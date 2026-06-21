@@ -34,8 +34,8 @@ export function Header() {
               </span>
             </Link>
 
-            {/* Navigation */}
-            <nav className="flex items-center gap-1 sm:border-l sm:border-zinc-800 sm:pl-6">
+            {/* Navigation (Desktop Only) */}
+            <nav className="hidden md:flex items-center gap-1 border-l border-zinc-800 pl-6">
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
