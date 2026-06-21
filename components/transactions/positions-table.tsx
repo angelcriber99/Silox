@@ -251,56 +251,32 @@ export function PositionsTable({
                     ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
                     : "#71717a";
 
-                  const isMsci = (p.ticker + (p.nombre || "")).toUpperCase().includes("MSCI")
-
                   return (
                     <TableRow
                       key={p.activo_id}
                       className="border-zinc-800/30 hover:bg-zinc-800/30 transition-colors duration-200 group"
                     >
                       <TableCell className="font-medium text-white font-tabular">
-                        {isMsci ? (
-                          <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-400 transition-colors">
-                            <span>
-                              {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
-                                ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
-                                : p.ticker.split('.')[0]}
-                              {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
-                                <span className="text-zinc-500 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
-                              )}
-                            </span>
-                            {p.isin && (
-                              <span className="text-[10px] text-zinc-500 tracking-wide font-normal mt-0.5">
-                                {p.isin}
-                              </span>
+                        <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-400 transition-colors">
+                          <span>
+                            {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
+                              ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
+                              : p.ticker.split('.')[0]}
+                            {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
+                              <span className="text-zinc-500 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
                             )}
-                          </Link>
-                        ) : (
-                          <div className="flex flex-col">
-                            <span>
-                              {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
-                                ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
-                                : p.ticker.split('.')[0]}
-                              {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
-                                <span className="text-zinc-500 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
-                              )}
+                          </span>
+                          {p.isin && (
+                            <span className="text-[10px] text-zinc-500 tracking-wide font-normal mt-0.5">
+                              {p.isin}
                             </span>
-                            {p.isin && (
-                              <span className="text-[10px] text-zinc-500 tracking-wide font-normal mt-0.5">
-                                {p.isin}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                          )}
+                        </Link>
                       </TableCell>
                       <TableCell className="text-zinc-500 text-sm max-w-[160px] truncate hidden md:table-cell">
-                        {isMsci ? (
-                          <Link href={`/activo/${p.activo_id}`} className="hover:text-zinc-300 transition-colors">
-                            {p.nombre || "—"}
-                          </Link>
-                        ) : (
-                          p.nombre || "—"
-                        )}
+                        <Link href={`/activo/${p.activo_id}`} className="hover:text-zinc-300 transition-colors">
+                          {p.nombre || "—"}
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <Badge
