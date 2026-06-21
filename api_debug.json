@@ -22,13 +22,13 @@
       "type": "Pago Dividendo"
     },
     {
-      "ticker": "VRLA.PA",
-      "date": "2026-05-04T00:00:00.000Z",
+      "ticker": "AMD.DE",
+      "date": "1995-04-27T00:00:00.000Z",
       "type": "Ex-Dividendo"
     },
     {
-      "ticker": "AMD.DE",
-      "date": "1995-04-27T00:00:00.000Z",
+      "ticker": "VRLA.PA",
+      "date": "2026-05-04T00:00:00.000Z",
       "type": "Ex-Dividendo"
     },
     {

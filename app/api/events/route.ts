@@ -1,15 +1,30 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
+import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
+const EventsSchema = z.object({
+  tickers: z.array(z.string().min(1).max(20)).max(100).optional().default([]),
+})
+
 export async function POST(request: Request) {
   try {
-    const { tickers } = await request.json()
+    const body = await request.json()
+    
+    const parsed = EventsSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Datos de entrada inválidos', details: parsed.error.format() },
+        { status: 400 }
+      )
+    }
+    
+    const { tickers } = parsed.data
 
-    if (!Array.isArray(tickers) || tickers.length === 0) {
+    if (tickers.length === 0) {
       return NextResponse.json({ events: [] })
     }
 
@@ -59,9 +74,6 @@ export async function POST(request: Request) {
           }
       })
     )
-
-    const fs = require('fs')
-    fs.writeFileSync('/Users/angel/Documents/Proyectos/silox/api_debug.json', JSON.stringify({ requestTickers: tickers, resultingEvents: events }, null, 2))
 
     return NextResponse.json({ events })
   } catch (error) {

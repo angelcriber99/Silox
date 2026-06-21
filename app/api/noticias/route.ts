@@ -1,21 +1,31 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { z } from 'zod'
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
 
+const NoticiasSchema = z.object({
+  items: z.array(z.object({
+    query: z.string().min(1).max(50),
+    displayName: z.string().min(1).max(50)
+  })).min(1).max(20),
+})
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { items } = body
-
-    if (!Array.isArray(items) || items.length === 0) {
+    
+    const parsed = NoticiasSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Proporciona un array de items' },
+        { error: 'Datos de entrada inválidos', details: parsed.error.format() },
         { status: 400 }
       )
     }
+    
+    const { items } = parsed.data
 
     const selectedItems = items.slice(0, 5)
 

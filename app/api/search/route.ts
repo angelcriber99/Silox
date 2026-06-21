@@ -1,15 +1,26 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
+import { z } from 'zod'
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
+const SearchSchema = z.object({
+  query: z.string().min(1).max(100)
+})
+
 export async function POST(request: Request) {
   try {
-    const { query } = await request.json()
+    const body = await request.json()
     
-    if (!query) {
-      return NextResponse.json({ error: 'Query requerido' }, { status: 400 })
+    const parsed = SearchSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Datos de entrada inválidos', details: parsed.error.format() },
+        { status: 400 }
+      )
     }
+    
+    const { query } = parsed.data
 
     const searchResult = await yahooFinance.search(query) as any
     const quotes = searchResult.quotes || []

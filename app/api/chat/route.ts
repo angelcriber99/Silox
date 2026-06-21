@@ -1,17 +1,36 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { z } from 'zod'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
 
+const ChatSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'model']),
+    content: z.string()
+  })),
+  portfolioContext: z.any()
+})
+
 export async function POST(request: Request) {
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 })
+  }
+
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      return new Response("La IA no está configurada.", { status: 500 })
+    const body = await request.json()
+    
+    const parsed = ChatSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Datos de entrada inválidos', details: parsed.error.format() },
+        { status: 400 }
+      )
     }
 
-    const { messages, portfolioContext } = await request.json()
+    const { messages, portfolioContext } = parsed.data
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
 
     // Build the system prompt
     const systemPrompt = `

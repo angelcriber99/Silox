@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
+import { z } from 'zod'
 import {
   convertSeriesToEur,
   convertToEur,
@@ -14,6 +15,11 @@ interface YahooQuote {
   regularMarketPrice?: number
   currency?: string
 }
+
+const PreciosSchema = z.object({
+  tickers: z.array(z.string().min(1).max(20)).min(1).max(100),
+  convertToEur: z.boolean().optional().default(false),
+})
 
 async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
   const pairs = Object.values(FX_PAIRS)
@@ -40,14 +46,16 @@ async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { tickers, convertToEur: shouldConvert = false } = body
-
-    if (!Array.isArray(tickers) || tickers.length === 0) {
+    
+    const parsed = PreciosSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Proporciona un array de tickers' },
+        { error: 'Datos de entrada inválidos', details: parsed.error.format() },
         { status: 400 }
       )
     }
+    
+    const { tickers, convertToEur: shouldConvert } = parsed.data
 
     const d = new Date()
     d.setDate(d.getDate() - 7)
