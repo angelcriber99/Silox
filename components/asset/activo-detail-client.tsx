@@ -1,0 +1,443 @@
+"use client"
+import { useState, useMemo } from "react"
+import Link from "next/link"
+import {
+  ArrowLeft, TrendingUp, TrendingDown, Wallet, BarChart3, Layers, Activity,
+  Calculator, History, Target, Sparkles, PiggyBank, CalendarDays, Clock,
+  Zap, Award, LineChart as LineChartIcon, DollarSign
+} from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import {
+  AreaChart, Area, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from "recharts"
+import { formatCurrency, formatPercent, formatUnits } from "@/lib/utils/formatters"
+import type { EnrichedPosition } from '@/lib/types'
+
+import dynamic from 'next/dynamic'
+import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
+
+const AssetEvolutionChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetEvolutionChart), { ssr: false })
+const AssetCapitalDonut = dynamic(() => import('./detail/asset-charts').then(m => m.AssetCapitalDonut), { ssr: false })
+const AssetContributionsChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetContributionsChart), { ssr: false })
+
+
+// ─── Types ───────────────────────────────────
+interface ActivoDetailClientProps {
+  position: EnrichedPosition
+  transactions: RawTransaction[]
+}
+
+const TIPO_BADGE_STYLES: Record<string, string> = {
+  ETF: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "Fondo Indexado": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  "Fondo Monetario": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+  Acción: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  Crypto: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+}
+
+// ─── Component ───────────────────────────────
+export function ActivoDetailClient({ position, transactions }: ActivoDetailClientProps) {
+  // Simulator state
+  const [monthlyContribution, setMonthlyContribution] = useState(300)
+  const [years, setYears] = useState(15)
+  const [expectedReturn, setExpectedReturn] = useState(8)
+
+
+  const {
+    sparklineData,
+    evolutionData,
+    monthlyContributionsData,
+    stats,
+    operacionesDonut,
+    capitalDonut,
+    txTableData
+  } = useAssetCalculations(position, transactions)
+
+  // ── Simulador Interés Compuesto ──
+  const simulationData = useMemo(() => {
+    let capital = position.valor_actual ?? position.coste_total
+    let invested = capital
+    const pts = [{ year: 0, capital: Math.round(capital), invested: Math.round(invested), interest: 0 }]
+    const monthlyRate = expectedReturn / 100 / 12
+
+    for (let y = 1; y <= years; y++) {
+      for (let m = 0; m < 12; m++) {
+        capital += monthlyContribution
+        capital *= (1 + monthlyRate)
+        invested += monthlyContribution
+      }
+      pts.push({
+        year: y,
+        capital: Math.round(capital),
+        invested: Math.round(invested),
+        interest: Math.round(capital - invested)
+      })
+    }
+    return pts
+  }, [position.valor_actual, position.coste_total, monthlyContribution, years, expectedReturn])
+
+  const finalData = simulationData[simulationData.length - 1]
+
+  return (
+    <div className="min-h-screen bg-[#09090b] selection:bg-purple-500/30">
+      {/* ═══════════ HEADER ═══════════ */}
+      <header className="sticky top-0 z-40 border-b border-zinc-800/60 bg-[#09090b]/90 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="text-sm font-medium">Volver al Dashboard</span>
+          </Link>
+          <div className="flex items-center gap-2.5 opacity-50">
+            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+              <Activity className="h-3 w-3 text-white" />
+            </div>
+            <span className="text-sm font-bold tracking-tight text-white">Silox</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8 pb-20">
+
+        {/* ═══════════ HERO ═══════════ */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 animate-fade-in">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Badge variant="outline" className={TIPO_BADGE_STYLES[position.tipo] || "bg-zinc-800 text-zinc-300"}>
+                {position.tipo}
+              </Badge>
+              {position.estrategia && (
+                <Badge variant="outline" className="bg-zinc-800/50 text-zinc-400 border-zinc-700">
+                  {position.estrategia}
+                </Badge>
+              )}
+            </div>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-2">
+              {position.nombre || position.ticker}
+            </h1>
+            <p className="text-zinc-500 font-medium">
+              Símbolo: <span className="text-zinc-300">{position.ticker}</span>
+              {position.isin && ` • ISIN: ${position.isin}`}
+              {position.original_currency && position.original_currency !== "EUR" && (
+                <span className="text-zinc-600"> • Moneda nativa: {position.original_currency}</span>
+              )}
+            </p>
+          </div>
+          <div className="text-left md:text-right">
+            <p className="text-sm text-zinc-500 uppercase font-bold tracking-wider mb-1">Valor Actual</p>
+            <p className="text-4xl md:text-5xl font-bold text-white font-tabular drop-shadow-md">
+              {position.valor_actual !== null ? formatCurrency(position.valor_actual, 'EUR') : "—"}
+            </p>
+            {position.pnl_percent !== null && (
+              <p className={`text-lg font-medium font-tabular flex items-center md:justify-end gap-1 mt-1 ${position.pnl_percent >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {position.pnl_percent >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                {formatPercent(position.pnl_percent)} global
+              </p>
+            )}
+            {/* Mini Sparkline 7d */}
+            {sparklineData && (
+              <div className="flex items-center gap-3 mt-3 md:justify-end">
+                <div className="w-[100px] h-[32px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={sparklineData.data}>
+                      <Line
+                        type="monotone"
+                        dataKey="price"
+                        stroke={sparklineData.isPositive ? "#10b981" : "#f43f5e"}
+                        strokeWidth={1.5}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <span className={`text-sm font-bold font-tabular ${sparklineData.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                  {sparklineData.isPositive ? "+" : ""}{sparklineData.change.toFixed(2)}% 7d
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ═══════════ KPIs GRID ═══════════ */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in stagger-1">
+          <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-zinc-400">
+              <Wallet className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Total Invertido</span>
+            </div>
+            <p className="text-2xl font-bold text-white font-tabular">{formatCurrency(position.coste_total, 'EUR')}</p>
+          </div>
+          <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-zinc-400">
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <span className="text-xs font-medium uppercase tracking-wider">Ganado por Mercado</span>
+            </div>
+            <p className={`text-2xl font-bold font-tabular ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, 'EUR')}
+            </p>
+          </div>
+          <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-zinc-400">
+              <Layers className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Participaciones</span>
+            </div>
+            <p className="text-2xl font-bold text-white font-tabular">{formatUnits(position.unidades)}</p>
+          </div>
+          <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-zinc-400">
+              <CalendarDays className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Operaciones</span>
+            </div>
+            <p className="text-2xl font-bold text-white font-tabular">{position.num_operaciones}</p>
+          </div>
+        </div>
+
+        {/* ═══════════ ADVANCED STATS ROW ═══════════ */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-in stagger-1">
+          <div className="bg-gradient-to-br from-purple-950/40 to-zinc-900/60 border border-purple-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-purple-300">
+              <Zap className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">CAGR</span>
+            </div>
+            <p className="text-2xl font-bold text-purple-300 font-tabular">
+              {stats.cagr > 0 ? "+" : ""}{stats.cagr.toFixed(2)}%
+            </p>
+            <p className="text-[10px] text-zinc-500 mt-1">Rentabilidad anualizada</p>
+          </div>
+          <div className="bg-gradient-to-br from-blue-950/40 to-zinc-900/60 border border-blue-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-blue-300">
+              <Clock className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Tiempo</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-300 font-tabular">{stats.monthsInvested} meses</p>
+            <p className="text-[10px] text-zinc-500 mt-1">Desde {stats.firstTxDate?.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }) || '—'}</p>
+          </div>
+          <div className="bg-gradient-to-br from-amber-950/40 to-zinc-900/60 border border-amber-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-amber-300">
+              <DollarSign className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Media / Mes</span>
+            </div>
+            <p className="text-2xl font-bold text-amber-300 font-tabular">{formatCurrency(stats.avgMonthly, 'EUR')}</p>
+            <p className="text-[10px] text-zinc-500 mt-1">Aportación media mensual</p>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-950/40 to-zinc-900/60 border border-emerald-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-emerald-300">
+              <Award className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Mayor Compra</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-300 font-tabular">{formatCurrency(stats.maxCompra, 'EUR')}</p>
+            <p className="text-[10px] text-zinc-500 mt-1">Tu mayor aportación</p>
+          </div>
+        </div>
+
+        {/* ═══════════ PRECIO MEDIO vs PRECIO ACTUAL ═══════════ */}
+        <Card className="bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm mb-10 animate-fade-in stagger-1">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Target className="h-5 w-5 text-amber-400" />
+                <div>
+                  <p className="text-sm font-medium text-zinc-400">Precio Medio de Compra</p>
+                  <p className="text-xl font-bold text-white font-tabular">{formatCurrency(stats.precioMedio, position.moneda)}</p>
+                </div>
+              </div>
+              <div className="flex-1 max-w-md mx-4">
+                <div className="relative h-3 rounded-full bg-zinc-800 overflow-hidden">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ${stats.precioPorcentaje >= 0 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-rose-500 to-rose-400'}`}
+                    style={{ width: `${Math.min(100, Math.abs(stats.precioPorcentaje) + 50)}%` }}
+                  />
+                </div>
+                <p className={`text-center mt-2 text-sm font-medium font-tabular ${stats.precioPorcentaje >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}% respecto a tu precio medio
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-zinc-400">Precio Actual</p>
+                <p className="text-xl font-bold text-white font-tabular">{formatCurrency(stats.precioActual, position.moneda)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ═══════════ TU DINERO vs INTERESES (DONUT GRANDE) + EVOLUCIÓN ═══════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+          {/* Donut: Tu dinero vs Intereses */}
+          <AssetCapitalDonut capitalDonut={capitalDonut} position={position} stats={stats} />
+
+          {/* Evolución Histórica */}
+          <AssetEvolutionChart evolutionData={evolutionData} />
+        </div>
+
+        {/* ═══════════ APORTACIONES MENSUALES + OPERACIONES ═══════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 animate-fade-in stagger-2">
+          {/* Barras de aportaciones */}
+          <AssetContributionsChart monthlyContributionsData={monthlyContributionsData} />
+        </div>
+
+        {/* ═══════════ SIMULADOR DE INTERÉS COMPUESTO ═══════════ */}
+        <Card className="bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm mb-10 animate-fade-in stagger-3">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-zinc-100 text-base">
+              <Calculator className="h-5 w-5 text-purple-400" />
+              🔮 La Magia del Interés Compuesto
+            </CardTitle>
+            <CardDescription className="text-zinc-400">
+              Proyecta el futuro. Cambia los parámetros y observa cómo la curva se despega exponencialmente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              {/* Controles */}
+              <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-zinc-800/50">
+                <div className="space-y-2">
+                  <Label className="text-zinc-300 text-sm">Aportación Mensual (€)</Label>
+                  <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-zinc-300 text-sm">Años Vista</Label>
+                  <Input type="number" value={years} onChange={e => setYears(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" min={1} max={50} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-zinc-300 text-sm">Rentabilidad Anual (%)</Label>
+                  <Input type="number" value={expectedReturn} onChange={e => setExpectedReturn(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" step={0.1} />
+                </div>
+                <div className="pt-4 border-t border-zinc-800/50 space-y-4">
+                  <div>
+                    <p className="text-xs text-zinc-500 uppercase font-medium">De tu bolsillo</p>
+                    <p className="text-lg font-bold text-blue-400 font-tabular">{formatCurrency(finalData?.invested ?? 0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 uppercase font-medium">Intereses Generados</p>
+                    <p className="text-lg font-bold text-emerald-400 font-tabular">+{formatCurrency(finalData?.interest ?? 0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 uppercase font-medium">Capital Final</p>
+                    <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] font-tabular">
+                      {formatCurrency(finalData?.capital ?? 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gráfico */}
+              <div className="lg:col-span-3 h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={simulationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="cCapital" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="cInvested" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="year" stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `Año ${v}`} />
+                    <YAxis stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                    <Tooltip content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null
+                      const cap = payload[0]?.value as number
+                      const inv = payload[1]?.value as number
+                      return (
+                        <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-2xl">
+                          <p className="text-zinc-300 text-sm mb-3 font-medium border-b border-zinc-800 pb-2">Año {label}</p>
+                          <div className="space-y-2">
+                            <div className="flex justify-between gap-6">
+                              <span className="text-purple-400 text-sm">Capital Total</span>
+                              <span className="text-purple-400 text-sm font-bold font-tabular">{formatCurrency(cap)}</span>
+                            </div>
+                            <div className="flex justify-between gap-6">
+                              <span className="text-blue-400 text-sm">Tu Dinero</span>
+                              <span className="text-blue-400 text-sm font-bold font-tabular">{formatCurrency(inv)}</span>
+                            </div>
+                            <div className="pt-2 mt-2 border-t border-zinc-800 flex justify-between gap-6">
+                              <span className="text-emerald-400 text-xs">Intereses</span>
+                              <span className="text-emerald-400 text-xs font-bold font-tabular">+{formatCurrency(cap - inv)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }} />
+                    <Area type="monotone" dataKey="capital" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#cCapital)" animationDuration={1500} />
+                    <Area type="monotone" dataKey="invested" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cInvested)" animationDuration={1500} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
+        <div className="animate-fade-in stagger-4">
+          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-zinc-400" />
+            Historial de Transacciones
+          </h2>
+          <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-zinc-950/50 text-zinc-400 text-xs uppercase font-medium">
+                <tr>
+                  <th className="px-5 py-4">Fecha</th>
+                  <th className="px-5 py-4">Tipo</th>
+                  <th className="px-5 py-4 text-right">Unidades</th>
+                  <th className="px-5 py-4 text-right">Precio</th>
+                  <th className="px-5 py-4 text-right">Total</th>
+                  <th className="px-5 py-4 text-right">Comisión</th>
+                  <th className="px-5 py-4 text-right">P&L</th>
+                  <th className="px-5 py-4 text-right">Acumulado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/50">
+                {txTableData.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-zinc-800/30 transition-colors">
+                    <td className="px-5 py-4 text-zinc-300 whitespace-nowrap">
+                      {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                        {tx.tipo_operacion}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right font-tabular text-zinc-300">{formatUnits(Number(tx.cantidad))}</td>
+                    <td className="px-5 py-4 text-right font-tabular text-zinc-300">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                    <td className="px-5 py-4 text-right font-tabular font-medium text-white">{formatCurrency(tx.total, position.moneda)}</td>
+                    <td className="px-5 py-4 text-right font-tabular text-zinc-500">
+                      {tx.comision > 0 ? formatCurrency(tx.comision, position.moneda) : "—"}
+                    </td>
+                    <td className="px-5 py-4 text-right font-tabular">
+                      {tx.pnlTotal !== null ? (
+                        <span className={tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                          {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotal)}
+                          <span className="text-[10px] ml-1 opacity-60">
+                            ({tx.pnlPct !== null ? (tx.pnlPct >= 0 ? "+" : "") + tx.pnlPct.toFixed(1) + "%" : ""})
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-zinc-600">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right font-tabular text-zinc-400">{formatCurrency(tx.accumulated, position.moneda)}</td>
+                  </tr>
+                ))}
+                {transactions.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-5 py-8 text-center text-zinc-500">
+                      No hay transacciones para este activo.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  )
+}
