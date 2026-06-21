@@ -22,9 +22,9 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-zinc-800/60 bg-[#09090b]/90 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-center gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           {/* Left – branding + nav + value */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-6 justify-center w-full">
+          <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
                 <Activity className="h-4 w-4 text-white" />
@@ -76,9 +76,10 @@ export function Header() {
                 </div>
               </div>
             )}
-            
-            <div className="flex items-center gap-4 ml-auto pl-5 border-l border-zinc-800">
-              <button 
+          </div>
+
+          <div className="flex items-center">
+            <button 
                 onClick={async () => {
                   const { createClient } = await import("@/lib/supabase/client")
                   const supabase = createClient()
@@ -96,7 +97,6 @@ export function Header() {
               </button>
             </div>
           </div>
-        </div>
       </header>
     </>
   )

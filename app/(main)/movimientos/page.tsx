@@ -151,7 +151,8 @@ export default function MovimientosPage() {
 
         {/* Table Section */}
         <div className="border border-zinc-800/60 bg-zinc-900/40 rounded-xl overflow-hidden backdrop-blur-sm">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-zinc-900/80 border-b border-zinc-800/60 text-zinc-400">
                 <tr>
@@ -264,6 +265,98 @@ export default function MovimientosPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="md:hidden flex flex-col divide-y divide-zinc-800/60">
+            {isLoading ? (
+               Array.from({ length: 3 }).map((_, i) => (
+                 <div key={i} className="p-4 flex flex-col gap-3">
+                   <div className="flex justify-between">
+                     <div className="h-4 w-24 bg-zinc-800 animate-shimmer rounded" />
+                     <div className="h-4 w-16 bg-zinc-800 animate-shimmer rounded" />
+                   </div>
+                   <div className="h-10 w-full bg-zinc-800 animate-shimmer rounded" />
+                 </div>
+               ))
+            ) : filteredTransactions.length === 0 ? (
+              <div className="text-center text-zinc-600 py-16">
+                 <div className="flex flex-col items-center gap-3">
+                   <History className="h-10 w-10 text-zinc-600 mb-2" />
+                   <p className="font-medium text-zinc-500">No se encontraron movimientos</p>
+                 </div>
+               </div>
+            ) : (
+              filteredTransactions.map((tx) => {
+                 const isCompra = tx.tipo_operacion === "Compra"
+                 const total = tx.cantidad * tx.precio_unitario + tx.comision
+                 const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
+                   year: 'numeric',
+                   month: 'short',
+                   day: 'numeric'
+                 })
+
+                 const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
+                 const ticker = tx.activo 
+                   ? (isFondo ? tx.activo.nombre?.split(' ')[0].toUpperCase() : tx.activo.ticker.split('.')[0])
+                   : "—"
+
+                 return (
+                   <div key={tx.id} className="p-4 flex flex-col gap-3 hover:bg-zinc-800/30 transition-colors relative">
+                     {/* Top Row: Operation type & Date */}
+                     <div className="flex items-center justify-between">
+                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                          isCompra ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                        }`}>
+                          {isCompra ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                          {tx.tipo_operacion}
+                        </span>
+                        <span className="text-xs text-zinc-500">{date}</span>
+                     </div>
+
+                     {/* Middle Row: Asset & Total Amount */}
+                     <div className="flex items-center justify-between">
+                       <div className="flex flex-col">
+                          <span className="font-bold text-white text-base">{ticker}</span>
+                          <span className="text-xs text-zinc-500 truncate max-w-[150px]">{tx.activo?.nombre}</span>
+                       </div>
+                       <div className={`flex flex-col items-end`}>
+                          <span className={`text-lg font-bold font-tabular ${isCompra ? "text-emerald-400" : "text-rose-400"}`}>
+                            {isCompra ? "-" : "+"}{formatCurrency(total)}
+                          </span>
+                       </div>
+                     </div>
+
+                     {/* Bottom Row: Details & Actions */}
+                     <div className="flex items-center justify-between mt-1 pt-3 border-t border-zinc-800/50">
+                        <span className="text-xs font-tabular text-zinc-400">
+                          {formatUnits(tx.cantidad)} ud. <span className="text-zinc-600 mx-1">x</span> {tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        </span>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="p-1 hover:bg-zinc-800 rounded-md focus:outline-none flex items-center gap-1">
+                            <MoreHorizontal className="h-5 w-5 text-zinc-500" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                            <DropdownMenuItem 
+                              onClick={() => handleEdit(tx)}
+                              className="hover:bg-zinc-800 focus:bg-zinc-800 cursor-pointer flex items-center gap-2"
+                            >
+                              <Pencil className="h-4 w-4" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(tx.id)}
+                              className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 focus:bg-rose-500/10 cursor-pointer flex items-center gap-2"
+                            >
+                              <Trash2 className="h-4 w-4" /> Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                     </div>
+                   </div>
+                 )
+              })
+            )}
           </div>
         </div>
       </div>

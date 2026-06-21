@@ -197,7 +197,8 @@ export function PositionsTable({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto min-h-[500px]">
+        {/* Desktop View (Table) */}
+        <div className="hidden md:block overflow-x-auto min-h-[500px]">
           <Table>
             <TableHeader className="bg-zinc-950/40">
               <TableRow className="border-zinc-800/50 hover:bg-transparent">
@@ -358,6 +359,117 @@ export function PositionsTable({
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Mobile View (Cards) */}
+        <div className="md:hidden flex flex-col divide-y divide-zinc-800/60">
+          {loading ? (
+             Array.from({ length: 3 }).map((_, i) => (
+               <div key={i} className="p-4 flex flex-col gap-3">
+                 <div className="h-4 w-32 bg-zinc-800 animate-shimmer rounded" />
+                 <div className="h-10 w-full bg-zinc-800 animate-shimmer rounded" />
+               </div>
+             ))
+          ) : filteredAndSorted.length === 0 ? (
+            <div className="text-center text-zinc-600 py-16">
+               <div className="flex flex-col items-center gap-3">
+                 <div className="h-12 w-12 rounded-full bg-zinc-800/60 flex items-center justify-center">
+                   <Layers className="h-5 w-5 text-zinc-600" />
+                 </div>
+                 <div>
+                   <p className="font-medium text-zinc-500">
+                     {searchQuery.trim() !== ""
+                       ? `No hay resultados`
+                       : filter !== "Todos"
+                         ? `Sin posiciones`
+                         : "Tu cartera está vacía"}
+                   </p>
+                 </div>
+               </div>
+             </div>
+          ) : (
+            filteredAndSorted.map((p) => {
+               const hasHistory = p.sparkline && p.sparkline.length > 1;
+               const sparklineColor = hasHistory 
+                 ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
+                 : "#71717a";
+
+               return (
+                 <div key={p.activo_id} className="p-4 flex flex-col gap-3 hover:bg-zinc-800/30 transition-colors">
+                   {/* Top: Title & Badge */}
+                   <div className="flex items-center justify-between">
+                     <Link href={`/activo/${p.activo_id}`} className="flex flex-col flex-1">
+                        <span className="font-medium text-white">
+                          {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
+                            ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
+                            : p.ticker.split('.')[0]}
+                        </span>
+                        {p.nombre && (
+                          <span className="text-xs text-zinc-500 truncate max-w-[200px]">
+                            {p.nombre}
+                          </span>
+                        )}
+                     </Link>
+                     <Badge
+                        variant="outline"
+                        className={`text-[10px] px-2 py-0 h-5 ${
+                          TIPO_BADGE_STYLES[p.tipo] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                        }`}
+                      >
+                        {p.tipo}
+                      </Badge>
+                   </div>
+
+                   {/* Middle: Units x Price -> Total Value */}
+                   <div className="flex justify-between items-end">
+                     <div className="flex flex-col">
+                       <span className="text-xs text-zinc-500 mb-0.5">Posición</span>
+                       <span className="text-sm font-medium font-tabular text-zinc-300">
+                         {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-zinc-600">x</span> {p.precio_actual !== null ? formatCurrency(p.precio_actual, 'EUR') : "—"}
+                       </span>
+                     </div>
+                     <div className="flex flex-col items-end">
+                       <span className="text-xs text-zinc-500 mb-0.5">Valor Actual</span>
+                       <span className="text-base font-bold font-tabular text-white">
+                         {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
+                       </span>
+                     </div>
+                   </div>
+
+                   {/* Bottom: P&L and Actions */}
+                   <div className="flex items-center justify-between mt-1 pt-3 border-t border-zinc-800/50">
+                     <div className="flex flex-col">
+                       <span className="text-xs text-zinc-500 mb-0.5">Rentabilidad</span>
+                       <div className="flex items-center gap-2">
+                         <PnlDisplay value={p.pnl} type="currency" />
+                         <span className="text-zinc-700 text-xs">|</span>
+                         <PnlDisplay value={p.pnl_percent} type="percent" />
+                       </div>
+                     </div>
+                     
+                     <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEditAsset(p)}
+                          className="h-8 w-8 text-zinc-400 bg-zinc-800/50 hover:text-white"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onAddTransaction(p)}
+                          className="h-8 w-8 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                     </div>
+                   </div>
+                 </div>
+               )
+            })
+          )}
         </div>
       </CardContent>
       <AddAssetModal open={addAssetOpen} onOpenChange={setAddAssetOpen} />
