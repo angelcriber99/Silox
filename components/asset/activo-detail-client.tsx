@@ -279,99 +279,102 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
         </div>
 
         {/* ═══════════ SIMULADOR DE INTERÉS COMPUESTO ═══════════ */}
-        <Card className="bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm mb-10 animate-fade-in stagger-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-zinc-100 text-base">
-              <Calculator className="h-5 w-5 text-purple-400" />
-              🔮 La Magia del Interés Compuesto
-            </CardTitle>
-            <CardDescription className="text-zinc-400">
-              Proyecta el futuro. Cambia los parámetros y observa cómo la curva se despega exponencialmente.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* Controles */}
-              <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-zinc-800/50">
-                <div className="space-y-2">
-                  <Label className="text-zinc-300 text-sm">Aportación Mensual (€)</Label>
-                  <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-zinc-300 text-sm">Años Vista</Label>
-                  <Input type="number" value={years} onChange={e => setYears(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" min={1} max={50} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-zinc-300 text-sm">Rentabilidad Anual (%)</Label>
-                  <Input type="number" value={expectedReturn} onChange={e => setExpectedReturn(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" step={0.1} />
-                </div>
-                <div className="pt-4 border-t border-zinc-800/50 space-y-4">
-                  <div>
-                    <p className="text-xs text-zinc-500 uppercase font-medium">De tu bolsillo</p>
-                    <p className="text-lg font-bold text-blue-400 font-tabular">{formatCurrency(finalData?.invested ?? 0)}</p>
+        {(position.tipo === "Fondo Indexado" || position.tipo === "Fondo Monetario") && (
+          <Card className="bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm mb-10 animate-fade-in stagger-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-zinc-100 text-base">
+                <Calculator className="h-5 w-5 text-purple-400" />
+                🔮 La Magia del Interés Compuesto
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                Proyecta el futuro. Cambia los parámetros y observa cómo la curva se despega exponencialmente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Controles */}
+                <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-zinc-800/50">
+                  <div className="space-y-2">
+                    <Label className="text-zinc-300 text-sm">Aportación Mensual (€)</Label>
+                    <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" />
                   </div>
-                  <div>
-                    <p className="text-xs text-zinc-500 uppercase font-medium">Intereses Generados</p>
-                    <p className="text-lg font-bold text-emerald-400 font-tabular">+{formatCurrency(finalData?.interest ?? 0)}</p>
+                  <div className="space-y-2">
+                    <Label className="text-zinc-300 text-sm">Años Vista</Label>
+                    <Input type="number" value={years} onChange={e => setYears(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" min={1} max={50} />
                   </div>
-                  <div>
-                    <p className="text-xs text-zinc-500 uppercase font-medium">Capital Final</p>
-                    <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] font-tabular">
-                      {formatCurrency(finalData?.capital ?? 0)}
-                    </p>
+                  <div className="space-y-2">
+                    <Label className="text-zinc-300 text-sm">Rentabilidad Anual (%)</Label>
+                    <Input type="number" value={expectedReturn} onChange={e => setExpectedReturn(Number(e.target.value))} className="bg-zinc-900 border-zinc-800 text-white" step={0.1} />
+                  </div>
+                  <div className="pt-4 border-t border-zinc-800/50 space-y-4">
+                    <div>
+                      <p className="text-xs text-zinc-500 uppercase font-medium">De tu bolsillo</p>
+                      <p className="text-lg font-bold text-blue-400 font-tabular">{formatCurrency(finalData?.invested ?? 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-500 uppercase font-medium">Intereses Generados</p>
+                      <p className="text-lg font-bold text-emerald-400 font-tabular">+{formatCurrency(finalData?.interest ?? 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-500 uppercase font-medium">Capital Final</p>
+                      <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] font-tabular">
+                        {formatCurrency(finalData?.capital ?? 0)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Gráfico */}
-              <div className="lg:col-span-3 h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={simulationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="cCapital" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="cInvested" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="year" stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `Año ${v}`} />
-                    <YAxis stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
-                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                    <Tooltip content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null
-                      const cap = payload[0]?.value as number
-                      const inv = payload[1]?.value as number
-                      return (
-                        <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-2xl">
-                          <p className="text-zinc-300 text-sm mb-3 font-medium border-b border-zinc-800 pb-2">Año {label}</p>
-                          <div className="space-y-2">
-                            <div className="flex justify-between gap-6">
-                              <span className="text-purple-400 text-sm">Capital Total</span>
-                              <span className="text-purple-400 text-sm font-bold font-tabular">{formatCurrency(cap)}</span>
-                            </div>
-                            <div className="flex justify-between gap-6">
-                              <span className="text-blue-400 text-sm">Tu Dinero</span>
-                              <span className="text-blue-400 text-sm font-bold font-tabular">{formatCurrency(inv)}</span>
-                            </div>
-                            <div className="pt-2 mt-2 border-t border-zinc-800 flex justify-between gap-6">
-                              <span className="text-emerald-400 text-xs">Intereses</span>
-                              <span className="text-emerald-400 text-xs font-bold font-tabular">+{formatCurrency(cap - inv)}</span>
+                {/* Gráfico */}
+                <div className="lg:col-span-3 h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={simulationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="cCapital" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="cInvested" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="year" stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `Año ${v}`} />
+                      <YAxis stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                      <Tooltip content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const cap = payload[0]?.value as number
+                        const inv = payload[1]?.value as number
+                        return (
+                          <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-2xl">
+                            <p className="text-zinc-300 text-sm mb-3 font-medium border-b border-zinc-800 pb-2">Año {label}</p>
+                            <div className="space-y-2">
+                              <div className="flex justify-between gap-6">
+                                <span className="text-purple-400 text-sm">Capital Total</span>
+                                <span className="text-purple-400 text-sm font-bold font-tabular">{formatCurrency(cap)}</span>
+                              </div>
+                              <div className="flex justify-between gap-6">
+                                <span className="text-blue-400 text-sm">Tu Dinero</span>
+                                <span className="text-blue-400 text-sm font-bold font-tabular">{formatCurrency(inv)}</span>
+                              </div>
+                              <div className="pt-2 mt-2 border-t border-zinc-800 flex justify-between gap-6">
+                                <span className="text-emerald-400 text-xs">Intereses</span>
+                                <span className="text-emerald-400 text-xs font-bold font-tabular">+{formatCurrency(cap - inv)}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )
-                    }} />
-                    <Area type="monotone" dataKey="capital" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#cCapital)" animationDuration={1500} />
-                    <Area type="monotone" dataKey="invested" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cInvested)" animationDuration={1500} />
-                  </AreaChart>
-                </ResponsiveContainer>
+                        )
+                      }} />
+                      <Area type="monotone" dataKey="capital" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#cCapital)" animationDuration={1500} />
+                      <Area type="monotone" dataKey="invested" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cInvested)" animationDuration={1500} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
+
 
         {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
         <div className="animate-fade-in stagger-4">
