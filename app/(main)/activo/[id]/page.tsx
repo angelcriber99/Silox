@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { fetchPosiciones, enrichPositions } from '@/lib/api/assets'
 import { fetchPrices } from '@/lib/api/market'
-import { getSupabaseClient } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { ActivoDetailClient } from "@/components/asset/activo-detail-client"
 import type { EnrichedPosition } from '@/lib/types'
 
@@ -21,7 +21,7 @@ export default function ActivoPage() {
     async function load() {
       try {
         setLoading(true)
-        const supabase = getSupabaseClient()
+        const supabase = createClient()
 
         // Fetch position data
         const rawPositions = await fetchPosiciones()

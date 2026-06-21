@@ -1,8 +1,8 @@
-import { getSupabaseClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import type { EventoRecurrente, PriceData } from '@/lib/types'
 
 export async function fetchEventosRecurrentes(): Promise<EventoRecurrente[]> {
-  const { data, error } = await getSupabaseClient()
+  const { data, error } = await createClient()
     .from('eventos_recurrentes')
     .select('*, activo:activos(ticker, nombre, tipo)')
     .order('dia_del_mes', { ascending: true })
@@ -17,9 +17,13 @@ export async function fetchEventosRecurrentes(): Promise<EventoRecurrente[]> {
 export async function insertEventoRecurrente(
   data: Omit<EventoRecurrente, 'id' | 'created_at' | 'activo'>
 ): Promise<EventoRecurrente> {
-  const { data: result, error } = await getSupabaseClient()
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No estás autenticado')
+
+  const { data: result, error } = await supabase
     .from('eventos_recurrentes')
-    .insert(data)
+    .insert([{ ...data, user_id: user.id }])
     .select('*, activo:activos(ticker, nombre, tipo)')
     .single()
 
@@ -31,7 +35,7 @@ export async function updateEventoRecurrente(
   id: string,
   data: Omit<EventoRecurrente, 'id' | 'created_at' | 'activo' | 'activo_id'> & { activo_id?: string }
 ): Promise<EventoRecurrente> {
-  const { data: result, error } = await getSupabaseClient()
+  const { data: result, error } = await createClient()
     .from('eventos_recurrentes')
     .update(data)
     .eq('id', id)
@@ -43,7 +47,7 @@ export async function updateEventoRecurrente(
 }
 
 export async function deleteEventoRecurrente(id: string): Promise<void> {
-  const { error } = await getSupabaseClient()
+  const { error } = await createClient()
     .from('eventos_recurrentes')
     .delete()
     .eq('id', id)

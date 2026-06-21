@@ -57,7 +57,7 @@ export function Header() {
 
             {/* Quick stats in header */}
             {totals.totalCost > 0 && (
-              <div className="hidden lg:flex items-center gap-5 border-l border-zinc-800 pl-5">
+              <div className="hidden lg:flex items-center gap-5 border-l border-zinc-800 pl-5 flex-1">
                 <div>
                   <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
                     Portfolio
@@ -76,6 +76,25 @@ export function Header() {
                 </div>
               </div>
             )}
+            
+            <div className="flex items-center gap-4 ml-auto pl-5 border-l border-zinc-800">
+              <button 
+                onClick={async () => {
+                  const { createClient } = await import("@/lib/supabase/client")
+                  const supabase = createClient()
+                  await supabase.auth.signOut()
+                  window.location.href = "/login"
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/40 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Salir
+              </button>
+            </div>
           </div>
         </div>
       </header>

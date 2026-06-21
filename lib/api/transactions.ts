@@ -1,8 +1,8 @@
-import { getSupabaseClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import type { Transaccion } from '@/lib/types'
 
 export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
-  const { data, error } = await getSupabaseClient()
+  const { data, error } = await createClient()
     .from('transacciones')
     .select('*, activo:activos(ticker, nombre, tipo)')
     .order('fecha', { ascending: false })
@@ -20,7 +20,7 @@ export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
 }
 
 export async function fetchAllTransactionsForTax(): Promise<Transaccion[]> {
-  const { data, error } = await getSupabaseClient()
+  const { data, error } = await createClient()
     .from('transacciones')
     .select(`
       *,
@@ -47,9 +47,13 @@ export async function insertTransaccion(tx: {
   fecha: string
   notas?: string
 }): Promise<Transaccion> {
-  const { data, error } = await getSupabaseClient()
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No estás autenticado')
+
+  const { data, error } = await supabase
     .from('transacciones')
-    .insert([tx])
+    .insert([{ ...tx, user_id: user.id }])
     .select()
     .single()
 
@@ -70,7 +74,7 @@ export async function updateTransaccion(id: string, updates: {
   fecha?: string
   notas?: string
 }): Promise<Transaccion> {
-  const { data, error } = await getSupabaseClient()
+  const { data, error } = await createClient()
     .from('transacciones')
     .update(updates)
     .eq('id', id)
@@ -87,7 +91,7 @@ export async function updateTransaccion(id: string, updates: {
 }
 
 export async function deleteTransaccion(id: string): Promise<void> {
-  const { error } = await getSupabaseClient()
+  const { error } = await createClient()
     .from('transacciones')
     .delete()
     .eq('id', id)

@@ -1,8 +1,8 @@
-import { getSupabaseClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
-  const { data, error } = await getSupabaseClient()
+  const { data, error } = await createClient()
     .from('posiciones')
     .select('*')
 
@@ -18,7 +18,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 }
 
 export async function fetchActivos(): Promise<Activo[]> {
-  const { data, error } = await getSupabaseClient()
+  const { data, error } = await createClient()
     .from('activos')
     .select('*')
     .order('created_at', { ascending: false })
@@ -35,9 +35,14 @@ export async function insertActivo(activo: {
   estrategia: string
   moneda?: string
 }): Promise<Activo> {
-  const { data, error } = await getSupabaseClient()
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) throw new Error('No estás autenticado')
+
+  const { data, error } = await supabase
     .from('activos')
-    .insert([activo])
+    .insert([{ ...activo, user_id: user.id }])
     .select()
     .single()
 
@@ -53,7 +58,7 @@ export async function updateActivo(id: string, updates: {
   estrategia?: string
   moneda?: string
 }): Promise<Activo> {
-  const { data, error } = await getSupabaseClient()
+  const { data, error } = await createClient()
     .from('activos')
     .update(updates)
     .eq('id', id)
