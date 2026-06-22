@@ -49,18 +49,24 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
         accCost -= total
       }
 
+      const inv = Math.max(0, Math.round(accCost * 100) / 100)
+      const val = Math.max(0, Math.round(accUnits * price * 100) / 100)
       points.push({
         date: new Date(tx.fecha).toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
-        invested: Math.max(0, Math.round(accCost * 100) / 100),
-        value: Math.max(0, Math.round(accUnits * price * 100) / 100)
+        invested: inv,
+        value: val,
+        profit: Math.round((val - inv) * 100) / 100
       })
     }
 
     if (position.precio_actual !== null && accUnits > 0) {
+      const inv = Math.max(0, Math.round(accCost * 100) / 100)
+      const val = Math.max(0, Math.round(accUnits * position.precio_actual * 100) / 100)
       points.push({
         date: "Hoy",
-        invested: Math.max(0, Math.round(accCost * 100) / 100),
-        value: Math.max(0, Math.round(accUnits * position.precio_actual * 100) / 100)
+        invested: inv,
+        value: val,
+        profit: Math.round((val - inv) * 100) / 100
       })
     }
 

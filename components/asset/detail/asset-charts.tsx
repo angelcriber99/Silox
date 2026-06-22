@@ -89,7 +89,7 @@ export function AssetEvolutionChart({ evolutionData }: any) {
           Evolución Histórica
         </CardTitle>
         <CardDescription className="text-muted-foreground">
-          Tu inversión vs el valor de mercado en cada operación.
+          Tu inversión y valor total (izq) vs Intereses ganados (der).
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -101,43 +101,58 @@ export function AssetEvolutionChart({ evolutionData }: any) {
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
-                <linearGradient id="gInvested" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <linearGradient id="gProfit" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="date" stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 11 }} tickMargin={8} minTickGap={30} />
-              <YAxis stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 11 }} tickFormatter={(v) => `€${(v / 1000).toFixed(1)}k`} width={55} domain={['auto', 'auto']} />
+              
+              {/* Eje Izquierdo: Valor e Inversión */}
+              <YAxis yAxisId="left" stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 11 }} tickFormatter={(v) => `€${(v / 1000).toFixed(1)}k`} width={55} domain={['auto', 'auto']} />
+              
+              {/* Eje Derecho: Intereses / Beneficio */}
+              <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" tick={{ fill: '#f59e0b', fontSize: 11 }} tickFormatter={(v) => `€${v}`} width={55} />
+              
               <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              
               <Tooltip content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null
-                const val = payload[0]?.value as number
-                const inv = payload[1]?.value as number
-                const diff = val - inv
+                const data = payload[0].payload
+                const val = data.value as number
+                const inv = data.invested as number
+                const prof = data.profit as number
                 return (
                   <div className="bg-card border border-border p-4 rounded-xl shadow-2xl">
                     <p className="text-foreground/80 text-sm mb-3 font-medium border-b border-border pb-2">{label}</p>
                     <div className="space-y-2">
                       <div className="flex justify-between gap-6">
-                        <span className="text-emerald-400 text-sm">Valor</span>
+                        <span className="text-emerald-400 text-sm">Valor Total</span>
                         <span className="text-emerald-400 text-sm font-bold font-tabular">{formatCurrency(val)}</span>
                       </div>
                       <div className="flex justify-between gap-6">
-                        <span className="text-blue-400 text-sm">Aportado</span>
+                        <span className="text-blue-400 text-sm">Aportaciones</span>
                         <span className="text-blue-400 text-sm font-bold font-tabular">{formatCurrency(inv)}</span>
                       </div>
                       <div className="pt-2 mt-2 border-t border-border flex justify-between gap-6">
-                        <span className="text-muted-foreground text-xs">Beneficio</span>
-                        <span className={`text-xs font-bold font-tabular ${diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {diff >= 0 ? '+' : ''}{formatCurrency(diff)}
+                        <span className="text-amber-400 text-xs">Intereses</span>
+                        <span className={`text-xs font-bold font-tabular ${prof >= 0 ? 'text-amber-400' : 'text-rose-400'}`}>
+                          {prof >= 0 ? '+' : ''}{formatCurrency(prof)}
                         </span>
                       </div>
                     </div>
                   </div>
                 )
               }} />
-              <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#gValue)" animationDuration={1500} />
-              <Area type="stepAfter" dataKey="invested" stroke="#3b82f6" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#gInvested)" animationDuration={1500} />
+              
+              {/* Valor total */}
+              <Area yAxisId="left" type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#gValue)" animationDuration={1500} />
+              
+              {/* Aportaciones (solo línea punteada para que se vea claramente el área de valor debajo) */}
+              <Area yAxisId="left" type="stepAfter" dataKey="invested" stroke="#3b82f6" strokeWidth={2} strokeDasharray="4 4" fillOpacity={0} fill="none" animationDuration={1500} />
+              
+              {/* Intereses (Eje derecho) */}
+              <Area yAxisId="right" type="monotone" dataKey="profit" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#gProfit)" animationDuration={1500} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
