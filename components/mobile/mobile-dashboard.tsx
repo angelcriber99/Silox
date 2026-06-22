@@ -80,7 +80,7 @@ export function MobileDashboard({
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-28">
       {/* ─── Header ──────────────────────── */}
       <div className="px-5 pt-6 pb-2">
         <div className="flex items-center justify-between mb-6">
@@ -181,10 +181,10 @@ export function MobileDashboard({
         </div>
         <div className="flex-1 bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/40 rounded-2xl p-4">
           <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
-            Activos
+            Rentabilidad
           </p>
-          <p className="text-lg font-bold font-tabular text-white mt-1">
-            {totals.positionCount}
+          <p className={`text-lg font-bold font-tabular mt-1 ${totals.totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            {totals.totalCost > 0 ? formatPercent(totals.totalPnlPercent) : "—"}
           </p>
         </div>
       </div>

@@ -45,6 +45,18 @@ export function MobileBottomSheet({
     }
   }, [open])
 
+  // Lock body scroll when sheet is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   const handleSelectAsset = (p: EnrichedPosition) => {
     setSelectedAsset(p)
     setStep("form")
@@ -99,7 +111,7 @@ export function MobileBottomSheet({
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="bg-[#111113] rounded-t-3xl border-t border-zinc-800/60 max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom,16px)]">
+        <div className="bg-[#111113] rounded-t-3xl border-t border-zinc-800/60 max-h-[85vh] overflow-y-auto overflow-x-hidden pb-[env(safe-area-inset-bottom,16px)]">
           {/* Handle */}
           <div className="flex justify-center pt-3 pb-2">
             <div className="w-10 h-1 rounded-full bg-zinc-600" />

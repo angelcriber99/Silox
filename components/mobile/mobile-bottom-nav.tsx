@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, History, Sparkles, User, Plus } from "lucide-react"
+import { LayoutDashboard, History, Plus } from "lucide-react"
 
 interface MobileBottomNavProps {
   onAddPress: () => void
@@ -13,27 +13,22 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
 
   const tabs = [
     { name: "Inicio", href: "/", icon: LayoutDashboard },
-    { name: "Historial", href: "/movimientos", icon: History },
     { name: "Añadir", href: "#", icon: Plus, isFab: true },
-    { name: "Chat IA", href: "/#", icon: Sparkles },
-    { name: "Perfil", href: "/#", icon: User },
+    { name: "Historial", href: "/movimientos", icon: History },
   ]
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-      {/* Glassmorphism background */}
       <div className="bg-[#09090b]/80 backdrop-blur-2xl border-t border-zinc-800/40">
-        <div className="flex items-end justify-around px-2 h-20 pb-[env(safe-area-inset-bottom,8px)]">
+        <div className="flex items-end justify-around px-2 h-16 pb-[env(safe-area-inset-bottom,8px)]">
           {tabs.map((tab) => {
             const isActive = pathname === tab.href
-
-            // FAB button (central elevated)
             if (tab.isFab) {
               return (
                 <button
                   key={tab.name}
                   onClick={onAddPress}
-                  className="relative -mt-6 flex items-center justify-center"
+                  className="relative -mt-4 flex items-center justify-center"
                 >
                   <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 shadow-lg shadow-violet-500/25 flex items-center justify-center active:scale-95 transition-transform duration-150">
                     <Plus className="h-7 w-7 text-white stroke-[2.5]" />
@@ -41,7 +36,6 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                 </button>
               )
             }
-
             return (
               <Link
                 key={tab.name}
@@ -58,7 +52,6 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                 <span className="text-[10px] font-semibold mt-1 tracking-wide">
                   {tab.name}
                 </span>
-                {/* Active indicator dot */}
                 {isActive && (
                   <div className="w-1 h-1 rounded-full bg-violet-400 mt-0.5" />
                 )}
