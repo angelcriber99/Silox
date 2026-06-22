@@ -31,6 +31,7 @@ interface ChartDatum {
   value: number
   color: string
   percent: number
+  pnlPercent24h: number
 }
 
 export function AllocationChart({ positions }: AllocationChartProps) {
@@ -38,24 +39,35 @@ export function AllocationChart({ positions }: AllocationChartProps) {
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
 
   const chartData = useMemo(() => {
-    const groups = new Map<string, number>()
+    const groups = new Map<string, { value: number; pnl24h: number; valorAyer: number }>()
     const colors = groupBy === "tipo" ? TYPE_COLORS : STRATEGY_COLORS
 
     for (const p of positions) {
       const key = groupBy === "tipo" ? p.tipo : p.estrategia
       const value = p.valor_actual ?? p.coste_total
+      const cp = p.change_percent_24h ?? 0
+      
+      const vAyer = value > 0 ? value / (1 + cp / 100) : 0
+      const pnl24h = value > 0 ? value - vAyer : 0
+
       if (value > 0) {
-        groups.set(key, (groups.get(key) ?? 0) + value)
+        const existing = groups.get(key) ?? { value: 0, pnl24h: 0, valorAyer: 0 }
+        groups.set(key, {
+          value: existing.value + value,
+          pnl24h: existing.pnl24h + pnl24h,
+          valorAyer: existing.valorAyer + vAyer
+        })
       }
     }
 
-    const total = Array.from(groups.values()).reduce((a, b) => a + b, 0)
+    const total = Array.from(groups.values()).reduce((a, b) => a + b.value, 0)
     const data: ChartDatum[] = Array.from(groups.entries())
-      .map(([name, value]) => ({
+      .map(([name, groupData]) => ({
         name,
-        value,
+        value: groupData.value,
         color: colors[name] ?? "#71717a",
-        percent: total > 0 ? (value / total) * 100 : 0,
+        percent: total > 0 ? (groupData.value / total) * 100 : 0,
+        pnlPercent24h: groupData.valorAyer > 0 ? (groupData.pnl24h / groupData.valorAyer) * 100 : 0
       }))
       .sort((a, b) => b.value - a.value)
 
@@ -165,9 +177,12 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                     className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
                     style={{ backgroundColor: d.color }}
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-medium text-zinc-200 group-hover:text-white transition-colors truncate">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="text-base font-medium text-zinc-200 group-hover:text-white transition-colors truncate leading-tight">
                       {d.name}
+                    </p>
+                    <p className={`text-[11px] font-medium mt-0.5 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {d.pnlPercent24h > 0 ? '+' : ''}{formatPercent(d.pnlPercent24h).replace('+', '')} hoy
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
