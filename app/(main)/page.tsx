@@ -17,6 +17,7 @@ import { AddTransactionModal } from "@/components/transactions/add-transaction-m
 import { AddEventModal } from "@/components/market/add-event-modal"
 import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { SiloxInsights } from "@/components/dashboard/silox-insights"
 
 export default function Home() {
   const { positions, totals, isLoading } = usePortfolio()
@@ -62,6 +63,9 @@ export default function Home() {
 
         {/* ── Content ────────────────────────────── */}
         <div className={`flex-1 mx-auto w-full px-6 py-6 space-y-6 ${zenMode ? 'max-w-4xl pt-20' : 'max-w-7xl'}`}>
+
+          {/* Insights */}
+          {!zenMode && <SiloxInsights positions={positions} totals={totals} />}
 
           {/* KPI Cards */}
           <PortfolioSummary totals={totals} loading={isLoading} />

@@ -1,8 +1,10 @@
 "use client"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DailyPnlChart } from "./daily-pnl-chart"
-import { TrendingUp, BarChart2 } from "lucide-react"
+import { DrawdownChart } from "./drawdown-chart"
+import { TrendingDown, BarChart2 } from "lucide-react"
 
 interface PerformanceModalProps {
   open: boolean
@@ -13,19 +15,36 @@ export function PerformanceModal({ open, onOpenChange }: PerformanceModalProps) 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl bg-background/95 backdrop-blur-xl border-border/50">
-        <DialogHeader className="mb-4">
+        <DialogHeader className="mb-2">
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             <BarChart2 className="w-6 h-6 text-blue-500" />
-            Rendimiento Diario
+            Análisis de Rendimiento
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Variación neta (ganancias o pérdidas) de tu portfolio día a día.
+            Métricas avanzadas sobre la evolución de tu portfolio.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="w-full">
-          <DailyPnlChart />
-        </div>
+        <Tabs defaultValue="daily" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50">
+            <TabsTrigger value="daily" className="data-[state=active]:bg-background">
+              <BarChart2 className="w-4 h-4 mr-2" />
+              PnL Diario
+            </TabsTrigger>
+            <TabsTrigger value="drawdown" className="data-[state=active]:bg-background">
+              <TrendingDown className="w-4 h-4 mr-2 text-rose-400" />
+              Drawdown
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="daily" className="mt-0">
+            <DailyPnlChart />
+          </TabsContent>
+          
+          <TabsContent value="drawdown" className="mt-0">
+            <DrawdownChart />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

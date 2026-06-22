@@ -134,7 +134,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
   }
 
   return (
-    <Card className="bg-card border-border backdrop-blur-sm h-full flex flex-col">
+    <Card className="bg-card border-border backdrop-blur-sm">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Calendar className="h-4 w-4 text-amber-400" />
@@ -145,9 +145,9 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         </Button>
       </CardHeader>
       <CardContent 
-        className="flex-1 flex flex-col gap-3 overflow-y-auto pr-2 pb-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
-        style={{ maxHeight: '112px' }}
+        className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2 max-h-[200px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
       >
+
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3">
@@ -165,25 +165,26 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
             <p className="text-[10px] text-muted-foreground/60 mt-1 max-w-[200px]">Añade eventos manuales o compra acciones con dividendos</p>
           </div>
         ) : (
-          events.map((event, idx) => (
-            <div 
-              key={`${event.id}-${idx}`} 
-              className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${event.isManual ? 'cursor-pointer hover:bg-muted/50' : ''}`}
-              onClick={() => {
-                if (event.isManual && onEditEvent && event.originalEvent) {
-                  onEditEvent(event.originalEvent)
-                }
-              }}
-            >
-              <div className="h-8 w-8 rounded-full bg-background/50 flex items-center justify-center border border-border/50 shrink-0">
-                {getIcon(event.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground/90 truncate">{event.title}</p>
-                <p className="text-xs text-muted-foreground/80">
-                  {event.date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                </p>
-              </div>
+          <div className="max-h-[140px] overflow-y-auto pr-1 space-y-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700">
+            {events.map((event, idx) => (
+              <div 
+                key={`${event.id}-${idx}`} 
+                className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${event.isManual ? 'cursor-pointer hover:bg-muted/50' : ''}`}
+                onClick={() => {
+                  if (event.isManual && onEditEvent && event.originalEvent) {
+                    onEditEvent(event.originalEvent)
+                  }
+                }}
+              >
+                <div className="h-8 w-8 rounded-full bg-background/50 flex items-center justify-center border border-border/50 shrink-0">
+                  {getIcon(event.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground/90 truncate">{event.title}</p>
+                  <p className="text-xs text-muted-foreground/80">
+                    {event.date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                  </p>
+                </div>
               <div className="text-right shrink-0">
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                   event.daysLeft === 0 
@@ -198,7 +199,8 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
                 </span>
               </div>
             </div>
-          ))
+          ))}
+          </div>
         )}
       </CardContent>
     </Card>

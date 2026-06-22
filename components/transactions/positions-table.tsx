@@ -13,12 +13,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus } from "lucide-react"
+import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell } from "lucide-react"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatUnits, formatPnl } from "@/lib/utils/formatters"
 import { Sparkline } from "@/components/asset/sparkline"
 import { AddAssetModal } from "@/components/asset/add-asset-modal"
+import { HelpGuideModal } from "@/components/dashboard/help-guide-modal"
+import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { useAlerts } from "@/lib/stores/use-alerts"
 import Link from "next/link"
 
 interface PositionsTableProps {
@@ -87,6 +90,11 @@ export function PositionsTable({
   const [sortKey, setSortKey] = useState<SortKey>("valor_actual")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
   const [addAssetOpen, setAddAssetOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [alertsOpen, setAlertsOpen] = useState(false)
+  const { alerts } = useAlerts()
+
+  const hasTriggeredAlerts = alerts.some(a => a.triggered)
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -190,20 +198,45 @@ export function PositionsTable({
             </div>
           </div>
           
-          <Button
-            size="sm"
-            onClick={() => setAddAssetOpen(true)}
-            className="bg-blue-600 hover:bg-blue-500 text-white transition-colors duration-200"
-          >
-            <Plus className="mr-2 h-3.5 w-3.5" />
-            Añadir Activo
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setHelpOpen(true)}
+              className="bg-transparent border-border text-muted-foreground hover:text-foreground transition-colors duration-200"
+              title="Guía de uso"
+            >
+              <BookOpen className="h-4 w-4" />
+            </Button>
+            <div className="relative">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setAlertsOpen(true)}
+                className="bg-transparent border-border text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Alertas
+              </Button>
+              {hasTriggeredAlerts && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 border-2 border-background animate-pulse" />
+              )}
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setAddAssetOpen(true)}
+              className="bg-blue-600 hover:bg-blue-500 text-white transition-colors duration-200"
+            >
+              <Plus className="mr-2 h-3.5 w-3.5" />
+              Añadir Activo
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         {/* Desktop View (Table) */}
         <div className="hidden md:block overflow-x-auto min-h-[500px]">
-          <Table>
+          <Table className="min-w-[900px] w-full">
             <TableHeader className="bg-muted/40">
               <TableRow className="border-border/50 hover:bg-transparent">
                 <SortableHeader label="Símbolo" sortKeyName="ticker" />
@@ -216,7 +249,7 @@ export function PositionsTable({
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right" />
                 <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
                 <SortableHeader label="P&L %" sortKeyName="pnl_percent" className="text-right hidden sm:table-cell" />
-                <TableHead className="text-right text-muted-foreground/80 w-12" />
+                <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -256,6 +289,10 @@ export function PositionsTable({
                     ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
                     : "#71717a";
 
+                  const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
+                    ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
+                    : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
+
                   return (
                     <TableRow
                       key={p.activo_id}
@@ -264,9 +301,7 @@ export function PositionsTable({
                       <TableCell className="font-medium text-foreground font-tabular">
                         <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
                           <span>
-                            {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
-                              ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
-                              : p.ticker.split('.')[0]}
+                            {displaySymbol}
                             {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
                               <span className="text-muted-foreground/80 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
                             )}
@@ -340,8 +375,8 @@ export function PositionsTable({
                       <TableCell className="text-right hidden sm:table-cell">
                         <PnlDisplay value={p.pnl_percent} type="percent" />
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <TableCell className="text-right min-w-[100px] w-[100px]">
+                        <div className="flex items-center justify-end gap-1 pr-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -395,7 +430,7 @@ export function PositionsTable({
                    </p>
                  </div>
                </div>
-             </div>
+            </div>
           ) : (
             filteredAndSorted.map((p) => {
                const hasHistory = p.sparkline && p.sparkline.length > 1;
@@ -403,15 +438,17 @@ export function PositionsTable({
                  ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
                  : "#71717a";
 
+               const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
+                 ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
+                 : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
+
                return (
                  <div key={p.activo_id} className="p-4 flex flex-col gap-3 hover:bg-muted/30 transition-colors">
                    {/* Top: Title & Badge */}
                    <div className="flex items-center justify-between">
                      <Link href={`/activo/${p.activo_id}`} className="flex flex-col flex-1">
                         <span className="font-medium text-foreground">
-                          {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
-                            ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
-                            : p.ticker.split('.')[0]}
+                          {displaySymbol}
                         </span>
                         {p.nombre && (
                           <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">
@@ -486,6 +523,8 @@ export function PositionsTable({
         </div>
       </CardContent>
       <AddAssetModal open={addAssetOpen} onOpenChange={setAddAssetOpen} />
+      <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
+      <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
     </Card>
   )
 }
