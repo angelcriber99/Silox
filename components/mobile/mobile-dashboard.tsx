@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
   YAxis,
 } from "recharts"
+import { EvolutionChart } from "@/components/dashboard/evolution-chart"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
 
@@ -225,8 +226,13 @@ export function MobileDashboard({
             </div>
           </div>
 
-          {/* ─── Assets List ─────────────────── */}
-          <div className="px-5 mb-4">
+          {/* ─── Historical Chart ─────────────── */}
+          <div className="px-5 mb-8">
+            <EvolutionChart />
+          </div>
+
+          {/* ─── Position List ─────────────────── */}
+          <div className="px-5 pb-24">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Tus Activos
             </h2>

@@ -8,6 +8,7 @@ import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters
 
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary"
 import { AllocationChart } from "@/components/dashboard/allocation-chart"
+import { EvolutionChart } from "@/components/dashboard/evolution-chart"
 import { PositionsTable } from "@/components/transactions/positions-table"
 import { TopMovers } from "@/components/dashboard/top-movers"
 import { UpcomingEvents } from "@/components/market/upcoming-events"
@@ -71,8 +72,9 @@ export default function Home() {
 
           {/* Charts Row */}
           <div className={`grid grid-cols-1 ${zenMode ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6`}>
-            <div className={zenMode ? 'col-span-1' : 'lg:col-span-2'}>
+            <div className={`${zenMode ? 'col-span-1' : 'lg:col-span-2'} flex flex-col gap-6`}>
               <AllocationChart positions={positions} />
+              <EvolutionChart />
             </div>
             {!zenMode && (
               <div className="lg:col-span-1 space-y-6 flex flex-col">
