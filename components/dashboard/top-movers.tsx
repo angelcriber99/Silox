@@ -56,11 +56,11 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
             Ganadoras
           </div>
           {best.length > 0 ? best.map(p => (
-            <div key={p.ticker} className="flex justify-between items-center text-sm">
-              <span className="text-foreground/80 font-medium truncate max-w-[100px]" title={p.nombre || p.ticker}>
+            <div key={p.ticker} className="flex justify-between items-center text-sm gap-2">
+              <span className="text-foreground/80 font-medium truncate flex-1" title={p.nombre || p.ticker}>
                 {p.nombre || p.ticker.split('.')[0]}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
                   <span className="text-xs text-muted-foreground/70 font-medium">
                     {formatPnl(p.change_amount_24h)}
@@ -78,11 +78,11 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
             Perdedoras
           </div>
           {worst.length > 0 ? worst.map(p => (
-            <div key={p.ticker} className="flex justify-between items-center text-sm">
-              <span className="text-foreground/80 font-medium truncate max-w-[100px]" title={p.nombre || p.ticker}>
+            <div key={p.ticker} className="flex justify-between items-center text-sm gap-2">
+              <span className="text-foreground/80 font-medium truncate flex-1" title={p.nombre || p.ticker}>
                 {p.nombre || p.ticker.split('.')[0]}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
                   <span className="text-xs text-muted-foreground/70 font-medium">
                     {formatPnl(p.change_amount_24h)}
