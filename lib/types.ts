@@ -76,6 +76,8 @@ export interface PortfolioTotals {
   totalCost: number
   totalPnl: number
   totalPnlPercent: number
+  totalPnl24h: number
+  totalPnlPercent24h: number
   positionCount: number
   hasAllPrices: boolean
 }

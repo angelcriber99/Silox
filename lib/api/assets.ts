@@ -146,11 +146,28 @@ export function computePortfolioTotals(
   const totalPnl = totalValue - totalCost
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
 
+  let totalPnl24h = 0
+  let totalValorAyer = 0
+  
+  withValues.forEach((p) => {
+    const cp = p.change_percent_24h ?? 0
+    const v = p.valor_actual ?? 0
+    if (v > 0) {
+      const vAyer = v / (1 + cp / 100)
+      totalPnl24h += (v - vAyer)
+      totalValorAyer += vAyer
+    }
+  })
+  
+  const totalPnlPercent24h = totalValorAyer > 0 ? (totalPnl24h / totalValorAyer) * 100 : 0
+
   return {
     totalValue,
     totalCost,
     totalPnl,
     totalPnlPercent,
+    totalPnl24h,
+    totalPnlPercent24h,
     positionCount: positions.length,
     hasAllPrices: withValues.length === positions.filter((p) => p.unidades > 0).length,
   }

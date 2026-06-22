@@ -26,7 +26,7 @@ function SkeletonValue() {
 interface KPICardProps {
   label: string
   value: string
-  subvalue?: string
+  subvalue?: React.ReactNode
   icon: React.ReactNode
   colorClass?: string
   delay?: string
@@ -131,6 +131,15 @@ export function PortfolioSummary({ totals, loading }: PortfolioSummaryProps) {
             ? formatPnl(totals.totalPnl)
             : "—"
         }
+        subvalue={
+          totals.totalCost > 0 ? (
+            <span className="flex items-center gap-1 font-medium">
+              Hoy: <span className={totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                {totals.totalPnl24h > 0 ? "+" : ""}{formatPnl(totals.totalPnl24h).replace("+", "")}
+              </span>
+            </span>
+          ) : undefined
+        }
         icon={<PnlIcon className="h-4 w-4" />}
         colorClass={totals.totalCost > 0 ? pnlColor : "text-zinc-400"}
         delay="stagger-3"
@@ -143,11 +152,13 @@ export function PortfolioSummary({ totals, loading }: PortfolioSummaryProps) {
             : "—"
         }
         subvalue={
-          totals.totalCost > 0
-            ? totals.totalPnl >= 0
-              ? "En positivo"
-              : "En negativo"
-            : undefined
+          totals.totalCost > 0 ? (
+            <span className="flex items-center gap-1 font-medium">
+              Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                {totals.totalPnlPercent24h > 0 ? "+" : ""}{formatPercent(totals.totalPnlPercent24h).replace("+", "")}
+              </span>
+            </span>
+          ) : undefined
         }
         icon={
           totals.totalCost > 0 ? (
