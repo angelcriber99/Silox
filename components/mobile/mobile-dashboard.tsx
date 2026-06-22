@@ -208,7 +208,7 @@ export function MobileDashboard({
       {!zenMode && (
         <div className="animate-fade-in">
           {/* ─── Quick Stats Row ─────────────── */}
-          <div className="flex gap-3 px-5 mb-6">
+          <div className="flex gap-3 px-5 mb-4">
             <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
               <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
                 Invertido
@@ -217,21 +217,24 @@ export function MobileDashboard({
                 {hideBalances ? "****" : (totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—")}
               </p>
             </div>
-            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm relative">
+            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
               <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
                 Rent. Hoy
               </p>
-              <button 
-                onClick={() => setPerformanceOpen(true)}
-                className="absolute top-3 right-3 p-1.5 bg-background/50 hover:bg-muted rounded-full text-muted-foreground transition-colors"
-                title="Ver rendimiento"
-              >
-                <BarChart2 className="w-4 h-4 text-blue-400" />
-              </button>
               <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
                 {hideBalances ? "**.*%" : (dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—")}
               </p>
             </div>
+          </div>
+
+          <div className="px-5 mb-6">
+            <button
+              onClick={() => setPerformanceOpen(true)}
+              className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-xl p-3 flex items-center justify-center gap-2 font-semibold transition-colors active:scale-95"
+            >
+              <BarChart2 className="w-5 h-5" />
+              Ver Gráfica de Rendimiento
+            </button>
           </div>
 
           <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} />

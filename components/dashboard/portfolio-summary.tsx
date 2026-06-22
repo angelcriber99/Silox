@@ -28,6 +28,7 @@ interface KPICardProps {
   loading?: boolean
   delay?: string
   action?: React.ReactNode
+  extraContent?: React.ReactNode
 }
 
 function KPICard({
@@ -39,12 +40,13 @@ function KPICard({
   loading = false,
   delay = "stagger-1",
   action,
+  extraContent,
 }: KPICardProps) {
   return (
     <Card
-      className={`animate-fade-in ${delay} bg-card border-border backdrop-blur-sm hover:border-border/60 transition-all duration-300 relative`}
+      className={`animate-fade-in ${delay} bg-card border-border backdrop-blur-sm hover:border-border/60 transition-all duration-300 relative flex flex-col h-full`}
     >
-      <CardContent className="p-5">
+      <CardContent className="p-5 flex-1 flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wider">
             {label}
@@ -57,14 +59,19 @@ function KPICard({
         {loading ? (
           <SkeletonValue />
         ) : (
-          <>
+          <div className="flex-1">
             <p className={`text-2xl font-bold font-tabular tracking-tight ${valueColor}`}>
               {value}
             </p>
             {subvalue && (
               <p className="text-xs text-muted-foreground/80 mt-1">{subvalue}</p>
             )}
-          </>
+          </div>
+        )}
+        {extraContent && (
+          <div className="mt-4">
+            {extraContent}
+          </div>
         )}
       </CardContent>
     </Card>
@@ -122,13 +129,13 @@ export function PortfolioSummary({
               <TrendingDown className="w-5 h-5 text-rose-400/50" />
             )
           }
-          action={
+          extraContent={
             <button 
               onClick={() => setPerformanceOpen(true)}
-              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-              title="Ver gráfico de rendimiento"
+              className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-lg py-2 px-3 flex items-center justify-center gap-2 font-semibold transition-colors text-xs"
             >
               <BarChart2 className="w-4 h-4" />
+              Ver Rendimiento Diario
             </button>
           }
           loading={loading}
