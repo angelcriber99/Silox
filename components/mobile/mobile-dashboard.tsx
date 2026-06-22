@@ -29,7 +29,7 @@ export function MobileDashboard({
   totals,
   isLoading,
 }: MobileDashboardProps) {
-  const { zenMode, soundEffects } = usePreferences()
+  const { zenMode, soundEffects, hideBalances } = usePreferences()
   const isPositive = totals.totalPnl >= 0
   const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
   const PnlIcon = isPositive ? TrendingUp : TrendingDown
