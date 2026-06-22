@@ -5,7 +5,6 @@ import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 import { BellRing, MessageSquare, ExternalLink, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 
 export function AlertasFeed() {
   const { data: alertas, isLoading } = useAlertas()
@@ -20,9 +19,9 @@ export function AlertasFeed() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+          <div className="h-12 w-full bg-muted/50 rounded animate-pulse" />
+          <div className="h-12 w-full bg-muted/50 rounded animate-pulse" />
+          <div className="h-12 w-full bg-muted/50 rounded animate-pulse" />
         </CardContent>
       </Card>
     )
