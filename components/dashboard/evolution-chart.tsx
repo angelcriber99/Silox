@@ -2,27 +2,28 @@
 
 import { useMemo } from "react"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
+import { useSnapshots } from "@/lib/hooks/use-portfolio"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, startOfDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { TrendingUp, Activity } from "lucide-react"
 
 export function EvolutionChart() {
-  const { data: transactions, isLoading } = useAllTransactions()
+  const { data: transactions, isLoading: txLoading } = useAllTransactions()
+  const { data: snapshots, isLoading: snapshotsLoading } = useSnapshots()
+
+  const isLoading = txLoading || snapshotsLoading
 
   const chartData = useMemo(() => {
     if (!transactions || transactions.length === 0) return []
 
-    // Sort transactions by date ascending
-    const sorted = [...transactions].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-
+    // Calculate daily invested capital from transactions
+    const sortedTx = [...transactions].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
     let runningCapital = 0
-    const dataPoints: Record<string, number> = {}
+    const txDataPoints: Record<string, number> = {}
 
-    // Group by month/year or just by exact date if not too many. 
-    // Since transactions can be few, we can just plot them by date.
-    sorted.forEach(tx => {
+    sortedTx.forEach(tx => {
       const dateKey = tx.fecha.split('T')[0]
       const txValue = (tx.cantidad * tx.precio_unitario)
       
@@ -30,17 +31,46 @@ export function EvolutionChart() {
         runningCapital += (txValue + tx.comision)
       } else {
         runningCapital -= (txValue - tx.comision)
-        if (runningCapital < 0) runningCapital = 0 // prevent negative baseline anomalies
+        if (runningCapital < 0) runningCapital = 0
       }
-      dataPoints[dateKey] = runningCapital
+      txDataPoints[dateKey] = runningCapital
     })
 
-    // Convert to array
-    return Object.entries(dataPoints).map(([date, value]) => ({
-      date,
-      value
-    }))
-  }, [transactions])
+    // Create a unified timeline
+    // We want data points for every date we have a transaction OR a snapshot
+    const allDates = new Set([
+      ...Object.keys(txDataPoints),
+      ...(snapshots?.map(s => s.date) || [])
+    ])
+
+    const sortedDates = Array.from(allDates).sort()
+
+    // Fill in missing values and combine
+    let lastInvested = 0
+    let lastValue: number | null = null
+
+    return sortedDates.map(date => {
+      if (txDataPoints[date] !== undefined) {
+        lastInvested = txDataPoints[date]
+      }
+      
+      const snapshot = snapshots?.find(s => s.date === date)
+      if (snapshot) {
+        lastValue = snapshot.total_value
+        // Optionally trust snapshot's total_invested over calculated runningCapital
+        // but since snapshots are new, calculating from transactions is more reliable for old dates.
+      } else {
+        lastValue = null // Don't chart values we don't have
+      }
+
+      return {
+        date,
+        invested: lastInvested,
+        value: lastValue
+      }
+    })
+
+  }, [transactions, snapshots])
 
   if (isLoading) {
     return (
@@ -59,13 +89,39 @@ export function EvolutionChart() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const formattedDate = format(parseISO(label), "d MMM yyyy", { locale: es })
+      
+      const investedObj = payload.find((p: any) => p.dataKey === 'invested')
+      const valueObj = payload.find((p: any) => p.dataKey === 'value')
+
       return (
-        <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md">
-          <p className="text-muted-foreground text-xs mb-1 font-medium uppercase tracking-wider">{formattedDate}</p>
-          <p className="text-foreground font-bold text-xl font-tabular">
-            {formatCurrency(payload[0].value)}
-          </p>
-          <p className="text-blue-400/80 text-xs mt-1">Capital Depositado Neto</p>
+        <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md min-w-[200px]">
+          <p className="text-muted-foreground text-xs mb-3 font-medium uppercase tracking-wider border-b border-border/50 pb-2">{formattedDate}</p>
+          
+          <div className="space-y-3">
+            {valueObj && valueObj.value !== null && (
+              <div>
+                <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  Valor Real
+                </p>
+                <p className="text-foreground font-bold text-lg font-tabular mt-0.5">
+                  {formatCurrency(valueObj.value)}
+                </p>
+              </div>
+            )}
+
+            {investedObj && (
+              <div>
+                <p className="text-blue-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-400" />
+                  Capital Invertido
+                </p>
+                <p className="text-foreground/80 font-semibold text-sm font-tabular mt-0.5">
+                  {formatCurrency(investedObj.value)}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )
     }
@@ -76,19 +132,23 @@ export function EvolutionChart() {
     <div className="bg-card/40 border border-border rounded-xl p-6 backdrop-blur-sm overflow-hidden relative group">
       <div className="absolute top-6 left-6 z-10 pointer-events-none">
         <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-blue-500" />
-          Evolución del Capital
+          <TrendingUp className="h-5 w-5 text-emerald-500" />
+          Evolución del Portfolio
         </h3>
-        <p className="text-sm text-muted-foreground mt-1">Crecimiento histórico de depósitos netos</p>
+        <p className="text-sm text-muted-foreground mt-1">Rentabilidad histórica (Valor vs Invertido)</p>
       </div>
 
       <div className="h-[350px] w-full mt-10">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
             <defs>
-              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+              <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <XAxis 
@@ -101,14 +161,26 @@ export function EvolutionChart() {
               minTickGap={30}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#3f3f46', strokeWidth: 1, strokeDasharray: '4 4' }} />
+            
+            <Area 
+              type="monotone" 
+              dataKey="invested" 
+              stroke="#3b82f6" 
+              strokeWidth={2}
+              fillOpacity={1} 
+              fill="url(#colorInvested)" 
+              animationDuration={1500}
+            />
+            
             <Area 
               type="monotone" 
               dataKey="value" 
-              stroke="#3b82f6" 
+              stroke="#10b981" 
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorValue)" 
               animationDuration={1500}
+              connectNulls={true}
             />
           </AreaChart>
         </ResponsiveContainer>

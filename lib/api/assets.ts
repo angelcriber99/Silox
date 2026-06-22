@@ -172,3 +172,42 @@ export function computePortfolioTotals(
     hasAllPrices: withValues.length === positions.filter((p) => p.unidades > 0).length,
   }
 }
+
+export async function saveDailySnapshot(totalValue: number, totalInvested: number): Promise<void> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  // Only save if we have actual value
+  if (totalValue <= 0 && totalInvested <= 0) return
+
+  const today = new Date().toISOString().split('T')[0]
+
+  // Upsert the snapshot for today
+  await supabase
+    .from('portfolio_snapshots')
+    .upsert({
+      user_id: user.id,
+      date: today,
+      total_value: totalValue,
+      total_invested: totalInvested,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'user_id, date'
+    })
+}
+
+export async function fetchSnapshots(): Promise<{ date: string, total_value: number, total_invested: number }[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('portfolio_snapshots')
+    .select('date, total_value, total_invested')
+    .order('date', { ascending: true })
+
+  if (error) {
+    console.error("Error fetching snapshots:", error)
+    return []
+  }
+
+  return data ?? []
+}

@@ -3,9 +3,9 @@
 import { useQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
-import { fetchPosiciones, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
+import { useEffect, useRef } from "react"
+import { fetchPosiciones, enrichPositions, computePortfolioTotals, saveDailySnapshot } from '@/lib/api/assets'
 import { usePrices } from "./use-prices"
-
 export function usePositions() {
   return useQuery({
     queryKey: ["positions"],
@@ -43,6 +43,16 @@ export function usePortfolio() {
     [enriched]
   )
 
+  const snapshotSaved = useRef(false)
+
+  // Save daily snapshot automatically
+  useEffect(() => {
+    if (!positionsLoading && !pricesLoading && totals.totalValue > 0 && !snapshotSaved.current) {
+      snapshotSaved.current = true
+      saveDailySnapshot(totals.totalValue, totals.totalCost).catch(console.error)
+    }
+  }, [totals.totalValue, totals.totalCost, positionsLoading, pricesLoading])
+
   const refetch = async () => {
     await refetchPositions()
     await refetchPrices()
@@ -57,4 +67,12 @@ export function usePortfolio() {
     refetch,
     refetchPrices,
   }
+}
+
+export function useSnapshots() {
+  return useQuery({
+    queryKey: ["portfolio-snapshots"],
+    queryFn: () => import('@/lib/api/assets').then(m => m.fetchSnapshots()),
+    staleTime: 5 * 60 * 1000,
+  })
 }
