@@ -20,7 +20,7 @@ const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
-  const { soundEffects } = usePreferences()
+  const { soundEffects, hideBalances } = usePreferences()
   const pnl = p.pnl ?? 0
   const pnlPercent = p.pnl_percent ?? 0
   const isPositive = pnl >= 0
@@ -81,19 +81,19 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
         {/* Right: Value + P&L */}
         <div className="flex flex-col items-end flex-shrink-0">
           <span className="text-[15px] font-bold font-tabular text-foreground">
-            {p.valor_actual !== null
+            {hideBalances ? "****" : (p.valor_actual !== null
               ? formatCurrency(p.valor_actual, "EUR")
-              : "—"}
+              : "—")}
           </span>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className={`text-[11px] font-medium font-tabular ${change24hColor}`}>
-              {formatPercent(change24h)}
+              {hideBalances ? "**.*%" : formatPercent(change24h)}
             </span>
             <div
               className={`flex items-center justify-center px-1.5 py-0.5 rounded-md ${pnlBg}`}
             >
               <span className={`text-[10px] font-bold font-tabular ${pnlColor}`}>
-                {formatPercent(pnlPercent)}
+                {hideBalances ? "**.*%" : formatPercent(pnlPercent)}
               </span>
             </div>
           </div>

@@ -135,11 +135,11 @@ export default function PerfilPage() {
             </div>
 
             {/* Toggle Compact View */}
-            <div className="flex items-center justify-between">
+            <div className="hidden sm:flex items-center justify-between pt-4 border-t border-border/50">
               <div>
-                <p className="font-medium text-foreground">Vista compacta</p>
+                <p className="font-medium text-foreground">Vista compacta (Solo escritorio)</p>
                 <p className="text-sm text-muted-foreground">
-                  Reduce el tamaño de las tablas e iconos.
+                  Reduce el tamaño de las tablas e iconos en pantallas grandes.
                 </p>
               </div>
               <button

@@ -150,9 +150,9 @@ export function MobileDashboard({
             Valor Total
           </p>
           <p className={`font-extrabold font-tabular text-foreground tracking-tight leading-none transition-all ${zenMode ? 'text-5xl my-4' : 'text-4xl'}`}>
-            {totals.totalValue > 0
+            {hideBalances ? "****" : (totals.totalValue > 0
               ? formatCurrency(totals.totalValue)
-              : "0,00 €"}
+              : "0,00 €")}
           </p>
 
           {/* P&L pill */}
@@ -166,10 +166,10 @@ export function MobileDashboard({
                 }`}
               >
                 <PnlIcon className="h-4 w-4" />
-                {formatPnl(totals.totalPnl)}
+                {hideBalances ? "****" : formatPnl(totals.totalPnl)}
               </div>
               <span className={`text-sm font-bold font-tabular ${pnlColor}`}>
-                ({formatPercent(totals.totalPnlPercent)})
+                ({hideBalances ? "**.*%" : formatPercent(totals.totalPnlPercent)})
               </span>
             </div>
           )}
@@ -212,7 +212,7 @@ export function MobileDashboard({
                 Invertido
               </p>
               <p className="text-lg font-bold font-tabular text-foreground mt-1">
-                {totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—"}
+                {hideBalances ? "****" : (totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—")}
               </p>
             </div>
             <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
@@ -220,7 +220,7 @@ export function MobileDashboard({
                 Rent. Hoy
               </p>
               <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                {dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—"}
+                {hideBalances ? "**.*%" : (dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—")}
               </p>
             </div>
           </div>

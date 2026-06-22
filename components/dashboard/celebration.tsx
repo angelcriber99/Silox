@@ -13,8 +13,8 @@ export function Celebration() {
 
   useEffect(() => {
     // Only celebrate once per session, and only if celebration mode is enabled
-    // and PnL% 24h is strictly greater than 1%
-    if (celebrationMode && !hasCelebrated && totals.totalPnlPercent24h > 1) {
+    // and overall PnL is positive
+    if (celebrationMode && !hasCelebrated && totals.totalPnl > 0) {
       setHasCelebrated(true)
       
       if (soundEffects) {
@@ -46,7 +46,7 @@ export function Celebration() {
       }
       frame()
     }
-  }, [totals.totalPnlPercent24h, celebrationMode, hasCelebrated, soundEffects])
+  }, [totals.totalPnl, celebrationMode, hasCelebrated, soundEffects])
 
   return null
 }
