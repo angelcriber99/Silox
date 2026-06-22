@@ -15,6 +15,7 @@ import { MarketTicker } from "@/components/market/market-ticker"
 import { EditAssetModal } from "@/components/asset/edit-asset-modal"
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal"
 import { AddEventModal } from "@/components/market/add-event-modal"
+import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 
 export default function Home() {
   const { positions, totals, isLoading } = usePortfolio()
@@ -46,38 +47,50 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col">
 
-      {/* Ticker Bar */}
-      <MarketTicker positions={positions} />
+      {/* ── Mobile Dashboard ─────────────────── */}
+      <div className="md:hidden">
+        <MobileDashboard
+          positions={positions}
+          totals={totals}
+          isLoading={isLoading}
+        />
+      </div>
 
-      {/* ── Content ────────────────────────────── */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-6 space-y-6">
+      {/* ── Desktop Dashboard ────────────────── */}
+      <div className="hidden md:flex md:flex-col md:flex-1">
+        {/* Ticker Bar */}
+        <MarketTicker positions={positions} />
 
-        {/* KPI Cards */}
-        <PortfolioSummary totals={totals} loading={isLoading} />
+        {/* ── Content ────────────────────────────── */}
+        <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-6 space-y-6">
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <AllocationChart positions={positions} />
-          </div>
-          <div className="lg:col-span-1 space-y-6 flex flex-col">
-            <TopMovers positions={positions} />
-            <div>
-              <UpcomingEvents 
-                positions={positions} 
-                onAddEvent={() => { setEditEventData(null); setAddEventOpen(true); }} 
-                onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true); }}
-              />
+          {/* KPI Cards */}
+          <PortfolioSummary totals={totals} loading={isLoading} />
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <AllocationChart positions={positions} />
+            </div>
+            <div className="lg:col-span-1 space-y-6 flex flex-col">
+              <TopMovers positions={positions} />
+              <div>
+                <UpcomingEvents 
+                  positions={positions} 
+                  onAddEvent={() => { setEditEventData(null); setAddEventOpen(true); }} 
+                  onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true); }}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <PositionsTable
-          positions={positions}
-          loading={isLoading}
-          onAddTransaction={openTransactionModal}
-          onEditAsset={openEditAssetModal}
-        />
+          <PositionsTable
+            positions={positions}
+            loading={isLoading}
+            onAddTransaction={openTransactionModal}
+            onEditAsset={openEditAssetModal}
+          />
+        </div>
       </div>
 
       {/* ── Modals ─────────────────────────────── */}

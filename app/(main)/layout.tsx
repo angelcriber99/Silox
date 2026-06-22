@@ -1,5 +1,5 @@
 import { Header } from "@/components/layout/header"
-import { MobileNav } from "@/components/layout/mobile-nav"
+import { MobileShell } from "@/components/mobile/mobile-shell"
 
 export default function MainLayout({
   children,
@@ -7,12 +7,15 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col min-h-screen pb-16 md:pb-0">
-      <Header />
+    <div className="flex flex-col min-h-screen pb-20 md:pb-0">
+      {/* Desktop header (hidden on mobile since MobileDashboard has its own) */}
+      <div className="hidden md:block">
+        <Header />
+      </div>
       <main className="flex-1">
         {children}
       </main>
-      <MobileNav />
+      <MobileShell />
     </div>
   )
 }
