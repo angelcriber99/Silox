@@ -30,14 +30,16 @@ export function Celebration() {
           angle: 60,
           spread: 55,
           origin: { x: 0 },
-          colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b']
+          colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'],
+          zIndex: 9999
         })
         confetti({
           particleCount: 5,
           angle: 120,
           spread: 55,
           origin: { x: 1 },
-          colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b']
+          colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'],
+          zIndex: 9999
         })
 
         if (Date.now() < end) {

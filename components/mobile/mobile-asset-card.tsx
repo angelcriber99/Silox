@@ -20,7 +20,7 @@ const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
-  const { soundEffects, hideBalances } = usePreferences()
+  const { soundEffects, hideBalances, compactMode } = usePreferences()
   const pnl = p.pnl ?? 0
   const pnlPercent = p.pnl_percent ?? 0
   const isPositive = pnl >= 0
@@ -47,20 +47,22 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
       onClick={() => { if (soundEffects) playSound('pop') }}
       className="block active:scale-[0.98] transition-transform duration-150"
     >
-      <div className="flex items-center gap-4 px-5 py-4 bg-card/40 hover:bg-muted/50 backdrop-blur-sm transition-colors border-b border-border/30">
-        {/* Left: Icon circle */}
-        <div
-          className={`h-11 w-11 rounded-xl ${typeStyle.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}
-        >
-          <span className={`text-sm font-bold ${typeStyle.text}`}>
-            {displayTicker.slice(0, 2)}
-          </span>
-        </div>
+      <div className={`flex items-center gap-4 bg-card/40 hover:bg-muted/50 backdrop-blur-sm transition-colors border-b border-border/30 ${compactMode ? 'px-4 py-2' : 'px-5 py-4'}`}>
+        {/* Left: Icon circle (hidden in compact mode) */}
+        {!compactMode && (
+          <div
+            className={`h-11 w-11 rounded-xl ${typeStyle.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}
+          >
+            <span className={`text-sm font-bold ${typeStyle.text}`}>
+              {displayTicker.slice(0, 2)}
+            </span>
+          </div>
+        )}
 
         {/* Center: Ticker + Name */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[15px] font-semibold text-foreground truncate">
+            <span className={`${compactMode ? 'text-sm' : 'text-[15px]'} font-semibold text-foreground truncate`}>
               {displayTicker}
             </span>
             <span
@@ -73,19 +75,21 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
                   : p.tipo}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground/80 truncate mt-0.5">
-            {p.nombre || "—"}
-          </p>
+          {!compactMode && (
+            <p className="text-xs text-muted-foreground/80 truncate mt-0.5">
+              {p.nombre || "—"}
+            </p>
+          )}
         </div>
 
         {/* Right: Value + P&L */}
         <div className="flex flex-col items-end flex-shrink-0">
-          <span className="text-[15px] font-bold font-tabular text-foreground">
+          <span className={`${compactMode ? 'text-sm' : 'text-[15px]'} font-bold font-tabular text-foreground`}>
             {hideBalances ? "****" : (p.valor_actual !== null
               ? formatCurrency(p.valor_actual, "EUR")
               : "—")}
           </span>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className={`flex items-center gap-1.5 ${compactMode ? '' : 'mt-0.5'}`}>
             <span className={`text-[11px] font-medium font-tabular ${change24hColor}`}>
               {hideBalances ? "**.*%" : formatPercent(change24h)}
             </span>

@@ -216,7 +216,7 @@ export default function PerfilPage() {
                   <button 
                     onClick={() => {
                       if (soundEffects) playSound('celebration')
-                      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'] })
+                      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'], zIndex: 9999 })
                     }}
                     className="text-xs text-primary hover:underline mt-1 inline-block"
                   >
