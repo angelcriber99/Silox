@@ -77,6 +77,7 @@ export async function fetchPrices(
       sparkline: v.sparkline ?? [],
       originalPrice: v.originalPrice ?? null,
       originalCurrency: v.originalCurrency,
+      changePercent24h: v.changePercent24h ?? null,
     }
   }
   return { prices, fxRates: data.fxRates }

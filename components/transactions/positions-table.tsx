@@ -208,8 +208,7 @@ export function PositionsTable({
                 <SortableHeader label="Unidades" sortKeyName="unidades" className="text-right" />
                 <TableHead className="text-zinc-500 text-right hidden lg:table-cell">P. Medio</TableHead>
                 <TableHead className="text-zinc-500 text-right">Precio</TableHead>
-                <SortableHeader label="24h" sortKeyName="change_percent_24h" className="text-right" />
-                <TableHead className="text-zinc-500 text-right hidden xl:table-cell">Tendencia (7d)</TableHead>
+                <TableHead className="text-zinc-500 text-right hidden xl:table-cell">Tendencia (7d) / 24h</TableHead>
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right" />
                 <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
                 <SortableHeader label="P&L %" sortKeyName="pnl_percent" className="text-right hidden sm:table-cell" />
@@ -310,18 +309,20 @@ export function PositionsTable({
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
-                      </TableCell>
                       <TableCell className="text-right hidden xl:table-cell">
-                        <div className="flex items-center justify-end gap-3 pr-2">
-                          {hasHistory && p.sparkline[0] > 0 && (
-                            <span className={`text-xs font-medium font-tabular ${sparklineColor === "#34d399" ? "text-emerald-400" : "text-rose-400"}`}>
-                              {((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0] * 100) > 0 ? "+" : ""}
-                              {(((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0]) * 100).toFixed(2)}%
-                            </span>
-                          )}
-                          <Sparkline data={p.sparkline} color={sparklineColor} />
+                        <div className="flex items-center justify-end gap-4 pr-2">
+                          <div className="flex items-center gap-3">
+                            {hasHistory && p.sparkline[0] > 0 && (
+                              <span className={`text-xs font-medium font-tabular w-12 text-right ${sparklineColor === "#34d399" ? "text-emerald-400" : "text-rose-400"}`}>
+                                {((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0] * 100) > 0 ? "+" : ""}
+                                {(((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0]) * 100).toFixed(2)}%
+                              </span>
+                            )}
+                            <Sparkline data={p.sparkline} color={sparklineColor} />
+                          </div>
+                          <div className="w-14 text-right">
+                            <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-tabular text-white font-medium">
