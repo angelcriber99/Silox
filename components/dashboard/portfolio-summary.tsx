@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
-import { Target, Briefcase, Wallet, BarChart2 } from "lucide-react"
+import { Target, Briefcase, Wallet, BarChart2, TrendingUp, TrendingDown } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import type { PortfolioTotals } from '@/lib/types'
 import { useState } from "react"
