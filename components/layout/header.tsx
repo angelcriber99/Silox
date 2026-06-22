@@ -25,19 +25,21 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          {/* Left – branding + nav + value */}
-          <div className="flex items-center gap-6">
+          {/* Left - Branding */}
+          <div className="flex items-center w-1/4">
             <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
                 <Activity className="h-4 w-4 text-white" />
               </div>
-              <span className="text-lg font-bold tracking-tight text-white">
+              <span className="text-lg font-bold tracking-tight text-foreground">
                 Silox
               </span>
             </Link>
+          </div>
 
-            {/* Navigation (Desktop Only) */}
-            <nav className="hidden md:flex items-center gap-1 border-l border-border pl-6">
+          {/* Center - Navigation & Stats */}
+          <div className="flex-1 flex justify-center items-center gap-6">
+            <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
@@ -46,7 +48,7 @@ export function Header() {
                     href={item.href}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                       isActive
-                        ? "bg-muted text-white"
+                        ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:text-foreground/90 hover:bg-muted/50"
                     }`}
                   >
@@ -59,7 +61,7 @@ export function Header() {
 
             {/* Quick stats in header */}
             {totals.totalCost > 0 && (
-              <div className="hidden lg:flex items-center gap-5 border-l border-border pl-5 flex-1">
+              <div className="hidden lg:flex items-center gap-5 border-l border-border pl-6">
                 <div>
                   <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider">
                     Portfolio
@@ -80,13 +82,14 @@ export function Header() {
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Right - Profile */}
+          <div className="flex items-center justify-end w-1/4 gap-4">
             <Link
               href="/perfil"
               className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
                 pathname === "/perfil"
                   ? "bg-primary/20 text-primary"
-                  : "bg-muted text-muted-foreground hover:text-white hover:bg-zinc-700/60"
+                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
               }`}
             >
               <Settings className="w-5 h-5" />
