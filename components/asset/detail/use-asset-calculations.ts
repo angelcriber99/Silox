@@ -34,7 +34,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
 
     let accUnits = 0
     let accCost = 0
-    const points: { date: string; invested: number; value: number }[] = []
+    const points: { date: string; invested: number; value: number; profit: number }[] = []
 
     for (const tx of sorted) {
       const qty = Number(tx.cantidad) || 0

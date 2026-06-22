@@ -34,8 +34,8 @@ export function MobileDashboard({
   // Scroll animations
   const containerRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll()
-  const headerOpacity = useTransform(scrollY, [0, 100], [1, 0.3])
-  const headerScale = useTransform(scrollY, [0, 100], [1, 0.95])
+  const bigNumberScale = useTransform(scrollY, [0, 100], [1, 0.9])
+  const bigNumberOpacity = useTransform(scrollY, [0, 100], [1, 0.4])
   
   // Pull to refresh animation
   const refreshControls = useAnimation()
@@ -87,30 +87,11 @@ export function MobileDashboard({
     [positions]
   )
 
-  // Calculate daily PnL
-  const dailyPnlInfo = useMemo(() => {
-    let todayValue = 0
-    let yesterdayValue = 0
-
-    for (const p of positions) {
-      if (p.unidades > 0 && p.precio_actual !== null) {
-        todayValue += p.unidades * p.precio_actual
-        let yesterdayPrice = p.precio_actual
-        if (p.sparkline && p.sparkline.length >= 2) {
-          yesterdayPrice = p.sparkline[p.sparkline.length - 2]
-        }
-        yesterdayValue += p.unidades * yesterdayPrice
-      }
-    }
-
-    if (yesterdayValue === 0) return { percent: 0, isPositive: true, amount: 0 }
-    const diff = todayValue - yesterdayValue
-    return {
-      percent: (diff / yesterdayValue) * 100,
-      amount: diff,
-      isPositive: diff >= 0
-    }
-  }, [positions])
+  const dailyPnlInfo = {
+    percent: totals.totalPnlPercent24h,
+    amount: totals.totalPnl24h,
+    isPositive: totals.totalPnl24h >= 0
+  }
 
   const bestPerformer = useMemo(() => {
     const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number')
@@ -156,7 +137,6 @@ export function MobileDashboard({
 
       {/* ─── Header ──────────────────────── */}
       <motion.div 
-        style={{ opacity: headerOpacity, scale: headerScale }}
         className="px-5 pt-2 pb-2 sticky top-0 z-10 bg-background/80 backdrop-blur-xl"
       >
         <div className="flex items-center justify-between mb-6">
@@ -203,7 +183,7 @@ export function MobileDashboard({
         </div>
 
         {/* ─── Big Number ────────────────── */}
-        <div className="text-center mb-2">
+        <motion.div style={{ scale: bigNumberScale, opacity: bigNumberOpacity }} className="text-center mb-2">
           <p className="text-[10px] text-muted-foreground/80 uppercase tracking-widest font-semibold mb-2">
             Valor Total
           </p>
@@ -232,7 +212,7 @@ export function MobileDashboard({
               </span>
             </div>
           )}
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* ─── Portfolio Chart ─────────────── */}
@@ -299,7 +279,7 @@ export function MobileDashboard({
                 </p>
                 <div>
                   <p className="text-sm font-bold text-foreground truncate mt-1">{bestPerformer.nombre || bestPerformer.ticker.split('.')[0]}</p>
-                  <p className="text-emerald-500 font-bold font-tabular text-xs">+{formatPercent(bestPerformer.change_percent_24h || 0)}</p>
+                  <p className="text-emerald-500 font-bold font-tabular text-xs">{formatPercent(bestPerformer.change_percent_24h || 0)}</p>
                 </div>
               </div>
             )}
