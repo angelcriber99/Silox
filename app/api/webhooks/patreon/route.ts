@@ -10,12 +10,15 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: Request) {
   try {
-    // Protección básica del webhook
-    const authHeader = request.headers.get('authorization');
+    // Protección básica del webhook (más permisiva por si iOS añade espacios)
+    const authHeader = request.headers.get('authorization') || '';
     const secret = process.env.WEBHOOK_SECRET || 'silox-patreon-secret';
     
-    if (authHeader !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!authHeader.includes(secret)) {
+      return NextResponse.json({ 
+        error: 'Unauthorized', 
+        debug_recibido: authHeader 
+      }, { status: 401 });
     }
 
     const body = await request.json();
