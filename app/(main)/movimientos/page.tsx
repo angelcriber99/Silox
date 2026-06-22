@@ -86,7 +86,7 @@ export default function MovimientosPage() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
               <History className="h-8 w-8 text-blue-500" />
               Libro de Movimientos
             </h1>
@@ -96,7 +96,7 @@ export default function MovimientosPage() {
           </div>
           <Link 
             href="/declarar" 
-            className="flex items-center gap-2 bg-muted hover:bg-zinc-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors border border-border"
+            className="flex items-center gap-2 bg-muted hover:bg-zinc-700 text-foreground px-4 py-2.5 rounded-lg font-medium transition-colors border border-border"
           >
             <Scale className="h-4 w-4 text-blue-400" />
             Asistente de Declaración
@@ -111,7 +111,7 @@ export default function MovimientosPage() {
               placeholder="Buscar por activo o ticker..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-zinc-950 border-border text-white w-full h-10"
+              className="pl-9 bg-zinc-950 border-border text-foreground w-full h-10"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar w-full">
@@ -307,14 +307,14 @@ export default function MovimientosPage() {
                           {isCompra ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="font-bold text-white text-[15px] truncate">{ticker}</span>
+                          <span className="font-bold text-foreground text-[15px] truncate">{ticker}</span>
                           <span className="text-xs font-medium text-muted-foreground/80 truncate">{isCompra ? "Compra" : "Venta"} • {date}</span>
                         </div>
                      </div>
 
                      <div className="flex items-center gap-2 flex-shrink-0">
                        <div className="flex flex-col items-end">
-                          <span className={`text-[15px] font-bold font-tabular leading-tight ${isCompra ? "text-white" : "text-emerald-400"}`}>
+                          <span className={`text-[15px] font-bold font-tabular leading-tight ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
                             {isCompra ? "-" : "+"}{formatCurrency(total)}
                           </span>
                           <span className="text-xs font-medium text-muted-foreground/80 font-tabular mt-0.5">

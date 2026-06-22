@@ -71,7 +71,7 @@ export function TaxChat({ context }: TaxChatProps) {
           <Sparkles className="h-5 w-5 text-blue-400" />
         </div>
         <div>
-          <h2 className="font-bold text-white">Asistente Fiscal IA</h2>
+          <h2 className="font-bold text-foreground">Asistente Fiscal IA</h2>
           <p className="text-xs text-muted-foreground">Responde basándose en las leyes españolas</p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export function TaxChat({ context }: TaxChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Pregunta dónde va la casilla de pérdidas, o dudas sobre tus dividendos..."
-            className="w-full bg-zinc-950 border border-border rounded-xl pl-4 pr-12 py-3 text-sm text-white placeholder:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="w-full bg-zinc-950 border border-border rounded-xl pl-4 pr-12 py-3 text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             disabled={isLoading}
           />
           <button

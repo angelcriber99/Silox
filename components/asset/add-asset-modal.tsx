@@ -34,10 +34,10 @@ const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 
 const inputClass =
-  "bg-zinc-950 border-border text-white placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+  "bg-zinc-950 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
 const selectClass =
-  "w-full h-10 px-3 rounded-md bg-zinc-950 border border-border text-white text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+  "w-full h-10 px-3 rounded-md bg-zinc-950 border border-border text-foreground text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
 
 export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   // Instrument
@@ -173,9 +173,9 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-card border-border text-white sm:max-w-lg">
+      <DialogContent className="bg-card border-border text-foreground sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
             <Plus className="h-5 w-5 text-blue-400" />
             Nueva Inversión
           </DialogTitle>
@@ -381,7 +381,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
               variant="outline"
               onClick={() => handleClose(false)}
               disabled={addInvestment.isPending}
-              className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-white"
+              className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               Cancelar
             </Button>

@@ -60,7 +60,7 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
         {/* Center: Ticker + Name */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[15px] font-semibold text-white truncate">
+            <span className="text-[15px] font-semibold text-foreground truncate">
               {displayTicker}
             </span>
             <span
@@ -80,7 +80,7 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
 
         {/* Right: Value + P&L */}
         <div className="flex flex-col items-end flex-shrink-0">
-          <span className="text-[15px] font-bold font-tabular text-white">
+          <span className="text-[15px] font-bold font-tabular text-foreground">
             {p.valor_actual !== null
               ? formatCurrency(p.valor_actual, "EUR")
               : "—"}

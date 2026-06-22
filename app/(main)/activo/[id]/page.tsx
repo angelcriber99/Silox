@@ -69,7 +69,7 @@ export default function ActivoPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-2xl font-bold text-white mb-2">Activo no encontrado</p>
+          <p className="text-2xl font-bold text-foreground mb-2">Activo no encontrado</p>
           <p className="text-muted-foreground text-sm">{error || "Este activo no existe en tu cartera."}</p>
         </div>
       </div>

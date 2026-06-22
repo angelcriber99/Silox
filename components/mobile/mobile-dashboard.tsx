@@ -126,7 +126,7 @@ export function MobileDashboard({
             </div>
             <div>
               <p className="text-xs text-muted-foreground/80 font-semibold uppercase tracking-wider">Portfolio</p>
-              <p className="text-sm font-bold text-white">Resumen Global</p>
+              <p className="text-sm font-bold text-foreground">Resumen Global</p>
             </div>
           </div>
           {/* Logout (subtle) */}
@@ -149,7 +149,7 @@ export function MobileDashboard({
           <p className="text-xs text-muted-foreground/80 uppercase tracking-widest font-semibold mb-2">
             Valor Total
           </p>
-          <p className={`font-extrabold font-tabular text-white tracking-tight leading-none transition-all ${zenMode ? 'text-5xl my-4' : 'text-4xl'}`}>
+          <p className={`font-extrabold font-tabular text-foreground tracking-tight leading-none transition-all ${zenMode ? 'text-5xl my-4' : 'text-4xl'}`}>
             {totals.totalValue > 0
               ? formatCurrency(totals.totalValue)
               : "0,00 €"}
@@ -211,7 +211,7 @@ export function MobileDashboard({
               <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
                 Invertido
               </p>
-              <p className="text-lg font-bold font-tabular text-white mt-1">
+              <p className="text-lg font-bold font-tabular text-foreground mt-1">
                 {totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—"}
               </p>
             </div>
@@ -236,7 +236,7 @@ export function MobileDashboard({
             {sortedPositions.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground/60">
                 <Activity className="h-10 w-10 mx-auto mb-3 opacity-40 text-primary" />
-                <p className="font-medium text-white">Sin posiciones</p>
+                <p className="font-medium text-foreground">Sin posiciones</p>
                 <p className="text-xs mt-1">
                   Añade tu primer activo desde el dashboard web
                 </p>

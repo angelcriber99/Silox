@@ -465,7 +465,7 @@ export function PositionsTable({
                           variant="ghost"
                           size="icon"
                           onClick={() => onEditAsset(p)}
-                          className="h-8 w-8 text-muted-foreground bg-muted/50 hover:text-white"
+                          className="h-8 w-8 text-muted-foreground bg-muted/50 hover:text-foreground"
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>

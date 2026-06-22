@@ -203,9 +203,9 @@ export function MobileBottomSheet({
   const isPending = addTx.isPending || addInvestment.isPending
 
   // Premium Input Style
-  const premiumInputClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-white text-xl font-bold font-tabular placeholder:text-muted-foreground/60 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+  const premiumInputClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-xl font-bold font-tabular placeholder:text-muted-foreground/60 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
   const labelClass = "block text-[11px] font-bold text-muted-foreground/80 uppercase tracking-wider mb-2"
-  const selectClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-white text-sm font-semibold focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+  const selectClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-sm font-semibold focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
 
   return (
     <AnimatePresence>
@@ -241,7 +241,7 @@ export function MobileBottomSheet({
               {/* Header & Tabs */}
               <div className="px-5 pb-4">
                 <div className="flex justify-between items-center mb-5">
-                  <h2 className="text-xl font-extrabold text-white">Añadir</h2>
+                  <h2 className="text-xl font-extrabold text-foreground">Añadir</h2>
                   <button onClick={onClose} className="p-2 bg-card rounded-full text-muted-foreground active:scale-95 transition-transform">
                     <X className="h-5 w-5" />
                   </button>
@@ -252,13 +252,13 @@ export function MobileBottomSheet({
                   <div className="flex p-1 bg-card rounded-xl">
                     <button 
                       onClick={() => { setActiveTab("operacion"); resetForm() }} 
-                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "operacion" ? "bg-muted text-white shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "operacion" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
                       Mis Activos
                     </button>
                     <button 
                       onClick={() => { setActiveTab("nuevo"); resetForm() }} 
-                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "nuevo" ? "bg-muted text-white shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "nuevo" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
                       Buscar Nuevo
                     </button>
@@ -292,11 +292,11 @@ export function MobileBottomSheet({
                                 <span className="text-base font-bold text-blue-400">{displayTicker.slice(0, 2)}</span>
                               </div>
                               <div className="flex-1 overflow-hidden">
-                                <p className="text-base font-bold text-white truncate">{displayTicker}</p>
+                                <p className="text-base font-bold text-foreground truncate">{displayTicker}</p>
                                 <p className="text-xs text-muted-foreground/80 truncate">{p.nombre}</p>
                               </div>
                               <div className="flex-shrink-0 text-right">
-                                <p className="text-sm font-bold text-white font-tabular">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
+                                <p className="text-sm font-bold text-foreground font-tabular">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
                               </div>
                             </motion.button>
                           )
@@ -309,7 +309,7 @@ export function MobileBottomSheet({
                     <div className="space-y-6 pb-6">
                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border">
                           <div className="flex-1 min-w-0">
-                             <p className="text-sm font-bold text-white truncate">{selectedAsset.ticker}</p>
+                             <p className="text-sm font-bold text-foreground truncate">{selectedAsset.ticker}</p>
                              <p className="text-xs text-muted-foreground/80 truncate">{selectedAsset.nombre}</p>
                           </div>
                           <button onClick={() => setStep("select")} className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full">Cambiar</button>
@@ -355,7 +355,7 @@ export function MobileBottomSheet({
                           whileTap={{ scale: 0.97 }}
                           onClick={handleSubmitTx}
                           disabled={isPending}
-                          className={`w-full py-4 rounded-2xl text-lg font-bold flex flex-col items-center justify-center transition-opacity disabled:opacity-50 ${isCompra ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"}`}
+                          className={`w-full py-4 rounded-2xl text-lg font-bold flex flex-col items-center justify-center transition-opacity disabled:opacity-50 ${isCompra ? "bg-emerald-600 text-foreground" : "bg-rose-600 text-foreground"}`}
                         >
                            {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                              <>
@@ -385,7 +385,7 @@ export function MobileBottomSheet({
                               placeholder="Ej: AAPL, VWCE.DE..." 
                               value={ticker} 
                               onChange={(e) => setTicker(e.target.value.toUpperCase())} 
-                              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 text-white text-lg font-bold placeholder:text-muted-foreground/60 placeholder:font-medium focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 text-foreground text-lg font-bold placeholder:text-muted-foreground/60 placeholder:font-medium focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                             />
                           </div>
                           
@@ -407,7 +407,7 @@ export function MobileBottomSheet({
                         <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex justify-between items-center">
                           <div className="flex-1 overflow-hidden pr-2">
                              <p className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">Activo Encontrado</p>
-                             <p className="text-white text-lg font-bold leading-tight truncate">{ticker}</p>
+                             <p className="text-foreground text-lg font-bold leading-tight truncate">{ticker}</p>
                              <p className="text-muted-foreground text-sm truncate">{nombre || "—"}</p>
                           </div>
                           <button onClick={() => setNewAssetStep("search")} className="text-muted-foreground text-xs bg-card px-3 py-1.5 rounded-full font-semibold flex-shrink-0">Editar</button>
@@ -436,7 +436,7 @@ export function MobileBottomSheet({
 
                         {/* Compra inicial */}
                         <div className="pt-4 border-t border-border">
-                          <p className="text-white font-bold mb-4 flex items-center gap-2">
+                          <p className="text-foreground font-bold mb-4 flex items-center gap-2">
                              <Plus className="h-5 w-5 text-emerald-400" />
                              Primera Inversión
                           </p>
@@ -462,7 +462,7 @@ export function MobileBottomSheet({
                           whileTap={{ scale: 0.97 }}
                           onClick={handleSubmitNewAsset}
                           disabled={isPending}
-                          className="w-full py-4 rounded-2xl text-lg font-bold flex flex-col items-center justify-center transition-opacity disabled:opacity-50 bg-emerald-600 text-white"
+                          className="w-full py-4 rounded-2xl text-lg font-bold flex flex-col items-center justify-center transition-opacity disabled:opacity-50 bg-emerald-600 text-foreground"
                         >
                            {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                              <>

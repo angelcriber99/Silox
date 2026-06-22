@@ -32,7 +32,7 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                   className="flex items-center justify-center"
                 >
                   <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 shadow-lg shadow-violet-500/25 flex items-center justify-center active:scale-95 transition-transform duration-150">
-                    <Plus className="h-6 w-6 text-white stroke-[2.5]" />
+                    <Plus className="h-6 w-6 text-foreground stroke-[2.5]" />
                   </div>
                 </button>
               )
@@ -42,7 +42,7 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                 key={tab.name}
                 href={tab.href}
                 className={`relative flex flex-col items-center justify-center w-16 h-full transition-colors duration-200 ${
-                  isActive ? "text-white" : "text-muted-foreground/80"
+                  isActive ? "text-foreground" : "text-muted-foreground/80"
                 }`}
               >
                 <tab.icon

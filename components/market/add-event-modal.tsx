@@ -89,7 +89,7 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
       <DialogContent className="max-w-md bg-zinc-950 border border-border text-foreground shadow-2xl p-0 overflow-hidden">
         <div className="bg-gradient-to-b from-amber-500/10 to-transparent p-6 pb-2 w-full">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-white">
+            <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-foreground">
               <Calendar className="h-5 w-5 text-amber-400" />
               {initialData ? "Editar Evento Periódico" : "Nuevo Evento Periódico"}
             </DialogTitle>
@@ -108,7 +108,7 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ej: Cobro de Intereses Revolut"
-              className="bg-card border-border text-white placeholder:text-muted-foreground/60 focus-visible:ring-amber-500/30"
+              className="bg-card border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-amber-500/30"
             />
           </div>
 
@@ -122,16 +122,16 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
                 max="31"
                 value={dia}
                 onChange={(e) => setDia(e.target.value)}
-                className="bg-card border-border text-white focus-visible:ring-amber-500/30"
+                className="bg-card border-border text-foreground focus-visible:ring-amber-500/30"
               />
             </div>
             <div className="space-y-2">
               <Label className="text-foreground/80">Tipo</Label>
               <Select value={tipo} onValueChange={setTipo}>
-                <SelectTrigger className="w-full bg-card border-border text-white">
+                <SelectTrigger className="w-full bg-card border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border text-white">
+                <SelectContent className="bg-card border-border text-foreground">
                   <SelectItem value="Interés">Intereses</SelectItem>
                   <SelectItem value="Aportación">Aportación</SelectItem>
                   <SelectItem value="Dividendo">Dividendo</SelectItem>
@@ -143,10 +143,10 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
           <div className="space-y-2 min-w-0">
             <Label className="text-foreground/80 font-medium">Asociar a un activo en cartera</Label>
             <Select value={activoId} onValueChange={setActivoId}>
-              <SelectTrigger className="w-full bg-card border-border text-white">
+              <SelectTrigger className="w-full bg-card border-border text-foreground">
                 <SelectValue placeholder="Selecciona un activo" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border text-white max-w-[var(--radix-select-trigger-width)]">
+              <SelectContent className="bg-card border-border text-foreground max-w-[var(--radix-select-trigger-width)]">
                 {positions.map(p => (
                   <SelectItem key={p.activo_id} value={p.activo_id} className="cursor-pointer hover:bg-muted">
                     <div className="truncate max-w-[250px] sm:max-w-[300px]">
@@ -177,7 +177,7 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
               <Button
                 type="button"
                 variant="ghost"
-                className="mr-3 text-muted-foreground hover:text-white"
+                className="mr-3 text-muted-foreground hover:text-foreground"
                 onClick={() => onOpenChange(false)}
               >
                 Cancelar

@@ -87,15 +87,15 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
       {/* ═══════════ HEADER ═══════════ */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm font-medium">Volver al Dashboard</span>
           </Link>
           <div className="flex items-center gap-2.5 opacity-50">
             <div className="h-6 w-6 rounded-md bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
-              <Activity className="h-3 w-3 text-white" />
+              <Activity className="h-3 w-3 text-foreground" />
             </div>
-            <span className="text-sm font-bold tracking-tight text-white">Silox</span>
+            <span className="text-sm font-bold tracking-tight text-foreground">Silox</span>
           </div>
         </div>
       </header>
@@ -115,7 +115,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
                 </Badge>
               )}
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-2">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground mb-2">
               {position.nombre || position.ticker}
             </h1>
             <p className="text-muted-foreground/80 font-medium">
@@ -128,7 +128,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
           </div>
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground/80 uppercase font-bold tracking-wider mb-1">Valor Actual</p>
-            <p className="text-4xl md:text-5xl font-bold text-white font-tabular drop-shadow-md">
+            <p className="text-4xl md:text-5xl font-bold text-foreground font-tabular drop-shadow-md">
               {position.valor_actual !== null ? formatCurrency(position.valor_actual, 'EUR') : "—"}
             </p>
             <div className="flex flex-col md:flex-row items-end justify-end gap-3 mt-1">
@@ -176,7 +176,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
               <Wallet className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Total Invertido</span>
             </div>
-            <p className="text-2xl font-bold text-white font-tabular">{formatCurrency(position.coste_total, 'EUR')}</p>
+            <p className="text-2xl font-bold text-foreground font-tabular">{formatCurrency(position.coste_total, 'EUR')}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
@@ -192,14 +192,14 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
               <Layers className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Participaciones</span>
             </div>
-            <p className="text-2xl font-bold text-white font-tabular">{formatUnits(position.unidades)}</p>
+            <p className="text-2xl font-bold text-foreground font-tabular">{formatUnits(position.unidades)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
               <CalendarDays className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Operaciones</span>
             </div>
-            <p className="text-2xl font-bold text-white font-tabular">{position.num_operaciones}</p>
+            <p className="text-2xl font-bold text-foreground font-tabular">{position.num_operaciones}</p>
           </div>
         </div>
 
@@ -249,7 +249,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
                 <Target className="h-5 w-5 text-amber-400" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Precio Medio de Compra</p>
-                  <p className="text-xl font-bold text-white font-tabular">{formatCurrency(stats.precioMedio, position.moneda)}</p>
+                  <p className="text-xl font-bold text-foreground font-tabular">{formatCurrency(stats.precioMedio, position.moneda)}</p>
                 </div>
               </div>
               <div className="flex-1 max-w-md mx-4">
@@ -265,7 +265,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-muted-foreground">Precio Actual</p>
-                <p className="text-xl font-bold text-white font-tabular">{formatCurrency(stats.precioActual, position.moneda)}</p>
+                <p className="text-xl font-bold text-foreground font-tabular">{formatCurrency(stats.precioActual, position.moneda)}</p>
               </div>
             </div>
           </CardContent>
@@ -304,15 +304,15 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
                 <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-border/50">
                   <div className="space-y-2">
                     <Label className="text-foreground/80 text-sm">Aportación Mensual (€)</Label>
-                    <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-card border-border text-white" />
+                    <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-card border-border text-foreground" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-foreground/80 text-sm">Años Vista</Label>
-                    <Input type="number" value={years} onChange={e => setYears(Number(e.target.value))} className="bg-card border-border text-white" min={1} max={50} />
+                    <Input type="number" value={years} onChange={e => setYears(Number(e.target.value))} className="bg-card border-border text-foreground" min={1} max={50} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-foreground/80 text-sm">Rentabilidad Anual (%)</Label>
-                    <Input type="number" value={expectedReturn} onChange={e => setExpectedReturn(Number(e.target.value))} className="bg-card border-border text-white" step={0.1} />
+                    <Input type="number" value={expectedReturn} onChange={e => setExpectedReturn(Number(e.target.value))} className="bg-card border-border text-foreground" step={0.1} />
                   </div>
                   <div className="pt-4 border-t border-border/50 space-y-4">
                     <div>
@@ -386,7 +386,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
 
         {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
         <div className="animate-fade-in stagger-4">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
             <Activity className="h-5 w-5 text-muted-foreground" />
             Historial de Transacciones
           </h2>
@@ -417,7 +417,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
                     </td>
                     <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
                     <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
-                    <td className="px-5 py-4 text-right font-tabular font-medium text-white">{formatCurrency(tx.total, position.moneda)}</td>
+                    <td className="px-5 py-4 text-right font-tabular font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
                     <td className="px-5 py-4 text-right font-tabular text-muted-foreground/80">
                       {tx.comision > 0 ? formatCurrency(tx.comision, position.moneda) : "—"}
                     </td>

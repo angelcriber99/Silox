@@ -196,7 +196,7 @@ export default function PerfilPage() {
                       ${accentColor === color ? 'ring-2 ring-offset-2 ring-offset-background ring-primary shadow-lg shadow-primary/30 scale-110' : ''}
                     `}
                   >
-                    {accentColor === color && <Check className="w-5 h-5 text-white" />}
+                    {accentColor === color && <Check className="w-5 h-5 text-foreground" />}
                   </button>
                 ))}
               </div>

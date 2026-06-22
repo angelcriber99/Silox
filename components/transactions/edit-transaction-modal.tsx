@@ -27,7 +27,7 @@ interface EditTransactionModalProps {
 type TipoOperacion = "Compra" | "Venta"
 
 const inputClass =
-  "bg-zinc-950 border-border text-white placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+  "bg-zinc-950 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
 export function EditTransactionModal({
   transaction,
@@ -113,9 +113,9 @@ export function EditTransactionModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-card border-border text-white sm:max-w-md">
+      <DialogContent className="bg-card border-border text-foreground sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
             <Edit2 className="h-5 w-5 text-blue-400" />
             Editar Transacción
           </DialogTitle>
@@ -271,7 +271,7 @@ export function EditTransactionModal({
               variant="outline"
               onClick={() => handleClose(false)}
               disabled={updateTransaction.isPending}
-              className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-white"
+              className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               Cancelar
             </Button>

@@ -29,7 +29,7 @@ export function Header() {
           <div className="flex items-center w-1/4">
             <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
-                <Activity className="h-4 w-4 text-white" />
+                <Activity className="h-4 w-4 text-foreground" />
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground">
                 Silox

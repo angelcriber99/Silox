@@ -62,7 +62,7 @@ export function EvolutionChart() {
       return (
         <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md">
           <p className="text-muted-foreground text-xs mb-1 font-medium uppercase tracking-wider">{formattedDate}</p>
-          <p className="text-white font-bold text-xl font-tabular">
+          <p className="text-foreground font-bold text-xl font-tabular">
             {formatCurrency(payload[0].value)}
           </p>
           <p className="text-blue-400/80 text-xs mt-1">Capital Depositado Neto</p>
@@ -75,7 +75,7 @@ export function EvolutionChart() {
   return (
     <div className="bg-card/40 border border-border rounded-xl p-6 backdrop-blur-sm overflow-hidden relative group">
       <div className="absolute top-6 left-6 z-10 pointer-events-none">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-blue-500" />
           Evolución del Capital
         </h3>

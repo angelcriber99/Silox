@@ -54,7 +54,7 @@ export default function DeclararPage() {
         <div className="flex flex-col gap-4">
           <Link 
             href="/movimientos" 
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-white transition-colors w-fit text-sm font-medium"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-fit text-sm font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver a Movimientos
@@ -62,7 +62,7 @@ export default function DeclararPage() {
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
                 <Scale className="h-8 w-8 text-blue-500" />
                 Asistente de Declaración
               </h1>
@@ -73,7 +73,7 @@ export default function DeclararPage() {
             
             <div className="relative">
               <select 
-                className="appearance-none bg-muted border border-border text-white font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+                className="appearance-none bg-muted border border-border text-foreground font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
               >
@@ -104,7 +104,7 @@ export default function DeclararPage() {
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
                   Total Ganancias
                 </div>
-                <div className="text-3xl font-bold text-white font-tabular">
+                <div className="text-3xl font-bold text-foreground font-tabular">
                   {formatCurrency(totals.gains)}
                 </div>
                 <p className="text-sm text-muted-foreground/80 mt-2">
@@ -117,7 +117,7 @@ export default function DeclararPage() {
                   <TrendingDown className="h-5 w-5 text-rose-400" />
                   Total Pérdidas
                 </div>
-                <div className="text-3xl font-bold text-white font-tabular">
+                <div className="text-3xl font-bold text-foreground font-tabular">
                   {formatCurrency(totals.losses)}
                 </div>
                 <p className="text-sm text-muted-foreground/80 mt-2">
@@ -142,7 +142,7 @@ export default function DeclararPage() {
             {/* FIFO Table */}
             <div className="border border-border bg-card/40 rounded-xl overflow-hidden backdrop-blur-sm">
               <div className="p-6 border-b border-border flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   Desglose de Operaciones
                   <div className="group relative">
                     <HelpCircle className="h-4 w-4 text-muted-foreground/80 cursor-help" />
@@ -231,7 +231,7 @@ export default function DeclararPage() {
                     <div className="bg-emerald-950/50 border border-emerald-800/50 rounded-lg p-4">
                       <div className="text-xs text-emerald-400 font-bold mb-1">CASILLA 0327</div>
                       <div className="text-sm text-emerald-100">Suma total de los <strong>Ingresos de Venta</strong>. Introduce esta cantidad:</div>
-                      <div className="text-xl font-bold text-white mt-1 font-tabular">
+                      <div className="text-xl font-bold text-foreground mt-1 font-tabular">
                         {formatCurrency(totals.gains > 0 ? totals.gains + totals.losses : 0 /* Aproximación rápida, en un escenario real se suma el Ingreso de todas las operaciones */)}
                       </div>
                     </div>

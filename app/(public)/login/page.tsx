@@ -31,9 +31,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8 backdrop-blur-xl shadow-2xl animate-fade-in">
         <div className="flex flex-col items-center mb-8">
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-4">
-            <Activity className="h-6 w-6 text-white" />
+            <Activity className="h-6 w-6 text-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Bienvenido a Silox</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Bienvenido a Silox</h1>
           <p className="text-muted-foreground text-sm mt-2 text-center">
             Inicia sesión para gestionar tu patrimonio de forma segura y privada.
           </p>

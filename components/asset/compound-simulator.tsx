@@ -76,7 +76,7 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
                 type="number" 
                 value={monthlyContribution} 
                 onChange={e => setMonthlyContribution(Number(e.target.value))}
-                className="bg-card border-border text-white"
+                className="bg-card border-border text-foreground"
               />
             </div>
             <div className="space-y-3">
@@ -85,7 +85,7 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
                 type="number" 
                 value={years} 
                 onChange={e => setYears(Number(e.target.value))}
-                className="bg-card border-border text-white"
+                className="bg-card border-border text-foreground"
                 min={1}
                 max={50}
               />
@@ -96,7 +96,7 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
                 type="number" 
                 value={expectedReturn} 
                 onChange={e => setExpectedReturn(Number(e.target.value))}
-                className="bg-card border-border text-white"
+                className="bg-card border-border text-foreground"
                 step={0.1}
               />
             </div>
@@ -104,7 +104,7 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
             <div className="pt-4 border-t border-border/50 space-y-4">
               <div>
                 <p className="text-xs text-muted-foreground/80 uppercase font-medium">Total Invertido</p>
-                <p className="text-lg font-bold text-white font-tabular">{formatCurrency(finalInvested)}</p>
+                <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(finalInvested)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground/80 uppercase font-medium">Intereses Generados</p>

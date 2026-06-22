@@ -23,7 +23,7 @@ export function MobileNav() {
               key={item.name}
               href={item.href}
               className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
-                isActive ? "text-white" : "text-muted-foreground/80 hover:text-foreground/80"
+                isActive ? "text-foreground" : "text-muted-foreground/80 hover:text-foreground/80"
               }`}
             >
               <item.icon className={`h-5 w-5 ${isActive ? "text-violet-400" : ""}`} />
