@@ -40,7 +40,7 @@ const TIPO_BADGE_STYLES: Record<string, string> = {
 }
 
 // ─── Component ───────────────────────────────
-export function ActivoDetailClient({ position, transactions }: ActivoDetailClientProps) {
+export function FundDetailClient({ position, transactions }: ActivoDetailClientProps) {
   // Simulator state
   const [monthlyContribution, setMonthlyContribution] = useState(300)
   const [years, setYears] = useState(15)

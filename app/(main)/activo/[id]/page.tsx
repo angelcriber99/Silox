@@ -5,7 +5,10 @@ import { useParams } from "next/navigation"
 import { fetchPosiciones, enrichPositions } from '@/lib/api/assets'
 import { fetchPrices } from '@/lib/api/market'
 import { createClient } from "@/lib/supabase/client"
-import { ActivoDetailClient } from "@/components/asset/activo-detail-client"
+import { FundDetailClient } from "@/components/asset/fund-detail-client"
+import { StockDetailClient } from "@/components/asset/stock-detail-client"
+import { CryptoDetailClient } from "@/components/asset/crypto-detail-client"
+import { EtfDetailClient } from "@/components/asset/etf-detail-client"
 import type { EnrichedPosition } from '@/lib/types'
 
 export default function ActivoPage() {
@@ -76,5 +79,14 @@ export default function ActivoPage() {
     )
   }
 
-  return <ActivoDetailClient position={position} transactions={transactions} />
+  if (position.tipo === "Acción") {
+    return <StockDetailClient position={position} transactions={transactions} />
+  } else if (position.tipo === "Crypto") {
+    return <CryptoDetailClient position={position} transactions={transactions} />
+  } else if (position.tipo === "ETF") {
+    return <EtfDetailClient position={position} transactions={transactions} />
+  }
+
+  // Default for "Fondo Indexado", "Fondo Monetario", and any other unrecognized type
+  return <FundDetailClient position={position} transactions={transactions} />
 }
