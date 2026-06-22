@@ -41,9 +41,10 @@ export function MobileDashboard({
     for (let i = 0; i < maxLen; i++) {
       let sum = 0
       for (const p of positions) {
-        if (p.sparkline && p.sparkline.length > 0) {
+        if (p.unidades > 0 && p.sparkline && p.sparkline.length > 0) {
           const idx = Math.floor((i / maxLen) * p.sparkline.length)
-          sum += p.sparkline[Math.min(idx, p.sparkline.length - 1)]
+          const priceAtIdx = p.sparkline[Math.min(idx, p.sparkline.length - 1)]
+          sum += priceAtIdx * p.unidades
         }
       }
       combined.push(sum)
