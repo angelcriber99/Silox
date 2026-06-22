@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { PreferencesProvider } from "@/components/providers/preferences-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 const inter = Inter({
@@ -84,6 +85,7 @@ export default function RootLayout({
               },
             }}
           />
+          <PwaRegister />
         </ThemeProvider>
       </body>
     </html>
