@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Loader2, Plus, ArrowUpRight, Search } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -58,7 +58,69 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
     () => new Date().toISOString().split("T")[0]
   )
 
+  // Autocomplete state
+  const [autocompleteResults, setAutocompleteResults] = useState<any[]>([])
+  const [showAutocomplete, setShowAutocomplete] = useState(false)
+  const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false)
+  const autocompleteTimeout = useRef<NodeJS.Timeout | null>(null)
+
   const addInvestment = useAddInvestment()
+
+  const handleAutocompleteSearch = async (value: string) => {
+    if (autocompleteTimeout.current) clearTimeout(autocompleteTimeout.current)
+    
+    if (value.trim().length < 2) {
+      setAutocompleteResults([])
+      setShowAutocomplete(false)
+      return
+    }
+
+    setIsAutocompleteLoading(true)
+    setShowAutocomplete(true)
+
+    autocompleteTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/search/autocomplete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: value.trim() }),
+        })
+        const data = await res.json()
+        if (res.ok && data.results) {
+          setAutocompleteResults(data.results)
+        } else {
+          setAutocompleteResults([])
+        }
+      } catch (err) {
+        setAutocompleteResults([])
+      } finally {
+        setIsAutocompleteLoading(false)
+      }
+    }, 500)
+  }
+
+  const selectAutocomplete = (res: any) => {
+    setTicker(res.ticker)
+    setNombre(res.name)
+    
+    // Auto-map type if possible
+    const t = res.type?.toUpperCase() || ""
+    if (t.includes("ETF")) setTipo("ETF")
+    else if (t.includes("MUTUALFUND")) setTipo("Fondo Indexado")
+    else if (t.includes("CRYPTOCURRENCY")) setTipo("Crypto")
+    else if (t.includes("EQUITY")) setTipo("Acción")
+    
+    // Guess currency if exchange indicates it (very basic)
+    if (res.exchange === "MCE" || res.exchange === "GER" || res.exchange === "FRA" || res.exchange === "AMS") {
+      setMoneda("EUR")
+    } else if (res.exchange === "NMS" || res.exchange === "NYQ" || res.exchange === "NGM") {
+      setMoneda("USD")
+    } else if (res.exchange === "LSE") {
+      setMoneda("GBP")
+    }
+
+    setShowAutocomplete(false)
+  }
 
   const resetForm = () => {
     setTicker("")
@@ -195,16 +257,51 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-foreground/80 text-xs">
-                  Ticker <span className="text-rose-400">*</span>
+                  Ticker / Búsqueda <span className="text-rose-400">*</span>
                 </Label>
-                <Input
-                  placeholder="VWCE.DE, AAPL…"
-                  value={ticker}
-                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                  className={inputClass}
-                  required
-                  disabled={addInvestment.isPending || isSearching}
-                />
+                <div className="relative">
+                  <Input
+                    placeholder="VWCE.DE, AAPL, Vanguard..."
+                    value={ticker}
+                    onChange={(e) => {
+                      setTicker(e.target.value.toUpperCase())
+                      handleAutocompleteSearch(e.target.value)
+                    }}
+                    onFocus={() => {
+                      if (autocompleteResults.length > 0) setShowAutocomplete(true)
+                    }}
+                    onBlur={() => {
+                      // Delay hiding to allow clicking on results
+                      setTimeout(() => setShowAutocomplete(false), 200)
+                    }}
+                    className={inputClass}
+                    required
+                    disabled={addInvestment.isPending || isSearching}
+                  />
+                  {showAutocomplete && autocompleteResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden flex flex-col">
+                      {isAutocompleteLoading && (
+                        <div className="p-2 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Buscando...
+                        </div>
+                      )}
+                      {!isAutocompleteLoading && autocompleteResults.map((res: any, idx: number) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => selectAutocomplete(res)}
+                          className="text-left px-3 py-2 hover:bg-muted/50 focus:bg-muted/50 border-b border-border/50 last:border-0 transition-colors"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="font-semibold text-sm text-foreground">{res.ticker}</span>
+                            <span className="text-[10px] bg-blue-500/10 text-blue-400 px-1.5 rounded">{res.type}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">{res.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-foreground/80 text-xs">Moneda</Label>
