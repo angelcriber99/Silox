@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAlerts } from "@/lib/stores/use-alerts"
+import { useAlerts } from "@/lib/hooks/use-alerts"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { Bell, BellRing, Plus, Trash2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -39,9 +39,9 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
       if (currentPrice === null) return
 
       let shouldTrigger = false
-      if (alert.condition === 'above' && currentPrice >= alert.targetPrice) {
+      if (alert.condition === 'above' && currentPrice >= alert.target_price) {
         shouldTrigger = true
-      } else if (alert.condition === 'below' && currentPrice <= alert.targetPrice) {
+      } else if (alert.condition === 'below' && currentPrice <= alert.target_price) {
         shouldTrigger = true
       }
 
@@ -52,7 +52,7 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
         // Browser native notification
         if ("Notification" in window && Notification.permission === "granted") {
           new Notification("¡Alerta de Silox!", {
-            body: `${alert.ticker} ha cruzado tu objetivo de ${formatCurrency(alert.targetPrice, pos.moneda || 'EUR')}. Precio actual: ${formatCurrency(currentPrice, pos.moneda || 'EUR')}`,
+            body: `${alert.ticker} ha cruzado tu objetivo de ${formatCurrency(alert.target_price, pos.moneda || 'EUR')}. Precio actual: ${formatCurrency(currentPrice, pos.moneda || 'EUR')}`,
             icon: '/icon-192.png'
           })
         }
@@ -69,7 +69,7 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
     if (!ticker || !targetPrice) return
     addAlert({
       ticker: ticker.toUpperCase(),
-      targetPrice: parseFloat(targetPrice),
+      target_price: parseFloat(targetPrice),
       condition
     })
     setTicker("")
@@ -166,9 +166,9 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
                           <span className="font-bold text-sm text-foreground">{a.ticker}</span>
                           {a.triggered && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-400">Activada</span>}
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {a.condition === 'above' ? 'Sube a' : 'Baja a'} <strong className="text-foreground">{formatCurrency(a.targetPrice, currency)}</strong>
-                        </span>
+                        <p className="text-sm text-muted-foreground">
+                          {a.condition === 'above' ? 'Sube a' : 'Baja a'} <strong className="text-foreground">{formatCurrency(a.target_price, currency)}</strong>
+                        </p>
                       </div>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10" onClick={() => removeAlert(a.id)}>

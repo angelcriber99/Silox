@@ -21,7 +21,7 @@ import { AddAssetModal } from "@/components/asset/add-asset-modal"
 import { HelpGuideModal } from "@/components/dashboard/help-guide-modal"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { useAlerts } from "@/lib/stores/use-alerts"
+import { useAlerts } from "@/lib/hooks/use-alerts"
 import Link from "next/link"
 
 interface PositionsTableProps {
@@ -243,8 +243,8 @@ export function PositionsTable({
                 <TableHead className="text-muted-foreground/80 hidden md:table-cell">Nombre</TableHead>
                 <SortableHeader label="Tipo" sortKeyName="tipo" />
                 <SortableHeader label="Unidades" sortKeyName="unidades" className="text-right" />
-                <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Medio</TableHead>
-                <TableHead className="text-muted-foreground/80 text-right">Precio</TableHead>
+                <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Compra</TableHead>
+                <TableHead className="text-muted-foreground/80 text-right">P. Actual</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right pr-6 hidden xl:table-cell">Tendencia (7d) / 24h</TableHead>
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right" />
                 <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
@@ -365,9 +365,18 @@ export function PositionsTable({
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-tabular text-foreground font-medium">
-                        {hideBalances ? "****" : (p.valor_actual !== null
-                          ? formatCurrency(p.valor_actual, 'EUR')
-                          : "—")}
+                        <div className="flex flex-col items-end gap-1">
+                          <span>
+                            {hideBalances ? "****" : (p.valor_actual !== null
+                              ? formatCurrency(p.valor_actual, 'EUR')
+                              : "—")}
+                          </span>
+                          {!hideBalances && p.coste_total_eur > 0 && (
+                            <span className="text-[10px] text-muted-foreground/70 font-normal">
+                              Inv: {formatCurrency(p.coste_total_eur, 'EUR')}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <PnlDisplay value={p.pnl} type="currency" />
@@ -476,9 +485,16 @@ export function PositionsTable({
                      </div>
                      <div className="flex flex-col items-end">
                        <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
-                       <span className="text-base font-bold font-tabular text-foreground">
-                         {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
-                       </span>
+                       <div className="flex flex-col items-end">
+                         <span className="text-base font-bold font-tabular text-foreground">
+                           {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
+                         </span>
+                         {p.coste_total_eur > 0 && (
+                           <span className="text-[10px] text-muted-foreground/70 font-normal -mt-1">
+                             Inv: {formatCurrency(p.coste_total_eur, 'EUR')}
+                           </span>
+                         )}
+                       </div>
                      </div>
                    </div>
 
