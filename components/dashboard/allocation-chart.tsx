@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { computePortfolioTotals } from "@/lib/api/assets"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -34,6 +35,7 @@ interface ChartDatum {
 
 export function AllocationChart({ positions }: AllocationChartProps) {
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
+  const totals = useMemo(() => computePortfolioTotals(positions), [positions])
 
   const chartData = useMemo(() => {
     const groups = new Map<string, number>()
@@ -148,6 +150,11 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                   <p className="text-2xl font-bold font-tabular text-white drop-shadow-md">
                     {formatCurrency(chartData.total)}
                   </p>
+                  {totals.totalPnlPercent24h !== 0 && (
+                    <p className={`text-xs font-medium mt-0.5 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
