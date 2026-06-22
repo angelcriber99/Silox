@@ -1,23 +1,17 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Activity, TrendingUp, TrendingDown, ChevronRight, LogOut, BarChart2, Eye, EyeOff } from "lucide-react"
+import { useMemo, useState, useRef, useEffect } from "react"
+import { Activity, TrendingUp, TrendingDown, LogOut, BarChart2, Eye, EyeOff, RefreshCw } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
-import {
-  formatCurrency,
-  formatPercent,
-  formatPnl,
-} from "@/lib/utils/formatters"
+import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  YAxis,
-} from "recharts"
+import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
+import { hapticFeedback } from "@/lib/utils/haptics"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
+import { AnimatedNumber } from "@/components/ui/animated-number"
+import { motion, useScroll, useTransform, useAnimation } from "framer-motion"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
@@ -32,9 +26,34 @@ export function MobileDashboard({
 }: MobileDashboardProps) {
   const { zenMode, setZenMode, soundEffects, hideBalances } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const isPositive = totals.totalPnl >= 0
   const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
   const PnlIcon = isPositive ? TrendingUp : TrendingDown
+
+  // Scroll animations
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { scrollY } = useScroll()
+  const headerOpacity = useTransform(scrollY, [0, 100], [1, 0.3])
+  const headerScale = useTransform(scrollY, [0, 100], [1, 0.95])
+  
+  // Pull to refresh animation
+  const refreshControls = useAnimation()
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return
+    hapticFeedback.medium()
+    setIsRefreshing(true)
+    refreshControls.start({ rotate: 360, transition: { repeat: Infinity, duration: 1, ease: "linear" } })
+    
+    // Simulate refresh (In real life, this would call mutate() from SWR/ReactQuery or router.refresh())
+    await new Promise(r => setTimeout(r, 1500))
+    
+    setIsRefreshing(false)
+    refreshControls.stop()
+    refreshControls.set({ rotate: 0 })
+    hapticFeedback.success()
+  }
 
   // Build a simple portfolio sparkline from all positions
   const portfolioSparkline = useMemo(() => {
@@ -76,28 +95,33 @@ export function MobileDashboard({
     for (const p of positions) {
       if (p.unidades > 0 && p.precio_actual !== null) {
         todayValue += p.unidades * p.precio_actual
-        
         let yesterdayPrice = p.precio_actual
         if (p.sparkline && p.sparkline.length >= 2) {
           yesterdayPrice = p.sparkline[p.sparkline.length - 2]
         }
-        
         yesterdayValue += p.unidades * yesterdayPrice
       }
     }
 
-    if (yesterdayValue === 0) {
-      return { percent: 0, isPositive: true, amount: 0 }
-    }
-
+    if (yesterdayValue === 0) return { percent: 0, isPositive: true, amount: 0 }
     const diff = todayValue - yesterdayValue
-    const percent = (diff / yesterdayValue) * 100
-    
     return {
-      percent,
+      percent: (diff / yesterdayValue) * 100,
       amount: diff,
       isPositive: diff >= 0
     }
+  }, [positions])
+
+  const bestPerformer = useMemo(() => {
+    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number')
+    if (withPercent.length === 0) return null
+    return withPercent.reduce((prev, current) => (prev.change_percent_24h! > current.change_percent_24h! ? prev : current))
+  }, [positions])
+
+  const worstPerformer = useMemo(() => {
+    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number')
+    if (withPercent.length === 0) return null
+    return withPercent.reduce((prev, current) => (prev.change_percent_24h! < current.change_percent_24h! ? prev : current))
   }, [positions])
 
   // Loading skeleton
@@ -108,54 +132,70 @@ export function MobileDashboard({
         <div className="h-12 w-48 bg-muted rounded animate-pulse mx-auto" />
         <div className="h-32 w-full bg-muted/50 rounded-2xl animate-pulse" />
         {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-16 w-full bg-muted/50 rounded-xl animate-pulse"
-          />
+          <div key={i} className="h-16 w-full bg-muted/50 rounded-xl animate-pulse" />
         ))}
       </div>
     )
   }
 
   return (
-    <div className={`pb-28 flex flex-col ${zenMode ? 'justify-center min-h-[85vh]' : ''}`}>
+    <div ref={containerRef} className={`pb-28 flex flex-col ${zenMode ? 'justify-center min-h-[85vh]' : 'min-h-screen'} bg-background/50`}>
+      
+      {/* Pull to refresh visual hint */}
+      <motion.div 
+        className="flex justify-center -mt-10 mb-4 h-10 items-end"
+      >
+        <motion.button 
+          onClick={handleRefresh}
+          animate={refreshControls}
+          className="bg-muted/30 p-2 rounded-full text-muted-foreground/50"
+        >
+          <RefreshCw className="w-5 h-5" />
+        </motion.button>
+      </motion.div>
+
       {/* ─── Header ──────────────────────── */}
-      <div className="px-5 pt-6 pb-2">
-        <div className="flex items-center justify-between mb-8">
+      <motion.div 
+        style={{ opacity: headerOpacity, scale: headerScale }}
+        className="px-5 pt-2 pb-2 sticky top-0 z-10 bg-background/80 backdrop-blur-xl"
+      >
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 transition-colors">
+            <motion.div 
+              whileTap={{ scale: 0.9 }}
+              className="h-10 w-10 rounded-[14px] bg-primary flex items-center justify-center shadow-lg shadow-primary/30 transition-colors"
+            >
               <Activity className="h-5 w-5 text-primary-foreground" />
-            </div>
+            </motion.div>
             <div>
-              <p className="text-xs text-muted-foreground/80 font-semibold uppercase tracking-wider">Portfolio</p>
+              <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-widest">Portfolio</p>
               <p className="text-sm font-bold text-foreground">Resumen Global</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Botón rápido Modo ZEN (Móvil) */}
             <button
               onClick={() => {
                 if (soundEffects) playSound('click')
+                hapticFeedback.light()
                 setZenMode(!zenMode)
               }}
-              className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${
+              className={`h-10 w-10 rounded-[14px] flex items-center justify-center transition-all ${
                 zenMode 
-                  ? 'bg-primary/20 text-primary border border-primary/30' 
-                  : 'bg-muted/50 backdrop-blur-md border border-border/50 text-muted-foreground'
+                  ? 'bg-primary/20 text-primary border border-primary/30 shadow-inner' 
+                  : 'bg-card/50 backdrop-blur-md border border-border/50 text-muted-foreground hover:bg-muted/80'
               }`}
             >
               {zenMode ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
             </button>
-            {/* Logout (subtle) */}
             <button
               onClick={async () => {
-                if (soundEffects) playSound('click')
+                hapticFeedback.heavy()
                 const { createClient } = await import("@/lib/supabase/client")
                 const supabase = createClient()
                 await supabase.auth.signOut()
                 window.location.href = "/login"
               }}
-              className="h-10 w-10 rounded-xl bg-muted/50 backdrop-blur-md border border-border/50 flex items-center justify-center text-muted-foreground active:bg-zinc-700 transition-colors"
+              className="h-10 w-10 rounded-[14px] bg-card/50 backdrop-blur-md border border-border/50 flex items-center justify-center text-muted-foreground active:scale-95 transition-all"
             >
               <LogOut className="w-[18px] h-[18px]" />
             </button>
@@ -163,46 +203,47 @@ export function MobileDashboard({
         </div>
 
         {/* ─── Big Number ────────────────── */}
-        <div className="text-center mb-6">
-          <p className="text-xs text-muted-foreground/80 uppercase tracking-widest font-semibold mb-2">
+        <div className="text-center mb-2">
+          <p className="text-[10px] text-muted-foreground/80 uppercase tracking-widest font-semibold mb-2">
             Valor Total
           </p>
-          <p className={`font-extrabold font-tabular text-foreground tracking-tight leading-none transition-all ${zenMode ? 'text-5xl my-4' : 'text-4xl'}`}>
-            {hideBalances ? "****" : (totals.totalValue > 0
-              ? formatCurrency(totals.totalValue)
-              : "0,00 €")}
-          </p>
+          <div className={`font-extrabold font-tabular text-foreground tracking-tight leading-none transition-all ${zenMode ? 'text-6xl my-8' : 'text-[42px]'}`}>
+            <AnimatedNumber 
+              value={totals.totalValue} 
+              format="currency" 
+              hide={hideBalances} 
+            />
+          </div>
 
-          {/* P&L pill */}
           {totals.totalCost > 0 && (
             <div className="flex items-center justify-center gap-2 mt-4">
               <div
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
                   isPositive
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : "bg-rose-500/10 text-rose-400"
+                    ? "bg-emerald-500/15 text-emerald-500"
+                    : "bg-rose-500/15 text-rose-500"
                 }`}
               >
-                <PnlIcon className="h-4 w-4" />
-                {hideBalances ? "****" : formatPnl(totals.totalPnl)}
+                <PnlIcon className="h-[14px] w-[14px]" />
+                <AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />
               </div>
-              <span className={`text-sm font-bold font-tabular ${pnlColor}`}>
-                ({hideBalances ? "**.*%" : formatPercent(totals.totalPnlPercent)})
+              <span className={`text-sm font-bold font-tabular opacity-90 ${pnlColor}`}>
+                (<AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />)
               </span>
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* ─── Portfolio Chart ─────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className={`w-full px-2 mb-4 transition-all ${zenMode ? 'h-48 mt-4' : 'h-28 -mt-2'}`}>
+        <div className={`w-full transition-all relative z-0 ${zenMode ? 'h-56 mt-4' : 'h-32 mt-2'}`}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={portfolioSparkline}>
+            <AreaChart data={portfolioSparkline} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="mobileAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={areaColor} stopOpacity={0} />
+                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.4} />
+                  <stop offset="100%" stopColor={areaColor} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
               <YAxis hide domain={["dataMin", "dataMax"]} />
@@ -210,10 +251,11 @@ export function MobileDashboard({
                 type="monotone"
                 dataKey="v"
                 stroke={areaColor}
-                strokeWidth={2.5}
+                strokeWidth={3}
                 fill="url(#mobileAreaGrad)"
                 isAnimationActive={true}
-                animationDuration={1000}
+                animationDuration={1500}
+                animationEasing="ease-out"
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -222,53 +264,93 @@ export function MobileDashboard({
 
       {/* Conditionally hide the rest if Zen Mode is on */}
       {!zenMode && (
-        <div className="animate-fade-in">
-          {/* ─── Quick Stats Row ─────────────── */}
-          <div className="flex gap-3 px-5 mb-4">
-            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
+        <div className="animate-fade-in mt-2">
+          
+          {/* ─── Snap Carousel Quick Stats ─────────────── */}
+          <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-5 pb-6 gap-3 -mx-5 pl-5 pr-5">
+            {/* Invertido */}
+            <div className="snap-center shrink-0 w-[140px] bg-card/60 backdrop-blur-xl border border-border/50 rounded-[20px] p-4 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-full blur-xl -mr-8 -mt-8" />
               <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
                 Invertido
               </p>
-              <p className="text-lg font-bold font-tabular text-foreground mt-1">
-                {hideBalances ? "****" : (totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—")}
+              <p className="text-xl font-bold font-tabular text-foreground mt-2">
+                <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
               </p>
             </div>
-            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
+            
+            {/* Rentabilidad Hoy */}
+            <div className="snap-center shrink-0 w-[140px] bg-card/60 backdrop-blur-xl border border-border/50 rounded-[20px] p-4 shadow-sm relative overflow-hidden">
+              <div className={`absolute top-0 right-0 w-16 h-16 rounded-full blur-xl -mr-8 -mt-8 ${dailyPnlInfo.isPositive ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`} />
               <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
                 Rent. Hoy
               </p>
-              <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                {hideBalances ? "**.*%" : (dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—")}
+              <p className={`text-xl font-bold font-tabular mt-2 ${dailyPnlInfo.isPositive ? "text-emerald-500" : "text-rose-500"}`}>
+                <AnimatedNumber value={dailyPnlInfo.percent} format="percent" hide={hideBalances} />
               </p>
             </div>
+
+            {/* Top Ganadora */}
+            {bestPerformer && (
+              <div className="snap-center shrink-0 w-[150px] bg-card/60 backdrop-blur-xl border border-border/50 rounded-[20px] p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-full blur-xl -mr-8 -mt-8" />
+                <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3 text-emerald-500" /> Ganadora
+                </p>
+                <div>
+                  <p className="text-sm font-bold text-foreground truncate mt-1">{bestPerformer.nombre || bestPerformer.ticker.split('.')[0]}</p>
+                  <p className="text-emerald-500 font-bold font-tabular text-xs">+{formatPercent(bestPerformer.change_percent_24h || 0)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Top Perdedora */}
+            {worstPerformer && (
+              <div className="snap-center shrink-0 w-[150px] bg-card/60 backdrop-blur-xl border border-border/50 rounded-[20px] p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/10 rounded-full blur-xl -mr-8 -mt-8" />
+                <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold flex items-center gap-1">
+                  <TrendingDown className="w-3 h-3 text-rose-500" /> Perdedora
+                </p>
+                <div>
+                  <p className="text-sm font-bold text-foreground truncate mt-1">{worstPerformer.nombre || worstPerformer.ticker.split('.')[0]}</p>
+                  <p className="text-rose-500 font-bold font-tabular text-xs">{formatPercent(worstPerformer.change_percent_24h || 0)}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="px-5 mb-6">
-            <button
-              onClick={() => setPerformanceOpen(true)}
-              className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-xl p-3 flex items-center justify-center gap-2 font-semibold transition-colors active:scale-95"
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                hapticFeedback.light()
+                setPerformanceOpen(true)
+              }}
+              className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-[16px] p-3.5 flex items-center justify-center gap-2 font-semibold transition-colors"
             >
               <BarChart2 className="w-5 h-5" />
-              Ver Gráfica de Rendimiento
-            </button>
+              Rendimiento Detallado
+            </motion.button>
           </div>
 
           <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} />
 
           {/* ─── Position List ─────────────────── */}
-          <div className="px-5 pb-4">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="px-5 pb-4 mt-2">
+            <h2 className="text-xs font-bold text-muted-foreground/70 uppercase tracking-widest">
               Tus Activos
             </h2>
           </div>
 
-          <div className="bg-card/30 border-y border-border/30 divide-y divide-border/20">
+          <div className="bg-card/40 border-y border-border/30 divide-y divide-border/20 backdrop-blur-sm">
             {sortedPositions.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground/60">
-                <Activity className="h-10 w-10 mx-auto mb-3 opacity-40 text-primary" />
-                <p className="font-medium text-foreground">Sin posiciones</p>
-                <p className="text-xs mt-1">
-                  Añade tu primer activo desde el dashboard web
+              <div className="text-center py-20 text-muted-foreground/60">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Activity className="h-8 w-8 text-primary/60" />
+                </div>
+                <p className="font-semibold text-foreground text-lg">Sin posiciones</p>
+                <p className="text-sm mt-1 px-10">
+                  Pulsa el botón <strong>+</strong> abajo para empezar tu imperio
                 </p>
               </div>
             ) : (

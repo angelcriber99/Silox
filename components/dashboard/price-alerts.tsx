@@ -164,7 +164,7 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-foreground">{a.ticker}</span>
-                          {a.triggered && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-400">Activada</span>}
+                          {a.triggered && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-400">Completada</span>}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {a.condition === 'above' ? 'Sube a' : 'Baja a'} <strong className="text-foreground">{formatCurrency(a.target_price, currency)}</strong>
