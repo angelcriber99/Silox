@@ -7,7 +7,9 @@ import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Trash2, 
 import { toast } from "sonner"
 import type { Transaccion } from '@/lib/types'
 import { EditTransactionModal } from "@/components/transactions/edit-transaction-modal"
+import { ExportExcelButton } from "@/components/transactions/export-excel-button"
 import { Input } from "@/components/ui/input"
+import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import Link from "next/link"
 
 import {
@@ -20,6 +22,7 @@ import {
 export default function MovimientosPage() {
   const { data: transactions, isLoading } = useTransactions(1000)
   const deleteTransaction = useDeleteTransaction()
+  const { positions } = usePortfolio()
 
   // State for modals
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -94,13 +97,19 @@ export default function MovimientosPage() {
               Historial completo de operaciones. Utiliza este registro para tu contabilidad.
             </p>
           </div>
-          <Link 
-            href="/declarar" 
-            className="flex items-center gap-2 bg-muted hover:bg-zinc-700 text-foreground px-4 py-2.5 rounded-lg font-medium transition-colors border border-border"
-          >
-            <Scale className="h-4 w-4 text-blue-400" />
-            Asistente de Declaración
-          </Link>
+          <div className="flex items-center gap-3">
+            <ExportExcelButton 
+              transactions={transactions || []} 
+              positions={positions || []} 
+            />
+            <Link 
+              href="/declarar" 
+              className="flex items-center gap-2 bg-muted hover:bg-zinc-700 text-foreground px-4 py-2.5 rounded-lg font-medium transition-colors border border-border whitespace-nowrap"
+            >
+              <Scale className="h-4 w-4 text-blue-400" />
+              Asistente de Declaración
+            </Link>
+          </div>
         </div>
 
         {/* Filters Section */}
