@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Activity, TrendingUp, TrendingDown, ChevronRight, LogOut, BarChart2 } from "lucide-react"
+import { Activity, TrendingUp, TrendingDown, ChevronRight, LogOut, BarChart2, Eye, EyeOff } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import {
   formatCurrency,
@@ -30,7 +30,7 @@ export function MobileDashboard({
   totals,
   isLoading,
 }: MobileDashboardProps) {
-  const { zenMode, soundEffects, hideBalances } = usePreferences()
+  const { zenMode, setZenMode, soundEffects, hideBalances } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const isPositive = totals.totalPnl >= 0
   const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
@@ -131,19 +131,35 @@ export function MobileDashboard({
               <p className="text-sm font-bold text-foreground">Resumen Global</p>
             </div>
           </div>
-          {/* Logout (subtle) */}
-          <button
-            onClick={async () => {
-              if (soundEffects) playSound('click')
-              const { createClient } = await import("@/lib/supabase/client")
-              const supabase = createClient()
-              await supabase.auth.signOut()
-              window.location.href = "/login"
-            }}
-            className="h-10 w-10 rounded-xl bg-muted/50 backdrop-blur-md border border-border/50 flex items-center justify-center text-muted-foreground active:bg-zinc-700 transition-colors"
-          >
-            <LogOut className="w-[18px] h-[18px]" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Botón rápido Modo ZEN (Móvil) */}
+            <button
+              onClick={() => {
+                if (soundEffects) playSound('click')
+                setZenMode(!zenMode)
+              }}
+              className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${
+                zenMode 
+                  ? 'bg-primary/20 text-primary border border-primary/30' 
+                  : 'bg-muted/50 backdrop-blur-md border border-border/50 text-muted-foreground'
+              }`}
+            >
+              {zenMode ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+            </button>
+            {/* Logout (subtle) */}
+            <button
+              onClick={async () => {
+                if (soundEffects) playSound('click')
+                const { createClient } = await import("@/lib/supabase/client")
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                window.location.href = "/login"
+              }}
+              className="h-10 w-10 rounded-xl bg-muted/50 backdrop-blur-md border border-border/50 flex items-center justify-center text-muted-foreground active:bg-zinc-700 transition-colors"
+            >
+              <LogOut className="w-[18px] h-[18px]" />
+            </button>
+          </div>
         </div>
 
         {/* ─── Big Number ────────────────── */}
