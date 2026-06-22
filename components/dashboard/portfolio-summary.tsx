@@ -78,11 +78,15 @@ function KPICard({
   )
 }
 
+import { Eye, EyeOff } from "lucide-react"
+
+// ... existing code ...
+
 export function PortfolioSummary({
   totals,
   loading = false,
 }: PortfolioSummaryProps) {
-  const { hideBalances } = usePreferences()
+  const { hideBalances, zenMode, setZenMode } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const isPositive = totals.totalPnl >= 0
 
@@ -94,6 +98,15 @@ export function PortfolioSummary({
           value={hideBalances ? "****" : formatCurrency(totals.totalValue)}
           subvalue={hideBalances ? null : (totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes")}
           icon={<Wallet className="w-5 h-5 text-muted-foreground/50" />}
+          action={
+            <button
+              onClick={() => setZenMode(!zenMode)}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+              title={zenMode ? "Salir del Modo ZEN" : "Activar Modo ZEN"}
+            >
+              {zenMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          }
           loading={loading}
           delay="stagger-1"
         />

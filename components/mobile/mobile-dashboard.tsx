@@ -256,7 +256,7 @@ export function MobileDashboard({
           <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} />
 
           {/* ─── Position List ─────────────────── */}
-          <div className="px-5 pb-24">
+          <div className="px-5 pb-4">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Tus Activos
             </h2>
