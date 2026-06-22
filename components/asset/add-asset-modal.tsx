@@ -34,10 +34,10 @@ const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 
 const inputClass =
-  "bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+  "bg-zinc-950 border-border text-white placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
 const selectClass =
-  "w-full h-10 px-3 rounded-md bg-zinc-950 border border-zinc-700 text-white text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+  "w-full h-10 px-3 rounded-md bg-zinc-950 border border-border text-white text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
 
 export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   // Instrument
@@ -173,13 +173,13 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-zinc-900 border-zinc-700 text-white sm:max-w-lg">
+      <DialogContent className="bg-card border-border text-white sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             <Plus className="h-5 w-5 text-blue-400" />
             Nueva Inversión
           </DialogTitle>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-muted-foreground">
             Añade un activo y registra tu compra. El valor se sincronizará
             automáticamente.
           </DialogDescription>
@@ -188,13 +188,13 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
         <form onSubmit={handleSubmit} className="space-y-5 py-2">
           {/* ── Section: Instrument ──────────────── */}
           <div className="space-y-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80">
               Instrumento
             </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">
+                <Label className="text-foreground/80 text-xs">
                   Ticker <span className="text-rose-400">*</span>
                 </Label>
                 <Input
@@ -207,7 +207,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Moneda</Label>
+                <Label className="text-foreground/80 text-xs">Moneda</Label>
                 <select
                   value={moneda}
                   onChange={(e) => setMoneda(e.target.value)}
@@ -223,7 +223,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Nombre (opcional)</Label>
+                <Label className="text-foreground/80 text-xs">Nombre (opcional)</Label>
                 <Input
                   placeholder="Vanguard FTSE All-World UCITS ETF"
                   value={nombre}
@@ -233,7 +233,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs flex items-center justify-between">
+                <Label className="text-foreground/80 text-xs flex items-center justify-between">
                   <span>ISIN (opcional)</span>
                   {isin.trim() && (
                     <button
@@ -259,7 +259,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Tipo</Label>
+                <Label className="text-foreground/80 text-xs">Tipo</Label>
                 <select
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
@@ -272,7 +272,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Estrategia</Label>
+                <Label className="text-foreground/80 text-xs">Estrategia</Label>
                 <select
                   value={estrategia}
                   onChange={(e) => setEstrategia(e.target.value)}
@@ -288,18 +288,18 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
           </div>
 
           {/* ── Divider ─────────────────────────── */}
-          <div className="border-t border-zinc-800" />
+          <div className="border-t border-border" />
 
           {/* ── Section: Purchase ────────────────── */}
           <div className="space-y-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
               <ArrowUpRight className="h-3 w-3 text-emerald-500" />
               Datos de compra
             </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">
+                <Label className="text-foreground/80 text-xs">
                   Cantidad <span className="text-rose-400">*</span>
                 </Label>
                 <Input
@@ -315,7 +315,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">
+                <Label className="text-foreground/80 text-xs">
                   Precio unitario <span className="text-rose-400">*</span>
                 </Label>
                 <Input
@@ -334,9 +334,9 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">
+                <Label className="text-foreground/80 text-xs">
                   Comisión{" "}
-                  <span className="text-zinc-600 font-normal">(opc.)</span>
+                  <span className="text-muted-foreground/60 font-normal">(opc.)</span>
                 </Label>
                 <Input
                   type="number"
@@ -350,7 +350,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Fecha</Label>
+                <Label className="text-foreground/80 text-xs">Fecha</Label>
                 <Input
                   type="date"
                   value={fecha}
@@ -367,7 +367,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
           {totalEstimado > 0 && (
             <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-400">Inversión total</span>
+                <span className="text-xs text-muted-foreground">Inversión total</span>
                 <span className="text-lg font-bold font-tabular text-emerald-400">
                   {formatCurrency(totalEstimado, moneda)}
                 </span>
@@ -381,7 +381,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
               variant="outline"
               onClick={() => handleClose(false)}
               disabled={addInvestment.isPending}
-              className="border-zinc-700 bg-transparent text-zinc-400 hover:bg-zinc-800 hover:text-white"
+              className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-white"
             >
               Cancelar
             </Button>

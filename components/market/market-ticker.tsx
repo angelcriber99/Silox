@@ -46,8 +46,8 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
 
   if (isLoadingNews || topItems.length === 0) {
     return (
-      <div className="h-10 bg-zinc-950 border-b border-zinc-800 flex items-center px-4">
-        <div className="h-4 w-64 bg-zinc-800 animate-pulse rounded" />
+      <div className="h-10 bg-zinc-950 border-b border-border flex items-center px-4">
+        <div className="h-4 w-64 bg-muted animate-pulse rounded" />
       </div>
     )
   }
@@ -55,7 +55,7 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
   if (!newsData || newsData.length === 0) return null
 
   return (
-    <div className="h-10 bg-zinc-950 border-b border-zinc-800 flex items-center overflow-hidden">
+    <div className="h-10 bg-zinc-950 border-b border-border flex items-center overflow-hidden">
       <Marquee speed={40} gradient={false} className="overflow-hidden">
 
         {/* Render News */}
@@ -65,13 +65,13 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
             href={newsItem.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 mx-8 text-sm group cursor-pointer hover:bg-zinc-800/50 px-3 py-1 rounded-full transition-colors"
+            className="flex items-center gap-2 mx-8 text-sm group cursor-pointer hover:bg-muted/50 px-3 py-1 rounded-full transition-colors"
           >
             <Newspaper className="h-4 w-4 text-blue-400" />
             <span className="font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded text-[10px] tracking-wider uppercase">
               {newsItem.relatedTicker}
             </span>
-            <span className="text-zinc-300 group-hover:text-white transition-colors line-clamp-1 max-w-[400px]">
+            <span className="text-foreground/80 group-hover:text-white transition-colors line-clamp-1 max-w-[400px]">
               {newsItem.title}
             </span>
           </a>

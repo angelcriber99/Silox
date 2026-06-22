@@ -9,9 +9,9 @@ export function RecentTransactions() {
   const { data: transactions, isLoading } = useTransactions(10)
 
   return (
-    <Card className="animate-fade-in stagger-3 bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm h-full">
+    <Card className="animate-fade-in stagger-3 bg-card border-border backdrop-blur-sm h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <History className="h-4 w-4" />
           Últimas Operaciones
         </CardTitle>
@@ -21,16 +21,16 @@ export function RecentTransactions() {
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-zinc-800 animate-shimmer" />
+                <div className="h-8 w-8 rounded-full bg-muted animate-shimmer" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-24 rounded bg-zinc-800 animate-shimmer" />
-                  <div className="h-2.5 w-32 rounded bg-zinc-800/60 animate-shimmer" />
+                  <div className="h-3 w-24 rounded bg-muted animate-shimmer" />
+                  <div className="h-2.5 w-32 rounded bg-muted animate-shimmer" />
                 </div>
               </div>
             ))}
           </div>
         ) : !transactions?.length ? (
-          <div className="flex flex-col items-center justify-center py-10 text-zinc-600">
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/60">
             <History className="h-8 w-8 mb-2 opacity-40" />
             <p className="text-sm">Sin operaciones registradas</p>
             <p className="text-xs text-zinc-700 mt-1">
@@ -54,7 +54,7 @@ export function RecentTransactions() {
               return (
                 <div
                   key={tx.id}
-                  className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-zinc-800/30 transition-colors duration-200"
+                  className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-muted/30 transition-colors duration-200"
                 >
                   {/* Icon */}
                   <div
@@ -74,18 +74,18 @@ export function RecentTransactions() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-zinc-200">
+                      <span className="text-sm font-medium text-foreground/90">
                         {isCompra ? "Compra" : "Venta"}
                       </span>
-                      <span className="text-xs text-zinc-500">·</span>
-                      <span className="text-sm font-tabular text-zinc-300">
+                      <span className="text-xs text-muted-foreground/80">·</span>
+                      <span className="text-sm font-tabular text-foreground/80">
                         {ticker.split('.')[0]}
                         {ticker.includes('.') && !isFondo && (
-                          <span className="text-zinc-500 text-[10px]">.{ticker.split('.').slice(1).join('.')}</span>
+                          <span className="text-muted-foreground/80 text-[10px]">.{ticker.split('.').slice(1).join('.')}</span>
                         )}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground/80 mt-0.5">
                       {formatUnits(tx.cantidad)} uds. × {formatCurrency(tx.precio_unitario)}
                     </p>
                   </div>
@@ -100,7 +100,7 @@ export function RecentTransactions() {
                       {isCompra ? "+" : "-"}
                       {formatCurrency(total)}
                     </p>
-                    <p className="text-[10px] text-zinc-600 mt-0.5">
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">
                       {formatRelative(tx.fecha)}
                     </p>
                   </div>

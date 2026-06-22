@@ -35,10 +35,10 @@ const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 
 const inputClass =
-  "bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+  "bg-zinc-950 border-border text-white placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
 const selectClass =
-  "w-full h-10 px-3 rounded-md bg-zinc-950 border border-zinc-700 text-white text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+  "w-full h-10 px-3 rounded-md bg-zinc-950 border border-border text-white text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
 
 export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalProps) {
   const [ticker, setTicker] = useState("")
@@ -124,13 +124,13 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-zinc-900 border-zinc-700 text-white sm:max-w-lg">
+      <DialogContent className="bg-card border-border text-white sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             <Edit3 className="h-5 w-5 text-blue-400" />
             Editar Activo
           </DialogTitle>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-muted-foreground">
             Modifica la configuración de {position?.ticker}. El Ticker debe ser exacto al de Yahoo Finance (incluyendo sufijos como .PA o .MC). Nosotros nos encargaremos de ocultarlo visualmente en la tabla para que quede más limpio.
           </DialogDescription>
         </DialogHeader>
@@ -139,7 +139,7 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">
+                <Label className="text-foreground/80 text-xs">
                   Ticker <span className="text-rose-400">*</span>
                 </Label>
                 <Input
@@ -152,7 +152,7 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Moneda</Label>
+                <Label className="text-foreground/80 text-xs">Moneda</Label>
                 <select
                   value={moneda}
                   onChange={(e) => setMoneda(e.target.value)}
@@ -168,7 +168,7 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Nombre (opcional)</Label>
+                <Label className="text-foreground/80 text-xs">Nombre (opcional)</Label>
                 <Input
                   placeholder="Vanguard FTSE All-World UCITS ETF"
                   value={nombre}
@@ -178,7 +178,7 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs flex items-center justify-between">
+                <Label className="text-foreground/80 text-xs flex items-center justify-between">
                   <span>ISIN (opcional)</span>
                   {isin.trim() && (
                     <button
@@ -204,7 +204,7 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Tipo</Label>
+                <Label className="text-foreground/80 text-xs">Tipo</Label>
                 <select
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
@@ -217,7 +217,7 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-xs">Estrategia</Label>
+                <Label className="text-foreground/80 text-xs">Estrategia</Label>
                 <select
                   value={estrategia}
                   onChange={(e) => setEstrategia(e.target.value)}
@@ -238,7 +238,7 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
               variant="outline"
               onClick={() => handleClose(false)}
               disabled={updateAsset.isPending}
-              className="border-zinc-700 bg-transparent text-zinc-400 hover:bg-zinc-800 hover:text-white"
+              className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-white"
             >
               Cancelar
             </Button>

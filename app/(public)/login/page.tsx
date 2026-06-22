@@ -27,14 +27,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex flex-col justify-center items-center p-4 selection:bg-purple-500/30">
-      <div className="w-full max-w-md bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-8 backdrop-blur-xl shadow-2xl animate-fade-in">
+    <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 selection:bg-purple-500/30">
+      <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8 backdrop-blur-xl shadow-2xl animate-fade-in">
         <div className="flex flex-col items-center mb-8">
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-4">
             <Activity className="h-6 w-6 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Bienvenido a Silox</h1>
-          <p className="text-zinc-400 text-sm mt-2 text-center">
+          <p className="text-muted-foreground text-sm mt-2 text-center">
             Inicia sesión para gestionar tu patrimonio de forma segura y privada.
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function LoginPage() {
           <span>Continuar con Google</span>
         </button>
 
-        <p className="text-center text-xs text-zinc-500 mt-6">
+        <p className="text-center text-xs text-muted-foreground/80 mt-6">
           Al iniciar sesión, aceptas que tus datos financieros se guarden de forma cifrada en la base de datos vinculados a tu ID único.
         </p>
       </div>

@@ -27,7 +27,7 @@ interface AddTransactionModalProps {
 type TipoOperacion = "Compra" | "Venta"
 
 const inputClass =
-  "bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+  "bg-zinc-950 border-border text-white placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
 export function AddTransactionModal({
   position,
@@ -118,7 +118,7 @@ export function AddTransactionModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-zinc-900 border-zinc-700 text-white sm:max-w-md">
+      <DialogContent className="bg-card border-border text-white sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             {isCompra ? (
@@ -128,15 +128,15 @@ export function AddTransactionModal({
             )}
             Nueva Transacción
           </DialogTitle>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-muted-foreground">
             {position ? (
               <>
                 Registra una operación sobre{" "}
-                <span className="font-semibold text-zinc-200">
+                <span className="font-semibold text-foreground/90">
                   {position.ticker}
                 </span>
                 {position.nombre && (
-                  <span className="text-zinc-500">
+                  <span className="text-muted-foreground/80">
                     {" "}
                     — {position.nombre}
                   </span>
@@ -164,7 +164,7 @@ export function AddTransactionModal({
                       ? isBuy
                         ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-300"
                         : "border-rose-500/50 bg-rose-500/10 text-rose-300"
-                      : "border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600"
+                      : "border-border bg-muted text-muted-foreground hover:border-zinc-600"
                   }`}
                 >
                   {isBuy ? (
@@ -181,7 +181,7 @@ export function AddTransactionModal({
           {/* Quantity + Price */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-zinc-300">Cantidad</Label>
+              <Label className="text-foreground/80">Cantidad</Label>
               <Input
                 type="number"
                 min="0.000001"
@@ -195,7 +195,7 @@ export function AddTransactionModal({
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-zinc-300 flex items-center justify-between">
+              <Label className="text-foreground/80 flex items-center justify-between">
                 Precio unitario
                 {position?.precio_actual && (
                   <button
@@ -224,9 +224,9 @@ export function AddTransactionModal({
           {/* Commission + Date */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-zinc-300">
+              <Label className="text-foreground/80">
                 Comisión{" "}
-                <span className="text-zinc-600 font-normal">(opc.)</span>
+                <span className="text-muted-foreground/60 font-normal">(opc.)</span>
               </Label>
               <Input
                 type="number"
@@ -240,7 +240,7 @@ export function AddTransactionModal({
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-zinc-300">Fecha</Label>
+              <Label className="text-foreground/80">Fecha</Label>
               <Input
                 type="date"
                 value={fecha}
@@ -254,9 +254,9 @@ export function AddTransactionModal({
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label className="text-zinc-300">
+            <Label className="text-foreground/80">
               Notas{" "}
-              <span className="text-zinc-600 font-normal">(opc.)</span>
+              <span className="text-muted-foreground/60 font-normal">(opc.)</span>
             </Label>
             <Input
               placeholder="Aportación mensual, DCA…"
@@ -269,9 +269,9 @@ export function AddTransactionModal({
 
           {/* Estimated total */}
           {totalEstimado > 0 && (
-            <div className="rounded-lg bg-zinc-800/50 border border-zinc-700/40 px-4 py-3">
+            <div className="rounded-lg bg-muted/50 border border-border/40 px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-500">Valor total</span>
+                <span className="text-xs text-muted-foreground/80">Valor total</span>
                 <span
                   className={`text-lg font-bold font-tabular ${
                     isCompra ? "text-emerald-400" : "text-rose-400"
@@ -289,7 +289,7 @@ export function AddTransactionModal({
               variant="outline"
               onClick={() => handleClose(false)}
               disabled={addTransaction.isPending}
-              className="border-zinc-700 bg-transparent text-zinc-400 hover:bg-zinc-800 hover:text-white"
+              className="border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-white"
             >
               Cancelar
             </Button>

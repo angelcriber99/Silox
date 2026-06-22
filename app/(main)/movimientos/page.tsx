@@ -80,7 +80,7 @@ export default function MovimientosPage() {
   }, [transactions, searchQuery, typeFilter, dateFrom, dateTo])
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col">
+    <main className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 space-y-6">
         
         {/* Header Section */}
@@ -90,13 +90,13 @@ export default function MovimientosPage() {
               <History className="h-8 w-8 text-blue-500" />
               Libro de Movimientos
             </h1>
-            <p className="text-zinc-400">
+            <p className="text-muted-foreground">
               Historial completo de operaciones. Utiliza este registro para tu contabilidad.
             </p>
           </div>
           <Link 
             href="/declarar" 
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors border border-zinc-700"
+            className="flex items-center gap-2 bg-muted hover:bg-zinc-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors border border-border"
           >
             <Scale className="h-4 w-4 text-blue-400" />
             Asistente de Declaración
@@ -104,19 +104,19 @@ export default function MovimientosPage() {
         </div>
 
         {/* Filters Section */}
-        <div className="flex flex-col gap-3 bg-zinc-900/40 border border-zinc-800/60 p-3 md:p-4 rounded-xl backdrop-blur-sm">
+        <div className="flex flex-col gap-3 bg-card/40 border border-border p-3 md:p-4 rounded-xl backdrop-blur-sm">
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
             <Input 
               placeholder="Buscar por activo o ticker..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-zinc-950 border-zinc-800 text-white w-full h-10"
+              className="pl-9 bg-zinc-950 border-border text-white w-full h-10"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar w-full">
             <select 
-              className="flex-shrink-0 appearance-none bg-zinc-950 border border-zinc-800 text-sm text-zinc-300 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
+              className="flex-shrink-0 appearance-none bg-zinc-950 border border-border text-sm text-foreground/80 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as any)}
             >
@@ -125,34 +125,34 @@ export default function MovimientosPage() {
               <option value="Venta">Solo Ventas</option>
             </select>
             
-            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
-              <span className="text-xs text-zinc-500">Desde</span>
+            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-border rounded-lg px-3 py-2">
+              <span className="text-xs text-muted-foreground/80">Desde</span>
               <input 
                 type="date" 
                 value={dateFrom} 
                 onChange={(e) => setDateFrom(e.target.value)} 
-                className="bg-transparent text-sm text-zinc-300 outline-none w-auto [color-scheme:dark]"
+                className="bg-transparent text-sm text-foreground/80 outline-none w-auto [color-scheme:dark]"
               />
             </div>
             
-            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
-              <span className="text-xs text-zinc-500">Hasta</span>
+            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-border rounded-lg px-3 py-2">
+              <span className="text-xs text-muted-foreground/80">Hasta</span>
               <input 
                 type="date" 
                 value={dateTo} 
                 onChange={(e) => setDateTo(e.target.value)} 
-                className="bg-transparent text-sm text-zinc-300 outline-none w-auto [color-scheme:dark]"
+                className="bg-transparent text-sm text-foreground/80 outline-none w-auto [color-scheme:dark]"
               />
             </div>
           </div>
         </div>
 
         {/* Table Section */}
-        <div className="border border-zinc-800/60 bg-zinc-900/40 rounded-xl overflow-hidden backdrop-blur-sm">
+        <div className="border border-border bg-card/40 rounded-xl overflow-hidden backdrop-blur-sm">
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-900/80 border-b border-zinc-800/60 text-zinc-400">
+              <thead className="bg-card/80 border-b border-border text-muted-foreground">
                 <tr>
                   <th className="px-6 py-4 font-medium">Fecha</th>
                   <th className="px-6 py-4 font-medium">Operación</th>
@@ -168,23 +168,23 @@ export default function MovimientosPage() {
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i}>
-                      <td className="px-6 py-4"><div className="h-4 w-24 bg-zinc-800 animate-pulse rounded" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-20 bg-zinc-800 animate-pulse rounded" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-32 bg-zinc-800 animate-pulse rounded" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-16 bg-zinc-800 animate-pulse rounded ml-auto" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-20 bg-zinc-800 animate-pulse rounded ml-auto" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-16 bg-zinc-800 animate-pulse rounded ml-auto" /></td>
-                      <td className="px-6 py-4"><div className="h-4 w-24 bg-zinc-800 animate-pulse rounded ml-auto" /></td>
-                      <td className="px-4 py-4"><div className="h-4 w-8 bg-zinc-800 animate-pulse rounded mx-auto" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-24 bg-muted animate-pulse rounded" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-20 bg-muted animate-pulse rounded" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-32 bg-muted animate-pulse rounded" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-16 bg-muted animate-pulse rounded ml-auto" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-20 bg-muted animate-pulse rounded ml-auto" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-16 bg-muted animate-pulse rounded ml-auto" /></td>
+                      <td className="px-6 py-4"><div className="h-4 w-24 bg-muted animate-pulse rounded ml-auto" /></td>
+                      <td className="px-4 py-4"><div className="h-4 w-8 bg-muted animate-pulse rounded mx-auto" /></td>
                     </tr>
                   ))
                 ) : filteredTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <History className="h-10 w-10 text-zinc-600 mb-2" />
-                        <p className="text-zinc-300 font-medium text-base">No se encontraron movimientos</p>
-                        <p className="text-zinc-500 text-sm">Ajusta los filtros para ver más resultados.</p>
+                        <History className="h-10 w-10 text-muted-foreground/60 mb-2" />
+                        <p className="text-foreground/80 font-medium text-base">No se encontraron movimientos</p>
+                        <p className="text-muted-foreground/80 text-sm">Ajusta los filtros para ver más resultados.</p>
                       </div>
                     </td>
                   </tr>
@@ -204,8 +204,8 @@ export default function MovimientosPage() {
                       : "—"
 
                     return (
-                      <tr key={tx.id} className="hover:bg-zinc-800/30 transition-colors group">
-                        <td className="px-6 py-4 whitespace-nowrap text-zinc-300">
+                      <tr key={tx.id} className="hover:bg-muted/30 transition-colors group">
+                        <td className="px-6 py-4 whitespace-nowrap text-foreground/80">
                           {date}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -218,17 +218,17 @@ export default function MovimientosPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col">
-                            <span className="font-medium text-zinc-200">{ticker}</span>
-                            <span className="text-xs text-zinc-500 truncate max-w-[200px]">{tx.activo?.nombre}</span>
+                            <span className="font-medium text-foreground/90">{ticker}</span>
+                            <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">{tx.activo?.nombre}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-zinc-300">
+                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80">
                           {formatUnits(tx.cantidad)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-zinc-300">
+                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80">
                           {tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-zinc-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground/80">
                           {tx.comision > 0 ? formatCurrency(tx.comision) : "0,00"}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-medium ${
@@ -238,13 +238,13 @@ export default function MovimientosPage() {
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-center">
                           <DropdownMenu>
-                            <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-zinc-800 rounded-md focus:outline-none focus:opacity-100">
-                              <MoreHorizontal className="h-4 w-4 text-zinc-400" />
+                            <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted rounded-md focus:outline-none focus:opacity-100">
+                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700 text-zinc-200 min-w-[140px]">
+                            <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
                               <DropdownMenuItem 
                                 onClick={() => handleEdit(tx)}
-                                className="hover:bg-zinc-800 focus:bg-zinc-800 cursor-pointer flex items-center gap-2"
+                                className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
                               >
                                 <Pencil className="h-4 w-4" /> Editar
                               </DropdownMenuItem>
@@ -271,17 +271,17 @@ export default function MovimientosPage() {
                Array.from({ length: 4 }).map((_, i) => (
                  <div key={i} className="p-4 flex flex-col gap-3">
                    <div className="flex justify-between">
-                     <div className="h-4 w-24 bg-zinc-800 animate-pulse rounded" />
-                     <div className="h-4 w-16 bg-zinc-800 animate-pulse rounded" />
+                     <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                     <div className="h-4 w-16 bg-muted animate-pulse rounded" />
                    </div>
-                   <div className="h-10 w-full bg-zinc-800 animate-pulse rounded" />
+                   <div className="h-10 w-full bg-muted animate-pulse rounded" />
                  </div>
                ))
             ) : filteredTransactions.length === 0 ? (
-               <div className="text-center text-zinc-600 py-16">
+               <div className="text-center text-muted-foreground/60 py-16">
                  <div className="flex flex-col items-center gap-3">
-                   <History className="h-10 w-10 text-zinc-600 mb-2 opacity-50" />
-                   <p className="font-medium text-zinc-400">No se encontraron movimientos</p>
+                   <History className="h-10 w-10 text-muted-foreground/60 mb-2 opacity-50" />
+                   <p className="font-medium text-muted-foreground">No se encontraron movimientos</p>
                  </div>
                </div>
             ) : (
@@ -299,7 +299,7 @@ export default function MovimientosPage() {
                    : "—"
 
                  return (
-                   <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
+                   <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                      <div className="flex items-center gap-3 overflow-hidden">
                        <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
                           isCompra ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
@@ -308,7 +308,7 @@ export default function MovimientosPage() {
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="font-bold text-white text-[15px] truncate">{ticker}</span>
-                          <span className="text-xs font-medium text-zinc-500 truncate">{isCompra ? "Compra" : "Venta"} • {date}</span>
+                          <span className="text-xs font-medium text-muted-foreground/80 truncate">{isCompra ? "Compra" : "Venta"} • {date}</span>
                         </div>
                      </div>
 
@@ -317,19 +317,19 @@ export default function MovimientosPage() {
                           <span className={`text-[15px] font-bold font-tabular leading-tight ${isCompra ? "text-white" : "text-emerald-400"}`}>
                             {isCompra ? "-" : "+"}{formatCurrency(total)}
                           </span>
-                          <span className="text-xs font-medium text-zinc-500 font-tabular mt-0.5">
+                          <span className="text-xs font-medium text-muted-foreground/80 font-tabular mt-0.5">
                             {formatUnits(tx.cantidad)} a {tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}€
                           </span>
                        </div>
                        
                         <DropdownMenu>
-                          <DropdownMenuTrigger className="p-1.5 -mr-1.5 hover:bg-zinc-800 rounded-md focus:outline-none flex items-center justify-center">
-                            <MoreHorizontal className="h-5 w-5 text-zinc-600" />
+                          <DropdownMenuTrigger className="p-1.5 -mr-1.5 hover:bg-muted rounded-md focus:outline-none flex items-center justify-center">
+                            <MoreHorizontal className="h-5 w-5 text-muted-foreground/60" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700 text-zinc-200 min-w-[140px]">
+                          <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
                             <DropdownMenuItem 
                               onClick={() => handleEdit(tx)}
-                              className="hover:bg-zinc-800 focus:bg-zinc-800 cursor-pointer flex items-center gap-2"
+                              className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
                             >
                               <Pencil className="h-4 w-4" /> Editar
                             </DropdownMenuItem>

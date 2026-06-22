@@ -14,9 +14,9 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
   const worst = sorted.slice().reverse().slice(0, 3).filter(p => !best.find(b => b.ticker === p.ticker))
 
   return (
-    <Card className="bg-[#111113] border-zinc-800">
-      <CardHeader className="pb-3 border-b border-zinc-800/50">
-        <CardTitle className="text-sm font-medium text-zinc-400">🔥 Top Movimientos</CardTitle>
+    <Card className="bg-[#111113] border-border">
+      <CardHeader className="pb-3 border-b border-border/50">
+        <CardTitle className="text-sm font-medium text-muted-foreground">🔥 Top Movimientos</CardTitle>
       </CardHeader>
       <CardContent className="pt-4 grid grid-cols-2 gap-4">
         {/* Best */}
@@ -27,12 +27,12 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           </div>
           {best.length > 0 ? best.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm">
-              <span className="text-zinc-300 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
+              <span className="text-foreground/80 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
                 {p.ticker.split('.')[0]}
               </span>
               <span className="text-emerald-400 font-tabular">{formatPercent(p.pnl_percent || 0)}</span>
             </div>
-          )) : <span className="text-xs text-zinc-600">Sin datos</span>}
+          )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
         </div>
         {/* Worst */}
         <div className="space-y-3">
@@ -42,12 +42,12 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           </div>
           {worst.length > 0 ? worst.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm">
-              <span className="text-zinc-300 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
+              <span className="text-foreground/80 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
                 {p.ticker.split('.')[0]}
               </span>
               <span className="text-rose-400 font-tabular">{formatPercent(p.pnl_percent || 0)}</span>
             </div>
-          )) : <span className="text-xs text-zinc-600">Sin datos</span>}
+          )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
         </div>
       </CardContent>
     </Card>

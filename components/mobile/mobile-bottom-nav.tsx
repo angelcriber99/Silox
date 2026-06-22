@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, History, Plus } from "lucide-react"
+import { LayoutDashboard, History, Plus, Settings } from "lucide-react"
 
 interface MobileBottomNavProps {
   onAddPress: () => void
@@ -13,13 +13,14 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
 
   const tabs = [
     { name: "Inicio", href: "/", icon: LayoutDashboard },
-    { name: "Añadir", href: "#", icon: Plus, isFab: true },
     { name: "Historial", href: "/movimientos", icon: History },
+    { name: "Añadir", href: "#", icon: Plus, isFab: true },
+    { name: "Perfil", href: "/perfil", icon: Settings },
   ]
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-      <div className="bg-[#09090b]/80 backdrop-blur-2xl border-t border-zinc-800/40">
+      <div className="bg-background/80 backdrop-blur-2xl border-t border-border">
         <div className="flex items-center justify-around px-6 h-16 pb-[env(safe-area-inset-bottom,0px)]">
           {tabs.map((tab) => {
             const isActive = pathname === tab.href
@@ -41,7 +42,7 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                 key={tab.name}
                 href={tab.href}
                 className={`relative flex flex-col items-center justify-center w-16 h-full transition-colors duration-200 ${
-                  isActive ? "text-white" : "text-zinc-500"
+                  isActive ? "text-white" : "text-muted-foreground/80"
                 }`}
               >
                 <tab.icon

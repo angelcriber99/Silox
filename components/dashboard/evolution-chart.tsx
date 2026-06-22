@@ -44,8 +44,8 @@ export function EvolutionChart() {
 
   if (isLoading) {
     return (
-      <div className="bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-6 h-[400px] flex items-center justify-center backdrop-blur-sm">
-        <div className="animate-pulse flex flex-col items-center gap-3 text-zinc-500">
+      <div className="bg-card/40 border border-border rounded-xl p-6 h-[400px] flex items-center justify-center backdrop-blur-sm">
+        <div className="animate-pulse flex flex-col items-center gap-3 text-muted-foreground/80">
           <Activity className="h-8 w-8 animate-bounce" />
           <p>Calculando evolución histórica...</p>
         </div>
@@ -60,8 +60,8 @@ export function EvolutionChart() {
     if (active && payload && payload.length) {
       const formattedDate = format(parseISO(label), "d MMM yyyy", { locale: es })
       return (
-        <div className="bg-zinc-900/90 border border-zinc-700 p-4 rounded-xl shadow-xl backdrop-blur-md">
-          <p className="text-zinc-400 text-xs mb-1 font-medium uppercase tracking-wider">{formattedDate}</p>
+        <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md">
+          <p className="text-muted-foreground text-xs mb-1 font-medium uppercase tracking-wider">{formattedDate}</p>
           <p className="text-white font-bold text-xl font-tabular">
             {formatCurrency(payload[0].value)}
           </p>
@@ -73,13 +73,13 @@ export function EvolutionChart() {
   }
 
   return (
-    <div className="bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-6 backdrop-blur-sm overflow-hidden relative group">
+    <div className="bg-card/40 border border-border rounded-xl p-6 backdrop-blur-sm overflow-hidden relative group">
       <div className="absolute top-6 left-6 z-10 pointer-events-none">
         <h3 className="text-xl font-bold text-white flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-blue-500" />
           Evolución del Capital
         </h3>
-        <p className="text-sm text-zinc-400 mt-1">Crecimiento histórico de depósitos netos</p>
+        <p className="text-sm text-muted-foreground mt-1">Crecimiento histórico de depósitos netos</p>
       </div>
 
       <div className="h-[350px] w-full mt-10">

@@ -125,14 +125,14 @@ export function AiChatDialog({ open, onOpenChange, portfolioContext, initialMess
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-[#09090b] border-zinc-800 p-0 flex flex-col h-[80vh] sm:h-[600px] overflow-hidden gap-0">
-        <DialogHeader className="p-4 border-b border-zinc-800 flex flex-row items-center gap-2 m-0 bg-zinc-900/50">
+      <DialogContent className="sm:max-w-2xl bg-background border-border p-0 flex flex-col h-[80vh] sm:h-[600px] overflow-hidden gap-0">
+        <DialogHeader className="p-4 border-b border-border flex flex-row items-center gap-2 m-0 bg-card/50">
           <Sparkles className="w-5 h-5 text-purple-400" />
-          <DialogTitle className="text-zinc-100 text-base m-0">Silox AI</DialogTitle>
+          <DialogTitle className="text-foreground text-base m-0">Silox AI</DialogTitle>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 ml-auto text-zinc-500 hover:text-red-400 hover:bg-red-400/10" 
+            className="h-8 w-8 ml-auto text-muted-foreground/80 hover:text-red-400 hover:bg-red-400/10" 
             onClick={clearChat}
             title="Borrar historial"
           >
@@ -140,7 +140,7 @@ export function AiChatDialog({ open, onOpenChange, portfolioContext, initialMess
           </Button>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 p-4 bg-[#09090b]">
+        <ScrollArea className="flex-1 p-4 bg-background">
           <div className="space-y-4 pb-4">
             {messages.map(m => (
               <div key={m.id} className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -153,7 +153,7 @@ export function AiChatDialog({ open, onOpenChange, portfolioContext, initialMess
                 <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm leading-relaxed ${
                   m.role === 'user' 
                     ? 'bg-blue-600 text-white rounded-br-none' 
-                    : 'bg-zinc-800 text-zinc-200 rounded-bl-none'
+                    : 'bg-muted text-foreground/90 rounded-bl-none'
                 }`}>
                   {m.content.split('\n').map((line, i) => (
                     <span key={i}>
@@ -176,7 +176,7 @@ export function AiChatDialog({ open, onOpenChange, portfolioContext, initialMess
                 <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
                   <Sparkles className="w-4 h-4 text-purple-400" />
                 </div>
-                <div className="bg-zinc-800 text-zinc-400 rounded-2xl rounded-bl-none px-4 py-2 text-sm flex items-center gap-2">
+                <div className="bg-muted text-muted-foreground rounded-2xl rounded-bl-none px-4 py-2 text-sm flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Escribiendo...
                 </div>
@@ -186,13 +186,13 @@ export function AiChatDialog({ open, onOpenChange, portfolioContext, initialMess
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 mt-auto">
+        <div className="p-4 border-t border-border bg-card/50 mt-auto">
           <form onSubmit={handleSubmit} className="flex gap-2 relative">
             <Input 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Pregúntale a Silox AI..."
-              className="bg-[#09090b] border-zinc-700 text-zinc-100 pr-12 focus-visible:ring-purple-500"
+              className="bg-background border-border text-foreground pr-12 focus-visible:ring-purple-500"
               disabled={isLoading}
             />
             <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="absolute right-1 top-1 bottom-1 h-auto bg-purple-600 hover:bg-purple-700 text-white shrink-0">

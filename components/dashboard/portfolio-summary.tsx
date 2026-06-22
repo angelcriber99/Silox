@@ -1,173 +1,141 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  PiggyBank,
-  BarChart3,
-  Layers,
-} from "lucide-react"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
+import { TrendingUp, TrendingDown, LayoutDashboard, Target, Briefcase, Wallet } from "lucide-react"
+import { usePreferences } from "@/lib/stores/use-preferences"
 import type { PortfolioTotals } from '@/lib/types'
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
-  loading: boolean
+  loading?: boolean
 }
 
 function SkeletonValue() {
   return (
-    <div className="h-7 w-28 rounded bg-zinc-800 animate-shimmer mt-1" />
+    <div className="h-7 w-28 rounded bg-muted animate-shimmer mt-1" />
   )
 }
 
 interface KPICardProps {
   label: string
   value: string
+  valueColor?: string
   subvalue?: React.ReactNode
   icon: React.ReactNode
-  colorClass?: string
+  loading?: boolean
   delay?: string
 }
 
 function KPICard({
   label,
   value,
+  valueColor = "text-foreground",
   subvalue,
   icon,
-  colorClass = "text-zinc-400",
+  loading = false,
   delay = "stagger-1",
 }: KPICardProps) {
   return (
     <Card
-      className={`animate-fade-in ${delay} bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm hover:border-zinc-700/60 transition-all duration-300`}
+      className={`animate-fade-in ${delay} bg-card border-border backdrop-blur-sm hover:border-border/60 transition-all duration-300`}
     >
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+          <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wider">
             {label}
           </span>
-          <div className={`${colorClass} opacity-60`}>{icon}</div>
+          {icon}
         </div>
-        <p
-          className={`text-2xl font-bold font-tabular tracking-tight ${colorClass === "text-zinc-400" ? "text-white" : colorClass}`}
-        >
-          {value}
-        </p>
-        {subvalue && (
-          <p className="text-xs text-zinc-500 mt-1">{subvalue}</p>
+        {loading ? (
+          <SkeletonValue />
+        ) : (
+          <>
+            <p className={`text-2xl font-bold font-tabular tracking-tight ${valueColor}`}>
+              {value}
+            </p>
+            {subvalue && (
+              <p className="text-xs text-muted-foreground/80 mt-1">{subvalue}</p>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
   )
 }
 
-export function PortfolioSummary({ totals, loading }: PortfolioSummaryProps) {
-  const pnlColor =
-    totals.totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"
-  const PnlIcon =
-    totals.totalPnl >= 0 ? TrendingUp : TrendingDown
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card
-            key={i}
-            className="bg-zinc-900/60 border-zinc-800/60"
-          >
-            <CardContent className="p-5">
-              <div className="h-4 w-20 rounded bg-zinc-800 mb-3" />
-              <SkeletonValue />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
+export function PortfolioSummary({
+  totals,
+  loading = false,
+}: PortfolioSummaryProps) {
+  const { hideBalances } = usePreferences()
+  const isPositive = totals.totalPnl >= 0
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <KPICard
         label="Valor del Portfolio"
-        value={
-          totals.totalValue > 0
-            ? formatCurrency(totals.totalValue)
-            : "—"
-        }
-        subvalue={
-          totals.hasAllPrices
-            ? "Precios sincronizados"
-            : totals.positionCount > 0
-              ? "Precios pendientes"
-              : undefined
-        }
-        icon={<Wallet className="h-4 w-4" />}
-        colorClass="text-zinc-400"
+        value={hideBalances ? "****" : formatCurrency(totals.totalValue)}
+        subvalue={hideBalances ? null : (totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes")}
+        icon={<Wallet className="w-5 h-5 text-muted-foreground/50" />}
+        loading={loading}
         delay="stagger-1"
       />
+      
       <KPICard
         label="Total Invertido"
-        value={
-          totals.totalCost > 0
-            ? formatCurrency(totals.totalCost)
-            : "—"
-        }
-        subvalue={
-          totals.positionCount > 0
-            ? `${totals.positionCount} posición(es)`
-            : undefined
-        }
-        icon={<PiggyBank className="h-4 w-4" />}
-        colorClass="text-zinc-400"
+        value={hideBalances ? "****" : formatCurrency(totals.totalCost)}
+        subvalue={hideBalances ? null : (
+          <span className="text-muted-foreground">
+            {totals.positionCount} posición(es)
+          </span>
+        )}
+        icon={<Briefcase className="w-5 h-5 text-muted-foreground/50" />}
+        loading={loading}
         delay="stagger-2"
       />
+      
       <KPICard
         label="Beneficio / Pérdida"
-        value={
-          totals.totalCost > 0
-            ? formatPnl(totals.totalPnl)
-            : "—"
-        }
-        subvalue={
-          totals.totalCost > 0 ? (
-            <span className="flex items-center gap-1 font-medium">
-              Hoy: <span className={totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                {totals.totalPnl24h > 0 ? "+" : ""}{formatPnl(totals.totalPnl24h).replace("+", "")}
-              </span>
+        value={hideBalances ? "****" : formatPnl(totals.totalPnl)}
+        valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
+        subvalue={hideBalances ? null : (
+          <span className="text-muted-foreground flex items-center gap-1">
+            Hoy: <span className={totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
+              {totals.totalPnl24h > 0 ? "+" : ""}{formatCurrency(totals.totalPnl24h)}
             </span>
-          ) : undefined
-        }
-        icon={<PnlIcon className="h-4 w-4" />}
-        colorClass={totals.totalCost > 0 ? pnlColor : "text-zinc-400"}
-        delay="stagger-3"
-      />
-      <KPICard
-        label="Rentabilidad"
-        value={
-          totals.totalCost > 0
-            ? formatPercent(totals.totalPnlPercent)
-            : "—"
-        }
-        subvalue={
-          totals.totalCost > 0 ? (
-            <span className="flex items-center gap-1 font-medium">
-              Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                {totals.totalPnlPercent24h > 0 ? "+" : ""}{formatPercent(totals.totalPnlPercent24h).replace("+", "")}
-              </span>
-            </span>
-          ) : undefined
-        }
+          </span>
+        )}
         icon={
-          totals.totalCost > 0 ? (
-            <BarChart3 className="h-4 w-4" />
+          isPositive ? (
+            <TrendingUp className="w-5 h-5 text-emerald-400/50" />
           ) : (
-            <Layers className="h-4 w-4" />
+            <TrendingDown className="w-5 h-5 text-rose-400/50" />
           )
         }
-        colorClass={totals.totalCost > 0 ? pnlColor : "text-zinc-400"}
+        loading={loading}
+        delay="stagger-3"
+      />
+      
+      <KPICard
+        label="Rentabilidad"
+        value={hideBalances ? "****" : formatPercent(totals.totalPnlPercent)}
+        valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
+        subvalue={hideBalances ? null : (
+          <span className="text-muted-foreground flex items-center gap-1">
+            Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
+              {totals.totalPnlPercent24h > 0 ? "+" : ""}{formatPercent(totals.totalPnlPercent24h)}
+            </span>
+          </span>
+        )}
+        icon={
+          <Target
+            className={`w-5 h-5 ${
+              isPositive ? "text-emerald-400/50" : "text-rose-400/50"
+            }`}
+          />
+        }
+        loading={loading}
         delay="stagger-4"
       />
     </div>

@@ -203,9 +203,9 @@ export function MobileBottomSheet({
   const isPending = addTx.isPending || addInvestment.isPending
 
   // Premium Input Style
-  const premiumInputClass = "w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-white text-xl font-bold font-tabular placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
-  const labelClass = "block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-2"
-  const selectClass = "w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-white text-sm font-semibold focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+  const premiumInputClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-white text-xl font-bold font-tabular placeholder:text-muted-foreground/60 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+  const labelClass = "block text-[11px] font-bold text-muted-foreground/80 uppercase tracking-wider mb-2"
+  const selectClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-white text-sm font-semibold focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
 
   return (
     <AnimatePresence>
@@ -228,7 +228,7 @@ export function MobileBottomSheet({
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="md:hidden fixed bottom-0 left-0 right-0 z-[70] bg-[#09090b] rounded-t-3xl border-t border-zinc-800/60 max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            className="md:hidden fixed bottom-0 left-0 right-0 z-[70] bg-background rounded-t-3xl border-t border-border max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
           >
             {/* Drag Handle */}
             <div className="flex justify-center pt-4 pb-2 w-full touch-none cursor-grab active:cursor-grabbing">
@@ -242,23 +242,23 @@ export function MobileBottomSheet({
               <div className="px-5 pb-4">
                 <div className="flex justify-between items-center mb-5">
                   <h2 className="text-xl font-extrabold text-white">Añadir</h2>
-                  <button onClick={onClose} className="p-2 bg-zinc-900 rounded-full text-zinc-400 active:scale-95 transition-transform">
+                  <button onClick={onClose} className="p-2 bg-card rounded-full text-muted-foreground active:scale-95 transition-transform">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 {/* Segmented Control */}
                 {(step === "select" && newAssetStep === "search") && (
-                  <div className="flex p-1 bg-zinc-900 rounded-xl">
+                  <div className="flex p-1 bg-card rounded-xl">
                     <button 
                       onClick={() => { setActiveTab("operacion"); resetForm() }} 
-                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "operacion" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "operacion" ? "bg-muted text-white shadow-sm" : "text-muted-foreground/80"}`}
                     >
                       Mis Activos
                     </button>
                     <button 
                       onClick={() => { setActiveTab("nuevo"); resetForm() }} 
-                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "nuevo" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-500"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "nuevo" ? "bg-muted text-white shadow-sm" : "text-muted-foreground/80"}`}
                     >
                       Buscar Nuevo
                     </button>
@@ -275,7 +275,7 @@ export function MobileBottomSheet({
                     <div className="space-y-3 pb-6">
                       {positions.length === 0 ? (
                          <div className="text-center py-10">
-                            <p className="text-zinc-500 text-sm">No tienes activos aún.</p>
+                            <p className="text-muted-foreground/80 text-sm">No tienes activos aún.</p>
                             <button onClick={() => setActiveTab("nuevo")} className="mt-4 text-blue-400 font-bold text-sm">Buscar Nuevo Activo</button>
                          </div>
                       ) : (
@@ -286,14 +286,14 @@ export function MobileBottomSheet({
                               whileTap={{ scale: 0.96 }}
                               key={p.activo_id}
                               onClick={() => handleSelectAsset(p)}
-                              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/40 text-left active:bg-zinc-800/40 transition-colors"
+                              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border text-left active:bg-muted/50 transition-colors"
                             >
                               <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                                 <span className="text-base font-bold text-blue-400">{displayTicker.slice(0, 2)}</span>
                               </div>
                               <div className="flex-1 overflow-hidden">
                                 <p className="text-base font-bold text-white truncate">{displayTicker}</p>
-                                <p className="text-xs text-zinc-500 truncate">{p.nombre}</p>
+                                <p className="text-xs text-muted-foreground/80 truncate">{p.nombre}</p>
                               </div>
                               <div className="flex-shrink-0 text-right">
                                 <p className="text-sm font-bold text-white font-tabular">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
@@ -307,10 +307,10 @@ export function MobileBottomSheet({
 
                   {step === "form" && selectedAsset && (
                     <div className="space-y-6 pb-6">
-                       <div className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+                       <div className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border">
                           <div className="flex-1 min-w-0">
                              <p className="text-sm font-bold text-white truncate">{selectedAsset.ticker}</p>
-                             <p className="text-xs text-zinc-500 truncate">{selectedAsset.nombre}</p>
+                             <p className="text-xs text-muted-foreground/80 truncate">{selectedAsset.nombre}</p>
                           </div>
                           <button onClick={() => setStep("select")} className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full">Cambiar</button>
                        </div>
@@ -322,7 +322,7 @@ export function MobileBottomSheet({
                              whileTap={{ scale: 0.95 }}
                              key={tipo}
                              onClick={() => setTipoOp(tipo)}
-                             className={`flex flex-col items-center justify-center gap-1 rounded-2xl border py-4 transition-all ${tipoOp === tipo ? (tipo === "Compra" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-rose-500/50 bg-rose-500/10 text-rose-400") : "border-zinc-800 bg-zinc-900/50 text-zinc-500"}`}
+                             className={`flex flex-col items-center justify-center gap-1 rounded-2xl border py-4 transition-all ${tipoOp === tipo ? (tipo === "Compra" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-rose-500/50 bg-rose-500/10 text-rose-400") : "border-border bg-card/50 text-muted-foreground/80"}`}
                            >
                               {tipo === "Compra" ? <ArrowDownRight className="h-6 w-6" /> : <ArrowUpRight className="h-6 w-6" />}
                               <span className="font-bold text-sm">{tipo}</span>
@@ -376,16 +376,16 @@ export function MobileBottomSheet({
                 <div className="px-5">
                   {newAssetStep === "search" && (
                      <div className="space-y-6 pb-6">
-                       <p className="text-zinc-400 text-sm">Busca el activo por su Ticker o ISIN para añadirlo a tu cartera.</p>
+                       <p className="text-muted-foreground text-sm">Busca el activo por su Ticker o ISIN para añadirlo a tu cartera.</p>
                        <div className="space-y-4">
                           <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/80" />
                             <input 
                               type="text" 
                               placeholder="Ej: AAPL, VWCE.DE..." 
                               value={ticker} 
                               onChange={(e) => setTicker(e.target.value.toUpperCase())} 
-                              className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl pl-12 pr-4 py-4 text-white text-lg font-bold placeholder:text-zinc-600 placeholder:font-medium focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 text-white text-lg font-bold placeholder:text-muted-foreground/60 placeholder:font-medium focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                             />
                           </div>
                           
@@ -408,9 +408,9 @@ export function MobileBottomSheet({
                           <div className="flex-1 overflow-hidden pr-2">
                              <p className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">Activo Encontrado</p>
                              <p className="text-white text-lg font-bold leading-tight truncate">{ticker}</p>
-                             <p className="text-zinc-400 text-sm truncate">{nombre || "—"}</p>
+                             <p className="text-muted-foreground text-sm truncate">{nombre || "—"}</p>
                           </div>
-                          <button onClick={() => setNewAssetStep("search")} className="text-zinc-400 text-xs bg-zinc-900 px-3 py-1.5 rounded-full font-semibold flex-shrink-0">Editar</button>
+                          <button onClick={() => setNewAssetStep("search")} className="text-muted-foreground text-xs bg-card px-3 py-1.5 rounded-full font-semibold flex-shrink-0">Editar</button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -420,7 +420,7 @@ export function MobileBottomSheet({
                                 <select value={tipo} onChange={(e) => setTipo(e.target.value)} className={selectClass}>
                                   {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500 text-xs">▼</div>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/80 text-xs">▼</div>
                               </div>
                            </div>
                            <div>
@@ -429,13 +429,13 @@ export function MobileBottomSheet({
                                 <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={selectClass}>
                                   {MONEDAS.map(m => <option key={m} value={m}>{m}</option>)}
                                 </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500 text-xs">▼</div>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/80 text-xs">▼</div>
                               </div>
                            </div>
                         </div>
 
                         {/* Compra inicial */}
-                        <div className="pt-4 border-t border-zinc-800">
+                        <div className="pt-4 border-t border-border">
                           <p className="text-white font-bold mb-4 flex items-center gap-2">
                              <Plus className="h-5 w-5 text-emerald-400" />
                              Primera Inversión

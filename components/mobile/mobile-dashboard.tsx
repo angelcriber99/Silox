@@ -99,13 +99,13 @@ export function MobileDashboard({
   if (isLoading) {
     return (
       <div className="px-5 pt-6 pb-24 space-y-6">
-        <div className="h-6 w-32 bg-zinc-800 rounded animate-pulse" />
-        <div className="h-12 w-48 bg-zinc-800 rounded animate-pulse mx-auto" />
-        <div className="h-32 w-full bg-zinc-800/50 rounded-2xl animate-pulse" />
+        <div className="h-6 w-32 bg-muted rounded animate-pulse" />
+        <div className="h-12 w-48 bg-muted rounded animate-pulse mx-auto" />
+        <div className="h-32 w-full bg-muted/50 rounded-2xl animate-pulse" />
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="h-16 w-full bg-zinc-800/40 rounded-xl animate-pulse"
+            className="h-16 w-full bg-muted/50 rounded-xl animate-pulse"
           />
         ))}
       </div>
@@ -122,7 +122,7 @@ export function MobileDashboard({
               <Activity className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Portfolio</p>
+              <p className="text-xs text-muted-foreground/80 font-semibold uppercase tracking-wider">Portfolio</p>
               <p className="text-sm font-bold text-white">Resumen Global</p>
             </div>
           </div>
@@ -134,7 +134,7 @@ export function MobileDashboard({
               await supabase.auth.signOut()
               window.location.href = "/login"
             }}
-            className="h-10 w-10 rounded-xl bg-zinc-800/60 flex items-center justify-center text-zinc-400 active:bg-zinc-700 transition-colors"
+            className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground active:bg-zinc-700 transition-colors"
           >
             <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -146,7 +146,7 @@ export function MobileDashboard({
 
         {/* ─── Big Number ────────────────── */}
         <div className="text-center mb-2">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-2">
+          <p className="text-xs text-muted-foreground/80 uppercase tracking-widest font-semibold mb-2">
             Valor Total
           </p>
           <p className="text-4xl font-extrabold font-tabular text-white tracking-tight leading-none">
@@ -204,16 +204,16 @@ export function MobileDashboard({
 
       {/* ─── Quick Stats Row ─────────────── */}
       <div className="flex gap-3 px-5 mb-5">
-        <div className="flex-1 bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/40 rounded-2xl p-4">
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+        <div className="flex-1 bg-card backdrop-blur-sm border border-border rounded-2xl p-4">
+          <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
             Invertido
           </p>
           <p className="text-lg font-bold font-tabular text-white mt-1">
             {totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—"}
           </p>
         </div>
-        <div className="flex-1 bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/40 rounded-2xl p-4">
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+        <div className="flex-1 bg-card backdrop-blur-sm border border-border rounded-2xl p-4">
+          <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
             Rent. Hoy
           </p>
           <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
@@ -224,17 +224,17 @@ export function MobileDashboard({
 
       {/* ─── Assets List ─────────────────── */}
       <div className="px-5 mb-3">
-        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           Tus Activos
         </h2>
       </div>
 
-      <div className="bg-zinc-900/30 border-y border-zinc-800/30">
+      <div className="bg-card/30 border-y border-border/30">
         {sortedPositions.length === 0 ? (
-          <div className="text-center py-16 text-zinc-600">
+          <div className="text-center py-16 text-muted-foreground/60">
             <Activity className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium text-zinc-500">Sin posiciones</p>
-            <p className="text-xs text-zinc-600 mt-1">
+            <p className="font-medium text-muted-foreground/80">Sin posiciones</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
               Pulsa el botón + para añadir tu primer activo
             </p>
           </div>

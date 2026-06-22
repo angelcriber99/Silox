@@ -18,6 +18,7 @@ import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatUnits, formatPnl } from "@/lib/utils/formatters"
 import { Sparkline } from "@/components/asset/sparkline"
 import { AddAssetModal } from "@/components/asset/add-asset-modal"
+import { usePreferences } from "@/lib/stores/use-preferences"
 import Link from "next/link"
 
 interface PositionsTableProps {
@@ -48,9 +49,11 @@ type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_pe
 type SortDir = "asc" | "desc"
 
 function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
-  if (value === null) return <span className="text-zinc-600">—</span>
+  const { hideBalances } = usePreferences()
+  if (hideBalances) return <span className="text-muted-foreground/60">****</span>
+  if (value === null) return <span className="text-muted-foreground/60">—</span>
 
-  const color = value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-zinc-400"
+  const color = value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-muted-foreground"
   const formatted = type === "currency" ? formatPnl(value) : formatPercent(value)
 
   return (
@@ -62,10 +65,10 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
 
 function SkeletonRow() {
   return (
-    <TableRow className="border-zinc-800/50">
+    <TableRow className="border-border/50">
       {Array.from({ length: 9 }).map((_, i) => (
         <TableCell key={i}>
-          <div className="h-4 w-16 rounded bg-zinc-800 animate-shimmer" />
+          <div className="h-4 w-16 rounded bg-muted animate-shimmer" />
         </TableCell>
       ))}
     </TableRow>
@@ -78,6 +81,7 @@ export function PositionsTable({
   onAddTransaction,
   onEditAsset,
 }: PositionsTableProps) {
+  const { hideBalances } = usePreferences()
   const [filter, setFilter] = useState("Todos")
   const [searchQuery, setSearchQuery] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("valor_actual")
@@ -129,7 +133,7 @@ export function PositionsTable({
     className?: string
   }) => (
     <TableHead
-      className={`text-zinc-500 cursor-pointer select-none hover:text-zinc-300 transition-colors duration-200 ${className}`}
+      className={`text-muted-foreground/80 cursor-pointer select-none hover:text-foreground/80 transition-colors duration-200 ${className}`}
       onClick={() => toggleSort(sortKeyName)}
     >
       <span className="inline-flex items-center gap-1">
@@ -140,10 +144,10 @@ export function PositionsTable({
   )
 
   return (
-    <Card className="animate-fade-in stagger-3 bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm overflow-hidden">
+    <Card className="animate-fade-in stagger-3 bg-card border-border backdrop-blur-sm overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Layers className="h-4 w-4" />
             Posiciones
           </CardTitle>
@@ -152,12 +156,12 @@ export function PositionsTable({
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-2.5 top-2 h-4 w-4 text-zinc-500" />
+              <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground/80" />
               <Input
                 placeholder="Buscar activo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-xs bg-zinc-950 border-zinc-800 w-full sm:w-[160px] lg:w-[200px] text-zinc-300 focus-visible:ring-purple-500/30"
+                className="pl-8 h-8 text-xs bg-zinc-950 border-border w-full sm:w-[160px] lg:w-[200px] text-foreground/80 focus-visible:ring-purple-500/30"
               />
             </div>
 
@@ -176,7 +180,7 @@ export function PositionsTable({
                         ? "bg-zinc-700 text-white shadow-sm"
                         : disabled
                           ? "text-zinc-700 cursor-not-allowed"
-                          : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60"
+                          : "text-muted-foreground/80 hover:text-foreground/80 hover:bg-muted"
                     }`}
                   >
                     {opt}
@@ -201,18 +205,18 @@ export function PositionsTable({
         <div className="hidden md:block overflow-x-auto min-h-[500px]">
           <Table>
             <TableHeader className="bg-zinc-950/40">
-              <TableRow className="border-zinc-800/50 hover:bg-transparent">
+              <TableRow className="border-border/50 hover:bg-transparent">
                 <SortableHeader label="Símbolo" sortKeyName="ticker" />
-                <TableHead className="text-zinc-500 hidden md:table-cell">Nombre</TableHead>
+                <TableHead className="text-muted-foreground/80 hidden md:table-cell">Nombre</TableHead>
                 <SortableHeader label="Tipo" sortKeyName="tipo" />
                 <SortableHeader label="Unidades" sortKeyName="unidades" className="text-right" />
-                <TableHead className="text-zinc-500 text-right hidden lg:table-cell">P. Medio</TableHead>
-                <TableHead className="text-zinc-500 text-right">Precio</TableHead>
-                <TableHead className="text-zinc-500 text-right pr-6 hidden xl:table-cell">Tendencia (7d) / 24h</TableHead>
+                <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Medio</TableHead>
+                <TableHead className="text-muted-foreground/80 text-right">Precio</TableHead>
+                <TableHead className="text-muted-foreground/80 text-right pr-6 hidden xl:table-cell">Tendencia (7d) / 24h</TableHead>
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right" />
                 <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
                 <SortableHeader label="P&L %" sortKeyName="pnl_percent" className="text-right hidden sm:table-cell" />
-                <TableHead className="text-right text-zinc-500 w-12" />
+                <TableHead className="text-right text-muted-foreground/80 w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,24 +225,24 @@ export function PositionsTable({
                   <SkeletonRow key={i} />
                 ))
               ) : filteredAndSorted.length === 0 ? (
-                <TableRow className="border-zinc-800/50 hover:bg-transparent">
+                <TableRow className="border-border/50 hover:bg-transparent">
                   <TableCell
                     colSpan={11}
-                    className="text-center text-zinc-600 py-16"
+                    className="text-center text-muted-foreground/60 py-16"
                   >
                     <div className="flex flex-col items-center gap-3">
-                      <div className="h-12 w-12 rounded-full bg-zinc-800/60 flex items-center justify-center">
-                        <Layers className="h-5 w-5 text-zinc-600" />
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                        <Layers className="h-5 w-5 text-muted-foreground/60" />
                       </div>
                       <div>
-                        <p className="font-medium text-zinc-500">
+                        <p className="font-medium text-muted-foreground/80">
                           {searchQuery.trim() !== ""
                             ? `No hay resultados para "${searchQuery}"`
                             : filter !== "Todos"
                               ? `Sin posiciones de tipo "${filter}"`
                               : "Tu cartera está vacía"}
                         </p>
-                        <p className="text-xs text-zinc-600 mt-1">
+                        <p className="text-xs text-muted-foreground/60 mt-1">
                           Añade un activo y registra tu primera operación
                         </p>
                       </div>
@@ -255,7 +259,7 @@ export function PositionsTable({
                   return (
                     <TableRow
                       key={p.activo_id}
-                      className="border-zinc-800/30 hover:bg-zinc-800/30 transition-colors duration-200 group"
+                      className="border-border/30 hover:bg-muted/30 transition-colors duration-200 group"
                     >
                       <TableCell className="font-medium text-white font-tabular">
                         <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-400 transition-colors">
@@ -264,18 +268,18 @@ export function PositionsTable({
                               ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
                               : p.ticker.split('.')[0]}
                             {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
-                              <span className="text-zinc-500 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
+                              <span className="text-muted-foreground/80 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
                             )}
                           </span>
                           {p.isin && (
-                            <span className="text-[10px] text-zinc-500 tracking-wide font-normal mt-0.5">
+                            <span className="text-[10px] text-muted-foreground/80 tracking-wide font-normal mt-0.5">
                               {p.isin}
                             </span>
                           )}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-zinc-500 text-sm max-w-[160px] truncate hidden md:table-cell">
-                        <Link href={`/activo/${p.activo_id}`} className="hover:text-zinc-300 transition-colors">
+                      <TableCell className="text-muted-foreground/80 text-sm max-w-[160px] truncate hidden md:table-cell">
+                        <Link href={`/activo/${p.activo_id}`} className="hover:text-foreground/80 transition-colors">
                           {p.nombre || "—"}
                         </Link>
                       </TableCell>
@@ -284,35 +288,35 @@ export function PositionsTable({
                           variant="outline"
                           className={
                             TIPO_BADGE_STYLES[p.tipo] ??
-                            "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                            "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
                           }
                         >
                           {p.tipo}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-zinc-300">
+                      <TableCell className="text-right font-tabular text-foreground/80">
                         {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-zinc-500 hidden lg:table-cell">
+                      <TableCell className="text-right font-tabular text-muted-foreground/80 hidden lg:table-cell">
                         {p.precio_medio > 0
-                          ? formatCurrency(p.precio_medio, p.moneda)
+                          ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda))
                           : "—"}
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-zinc-300">
-                        {p.precio_actual_nativo !== null ? (
+                      <TableCell className="text-right font-tabular text-foreground/80">
+                        {hideBalances ? "****" : (p.precio_actual_nativo !== null ? (
                           formatCurrency(p.precio_actual_nativo, p.original_currency || p.moneda)
                         ) : p.precio_actual !== null ? (
                           formatCurrency(p.precio_actual, 'EUR')
                         ) : (
-                          <span className="text-zinc-600 text-xs">
+                          <span className="text-muted-foreground/60 text-xs">
                             pendiente
                           </span>
-                        )}
+                        ))}
                       </TableCell>
                       <TableCell className="text-right hidden xl:table-cell">
                         <div className="flex items-center justify-end gap-4 pr-2">
                           <div className="flex items-center gap-3">
-                            {hasHistory && p.sparkline[0] > 0 && (
+                            {hasHistory && p.sparkline[0] > 0 && !hideBalances && (
                               <span className={`text-xs font-medium font-tabular w-12 text-right ${sparklineColor === "#34d399" ? "text-emerald-400" : "text-rose-400"}`}>
                                 {((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0] * 100) > 0 ? "+" : ""}
                                 {(((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0]) * 100).toFixed(2)}%
@@ -325,10 +329,10 @@ export function PositionsTable({
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-white font-medium">
-                        {p.valor_actual !== null
+                      <TableCell className="text-right font-tabular text-foreground font-medium">
+                        {hideBalances ? "****" : (p.valor_actual !== null
                           ? formatCurrency(p.valor_actual, 'EUR')
-                          : "—"}
+                          : "—")}
                       </TableCell>
                       <TableCell className="text-right">
                         <PnlDisplay value={p.pnl} type="currency" />
@@ -343,7 +347,7 @@ export function PositionsTable({
                             size="icon"
                             onClick={() => onEditAsset(p)}
                             title={`Editar activo — ${p.ticker}`}
-                            className="h-7 w-7 text-zinc-600 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                            className="h-7 w-7 text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
                           >
                             <Edit3 className="h-4 w-4" />
                           </Button>
@@ -352,7 +356,7 @@ export function PositionsTable({
                             size="icon"
                             onClick={() => onAddTransaction(p)}
                             title={`Añadir transacción — ${p.ticker}`}
-                            className="h-7 w-7 text-zinc-600 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                            className="h-7 w-7 text-muted-foreground/60 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
                           >
                             <PlusCircle className="h-4 w-4" />
                           </Button>
@@ -371,18 +375,18 @@ export function PositionsTable({
           {loading ? (
              Array.from({ length: 3 }).map((_, i) => (
                <div key={i} className="p-4 flex flex-col gap-3">
-                 <div className="h-4 w-32 bg-zinc-800 animate-shimmer rounded" />
-                 <div className="h-10 w-full bg-zinc-800 animate-shimmer rounded" />
+                 <div className="h-4 w-32 bg-muted animate-shimmer rounded" />
+                 <div className="h-10 w-full bg-muted animate-shimmer rounded" />
                </div>
              ))
           ) : filteredAndSorted.length === 0 ? (
-            <div className="text-center text-zinc-600 py-16">
+            <div className="text-center text-muted-foreground/60 py-16">
                <div className="flex flex-col items-center gap-3">
-                 <div className="h-12 w-12 rounded-full bg-zinc-800/60 flex items-center justify-center">
-                   <Layers className="h-5 w-5 text-zinc-600" />
+                 <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                   <Layers className="h-5 w-5 text-muted-foreground/60" />
                  </div>
                  <div>
-                   <p className="font-medium text-zinc-500">
+                   <p className="font-medium text-muted-foreground/80">
                      {searchQuery.trim() !== ""
                        ? `No hay resultados`
                        : filter !== "Todos"
@@ -400,7 +404,7 @@ export function PositionsTable({
                  : "#71717a";
 
                return (
-                 <div key={p.activo_id} className="p-4 flex flex-col gap-3 hover:bg-zinc-800/30 transition-colors">
+                 <div key={p.activo_id} className="p-4 flex flex-col gap-3 hover:bg-muted/30 transition-colors">
                    {/* Top: Title & Badge */}
                    <div className="flex items-center justify-between">
                      <Link href={`/activo/${p.activo_id}`} className="flex flex-col flex-1">
@@ -410,7 +414,7 @@ export function PositionsTable({
                             : p.ticker.split('.')[0]}
                         </span>
                         {p.nombre && (
-                          <span className="text-xs text-zinc-500 truncate max-w-[200px]">
+                          <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">
                             {p.nombre}
                           </span>
                         )}
@@ -418,7 +422,7 @@ export function PositionsTable({
                      <Badge
                         variant="outline"
                         className={`text-[10px] px-2 py-0 h-5 ${
-                          TIPO_BADGE_STYLES[p.tipo] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                          TIPO_BADGE_STYLES[p.tipo] ?? "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
                         }`}
                       >
                         {p.tipo}
@@ -428,13 +432,13 @@ export function PositionsTable({
                    {/* Middle: Units x Price -> Total Value */}
                    <div className="flex justify-between items-end">
                      <div className="flex flex-col">
-                       <span className="text-xs text-zinc-500 mb-0.5">Posición</span>
-                       <span className="text-sm font-medium font-tabular text-zinc-300">
-                         {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-zinc-600">x</span> {p.precio_actual !== null ? formatCurrency(p.precio_actual, 'EUR') : "—"}
+                       <span className="text-xs text-muted-foreground/80 mb-0.5">Posición</span>
+                       <span className="text-sm font-medium font-tabular text-foreground/80">
+                         {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-muted-foreground/60">x</span> {p.precio_actual !== null ? formatCurrency(p.precio_actual, 'EUR') : "—"}
                        </span>
                      </div>
                      <div className="flex flex-col items-end">
-                       <span className="text-xs text-zinc-500 mb-0.5">Valor Actual</span>
+                       <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
                        <span className="text-base font-bold font-tabular text-white">
                          {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
                        </span>
@@ -442,9 +446,9 @@ export function PositionsTable({
                    </div>
 
                    {/* Bottom: P&L and Actions */}
-                   <div className="flex items-center justify-between mt-1 pt-3 border-t border-zinc-800/50">
+                   <div className="flex items-center justify-between mt-1 pt-3 border-t border-border/50">
                      <div className="flex flex-col">
-                       <span className="text-xs text-zinc-500 mb-0.5">Rentabilidad Total</span>
+                       <span className="text-xs text-muted-foreground/80 mb-0.5">Rentabilidad Total</span>
                        <div className="flex items-center gap-2">
                          <PnlDisplay value={p.pnl} type="currency" />
                          <span className="text-zinc-700 text-xs">|</span>
@@ -452,7 +456,7 @@ export function PositionsTable({
                        </div>
                      </div>
                      <div className="flex flex-col items-end mr-4">
-                       <span className="text-xs text-zinc-500 mb-0.5">Hoy (24h)</span>
+                       <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy (24h)</span>
                        <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
                      </div>
                      
@@ -461,7 +465,7 @@ export function PositionsTable({
                           variant="ghost"
                           size="icon"
                           onClick={() => onEditAsset(p)}
-                          className="h-8 w-8 text-zinc-400 bg-zinc-800/50 hover:text-white"
+                          className="h-8 w-8 text-muted-foreground bg-muted/50 hover:text-white"
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>

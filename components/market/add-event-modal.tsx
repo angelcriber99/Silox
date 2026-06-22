@@ -86,14 +86,14 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-zinc-950 border border-zinc-800/60 text-zinc-100 shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="max-w-md bg-zinc-950 border border-border text-foreground shadow-2xl p-0 overflow-hidden">
         <div className="bg-gradient-to-b from-amber-500/10 to-transparent p-6 pb-2 w-full">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-white">
               <Calendar className="h-5 w-5 text-amber-400" />
               {initialData ? "Editar Evento Periódico" : "Nuevo Evento Periódico"}
             </DialogTitle>
-            <DialogDescription className="text-zinc-400 text-sm mt-1.5">
+            <DialogDescription className="text-muted-foreground text-sm mt-1.5">
               Programa alertas automáticas para cobros recurrentes.
             </DialogDescription>
           </DialogHeader>
@@ -101,20 +101,20 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 pt-2 space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="titulo" className="text-zinc-300 font-medium">Descripción del Evento</Label>
+            <Label htmlFor="titulo" className="text-foreground/80 font-medium">Descripción del Evento</Label>
             <Input
               id="titulo"
               required
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ej: Cobro de Intereses Revolut"
-              className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-amber-500/30"
+              className="bg-card border-border text-white placeholder:text-muted-foreground/60 focus-visible:ring-amber-500/30"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-zinc-300">Día del mes</Label>
+              <Label className="text-foreground/80">Día del mes</Label>
               <Input
                 required
                 type="number"
@@ -122,16 +122,16 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
                 max="31"
                 value={dia}
                 onChange={(e) => setDia(e.target.value)}
-                className="bg-zinc-900 border-zinc-800 text-white focus-visible:ring-amber-500/30"
+                className="bg-card border-border text-white focus-visible:ring-amber-500/30"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-zinc-300">Tipo</Label>
+              <Label className="text-foreground/80">Tipo</Label>
               <Select value={tipo} onValueChange={setTipo}>
-                <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-white">
+                <SelectTrigger className="w-full bg-card border-border text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                <SelectContent className="bg-card border-border text-white">
                   <SelectItem value="Interés">Intereses</SelectItem>
                   <SelectItem value="Aportación">Aportación</SelectItem>
                   <SelectItem value="Dividendo">Dividendo</SelectItem>
@@ -141,16 +141,16 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
           </div>
 
           <div className="space-y-2 min-w-0">
-            <Label className="text-zinc-300 font-medium">Asociar a un activo en cartera</Label>
+            <Label className="text-foreground/80 font-medium">Asociar a un activo en cartera</Label>
             <Select value={activoId} onValueChange={setActivoId}>
-              <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-white">
+              <SelectTrigger className="w-full bg-card border-border text-white">
                 <SelectValue placeholder="Selecciona un activo" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800 text-white max-w-[var(--radix-select-trigger-width)]">
+              <SelectContent className="bg-card border-border text-white max-w-[var(--radix-select-trigger-width)]">
                 {positions.map(p => (
-                  <SelectItem key={p.activo_id} value={p.activo_id} className="cursor-pointer hover:bg-zinc-800">
+                  <SelectItem key={p.activo_id} value={p.activo_id} className="cursor-pointer hover:bg-muted">
                     <div className="truncate max-w-[250px] sm:max-w-[300px]">
-                      <span className="font-medium">{p.ticker}</span> <span className="text-zinc-500 ml-1">— {p.nombre || p.tipo}</span>
+                      <span className="font-medium">{p.ticker}</span> <span className="text-muted-foreground/80 ml-1">— {p.nombre || p.tipo}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -158,7 +158,7 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
             </Select>
           </div>
 
-          <div className="flex justify-between items-center pt-5 border-t border-zinc-800/50 mt-6">
+          <div className="flex justify-between items-center pt-5 border-t border-border/50 mt-6">
             <div>
               {initialData && (
                 <Button
@@ -177,7 +177,7 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
               <Button
                 type="button"
                 variant="ghost"
-                className="mr-3 text-zinc-400 hover:text-white"
+                className="mr-3 text-muted-foreground hover:text-white"
                 onClick={() => onOpenChange(false)}
               >
                 Cancelar

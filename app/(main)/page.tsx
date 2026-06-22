@@ -45,7 +45,7 @@ export default function Home() {
     totals.totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col">
+    <main className="min-h-screen bg-background text-foreground flex flex-col">
 
       {/* ── Mobile Dashboard ─────────────────── */}
       <div className="md:hidden">

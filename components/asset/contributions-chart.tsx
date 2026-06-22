@@ -67,13 +67,13 @@ export function ContributionsChart({ transactions, currentPrice }: Contributions
   if (data.length === 0) return null
 
   return (
-    <Card className="bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm animate-fade-in stagger-2">
+    <Card className="bg-card border-border backdrop-blur-sm animate-fade-in stagger-2">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-zinc-100">
+        <CardTitle className="flex items-center gap-2 text-foreground">
           <History className="h-5 w-5 text-blue-400" />
           Evolución Histórica
         </CardTitle>
-        <CardDescription className="text-zinc-400">
+        <CardDescription className="text-muted-foreground">
           Comparativa entre el capital que has aportado y el valor de mercado en el momento de cada operación.
         </CardDescription>
       </CardHeader>
@@ -114,8 +114,8 @@ export function ContributionsChart({ transactions, currentPrice }: Contributions
                     const isPositive = diff >= 0
 
                     return (
-                      <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-2xl">
-                        <p className="text-zinc-300 text-sm mb-3 font-medium border-b border-zinc-800 pb-2">{label}</p>
+                      <div className="bg-card border border-border p-4 rounded-xl shadow-2xl">
+                        <p className="text-foreground/80 text-sm mb-3 font-medium border-b border-border pb-2">{label}</p>
                         <div className="space-y-2">
                           <div className="flex justify-between gap-4">
                             <span className="text-emerald-400 text-sm font-medium">Valor Mercado:</span>
@@ -129,8 +129,8 @@ export function ContributionsChart({ transactions, currentPrice }: Contributions
                               {formatCurrency(invested)}
                             </span>
                           </div>
-                          <div className="pt-2 mt-2 border-t border-zinc-800 flex justify-between gap-4">
-                            <span className="text-zinc-400 text-xs font-medium">Beneficio latente:</span>
+                          <div className="pt-2 mt-2 border-t border-border flex justify-between gap-4">
+                            <span className="text-muted-foreground text-xs font-medium">Beneficio latente:</span>
                             <span className={`text-xs font-bold font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {isPositive ? '+' : ''}{formatCurrency(diff)}
                             </span>

@@ -11,13 +11,13 @@ import { formatCurrency } from "@/lib/utils/formatters"
 
 export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
   return (
-    <Card className="bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm animate-fade-in stagger-2">
+    <Card className="bg-card border-border backdrop-blur-sm animate-fade-in stagger-2">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-zinc-100 text-base">
+        <CardTitle className="flex items-center gap-2 text-foreground text-base">
           <DollarSign className="h-5 w-5 text-blue-400" />
           Composición del Capital
         </CardTitle>
-        <CardDescription className="text-zinc-400">
+        <CardDescription className="text-muted-foreground">
           ¿Cuánto es tuyo y cuánto te ha regalado el mercado?
         </CardDescription>
       </CardHeader>
@@ -33,16 +33,16 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
               if (!active || !payload?.length) return null
               const d = payload[0].payload
               return (
-                <div className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg shadow-xl">
+                <div className="bg-card border border-border p-3 rounded-lg shadow-xl">
                   <p className="text-white text-sm font-bold">{d.name}</p>
-                  <p className="text-zinc-300 text-sm font-tabular">{formatCurrency(d.value)}</p>
+                  <p className="text-foreground/80 text-sm font-tabular">{formatCurrency(d.value)}</p>
                 </div>
               )
             }} />
           </PieChart>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
-              <p className="text-[10px] text-zinc-500 uppercase font-medium">Total</p>
+              <p className="text-[10px] text-muted-foreground/80 uppercase font-medium">Total</p>
               <p className="text-lg font-bold text-white font-tabular">{formatCurrency(position.valor_actual ?? 0)}</p>
             </div>
           </div>
@@ -51,24 +51,24 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-blue-500" />
-              <span className="text-zinc-400 text-sm">Tu Dinero</span>
+              <span className="text-muted-foreground text-sm">Tu Dinero</span>
             </div>
             <span className="text-white font-bold font-tabular text-sm">{formatCurrency(position.coste_total)}</span>
           </div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-zinc-400 text-sm">Intereses</span>
+              <span className="text-muted-foreground text-sm">Intereses</span>
             </div>
             <span className="text-emerald-400 font-bold font-tabular text-sm">
               +{formatCurrency(Math.max(0, stats.gananciaIntereses))}
             </span>
           </div>
           {position.comisiones_total > 0 && (
-            <div className="pt-2 border-t border-zinc-800">
+            <div className="pt-2 border-t border-border">
               <div className="flex justify-between items-center">
-                <span className="text-zinc-500 text-xs">Comisiones pagadas</span>
-                <span className="text-zinc-400 font-tabular text-xs">-{formatCurrency(position.comisiones_total)}</span>
+                <span className="text-muted-foreground/80 text-xs">Comisiones pagadas</span>
+                <span className="text-muted-foreground font-tabular text-xs">-{formatCurrency(position.comisiones_total)}</span>
               </div>
             </div>
           )}
@@ -82,13 +82,13 @@ export function AssetEvolutionChart({ evolutionData }: any) {
   if (!evolutionData || evolutionData.length === 0) return null
   
   return (
-    <Card className="lg:col-span-2 bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm animate-fade-in stagger-2">
+    <Card className="lg:col-span-2 bg-card border-border backdrop-blur-sm animate-fade-in stagger-2">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-zinc-100 text-base">
+        <CardTitle className="flex items-center gap-2 text-foreground text-base">
           <History className="h-5 w-5 text-blue-400" />
           Evolución Histórica
         </CardTitle>
-        <CardDescription className="text-zinc-400">
+        <CardDescription className="text-muted-foreground">
           Tu inversión vs el valor de mercado en cada operación.
         </CardDescription>
       </CardHeader>
@@ -115,8 +115,8 @@ export function AssetEvolutionChart({ evolutionData }: any) {
                 const inv = payload[1]?.value as number
                 const diff = val - inv
                 return (
-                  <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-2xl">
-                    <p className="text-zinc-300 text-sm mb-3 font-medium border-b border-zinc-800 pb-2">{label}</p>
+                  <div className="bg-card border border-border p-4 rounded-xl shadow-2xl">
+                    <p className="text-foreground/80 text-sm mb-3 font-medium border-b border-border pb-2">{label}</p>
                     <div className="space-y-2">
                       <div className="flex justify-between gap-6">
                         <span className="text-emerald-400 text-sm">Valor</span>
@@ -126,8 +126,8 @@ export function AssetEvolutionChart({ evolutionData }: any) {
                         <span className="text-blue-400 text-sm">Aportado</span>
                         <span className="text-blue-400 text-sm font-bold font-tabular">{formatCurrency(inv)}</span>
                       </div>
-                      <div className="pt-2 mt-2 border-t border-zinc-800 flex justify-between gap-6">
-                        <span className="text-zinc-400 text-xs">Beneficio</span>
+                      <div className="pt-2 mt-2 border-t border-border flex justify-between gap-6">
+                        <span className="text-muted-foreground text-xs">Beneficio</span>
                         <span className={`text-xs font-bold font-tabular ${diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {diff >= 0 ? '+' : ''}{formatCurrency(diff)}
                         </span>
@@ -148,13 +148,13 @@ export function AssetEvolutionChart({ evolutionData }: any) {
 
 export function AssetContributionsChart({ monthlyContributionsData }: any) {
   return (
-    <Card className="lg:col-span-2 bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm">
+    <Card className="lg:col-span-2 bg-card border-border backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-zinc-100 text-base">
+        <CardTitle className="flex items-center gap-2 text-foreground text-base">
           <PiggyBank className="h-5 w-5 text-amber-400" />
           Aportaciones Mensuales
         </CardTitle>
-        <CardDescription className="text-zinc-400">
+        <CardDescription className="text-muted-foreground">
           Dinero invertido de tu bolsillo cada mes.
         </CardDescription>
       </CardHeader>
@@ -169,8 +169,8 @@ export function AssetContributionsChart({ monthlyContributionsData }: any) {
                 <Tooltip content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null
                   return (
-                    <div className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg shadow-xl">
-                      <p className="text-zinc-300 text-sm font-medium mb-1">{label}</p>
+                    <div className="bg-card border border-border p-3 rounded-lg shadow-xl">
+                      <p className="text-foreground/80 text-sm font-medium mb-1">{label}</p>
                       <p className="text-amber-400 text-sm font-bold font-tabular">{formatCurrency(payload[0].value as number)}</p>
                     </div>
                   )
@@ -180,10 +180,10 @@ export function AssetContributionsChart({ monthlyContributionsData }: any) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-[250px] w-full flex flex-col items-center justify-center text-center px-4 border-2 border-dashed border-zinc-800/50 rounded-lg bg-zinc-900/20">
+          <div className="h-[250px] w-full flex flex-col items-center justify-center text-center px-4 border-2 border-dashed border-border/50 rounded-lg bg-card/20">
             <PiggyBank className="h-10 w-10 text-zinc-700 mb-3" />
-            <p className="text-zinc-300 font-medium text-sm">Tu inversión inicial fue grande</p>
-            <p className="text-zinc-500 text-xs mt-2 max-w-[250px]">
+            <p className="text-foreground/80 font-medium text-sm">Tu inversión inicial fue grande</p>
+            <p className="text-muted-foreground/80 text-xs mt-2 max-w-[250px]">
               Hemos ocultado la primera aportación para no romper la escala visual. Aquí verás tus futuras aportaciones mensuales DCA.
             </p>
           </div>

@@ -6,6 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -35,6 +36,7 @@ interface ChartDatum {
 }
 
 export function AllocationChart({ positions }: AllocationChartProps) {
+  const { hideBalances } = usePreferences()
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
 
@@ -77,19 +79,19 @@ export function AllocationChart({ positions }: AllocationChartProps) {
   const hasData = chartData.data.length > 0
 
   return (
-    <Card className="animate-fade-in stagger-2 bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm h-full flex flex-col">
+    <Card className="animate-fade-in stagger-2 bg-card border-border backdrop-blur-sm h-full flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-zinc-400">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
             Distribución
           </CardTitle>
-          <div className="flex gap-1 rounded-lg bg-zinc-800/60 p-0.5">
+          <div className="flex gap-1 rounded-lg bg-muted p-0.5">
             <button
               onClick={() => setGroupBy("tipo")}
               className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
                 groupBy === "tipo"
                   ? "bg-zinc-700 text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  : "text-muted-foreground/80 hover:text-foreground/80"
               }`}
             >
               Tipo
@@ -99,7 +101,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
               className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
                 groupBy === "estrategia"
                   ? "bg-zinc-700 text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  : "text-muted-foreground/80 hover:text-foreground/80"
               }`}
             >
               Estrategia
@@ -109,7 +111,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
       </CardHeader>
       <CardContent className="pt-0 flex-1 flex flex-col justify-center">
         {!hasData ? (
-          <div className="flex items-center justify-center h-48 text-zinc-600 text-sm">
+          <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
             Añade activos con transacciones para ver la distribución
           </div>
         ) : (
@@ -139,15 +141,15 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                     if (!active || !payload?.length) return null
                     const d = payload[0].payload as ChartDatum
                     return (
-                      <div className="rounded-xl bg-zinc-900/95 backdrop-blur-md border border-zinc-700 p-4 shadow-2xl z-50 relative">
+                      <div className="rounded-xl bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl z-50 relative">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
-                          <p className="text-sm font-bold text-white uppercase tracking-wider">{d.name}</p>
+                          <p className="text-sm font-bold text-foreground uppercase tracking-wider">{d.name}</p>
                         </div>
-                        <p className="text-2xl font-bold font-tabular text-white">
-                          {formatCurrency(d.value)}
+                        <p className="text-2xl font-bold font-tabular text-foreground">
+                          {hideBalances ? "****" : formatCurrency(d.value)}
                         </p>
-                        <p className="text-sm font-medium text-zinc-400 mt-1">
+                        <p className="text-sm font-medium text-muted-foreground mt-1">
                           Representa el {formatPercent(d.percent).replace("+", "")} de tu cartera
                         </p>
                       </div>
@@ -158,13 +160,15 @@ export function AllocationChart({ positions }: AllocationChartProps) {
               {/* Center label */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-500 group-hover:scale-110">
                 <div className="text-center">
-                  <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest mb-1">Total</p>
-                  <p className="text-2xl font-bold font-tabular text-white drop-shadow-md">
-                    {formatCurrency(totals.totalValue > 0 ? totals.totalValue : chartData.total)}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Total</p>
+                  <p className="text-2xl font-bold font-tabular text-foreground drop-shadow-md">
+                    {hideBalances ? "****" : formatCurrency(totals.totalValue > 0 ? totals.totalValue : chartData.total)}
                   </p>
-                  <p className={`text-xs font-medium mt-0.5 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
-                  </p>
+                  {!hideBalances && (
+                    <p className={`text-[11px] font-medium mt-0.5 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -178,7 +182,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                     style={{ backgroundColor: d.color }}
                   />
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="text-base font-medium text-zinc-200 group-hover:text-white transition-colors truncate leading-tight">
+                    <p className="text-base font-medium text-foreground/90 group-hover:text-white transition-colors truncate leading-tight">
                       {d.name}
                     </p>
                     <p className={`text-[11px] font-medium mt-0.5 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -186,10 +190,10 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-base font-bold font-tabular text-white">
-                      {formatCurrency(d.value)}
+                    <p className="text-base font-bold font-tabular text-foreground">
+                      {hideBalances ? "****" : formatCurrency(d.value)}
                     </p>
-                    <p className="text-xs font-medium font-tabular text-zinc-500">
+                    <p className="text-xs font-medium font-tabular text-muted-foreground">
                       {d.percent.toFixed(1)}%
                     </p>
                   </div>

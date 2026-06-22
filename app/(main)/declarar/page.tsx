@@ -47,14 +47,14 @@ export default function DeclararPage() {
   }, [yearEvents])
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col">
+    <main className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 space-y-8">
         
         {/* Header Section */}
         <div className="flex flex-col gap-4">
           <Link 
             href="/movimientos" 
-            className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors w-fit text-sm font-medium"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-white transition-colors w-fit text-sm font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver a Movimientos
@@ -66,14 +66,14 @@ export default function DeclararPage() {
                 <Scale className="h-8 w-8 text-blue-500" />
                 Asistente de Declaración
               </h1>
-              <p className="text-zinc-400">
+              <p className="text-muted-foreground">
                 Cálculo automatizado de ganancias y pérdidas patrimoniales (Método FIFO).
               </p>
             </div>
             
             <div className="relative">
               <select 
-                className="appearance-none bg-zinc-800 border border-zinc-700 text-white font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+                className="appearance-none bg-muted border border-border text-white font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
               >
@@ -81,7 +81,7 @@ export default function DeclararPage() {
                   <option key={year} value={year}>Año {year}</option>
                 ))}
               </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
                 ▼
               </div>
             </div>
@@ -91,36 +91,36 @@ export default function DeclararPage() {
         {isLoading ? (
           <div className="animate-pulse flex flex-col gap-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map(i => <div key={i} className="h-32 bg-zinc-900/50 rounded-xl" />)}
+              {[1, 2, 3].map(i => <div key={i} className="h-32 bg-card/50 rounded-xl" />)}
             </div>
-            <div className="h-64 bg-zinc-900/50 rounded-xl" />
+            <div className="h-64 bg-card/50 rounded-xl" />
           </div>
         ) : (
           <>
             {/* Totals Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-6 backdrop-blur-sm">
-                <div className="flex items-center gap-2 text-zinc-400 mb-2 font-medium">
+              <div className="bg-card/40 border border-border rounded-xl p-6 backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-muted-foreground mb-2 font-medium">
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
                   Total Ganancias
                 </div>
                 <div className="text-3xl font-bold text-white font-tabular">
                   {formatCurrency(totals.gains)}
                 </div>
-                <p className="text-sm text-zinc-500 mt-2">
+                <p className="text-sm text-muted-foreground/80 mt-2">
                   Suma de todas las ventas rentables.
                 </p>
               </div>
 
-              <div className="bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-6 backdrop-blur-sm">
-                <div className="flex items-center gap-2 text-zinc-400 mb-2 font-medium">
+              <div className="bg-card/40 border border-border rounded-xl p-6 backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-muted-foreground mb-2 font-medium">
                   <TrendingDown className="h-5 w-5 text-rose-400" />
                   Total Pérdidas
                 </div>
                 <div className="text-3xl font-bold text-white font-tabular">
                   {formatCurrency(totals.losses)}
                 </div>
-                <p className="text-sm text-zinc-500 mt-2">
+                <p className="text-sm text-muted-foreground/80 mt-2">
                   Suma de todas las ventas con minusvalía.
                 </p>
               </div>
@@ -140,13 +140,13 @@ export default function DeclararPage() {
             </div>
 
             {/* FIFO Table */}
-            <div className="border border-zinc-800/60 bg-zinc-900/40 rounded-xl overflow-hidden backdrop-blur-sm">
-              <div className="p-6 border-b border-zinc-800/60 flex items-center justify-between">
+            <div className="border border-border bg-card/40 rounded-xl overflow-hidden backdrop-blur-sm">
+              <div className="p-6 border-b border-border flex items-center justify-between">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   Desglose de Operaciones
                   <div className="group relative">
-                    <HelpCircle className="h-4 w-4 text-zinc-500 cursor-help" />
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-zinc-800 text-xs text-zinc-200 p-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-zinc-700">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground/80 cursor-help" />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-muted text-xs text-foreground/90 p-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-border">
                       Este desglose une cada venta con sus correspondientes lotes de compra (FIFO) restando las comisiones aplicables en cada tramo.
                     </div>
                   </div>
@@ -155,7 +155,7 @@ export default function DeclararPage() {
               
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-zinc-900/80 border-b border-zinc-800/60 text-zinc-400">
+                  <thead className="bg-card/80 border-b border-border text-muted-foreground">
                     <tr>
                       <th className="px-6 py-4 font-medium">Fecha Venta</th>
                       <th className="px-6 py-4 font-medium">Activo</th>
@@ -168,8 +168,8 @@ export default function DeclararPage() {
                   <tbody className="divide-y divide-zinc-800/60">
                     {yearEvents.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
-                          <Info className="h-8 w-8 mx-auto mb-3 text-zinc-600" />
+                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground/80">
+                          <Info className="h-8 w-8 mx-auto mb-3 text-muted-foreground/60" />
                           <p>No se encontraron ventas para el año fiscal {selectedYear}</p>
                         </td>
                       </tr>
@@ -182,24 +182,24 @@ export default function DeclararPage() {
                         })
 
                         return (
-                          <tr key={idx} className="hover:bg-zinc-800/30 transition-colors group">
-                            <td className="px-6 py-4 whitespace-nowrap text-zinc-300 align-top">
+                          <tr key={idx} className="hover:bg-muted/30 transition-colors group">
+                            <td className="px-6 py-4 whitespace-nowrap text-foreground/80 align-top">
                               {date}
                             </td>
                             <td className="px-6 py-4 align-top">
                               <div className="flex flex-col">
-                                <span className="font-medium text-zinc-200">{e.ticker}</span>
-                                <span className="text-xs text-zinc-500 truncate max-w-[200px] mb-1">{e.nombre}</span>
-                                <span className="text-[10px] text-zinc-600 leading-tight max-w-[250px]">{e.detalles}</span>
+                                <span className="font-medium text-foreground/90">{e.ticker}</span>
+                                <span className="text-xs text-muted-foreground/80 truncate max-w-[200px] mb-1">{e.nombre}</span>
+                                <span className="text-[10px] text-muted-foreground/60 leading-tight max-w-[250px]">{e.detalles}</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-zinc-300 align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80 align-top">
                               {e.cantidadVendida.toLocaleString('es-ES', { maximumFractionDigits: 4 })}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-zinc-400 align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground align-top">
                               {formatCurrency(e.ingresoVenta)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-zinc-400 align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground align-top">
                               {formatCurrency(e.costeAdquisicion)}
                             </td>
                             <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-bold align-top ${

@@ -55,13 +55,13 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
   const finalInterest = data[data.length - 1]?.interest || 0
 
   return (
-    <Card className="bg-zinc-900/60 border-zinc-800/60 backdrop-blur-sm mt-6 animate-fade-in stagger-3">
+    <Card className="bg-card border-border backdrop-blur-sm mt-6 animate-fade-in stagger-3">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-zinc-100">
+        <CardTitle className="flex items-center gap-2 text-foreground">
           <Calculator className="h-5 w-5 text-purple-400" />
           Simulador de Interés Compuesto
         </CardTitle>
-        <CardDescription className="text-zinc-400">
+        <CardDescription className="text-muted-foreground">
           Proyecta el crecimiento de tu capital a futuro basado en aportaciones periódicas.
         </CardDescription>
       </CardHeader>
@@ -69,49 +69,49 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Controls */}
-          <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-zinc-800/50">
+          <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-border/50">
             <div className="space-y-3">
-              <Label className="text-zinc-300">Aportación Mensual (€)</Label>
+              <Label className="text-foreground/80">Aportación Mensual (€)</Label>
               <Input 
                 type="number" 
                 value={monthlyContribution} 
                 onChange={e => setMonthlyContribution(Number(e.target.value))}
-                className="bg-zinc-900 border-zinc-800 text-white"
+                className="bg-card border-border text-white"
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-zinc-300">Años Vista</Label>
+              <Label className="text-foreground/80">Años Vista</Label>
               <Input 
                 type="number" 
                 value={years} 
                 onChange={e => setYears(Number(e.target.value))}
-                className="bg-zinc-900 border-zinc-800 text-white"
+                className="bg-card border-border text-white"
                 min={1}
                 max={50}
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-zinc-300">Rentabilidad Anual (%)</Label>
+              <Label className="text-foreground/80">Rentabilidad Anual (%)</Label>
               <Input 
                 type="number" 
                 value={expectedReturn} 
                 onChange={e => setExpectedReturn(Number(e.target.value))}
-                className="bg-zinc-900 border-zinc-800 text-white"
+                className="bg-card border-border text-white"
                 step={0.1}
               />
             </div>
 
-            <div className="pt-4 border-t border-zinc-800/50 space-y-4">
+            <div className="pt-4 border-t border-border/50 space-y-4">
               <div>
-                <p className="text-xs text-zinc-500 uppercase font-medium">Total Invertido</p>
+                <p className="text-xs text-muted-foreground/80 uppercase font-medium">Total Invertido</p>
                 <p className="text-lg font-bold text-white font-tabular">{formatCurrency(finalInvested)}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-500 uppercase font-medium">Intereses Generados</p>
+                <p className="text-xs text-muted-foreground/80 uppercase font-medium">Intereses Generados</p>
                 <p className="text-lg font-bold text-emerald-400 font-tabular">+{formatCurrency(finalInterest)}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-500 uppercase font-medium">Capital Final</p>
+                <p className="text-xs text-muted-foreground/80 uppercase font-medium">Capital Final</p>
                 <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] font-tabular">
                   {formatCurrency(finalCapital)}
                 </p>
@@ -149,8 +149,8 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg shadow-xl">
-                          <p className="text-zinc-300 text-sm mb-2 font-medium">Año {label}</p>
+                        <div className="bg-card border border-border p-3 rounded-lg shadow-xl">
+                          <p className="text-foreground/80 text-sm mb-2 font-medium">Año {label}</p>
                           <div className="space-y-1">
                             <p className="text-purple-400 text-sm font-bold font-tabular">
                               Capital: {formatCurrency(payload[0].value as number)}

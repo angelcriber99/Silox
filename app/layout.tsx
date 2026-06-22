@@ -2,6 +2,7 @@ import type { Viewport, Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/providers/query-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -51,28 +52,35 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <QueryProvider>
-          {children}
-        </QueryProvider>
-        <Toaster
-          theme="dark"
-          position="bottom-right"
-          toastOptions={{
-            classNames: {
-              toast:
-                "bg-zinc-900/95 backdrop-blur-sm border border-zinc-700/50 text-zinc-100 shadow-2xl",
-              title: "text-zinc-100 font-semibold",
-              description: "text-zinc-400",
-              actionButton: "bg-blue-600 text-white",
-              cancelButton: "bg-zinc-800 text-zinc-300",
-              success:
-                "border-emerald-500/30 [&>[data-icon]]:text-emerald-400",
-              error: "border-rose-500/30 [&>[data-icon]]:text-rose-400",
-              warning:
-                "border-amber-500/30 [&>[data-icon]]:text-amber-400",
-            },
-          }}
-        />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+          <Toaster
+            theme="dark"
+            position="bottom-right"
+            toastOptions={{
+              classNames: {
+                toast:
+                  "bg-card backdrop-blur-sm border border-border text-foreground shadow-2xl",
+                title: "text-foreground font-semibold",
+                description: "text-muted-foreground",
+                actionButton: "bg-primary text-primary-foreground",
+                cancelButton: "bg-muted text-muted-foreground",
+                success:
+                  "border-emerald-500/30 [&>[data-icon]]:text-emerald-500",
+                error: "border-rose-500/30 [&>[data-icon]]:text-rose-500",
+                warning:
+                  "border-amber-500/30 [&>[data-icon]]:text-amber-500",
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );

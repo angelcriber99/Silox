@@ -56,10 +56,10 @@ export default function ActivoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
-          <p className="text-zinc-400 text-sm font-medium">Cargando datos del activo...</p>
+          <p className="text-muted-foreground text-sm font-medium">Cargando datos del activo...</p>
         </div>
       </div>
     )
@@ -67,10 +67,10 @@ export default function ActivoPage() {
 
   if (error || !position) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-2xl font-bold text-white mb-2">Activo no encontrado</p>
-          <p className="text-zinc-400 text-sm">{error || "Este activo no existe en tu cartera."}</p>
+          <p className="text-muted-foreground text-sm">{error || "Este activo no existe en tu cartera."}</p>
         </div>
       </div>
     )

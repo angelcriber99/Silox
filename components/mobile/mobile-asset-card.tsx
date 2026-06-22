@@ -30,7 +30,7 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
 
   const typeStyle = TYPE_COLORS[p.tipo] ?? {
     bg: "bg-zinc-500/10",
-    text: "text-zinc-400",
+    text: "text-muted-foreground",
   }
 
   const displayTicker =
@@ -43,7 +43,7 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
       href={`/activo/${p.activo_id}`}
       className="block active:scale-[0.98] transition-transform duration-150"
     >
-      <div className="flex items-center gap-4 px-5 py-4 bg-zinc-900/40 hover:bg-zinc-800/40 transition-colors border-b border-zinc-800/30">
+      <div className="flex items-center gap-4 px-5 py-4 bg-card/40 hover:bg-muted/50 transition-colors border-b border-border/30">
         {/* Left: Icon circle */}
         <div
           className={`h-11 w-11 rounded-xl ${typeStyle.bg} flex items-center justify-center flex-shrink-0`}
@@ -69,7 +69,7 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
                   : p.tipo}
             </span>
           </div>
-          <p className="text-xs text-zinc-500 truncate mt-0.5">
+          <p className="text-xs text-muted-foreground/80 truncate mt-0.5">
             {p.nombre || "—"}
           </p>
         </div>
