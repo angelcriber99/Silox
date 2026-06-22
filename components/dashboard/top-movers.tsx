@@ -14,7 +14,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
   const worst = sorted.slice().reverse().slice(0, 3).filter(p => !best.find(b => b.ticker === p.ticker))
 
   return (
-    <Card className="bg-[#111113] border-border">
+    <Card className="bg-card border-border">
       <CardHeader className="pb-3 border-b border-border/50">
         <CardTitle className="text-sm font-medium text-muted-foreground">🔥 Top Movimientos</CardTitle>
       </CardHeader>

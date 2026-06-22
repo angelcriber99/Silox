@@ -46,7 +46,7 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
 
   if (isLoadingNews || topItems.length === 0) {
     return (
-      <div className="h-10 bg-zinc-950 border-b border-border flex items-center px-4">
+      <div className="h-10 bg-muted/30 border-b border-border flex items-center px-4">
         <div className="h-4 w-64 bg-muted animate-pulse rounded" />
       </div>
     )
@@ -55,7 +55,7 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
   if (!newsData || newsData.length === 0) return null
 
   return (
-    <div className="h-10 bg-zinc-950 border-b border-border flex items-center overflow-hidden">
+    <div className="h-10 bg-muted/30 border-b border-border flex items-center overflow-hidden">
       <Marquee speed={40} gradient={false} className="overflow-hidden">
 
         {/* Render News */}
@@ -71,7 +71,7 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
             <span className="font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded text-[10px] tracking-wider uppercase">
               {newsItem.relatedTicker}
             </span>
-            <span className="text-foreground/80 group-hover:text-white transition-colors line-clamp-1 max-w-[400px]">
+            <span className="text-foreground/80 group-hover:text-foreground transition-colors line-clamp-1 max-w-[400px]">
               {newsItem.title}
             </span>
           </a>

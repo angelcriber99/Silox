@@ -161,7 +161,7 @@ export function PositionsTable({
                 placeholder="Buscar activo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-xs bg-zinc-950 border-border w-full sm:w-[160px] lg:w-[200px] text-foreground/80 focus-visible:ring-purple-500/30"
+                className="pl-8 h-8 text-xs bg-background border-border w-full sm:w-[160px] lg:w-[200px] text-foreground focus-visible:ring-primary/30"
               />
             </div>
 
@@ -177,9 +177,9 @@ export function PositionsTable({
                     disabled={disabled}
                     className={`px-3 py-1 text-xs rounded-lg font-medium transition-all duration-200 ${
                       filter === opt
-                        ? "bg-zinc-700 text-white shadow-sm"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : disabled
-                          ? "text-zinc-700 cursor-not-allowed"
+                          ? "text-muted-foreground/40 cursor-not-allowed"
                           : "text-muted-foreground/80 hover:text-foreground/80 hover:bg-muted"
                     }`}
                   >
@@ -204,7 +204,7 @@ export function PositionsTable({
         {/* Desktop View (Table) */}
         <div className="hidden md:block overflow-x-auto min-h-[500px]">
           <Table>
-            <TableHeader className="bg-zinc-950/40">
+            <TableHeader className="bg-muted/40">
               <TableRow className="border-border/50 hover:bg-transparent">
                 <SortableHeader label="Símbolo" sortKeyName="ticker" />
                 <TableHead className="text-muted-foreground/80 hidden md:table-cell">Nombre</TableHead>
@@ -261,8 +261,8 @@ export function PositionsTable({
                       key={p.activo_id}
                       className="border-border/30 hover:bg-muted/30 transition-colors duration-200 group"
                     >
-                      <TableCell className="font-medium text-white font-tabular">
-                        <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-400 transition-colors">
+                      <TableCell className="font-medium text-foreground font-tabular">
+                        <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
                           <span>
                             {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
                               ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
@@ -408,7 +408,7 @@ export function PositionsTable({
                    {/* Top: Title & Badge */}
                    <div className="flex items-center justify-between">
                      <Link href={`/activo/${p.activo_id}`} className="flex flex-col flex-1">
-                        <span className="font-medium text-white">
+                        <span className="font-medium text-foreground">
                           {(p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
                             ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
                             : p.ticker.split('.')[0]}
@@ -439,7 +439,7 @@ export function PositionsTable({
                      </div>
                      <div className="flex flex-col items-end">
                        <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
-                       <span className="text-base font-bold font-tabular text-white">
+                       <span className="text-base font-bold font-tabular text-foreground">
                          {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
                        </span>
                      </div>

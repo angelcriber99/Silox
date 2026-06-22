@@ -90,7 +90,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
               onClick={() => setGroupBy("tipo")}
               className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
                 groupBy === "tipo"
-                  ? "bg-zinc-700 text-white shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground/80 hover:text-foreground/80"
               }`}
             >
@@ -100,7 +100,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
               onClick={() => setGroupBy("estrategia")}
               className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
                 groupBy === "estrategia"
-                  ? "bg-zinc-700 text-white shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground/80 hover:text-foreground/80"
               }`}
             >
@@ -182,7 +182,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                     style={{ backgroundColor: d.color }}
                   />
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="text-base font-medium text-foreground/90 group-hover:text-white transition-colors truncate leading-tight">
+                    <p className="text-base font-medium text-foreground/90 group-hover:text-foreground transition-colors truncate leading-tight">
                       {d.name}
                     </p>
                     <p className={`text-[11px] font-medium mt-0.5 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
