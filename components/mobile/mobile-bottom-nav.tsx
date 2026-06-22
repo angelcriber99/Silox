@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, History, Plus, Settings } from "lucide-react"
+import { LayoutDashboard, History, Plus, Settings, FileText } from "lucide-react"
+import { playSound } from "@/lib/utils/sounds"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 interface MobileBottomNavProps {
   onAddPress: () => void
@@ -10,58 +12,72 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
+  const { soundEffects } = usePreferences()
 
   const tabs = [
     { name: "Inicio", href: "/", icon: LayoutDashboard },
     { name: "Historial", href: "/movimientos", icon: History },
     { name: "Añadir", href: "#", icon: Plus, isFab: true },
+    { name: "Declarar", href: "/declarar", icon: FileText },
     { name: "Perfil", href: "/perfil", icon: Settings },
   ]
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-      <div className="bg-background/80 backdrop-blur-2xl border-t border-border">
-        <div className="flex items-center justify-around px-6 h-16 pb-[env(safe-area-inset-bottom,0px)]">
-          {tabs.map((tab) => {
-            const isActive = pathname === tab.href
-            if (tab.isFab) {
-              return (
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-2xl border-t border-border/50" />
+      <div className="relative flex items-end justify-between px-2 pb-[env(safe-area-inset-bottom,0px)] h-16">
+        {tabs.map((tab) => {
+          const isActive = pathname === tab.href
+
+          if (tab.isFab) {
+            return (
+              <div key="fab-container" className="relative flex-1 flex justify-center h-full">
                 <button
-                  key={tab.name}
-                  onClick={onAddPress}
-                  className="flex items-center justify-center"
+                  onClick={() => {
+                    if (soundEffects) playSound('click')
+                    onAddPress()
+                  }}
+                  className="absolute -top-5 flex items-center justify-center outline-none"
                 >
-                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 shadow-lg shadow-violet-500/25 flex items-center justify-center active:scale-95 transition-transform duration-150">
-                    <Plus className="h-6 w-6 text-foreground stroke-[2.5]" />
+                  <div className="h-14 w-14 rounded-full bg-primary shadow-xl shadow-primary/30 flex items-center justify-center active:scale-95 active:shadow-sm transition-all duration-200 border-4 border-background">
+                    <Plus className="h-7 w-7 text-primary-foreground stroke-[2.5]" />
                   </div>
                 </button>
-              )
-            }
-            return (
-              <Link
-                key={tab.name}
-                href={tab.href}
-                className={`relative flex flex-col items-center justify-center w-16 h-full transition-colors duration-200 ${
-                  isActive ? "text-foreground" : "text-muted-foreground/80"
-                }`}
-              >
-                <tab.icon
-                  className={`h-5 w-5 ${
-                    isActive ? "text-violet-400" : ""
-                  }`}
-                />
-                <span className="text-[10px] font-semibold mt-1 tracking-wide">
+                {/* Space holder for the FAB text */}
+                <span className="absolute bottom-1 text-[10px] font-semibold text-muted-foreground/60 tracking-wide">
                   {tab.name}
                 </span>
-                <div
-                  className={`absolute bottom-2 w-1 h-1 rounded-full bg-violet-400 transition-opacity ${
-                    isActive ? "opacity-100" : "opacity-0"
+              </div>
+            )
+          }
+
+          return (
+            <Link
+              key={tab.name}
+              href={tab.href}
+              onClick={() => { if (soundEffects) playSound('click') }}
+              className={`relative flex-1 flex flex-col items-center justify-center h-full transition-colors duration-200 pb-1 ${
+                isActive ? "text-primary" : "text-muted-foreground/70"
+              }`}
+            >
+              <div className="relative mb-1">
+                <tab.icon
+                  className={`h-5 w-5 transition-transform duration-200 ${
+                    isActive ? "scale-110" : "scale-100"
                   }`}
                 />
-              </Link>
-            )
-          })}
-        </div>
+              </div>
+              <span className={`text-[10px] font-semibold tracking-wide transition-colors ${
+                isActive ? "text-foreground" : ""
+              }`}>
+                {tab.name}
+              </span>
+              {isActive && (
+                <div className="absolute top-0 w-8 h-1 rounded-b-full bg-primary opacity-80" />
+              )}
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
