@@ -145,7 +145,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         </Button>
       </CardHeader>
       <CardContent 
-        className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2 max-h-[200px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
+        className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2 h-[220px] min-h-[220px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
       >
 
         {loading ? (
