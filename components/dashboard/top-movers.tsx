@@ -48,7 +48,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           </button>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-3 grid grid-cols-1 gap-6">
+      <CardContent className="p-4 pt-3 grid grid-cols-2 gap-4">
         {/* Best */}
         <div className="space-y-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
@@ -60,13 +60,12 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
               <span className="text-foreground/80 font-medium truncate flex-1" title={p.nombre || p.ticker}>
                 {p.nombre || p.ticker.split('.')[0]}
               </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
-                  <span className="text-xs text-muted-foreground/70 font-medium">
-                    {formatPnl(p.change_amount_24h)}
-                  </span>
+              <div className="flex items-center justify-end shrink-0">
+                {sortBy === "percent" ? (
+                  <span className="text-emerald-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
+                ) : (
+                  <span className="text-emerald-400 font-tabular">{formatPnl(p.change_amount_24h!)}</span>
                 )}
-                <span className="text-emerald-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
               </div>
             </div>
           )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
@@ -82,13 +81,12 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
               <span className="text-foreground/80 font-medium truncate flex-1" title={p.nombre || p.ticker}>
                 {p.nombre || p.ticker.split('.')[0]}
               </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
-                  <span className="text-xs text-muted-foreground/70 font-medium">
-                    {formatPnl(p.change_amount_24h)}
-                  </span>
+              <div className="flex items-center justify-end shrink-0">
+                {sortBy === "percent" ? (
+                  <span className="text-rose-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
+                ) : (
+                  <span className="text-rose-400 font-tabular">{formatPnl(p.change_amount_24h!)}</span>
                 )}
-                <span className="text-rose-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
               </div>
             </div>
           )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
