@@ -29,6 +29,12 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
   const best = sorted.slice(0, 3)
   const worst = sorted.slice().reverse().slice(0, 3).filter(p => !best.find(b => b.ticker === p.ticker))
 
+  const getDisplayName = (p: EnrichedPosition) => {
+    if (p.nombre?.toUpperCase().includes("MSCI")) return "MSCI"
+    if (p.ticker.startsWith("0P")) return p.nombre || p.ticker.split('.')[0]
+    return p.ticker.split('.')[0]
+  }
+
   return (
     <Card className="bg-card border-border">
       <CardHeader className="p-4 pb-2 border-b border-border/50 flex flex-row items-center justify-between space-y-0">
@@ -58,7 +64,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           {best.length > 0 ? best.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm gap-2">
               <span className="text-foreground/80 font-medium truncate flex-1" title={p.nombre || p.ticker}>
-                {p.nombre || p.ticker.split('.')[0]}
+                {getDisplayName(p)}
               </span>
               <div className="flex items-center justify-end shrink-0">
                 {sortBy === "percent" ? (
@@ -79,7 +85,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           {worst.length > 0 ? worst.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm gap-2">
               <span className="text-foreground/80 font-medium truncate flex-1" title={p.nombre || p.ticker}>
-                {p.nombre || p.ticker.split('.')[0]}
+                {getDisplayName(p)}
               </span>
               <div className="flex items-center justify-end shrink-0">
                 {sortBy === "percent" ? (
