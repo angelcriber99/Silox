@@ -20,7 +20,7 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import { SiloxInsights } from "@/components/dashboard/silox-insights"
 
 export default function Home() {
-  const { positions, totals, isLoading } = usePortfolio()
+  const { positions, totals, isLoading, pricesUpdatedAt } = usePortfolio()
   const { zenMode, setZenMode } = usePreferences()
 
   // Modals
@@ -121,6 +121,12 @@ export default function Home() {
           window.location.reload()
         }}
       />
+
+      {pricesUpdatedAt && (
+        <div className="text-[10px] text-muted-foreground/40 text-center pb-4 w-full flex justify-center items-center">
+          Última actualización de precios: {new Date(pricesUpdatedAt).toLocaleString('es-ES')}
+        </div>
+      )}
     </main>
   )
 }

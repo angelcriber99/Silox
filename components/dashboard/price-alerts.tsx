@@ -35,10 +35,13 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
       const pos = positions.find(p => p.ticker.toUpperCase() === alert.ticker.toUpperCase())
       if (!pos || pos.precio_actual === null) return
 
+      const currentPrice = pos.precio_actual_nativo !== null ? pos.precio_actual_nativo : pos.precio_actual
+      if (currentPrice === null) return
+
       let shouldTrigger = false
-      if (alert.condition === 'above' && pos.precio_actual >= alert.targetPrice) {
+      if (alert.condition === 'above' && currentPrice >= alert.targetPrice) {
         shouldTrigger = true
-      } else if (alert.condition === 'below' && pos.precio_actual <= alert.targetPrice) {
+      } else if (alert.condition === 'below' && currentPrice <= alert.targetPrice) {
         shouldTrigger = true
       }
 
@@ -49,7 +52,7 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
         // Browser native notification
         if ("Notification" in window && Notification.permission === "granted") {
           new Notification("¡Alerta de Silox!", {
-            body: `${alert.ticker} ha cruzado tu objetivo de ${formatCurrency(alert.targetPrice)}. Precio actual: ${formatCurrency(pos.precio_actual)}`,
+            body: `${alert.ticker} ha cruzado tu objetivo de ${formatCurrency(alert.targetPrice, pos.moneda || 'EUR')}. Precio actual: ${formatCurrency(currentPrice, pos.moneda || 'EUR')}`,
             icon: '/icon-192.png'
           })
         }
@@ -97,13 +100,16 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
             <h4 className="text-sm font-medium text-foreground">Nueva Alerta</h4>
             <div className="flex flex-col gap-2">
               <div className="flex gap-2 text-sm">
-                <input 
-                  type="text" 
-                  placeholder="Ticker" 
+                <select
                   value={ticker}
                   onChange={(e) => setTicker(e.target.value)}
                   className="w-1/3 bg-muted border border-border rounded-md px-3 py-2 uppercase"
-                />
+                >
+                  <option value="" disabled>Ticker</option>
+                  {positions.map(p => (
+                    <option key={p.ticker} value={p.ticker}>{p.ticker}</option>
+                  ))}
+                </select>
                 <select 
                   value={condition} 
                   onChange={(e) => setCondition(e.target.value as 'above'|'below')}
@@ -112,13 +118,20 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
                   <option value="above">suba a &ge;</option>
                   <option value="below">baje a &le;</option>
                 </select>
-                <input 
-                  type="number" 
-                  placeholder="Precio" 
-                  value={targetPrice}
-                  onChange={(e) => setTargetPrice(e.target.value)}
-                  className="w-1/3 bg-muted border border-border rounded-md px-3 py-2"
-                />
+                <div className="relative w-1/3">
+                  <input 
+                    type="number" 
+                    placeholder="Precio" 
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    className="w-full bg-muted border border-border rounded-md px-3 py-2 pr-10"
+                  />
+                  {ticker && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60 font-medium pointer-events-none">
+                      {positions.find(p => p.ticker === ticker)?.moneda || 'EUR'}
+                    </span>
+                  )}
+                </div>
               </div>
               <Button onClick={handleAdd} className="w-full bg-violet-600 hover:bg-violet-500 text-white">
                 <Plus className="h-4 w-4 mr-2" />
@@ -139,27 +152,31 @@ export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
                   <p className="text-sm text-muted-foreground">Sin alertas activas</p>
                 </div>
               )}
-              {alerts.map(a => (
-                <div key={a.id} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${a.triggered ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-card border-border/50'}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${a.triggered ? 'bg-emerald-500/20' : 'bg-muted'}`}>
-                      {a.triggered ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <BellRing className="h-4 w-4 text-muted-foreground" />}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-foreground">{a.ticker}</span>
-                        {a.triggered && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-400">Activada</span>}
+              {alerts.map(a => {
+                const pos = positions?.find(p => p.ticker.toUpperCase() === a.ticker.toUpperCase())
+                const currency = pos?.moneda || 'EUR'
+                return (
+                  <div key={a.id} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${a.triggered ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-card border-border/50'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full ${a.triggered ? 'bg-emerald-500/20' : 'bg-muted'}`}>
+                        {a.triggered ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <BellRing className="h-4 w-4 text-muted-foreground" />}
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {a.condition === 'above' ? 'Sube a' : 'Baja a'} <strong className="text-foreground">{formatCurrency(a.targetPrice)}</strong>
-                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-foreground">{a.ticker}</span>
+                          {a.triggered && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-400">Activada</span>}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {a.condition === 'above' ? 'Sube a' : 'Baja a'} <strong className="text-foreground">{formatCurrency(a.targetPrice, currency)}</strong>
+                        </span>
+                      </div>
                     </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10" onClick={() => removeAlert(a.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10" onClick={() => removeAlert(a.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>

@@ -32,6 +32,7 @@ export function usePortfolio() {
     data: pricePayload,
     isLoading: pricesLoading,
     refetch: refetchPrices,
+    dataUpdatedAt: pricesUpdatedAt,
   } = usePrices(tickers)
 
   const enriched: EnrichedPosition[] = useMemo(() => {
@@ -86,6 +87,7 @@ export function usePortfolio() {
     error: positionsError,
     refetch,
     refetchPrices,
+    pricesUpdatedAt,
   }
 }
 

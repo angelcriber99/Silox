@@ -162,7 +162,7 @@ export function PortfolioSummary({
           subvalue={hideBalances ? null : (
             <span className="text-muted-foreground flex items-center gap-1">
               Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                {totals.totalPnlPercent24h > 0 ? "+" : ""}{formatPercent(totals.totalPnlPercent24h)}
+                {formatPercent(totals.totalPnlPercent24h)}
               </span>
             </span>
           )}
