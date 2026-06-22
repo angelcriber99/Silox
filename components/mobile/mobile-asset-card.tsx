@@ -4,6 +4,8 @@ import Link from "next/link"
 import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { usePreferences } from "@/lib/stores/use-preferences"
+import { playSound } from "@/lib/utils/sounds"
 
 interface MobileAssetCardProps {
   position: EnrichedPosition
@@ -18,6 +20,7 @@ const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
+  const { soundEffects } = usePreferences()
   const pnl = p.pnl ?? 0
   const pnlPercent = p.pnl_percent ?? 0
   const isPositive = pnl >= 0
@@ -41,12 +44,13 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
   return (
     <Link
       href={`/activo/${p.activo_id}`}
+      onClick={() => { if (soundEffects) playSound('pop') }}
       className="block active:scale-[0.98] transition-transform duration-150"
     >
-      <div className="flex items-center gap-4 px-5 py-4 bg-card/40 hover:bg-muted/50 transition-colors border-b border-border/30">
+      <div className="flex items-center gap-4 px-5 py-4 bg-card/40 hover:bg-muted/50 backdrop-blur-sm transition-colors border-b border-border/30">
         {/* Left: Icon circle */}
         <div
-          className={`h-11 w-11 rounded-xl ${typeStyle.bg} flex items-center justify-center flex-shrink-0`}
+          className={`h-11 w-11 rounded-xl ${typeStyle.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}
         >
           <span className={`text-sm font-bold ${typeStyle.text}`}>
             {displayTicker.slice(0, 2)}

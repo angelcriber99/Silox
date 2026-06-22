@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { Activity, TrendingUp, TrendingDown, ChevronRight } from "lucide-react"
+import { Activity, TrendingUp, TrendingDown, ChevronRight, LogOut } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import {
   formatCurrency,
@@ -15,6 +15,8 @@ import {
   ResponsiveContainer,
   YAxis,
 } from "recharts"
+import { usePreferences } from "@/lib/stores/use-preferences"
+import { playSound } from "@/lib/utils/sounds"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
@@ -27,6 +29,7 @@ export function MobileDashboard({
   totals,
   isLoading,
 }: MobileDashboardProps) {
+  const { zenMode, soundEffects } = usePreferences()
   const isPositive = totals.totalPnl >= 0
   const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
   const PnlIcon = isPositive ? TrendingUp : TrendingDown
@@ -113,13 +116,13 @@ export function MobileDashboard({
   }
 
   return (
-    <div className="pb-28">
+    <div className={`pb-28 flex flex-col ${zenMode ? 'justify-center min-h-[85vh]' : ''}`}>
       {/* ─── Header ──────────────────────── */}
       <div className="px-5 pt-6 pb-2">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <Activity className="h-5 w-5 text-white" />
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 transition-colors">
+              <Activity className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground/80 font-semibold uppercase tracking-wider">Portfolio</p>
@@ -129,27 +132,24 @@ export function MobileDashboard({
           {/* Logout (subtle) */}
           <button
             onClick={async () => {
+              if (soundEffects) playSound('click')
               const { createClient } = await import("@/lib/supabase/client")
               const supabase = createClient()
               await supabase.auth.signOut()
               window.location.href = "/login"
             }}
-            className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground active:bg-zinc-700 transition-colors"
+            className="h-10 w-10 rounded-xl bg-muted/50 backdrop-blur-md border border-border/50 flex items-center justify-center text-muted-foreground active:bg-zinc-700 transition-colors"
           >
-            <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
+            <LogOut className="w-[18px] h-[18px]" />
           </button>
         </div>
 
         {/* ─── Big Number ────────────────── */}
-        <div className="text-center mb-2">
+        <div className="text-center mb-6">
           <p className="text-xs text-muted-foreground/80 uppercase tracking-widest font-semibold mb-2">
             Valor Total
           </p>
-          <p className="text-4xl font-extrabold font-tabular text-white tracking-tight leading-none">
+          <p className={`font-extrabold font-tabular text-white tracking-tight leading-none transition-all ${zenMode ? 'text-5xl my-4' : 'text-4xl'}`}>
             {totals.totalValue > 0
               ? formatCurrency(totals.totalValue)
               : "0,00 €"}
@@ -157,9 +157,9 @@ export function MobileDashboard({
 
           {/* P&L pill */}
           {totals.totalCost > 0 && (
-            <div className="flex items-center justify-center gap-2 mt-3">
+            <div className="flex items-center justify-center gap-2 mt-4">
               <div
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
                   isPositive
                     ? "bg-emerald-500/10 text-emerald-400"
                     : "bg-rose-500/10 text-rose-400"
@@ -178,12 +178,12 @@ export function MobileDashboard({
 
       {/* ─── Portfolio Chart ─────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className="h-28 w-full px-2 -mt-2 mb-2">
+        <div className={`w-full px-2 mb-4 transition-all ${zenMode ? 'h-48 mt-4' : 'h-28 -mt-2'}`}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={portfolioSparkline}>
               <defs>
                 <linearGradient id="mobileAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.25} />
+                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.3} />
                   <stop offset="100%" stopColor={areaColor} stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -192,58 +192,63 @@ export function MobileDashboard({
                 type="monotone"
                 dataKey="v"
                 stroke={areaColor}
-                strokeWidth={2}
+                strokeWidth={2.5}
                 fill="url(#mobileAreaGrad)"
                 isAnimationActive={true}
-                animationDuration={800}
+                animationDuration={1000}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* ─── Quick Stats Row ─────────────── */}
-      <div className="flex gap-3 px-5 mb-5">
-        <div className="flex-1 bg-card backdrop-blur-sm border border-border rounded-2xl p-4">
-          <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
-            Invertido
-          </p>
-          <p className="text-lg font-bold font-tabular text-white mt-1">
-            {totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—"}
-          </p>
-        </div>
-        <div className="flex-1 bg-card backdrop-blur-sm border border-border rounded-2xl p-4">
-          <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
-            Rent. Hoy
-          </p>
-          <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-            {dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—"}
-          </p>
-        </div>
-      </div>
-
-      {/* ─── Assets List ─────────────────── */}
-      <div className="px-5 mb-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Tus Activos
-        </h2>
-      </div>
-
-      <div className="bg-card/30 border-y border-border/30">
-        {sortedPositions.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground/60">
-            <Activity className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium text-muted-foreground/80">Sin posiciones</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              Pulsa el botón + para añadir tu primer activo
-            </p>
+      {/* Conditionally hide the rest if Zen Mode is on */}
+      {!zenMode && (
+        <div className="animate-fade-in">
+          {/* ─── Quick Stats Row ─────────────── */}
+          <div className="flex gap-3 px-5 mb-6">
+            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
+                Invertido
+              </p>
+              <p className="text-lg font-bold font-tabular text-white mt-1">
+                {totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—"}
+              </p>
+            </div>
+            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
+                Rent. Hoy
+              </p>
+              <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                {dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—"}
+              </p>
+            </div>
           </div>
-        ) : (
-          sortedPositions.map((p) => (
-            <MobileAssetCard key={p.activo_id} position={p} />
-          ))
-        )}
-      </div>
+
+          {/* ─── Assets List ─────────────────── */}
+          <div className="px-5 mb-4">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Tus Activos
+            </h2>
+          </div>
+
+          <div className="bg-card/30 border-y border-border/30 divide-y divide-border/20">
+            {sortedPositions.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground/60">
+                <Activity className="h-10 w-10 mx-auto mb-3 opacity-40 text-primary" />
+                <p className="font-medium text-white">Sin posiciones</p>
+                <p className="text-xs mt-1">
+                  Añade tu primer activo desde el dashboard web
+                </p>
+              </div>
+            ) : (
+              sortedPositions.map((p) => (
+                <MobileAssetCard key={p.activo_id} position={p} />
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
