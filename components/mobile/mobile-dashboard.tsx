@@ -62,6 +62,38 @@ export function MobileDashboard({
     [positions]
   )
 
+  // Calculate daily PnL
+  const dailyPnlInfo = useMemo(() => {
+    let todayValue = 0
+    let yesterdayValue = 0
+
+    for (const p of positions) {
+      if (p.unidades > 0 && p.precio_actual !== null) {
+        todayValue += p.unidades * p.precio_actual
+        
+        let yesterdayPrice = p.precio_actual
+        if (p.sparkline && p.sparkline.length >= 2) {
+          yesterdayPrice = p.sparkline[p.sparkline.length - 2]
+        }
+        
+        yesterdayValue += p.unidades * yesterdayPrice
+      }
+    }
+
+    if (yesterdayValue === 0) {
+      return { percent: 0, isPositive: true, amount: 0 }
+    }
+
+    const diff = todayValue - yesterdayValue
+    const percent = (diff / yesterdayValue) * 100
+    
+    return {
+      percent,
+      amount: diff,
+      isPositive: diff >= 0
+    }
+  }, [positions])
+
   // Loading skeleton
   if (isLoading) {
     return (
@@ -181,10 +213,10 @@ export function MobileDashboard({
         </div>
         <div className="flex-1 bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/40 rounded-2xl p-4">
           <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
-            Rentabilidad
+            Rent. Hoy
           </p>
-          <p className={`text-lg font-bold font-tabular mt-1 ${totals.totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-            {totals.totalCost > 0 ? formatPercent(totals.totalPnlPercent) : "—"}
+          <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+            {dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—"}
           </p>
         </div>
       </div>
