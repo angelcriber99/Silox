@@ -57,8 +57,8 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           </div>
           {best.length > 0 ? best.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm">
-              <span className="text-foreground/80 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
-                {p.ticker.split('.')[0]}
+              <span className="text-foreground/80 font-medium truncate max-w-[100px]" title={p.nombre || p.ticker}>
+                {p.nombre || p.ticker.split('.')[0]}
               </span>
               <div className="flex items-center gap-2">
                 {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
@@ -79,8 +79,8 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           </div>
           {worst.length > 0 ? worst.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm">
-              <span className="text-foreground/80 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
-                {p.ticker.split('.')[0]}
+              <span className="text-foreground/80 font-medium truncate max-w-[100px]" title={p.nombre || p.ticker}>
+                {p.nombre || p.ticker.split('.')[0]}
               </span>
               <div className="flex items-center gap-2">
                 {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
