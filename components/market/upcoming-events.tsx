@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Calendar, Plus, CalendarDays, DollarSign, Wallet } from "lucide-react"
+import { Calendar, Plus, CalendarDays, DollarSign, Wallet, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { EnrichedPosition, EventoRecurrente } from '@/lib/types'
 import { fetchEventosRecurrentes } from '@/lib/api/market'
@@ -139,16 +139,17 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Calendar className="h-4 w-4 text-amber-400" />
           Próximos Eventos
+          {loading && events.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
         </CardTitle>
         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/80 hover:text-foreground/80" onClick={onAddEvent}>
           <Plus className="h-4 w-4" />
         </Button>
       </CardHeader>
       <CardContent 
-        className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2 h-[220px] min-h-[220px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
+        className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2 max-h-[200px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
       >
 
-        {loading ? (
+        {loading && events.length === 0 ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-muted animate-shimmer" />
