@@ -25,6 +25,7 @@ export interface EnrichedPosition extends Posicion {
   precio_medio: number // in native currency
   sparkline: number[] // in EUR
   change_percent_24h: number | null
+  change_amount_24h: number | null
 }
 
 export interface Transaccion {

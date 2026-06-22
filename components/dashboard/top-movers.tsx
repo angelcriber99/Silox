@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { EnrichedPosition } from '@/lib/types'
-import { formatPercent } from "@/lib/utils/formatters"
+import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { TrendingUp, TrendingDown } from "lucide-react"
 
 export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
@@ -30,7 +30,14 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
               <span className="text-foreground/80 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
                 {p.ticker.split('.')[0]}
               </span>
-              <span className="text-emerald-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
+              <div className="flex items-center gap-2">
+                {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
+                  <span className="text-xs text-muted-foreground/70 font-medium">
+                    {formatPnl(p.change_amount_24h)}
+                  </span>
+                )}
+                <span className="text-emerald-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
+              </div>
             </div>
           )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
         </div>
@@ -45,7 +52,14 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
               <span className="text-foreground/80 font-medium truncate max-w-[80px]" title={p.nombre || p.ticker}>
                 {p.ticker.split('.')[0]}
               </span>
-              <span className="text-rose-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
+              <div className="flex items-center gap-2">
+                {p.change_amount_24h !== null && p.change_amount_24h !== 0 && p.unidades > 0 && (
+                  <span className="text-xs text-muted-foreground/70 font-medium">
+                    {formatPnl(p.change_amount_24h)}
+                  </span>
+                )}
+                <span className="text-rose-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
+              </div>
             </div>
           )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
         </div>

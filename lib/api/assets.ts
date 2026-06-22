@@ -115,6 +115,12 @@ export function enrichPositions(
         ? (pnl / coste_total_eur) * 100
         : null
         
+    let change_amount_24h = null
+    if (valor_actual_eur !== null && change_percent_24h !== null) {
+      const vAyer = valor_actual_eur / (1 + change_percent_24h / 100)
+      change_amount_24h = valor_actual_eur - vAyer
+    }
+
     const precio_medio = precio_medio_real
 
     return {
@@ -130,6 +136,7 @@ export function enrichPositions(
       precio_medio,
       sparkline,
       change_percent_24h,
+      change_amount_24h,
     }
   })
 }
