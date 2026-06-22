@@ -148,13 +148,11 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                 <div className="text-center">
                   <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest mb-1">Total</p>
                   <p className="text-2xl font-bold font-tabular text-white drop-shadow-md">
-                    {formatCurrency(chartData.total)}
+                    {formatCurrency(totals.totalValue > 0 ? totals.totalValue : chartData.total)}
                   </p>
-                  {totals.totalPnlPercent24h !== 0 && (
-                    <p className={`text-xs font-medium mt-0.5 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
-                    </p>
-                  )}
+                  <p className={`text-xs font-medium mt-0.5 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
+                  </p>
                 </div>
               </div>
             </div>
