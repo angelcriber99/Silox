@@ -6,6 +6,10 @@ import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 
+import { DistribucionSilosChart } from "@/components/dashboard/distribucion-silos-chart"
+import { HistoricoNominasChart } from "@/components/dashboard/historico-nominas-chart"
+import { ProximosEventos } from "@/components/dashboard/proximos-eventos"
+import { AlertasFeed } from "@/components/dashboard/alertas-feed"
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary"
 import { AllocationChart } from "@/components/dashboard/allocation-chart"
 import { PositionsTable } from "@/components/transactions/positions-table"
@@ -68,6 +72,18 @@ export default function Home() {
 
           {/* KPI Cards */}
           <PortfolioSummary totals={totals} loading={isLoading} />
+
+          {/* Fila 3: Gráficos Adicionales y Alertas */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div className="lg:col-span-2">
+              <DistribucionSilosChart data={positions} />
+            </div>
+            <div className="flex flex-col gap-4">
+              <HistoricoNominasChart />
+              <ProximosEventos />
+              <AlertasFeed />
+            </div>
+          </div>
 
           {/* Charts Row */}
           <div className={`grid grid-cols-1 ${zenMode ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6`}>
