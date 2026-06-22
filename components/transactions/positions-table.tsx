@@ -44,7 +44,7 @@ const FILTER_OPTIONS = [
   "Crypto",
 ] as const
 
-type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent"
+type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent" | "change_percent_24h"
 type SortDir = "asc" | "desc"
 
 function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
@@ -208,6 +208,7 @@ export function PositionsTable({
                 <SortableHeader label="Unidades" sortKeyName="unidades" className="text-right" />
                 <TableHead className="text-zinc-500 text-right hidden lg:table-cell">P. Medio</TableHead>
                 <TableHead className="text-zinc-500 text-right">Precio</TableHead>
+                <SortableHeader label="24h" sortKeyName="change_percent_24h" className="text-right" />
                 <TableHead className="text-zinc-500 text-right hidden xl:table-cell">Tendencia (7d)</TableHead>
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right" />
                 <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
@@ -308,6 +309,9 @@ export function PositionsTable({
                             pendiente
                           </span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
                       </TableCell>
                       <TableCell className="text-right hidden xl:table-cell">
                         <div className="flex items-center justify-end gap-3 pr-2">
@@ -439,12 +443,16 @@ export function PositionsTable({
                    {/* Bottom: P&L and Actions */}
                    <div className="flex items-center justify-between mt-1 pt-3 border-t border-zinc-800/50">
                      <div className="flex flex-col">
-                       <span className="text-xs text-zinc-500 mb-0.5">Rentabilidad</span>
+                       <span className="text-xs text-zinc-500 mb-0.5">Rentabilidad Total</span>
                        <div className="flex items-center gap-2">
                          <PnlDisplay value={p.pnl} type="currency" />
                          <span className="text-zinc-700 text-xs">|</span>
                          <PnlDisplay value={p.pnl_percent} type="percent" />
                        </div>
+                     </div>
+                     <div className="flex flex-col items-end mr-4">
+                       <span className="text-xs text-zinc-500 mb-0.5">Hoy (24h)</span>
+                       <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
                      </div>
                      
                      <div className="flex items-center gap-2">

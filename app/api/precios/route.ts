@@ -13,6 +13,7 @@ const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
 interface YahooQuote {
   regularMarketPrice?: number
+  regularMarketChangePercent?: number
   currency?: string
 }
 
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
 
         const originalCurrency = normalizeYahooCurrency(quote.currency)
         const rawPrice = quote.regularMarketPrice ?? null
+        const changePercent24h = quote.regularMarketChangePercent ?? null
 
         let sparkline: number[] = []
         if (chart?.quotes) {
@@ -93,39 +95,40 @@ export async function POST(request: Request) {
           price,
           sparkline,
           currency,
+          changePercent24h,
           originalPrice: rawPrice,
           originalCurrency,
         }
       })
     )
 
-    const prices: Record<
-      string,
-      {
-        price: number | null
-        sparkline: number[]
-        currency: string
-        originalPrice?: number | null
-        originalCurrency?: string
-      }
-    > = {}
+    interface PriceEntry {
+      price: number | null;
+      sparkline: number[];
+      currency: string;
+      changePercent24h?: number | null;
+      originalPrice?: number | null;
+      originalCurrency?: string;
+    }
+    const prices: Record<string, PriceEntry> = {}
 
     for (let i = 0; i < results.length; i++) {
       const result = results[i]
       const ticker = tickers[i]
 
       if (result.status === 'fulfilled') {
-        const { price, sparkline, currency, originalPrice, originalCurrency } =
+        const { price, sparkline, currency, changePercent24h, originalPrice, originalCurrency } =
           result.value
         prices[ticker] = {
           price,
           sparkline,
           currency,
+          changePercent24h,
           originalPrice,
           originalCurrency,
         }
       } else if (ticker) {
-        prices[ticker] = { price: null, sparkline: [], currency: 'EUR' }
+        prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null }
       }
     }
 

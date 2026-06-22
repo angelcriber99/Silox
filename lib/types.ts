@@ -24,6 +24,7 @@ export interface EnrichedPosition extends Posicion {
   pnl_percent: number | null // based on EUR
   precio_medio: number // in native currency
   sparkline: number[] // in EUR
+  change_percent_24h: number | null
 }
 
 export interface Transaccion {
@@ -84,4 +85,5 @@ export interface PriceData {
   sparkline: number[]
   originalPrice?: number | null
   originalCurrency?: string
+  changePercent24h?: number | null
 }

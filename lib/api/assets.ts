@@ -84,6 +84,7 @@ export function enrichPositions(
     const precio_actual = priceData?.price ?? fallbackPrice
     const precio_actual_nativo = priceData?.originalPrice ?? fallbackPrice
     const original_currency = priceData?.originalCurrency ?? p.moneda
+    const change_percent_24h = priceData?.changePercent24h ?? null
     let sparkline = priceData?.sparkline ?? []
     
     if (sparkline.length < 2 && precio_actual !== null) {
@@ -128,6 +129,7 @@ export function enrichPositions(
       pnl_percent,
       precio_medio,
       sparkline,
+      change_percent_24h,
     }
   })
 }

@@ -24,6 +24,10 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
   const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
   const pnlBg = isPositive ? "bg-emerald-500/10" : "bg-rose-500/10"
 
+  const change24h = p.change_percent_24h ?? 0
+  const is24hPositive = change24h >= 0
+  const change24hColor = is24hPositive ? "text-emerald-400" : "text-rose-400"
+
   const typeStyle = TYPE_COLORS[p.tipo] ?? {
     bg: "bg-zinc-500/10",
     text: "text-zinc-400",
@@ -77,12 +81,17 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
               ? formatCurrency(p.valor_actual, "EUR")
               : "—"}
           </span>
-          <div
-            className={`flex items-center justify-center mt-0.5 px-2 py-0.5 rounded-md ${pnlBg}`}
-          >
-            <span className={`text-[11px] font-bold font-tabular ${pnlColor}`}>
-              {formatPercent(pnlPercent)}
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className={`text-[11px] font-medium font-tabular ${change24hColor}`}>
+              {formatPercent(change24h)}
             </span>
+            <div
+              className={`flex items-center justify-center px-1.5 py-0.5 rounded-md ${pnlBg}`}
+            >
+              <span className={`text-[10px] font-bold font-tabular ${pnlColor}`}>
+                {formatPercent(pnlPercent)}
+              </span>
+            </div>
           </div>
         </div>
       </div>

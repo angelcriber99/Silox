@@ -131,12 +131,20 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
             <p className="text-4xl md:text-5xl font-bold text-white font-tabular drop-shadow-md">
               {position.valor_actual !== null ? formatCurrency(position.valor_actual, 'EUR') : "—"}
             </p>
-            {position.pnl_percent !== null && (
-              <p className={`text-lg font-medium font-tabular flex items-center md:justify-end gap-1 mt-1 ${position.pnl_percent >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {position.pnl_percent >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                {formatPercent(position.pnl_percent)} global
-              </p>
-            )}
+            <div className="flex flex-col md:flex-row items-end justify-end gap-3 mt-1">
+              {position.change_percent_24h !== null && (
+                <p className={`text-base font-medium font-tabular flex items-center gap-1 ${position.change_percent_24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {position.change_percent_24h >= 0 ? "+" : ""}{position.change_percent_24h.toFixed(2)}% hoy
+                </p>
+              )}
+              {position.pnl_percent !== null && (
+                <p className={`text-lg font-medium font-tabular flex items-center gap-1 ${position.pnl_percent >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  <span className="text-zinc-600 hidden md:inline">|</span>
+                  {position.pnl_percent >= 0 ? <TrendingUp className="h-5 w-5 ml-2" /> : <TrendingDown className="h-5 w-5 ml-2" />}
+                  {formatPercent(position.pnl_percent)} global
+                </p>
+              )}
+            </div>
             {/* Mini Sparkline 7d */}
             {sparklineData && (
               <div className="flex items-center gap-3 mt-3 md:justify-end">
