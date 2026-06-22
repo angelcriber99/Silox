@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo } from "react"
-import { Activity, TrendingUp, TrendingDown, ChevronRight, LogOut } from "lucide-react"
+import { useMemo, useState } from "react"
+import { Activity, TrendingUp, TrendingDown, ChevronRight, LogOut, BarChart2 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import {
   formatCurrency,
@@ -15,9 +15,9 @@ import {
   ResponsiveContainer,
   YAxis,
 } from "recharts"
-import { EvolutionChart } from "@/components/dashboard/evolution-chart"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
+import { PerformanceModal } from "@/components/dashboard/performance-modal"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
@@ -31,6 +31,7 @@ export function MobileDashboard({
   isLoading,
 }: MobileDashboardProps) {
   const { zenMode, soundEffects, hideBalances } = usePreferences()
+  const [performanceOpen, setPerformanceOpen] = useState(false)
   const isPositive = totals.totalPnl >= 0
   const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
   const PnlIcon = isPositive ? TrendingUp : TrendingDown
@@ -216,20 +217,24 @@ export function MobileDashboard({
                 {hideBalances ? "****" : (totals.totalCost > 0 ? formatCurrency(totals.totalCost) : "—")}
               </p>
             </div>
-            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm">
+            <div className="flex-1 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-sm relative">
               <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider font-semibold">
                 Rent. Hoy
               </p>
+              <button 
+                onClick={() => setPerformanceOpen(true)}
+                className="absolute top-3 right-3 p-1.5 bg-background/50 hover:bg-muted rounded-full text-muted-foreground transition-colors"
+                title="Ver rendimiento"
+              >
+                <BarChart2 className="w-4 h-4 text-blue-400" />
+              </button>
               <p className={`text-lg font-bold font-tabular mt-1 ${dailyPnlInfo.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
                 {hideBalances ? "**.*%" : (dailyPnlInfo.percent !== 0 ? formatPercent(dailyPnlInfo.percent) : "—")}
               </p>
             </div>
           </div>
 
-          {/* ─── Historical Chart ─────────────── */}
-          <div className="px-5 mb-8">
-            <EvolutionChart />
-          </div>
+          <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} />
 
           {/* ─── Position List ─────────────────── */}
           <div className="px-5 pb-24">
