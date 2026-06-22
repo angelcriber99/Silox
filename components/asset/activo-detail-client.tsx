@@ -301,7 +301,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
             <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {/* Controles */}
-                <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-border/50">
+                <div className="lg:col-span-1 space-y-6 bg-background/50 p-5 rounded-xl border border-border/50">
                   <div className="space-y-2">
                     <Label className="text-foreground/80 text-sm">Aportación Mensual (€)</Label>
                     <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-card border-border text-foreground" />
@@ -392,7 +392,7 @@ export function ActivoDetailClient({ position, transactions }: ActivoDetailClien
           </h2>
           <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-zinc-950/50 text-muted-foreground text-xs uppercase font-medium">
+              <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
                 <tr>
                   <th className="px-5 py-4">Fecha</th>
                   <th className="px-5 py-4">Tipo</th>

@@ -69,7 +69,7 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Controls */}
-          <div className="lg:col-span-1 space-y-6 bg-zinc-950/50 p-5 rounded-xl border border-border/50">
+          <div className="lg:col-span-1 space-y-6 bg-background/50 p-5 rounded-xl border border-border/50">
             <div className="space-y-3">
               <Label className="text-foreground/80">Aportación Mensual (€)</Label>
               <Input 

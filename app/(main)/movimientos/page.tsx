@@ -111,12 +111,12 @@ export default function MovimientosPage() {
               placeholder="Buscar por activo o ticker..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-zinc-950 border-border text-foreground w-full h-10"
+              className="pl-9 bg-background border-border text-foreground w-full h-10"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar w-full">
             <select 
-              className="flex-shrink-0 appearance-none bg-zinc-950 border border-border text-sm text-foreground/80 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
+              className="flex-shrink-0 appearance-none bg-background border border-border text-sm text-foreground/80 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as any)}
             >
@@ -125,7 +125,7 @@ export default function MovimientosPage() {
               <option value="Venta">Solo Ventas</option>
             </select>
             
-            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-border rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 flex-shrink-0 bg-background border border-border rounded-lg px-3 py-2">
               <span className="text-xs text-muted-foreground/80">Desde</span>
               <input 
                 type="date" 
@@ -135,7 +135,7 @@ export default function MovimientosPage() {
               />
             </div>
             
-            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-border rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 flex-shrink-0 bg-background border border-border rounded-lg px-3 py-2">
               <span className="text-xs text-muted-foreground/80">Hasta</span>
               <input 
                 type="date" 

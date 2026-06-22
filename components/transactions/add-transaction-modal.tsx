@@ -27,7 +27,7 @@ interface AddTransactionModalProps {
 type TipoOperacion = "Compra" | "Venta"
 
 const inputClass =
-  "bg-zinc-950 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+  "bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
 export function AddTransactionModal({
   position,

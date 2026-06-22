@@ -86,7 +86,7 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-zinc-950 border border-border text-foreground shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="max-w-md bg-background border border-border text-foreground shadow-2xl p-0 overflow-hidden">
         <div className="bg-gradient-to-b from-amber-500/10 to-transparent p-6 pb-2 w-full">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-foreground">

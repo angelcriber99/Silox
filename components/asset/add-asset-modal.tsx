@@ -34,10 +34,10 @@ const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 
 const inputClass =
-  "bg-zinc-950 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+  "bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
 const selectClass =
-  "w-full h-10 px-3 rounded-md bg-zinc-950 border border-border text-foreground text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+  "w-full h-10 px-3 rounded-md bg-background border border-border text-foreground text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
 
 export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   // Instrument

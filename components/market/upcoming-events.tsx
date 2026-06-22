@@ -175,7 +175,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
                 }
               }}
             >
-              <div className="h-8 w-8 rounded-full bg-zinc-950/50 flex items-center justify-center border border-border/50 shrink-0">
+              <div className="h-8 w-8 rounded-full bg-background/50 flex items-center justify-center border border-border/50 shrink-0">
                 {getIcon(event.type)}
               </div>
               <div className="flex-1 min-w-0">

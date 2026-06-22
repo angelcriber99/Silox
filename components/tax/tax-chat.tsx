@@ -116,7 +116,7 @@ export function TaxChat({ context }: TaxChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Pregunta dónde va la casilla de pérdidas, o dudas sobre tus dividendos..."
-            className="w-full bg-zinc-950 border border-border rounded-xl pl-4 pr-12 py-3 text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="w-full bg-background border border-border rounded-xl pl-4 pr-12 py-3 text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             disabled={isLoading}
           />
           <button
