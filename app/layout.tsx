@@ -1,6 +1,7 @@
 import type { Viewport, Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { PreferencesProvider } from "@/components/providers/preferences-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -49,6 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
+      suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
@@ -59,7 +61,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            {children}
+            <PreferencesProvider>
+              {children}
+            </PreferencesProvider>
           </QueryProvider>
           <Toaster
             theme="dark"

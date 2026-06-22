@@ -16,9 +16,11 @@ import { EditAssetModal } from "@/components/asset/edit-asset-modal"
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal"
 import { AddEventModal } from "@/components/market/add-event-modal"
 import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 export default function Home() {
   const { positions, totals, isLoading } = usePortfolio()
+  const { zenMode } = usePreferences()
 
   // Modals
   const [addTxOpen, setAddTxOpen] = useState(false)
@@ -59,37 +61,41 @@ export default function Home() {
       {/* ── Desktop Dashboard ────────────────── */}
       <div className="hidden md:flex md:flex-col md:flex-1">
         {/* Ticker Bar */}
-        <MarketTicker positions={positions} />
+        {!zenMode && <MarketTicker positions={positions} />}
 
         {/* ── Content ────────────────────────────── */}
-        <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-6 space-y-6">
+        <div className={`flex-1 mx-auto w-full px-6 py-6 space-y-6 ${zenMode ? 'max-w-4xl pt-20' : 'max-w-7xl'}`}>
 
           {/* KPI Cards */}
           <PortfolioSummary totals={totals} loading={isLoading} />
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          <div className={`grid grid-cols-1 ${zenMode ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6`}>
+            <div className={zenMode ? 'col-span-1' : 'lg:col-span-2'}>
               <AllocationChart positions={positions} />
             </div>
-            <div className="lg:col-span-1 space-y-6 flex flex-col">
-              <TopMovers positions={positions} />
-              <div>
-                <UpcomingEvents 
-                  positions={positions} 
-                  onAddEvent={() => { setEditEventData(null); setAddEventOpen(true); }} 
-                  onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true); }}
-                />
+            {!zenMode && (
+              <div className="lg:col-span-1 space-y-6 flex flex-col">
+                <TopMovers positions={positions} />
+                <div>
+                  <UpcomingEvents 
+                    positions={positions} 
+                    onAddEvent={() => { setEditEventData(null); setAddEventOpen(true); }} 
+                    onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true); }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          <PositionsTable
-            positions={positions}
-            loading={isLoading}
-            onAddTransaction={openTransactionModal}
-            onEditAsset={openEditAssetModal}
-          />
+          {!zenMode && (
+            <PositionsTable
+              positions={positions}
+              loading={isLoading}
+              onAddTransaction={openTransactionModal}
+              onEditAsset={openEditAssetModal}
+            />
+          )}
         </div>
       </div>
 
