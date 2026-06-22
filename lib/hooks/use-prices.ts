@@ -8,7 +8,7 @@ export function usePrices(tickers: string[]) {
     queryKey: ["prices", tickers.slice().sort().join(",")],
     queryFn: () => fetchPrices(tickers),
     enabled: tickers.length > 0,
-    staleTime: 30_000,
-    refetchInterval: 60_000, // Auto-refresh every 60 seconds
+    staleTime: 15_000,
+    refetchInterval: 15_000, // Auto-refresh every 15 seconds
   })
 }

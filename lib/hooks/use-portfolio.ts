@@ -1,16 +1,17 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useMemo, useEffect, useRef } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
-import { useEffect, useRef } from "react"
 import { fetchPosiciones, enrichPositions, computePortfolioTotals, saveDailySnapshot } from '@/lib/api/assets'
 import { usePrices } from "./use-prices"
+import { createClient } from '@/lib/supabase/client'
+
 export function usePositions() {
   return useQuery({
     queryKey: ["positions"],
     queryFn: fetchPosiciones,
-    staleTime: 30_000,
+    staleTime: 60_000, // 1 minute, but invalidated via websockets instantly
   })
 }
 
@@ -52,6 +53,25 @@ export function usePortfolio() {
       saveDailySnapshot(totals.totalValue, totals.totalCost).catch(console.error)
     }
   }, [totals.totalValue, totals.totalCost, positionsLoading, pricesLoading])
+
+  // Supabase Realtime: Súper Tiempo Real
+  useEffect(() => {
+    const supabase = createClient()
+    const channelName = `portfolio-realtime-${Math.random()}`
+    
+    const channel = supabase.channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posiciones' }, () => {
+        refetchPositions()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transacciones' }, () => {
+        refetchPositions()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [refetchPositions])
 
   const refetch = async () => {
     await refetchPositions()

@@ -140,7 +140,7 @@ export async function POST(request: Request) {
       },
       {
         headers: {
-          'Cache-Control': 'private, max-age=60',
+          'Cache-Control': 'private, no-cache, no-store, must-revalidate',
         },
       }
     )
