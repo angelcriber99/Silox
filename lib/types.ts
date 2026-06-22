@@ -89,13 +89,3 @@ export interface PriceData {
   originalCurrency?: string
   changePercent24h?: number | null
 }
-
-export interface Alerta {
-  id: string
-  tipo: 'chat' | 'post'
-  ticker: string | null
-  accion: 'BUY' | 'SELL' | null
-  precio: number | null
-  texto_original: string
-  fecha: string
-}

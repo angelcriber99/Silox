@@ -6,7 +6,6 @@ import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 
-import { AlertasFeed } from "@/components/dashboard/alertas-feed"
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary"
 import { AllocationChart } from "@/components/dashboard/allocation-chart"
 import { PositionsTable } from "@/components/transactions/positions-table"
@@ -70,8 +69,6 @@ export default function Home() {
           {/* KPI Cards */}
           <PortfolioSummary totals={totals} loading={isLoading} />
 
-
-
           {/* Charts Row */}
           <div className={`grid grid-cols-1 ${zenMode ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6`}>
             <div className={`${zenMode ? 'col-span-1' : 'lg:col-span-2'} flex flex-col gap-6`}>
@@ -87,7 +84,6 @@ export default function Home() {
                     onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true); }}
                   />
                 </div>
-                <AlertasFeed />
               </div>
             )}
           </div>
