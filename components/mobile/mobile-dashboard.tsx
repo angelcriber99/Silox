@@ -121,8 +121,8 @@ export function MobileDashboard({
               <Activity className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500 font-medium">Buenos días 👋</p>
-              <p className="text-sm font-semibold text-white">Tu Portfolio</p>
+              <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Portfolio</p>
+              <p className="text-sm font-bold text-white">Resumen Global</p>
             </div>
           </div>
           {/* Logout (subtle) */}

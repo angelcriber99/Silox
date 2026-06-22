@@ -23,7 +23,6 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
   const isPositive = pnl >= 0
   const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
   const pnlBg = isPositive ? "bg-emerald-500/10" : "bg-rose-500/10"
-  const PnlIcon = pnl > 0 ? TrendingUp : pnl < 0 ? TrendingDown : Minus
 
   const typeStyle = TYPE_COLORS[p.tipo] ?? {
     bg: "bg-zinc-500/10",
@@ -79,10 +78,9 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
               : "—"}
           </span>
           <div
-            className={`flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-md ${pnlBg}`}
+            className={`flex items-center justify-center mt-0.5 px-2 py-0.5 rounded-md ${pnlBg}`}
           >
-            <PnlIcon className={`h-3 w-3 ${pnlColor}`} />
-            <span className={`text-xs font-semibold font-tabular ${pnlColor}`}>
+            <span className={`text-[11px] font-bold font-tabular ${pnlColor}`}>
               {formatPercent(pnlPercent)}
             </span>
           </div>

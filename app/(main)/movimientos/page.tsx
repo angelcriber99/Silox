@@ -104,46 +104,44 @@ export default function MovimientosPage() {
         </div>
 
         {/* Filters Section */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-xl backdrop-blur-sm">
-          <div className="relative flex-1 w-full">
+        <div className="flex flex-col gap-3 bg-zinc-900/40 border border-zinc-800/60 p-3 md:p-4 rounded-xl backdrop-blur-sm">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <Input 
               placeholder="Buscar por activo o ticker..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-zinc-950 border-zinc-700 text-white w-full"
+              className="pl-9 bg-zinc-950 border-zinc-800 text-white w-full h-10"
             />
           </div>
-          <div className="flex flex-wrap gap-4 w-full md:w-auto md:flex-nowrap">
-            <div className="relative min-w-[160px]">
-              <select 
-                className="appearance-none bg-zinc-950 border border-zinc-700 text-sm text-zinc-300 rounded-md pl-4 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as any)}
-              >
-                <option value="Todos">Todas las operaciones</option>
-                <option value="Compra">Solo Compras</option>
-                <option value="Venta">Solo Ventas</option>
-              </select>
-              <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-            </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar w-full">
+            <select 
+              className="flex-shrink-0 appearance-none bg-zinc-950 border border-zinc-800 text-sm text-zinc-300 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as any)}
+            >
+              <option value="Todos">Todas las operaciones</option>
+              <option value="Compra">Solo Compras</option>
+              <option value="Venta">Solo Ventas</option>
+            </select>
             
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-zinc-500 whitespace-nowrap">Desde</span>
-              <Input 
+            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
+              <span className="text-xs text-zinc-500">Desde</span>
+              <input 
                 type="date" 
                 value={dateFrom} 
                 onChange={(e) => setDateFrom(e.target.value)} 
-                className="bg-zinc-950 border-zinc-700 text-zinc-300 w-auto min-w-[130px] [color-scheme:dark]"
+                className="bg-transparent text-sm text-zinc-300 outline-none w-auto [color-scheme:dark]"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-zinc-500 whitespace-nowrap">Hasta</span>
-              <Input 
+            
+            <div className="flex items-center gap-2 flex-shrink-0 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
+              <span className="text-xs text-zinc-500">Hasta</span>
+              <input 
                 type="date" 
                 value={dateTo} 
                 onChange={(e) => setDateTo(e.target.value)} 
-                className="bg-zinc-950 border-zinc-700 text-zinc-300 w-auto min-w-[130px] [color-scheme:dark]"
+                className="bg-transparent text-sm text-zinc-300 outline-none w-auto [color-scheme:dark]"
               />
             </div>
           </div>
@@ -268,22 +266,22 @@ export default function MovimientosPage() {
           </div>
 
           {/* Mobile Cards View */}
-          <div className="md:hidden flex flex-col divide-y divide-zinc-800/60">
+          <div className="md:hidden flex flex-col divide-y divide-zinc-800/40">
             {isLoading ? (
-               Array.from({ length: 3 }).map((_, i) => (
+               Array.from({ length: 4 }).map((_, i) => (
                  <div key={i} className="p-4 flex flex-col gap-3">
                    <div className="flex justify-between">
-                     <div className="h-4 w-24 bg-zinc-800 animate-shimmer rounded" />
-                     <div className="h-4 w-16 bg-zinc-800 animate-shimmer rounded" />
+                     <div className="h-4 w-24 bg-zinc-800 animate-pulse rounded" />
+                     <div className="h-4 w-16 bg-zinc-800 animate-pulse rounded" />
                    </div>
-                   <div className="h-10 w-full bg-zinc-800 animate-shimmer rounded" />
+                   <div className="h-10 w-full bg-zinc-800 animate-pulse rounded" />
                  </div>
                ))
             ) : filteredTransactions.length === 0 ? (
-              <div className="text-center text-zinc-600 py-16">
+               <div className="text-center text-zinc-600 py-16">
                  <div className="flex flex-col items-center gap-3">
-                   <History className="h-10 w-10 text-zinc-600 mb-2" />
-                   <p className="font-medium text-zinc-500">No se encontraron movimientos</p>
+                   <History className="h-10 w-10 text-zinc-600 mb-2 opacity-50" />
+                   <p className="font-medium text-zinc-400">No se encontraron movimientos</p>
                  </div>
                </div>
             ) : (
@@ -291,7 +289,6 @@ export default function MovimientosPage() {
                  const isCompra = tx.tipo_operacion === "Compra"
                  const total = tx.cantidad * tx.precio_unitario + tx.comision
                  const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
-                   year: 'numeric',
                    month: 'short',
                    day: 'numeric'
                  })
@@ -302,42 +299,34 @@ export default function MovimientosPage() {
                    : "—"
 
                  return (
-                   <div key={tx.id} className="p-4 flex flex-col gap-3 hover:bg-zinc-800/30 transition-colors relative">
-                     {/* Top Row: Operation type & Date */}
-                     <div className="flex items-center justify-between">
-                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                   <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
+                     <div className="flex items-center gap-3 overflow-hidden">
+                       <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
                           isCompra ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
                         }`}>
-                          {isCompra ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                          {tx.tipo_operacion}
-                        </span>
-                        <span className="text-xs text-zinc-500">{date}</span>
+                          {isCompra ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-white text-[15px] truncate">{ticker}</span>
+                          <span className="text-xs font-medium text-zinc-500 truncate">{isCompra ? "Compra" : "Venta"} • {date}</span>
+                        </div>
                      </div>
 
-                     {/* Middle Row: Asset & Total Amount */}
-                     <div className="flex items-center justify-between">
-                       <div className="flex flex-col">
-                          <span className="font-bold text-white text-base">{ticker}</span>
-                          <span className="text-xs text-zinc-500 truncate max-w-[150px]">{tx.activo?.nombre}</span>
-                       </div>
-                       <div className={`flex flex-col items-end`}>
-                          <span className={`text-lg font-bold font-tabular ${isCompra ? "text-emerald-400" : "text-rose-400"}`}>
+                     <div className="flex items-center gap-2 flex-shrink-0">
+                       <div className="flex flex-col items-end">
+                          <span className={`text-[15px] font-bold font-tabular leading-tight ${isCompra ? "text-white" : "text-emerald-400"}`}>
                             {isCompra ? "-" : "+"}{formatCurrency(total)}
                           </span>
+                          <span className="text-xs font-medium text-zinc-500 font-tabular mt-0.5">
+                            {formatUnits(tx.cantidad)} a {tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}€
+                          </span>
                        </div>
-                     </div>
-
-                     {/* Bottom Row: Details & Actions */}
-                     <div className="flex items-center justify-between mt-1 pt-3 border-t border-zinc-800/50">
-                        <span className="text-xs font-tabular text-zinc-400">
-                          {formatUnits(tx.cantidad)} ud. <span className="text-zinc-600 mx-1">x</span> {tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                        </span>
-                        
+                       
                         <DropdownMenu>
-                          <DropdownMenuTrigger className="p-1 hover:bg-zinc-800 rounded-md focus:outline-none flex items-center gap-1">
-                            <MoreHorizontal className="h-5 w-5 text-zinc-500" />
+                          <DropdownMenuTrigger className="p-1.5 -mr-1.5 hover:bg-zinc-800 rounded-md focus:outline-none flex items-center justify-center">
+                            <MoreHorizontal className="h-5 w-5 text-zinc-600" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700 text-zinc-200">
+                          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700 text-zinc-200 min-w-[140px]">
                             <DropdownMenuItem 
                               onClick={() => handleEdit(tx)}
                               className="hover:bg-zinc-800 focus:bg-zinc-800 cursor-pointer flex items-center gap-2"
