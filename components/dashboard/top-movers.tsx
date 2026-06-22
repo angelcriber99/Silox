@@ -48,7 +48,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
           </button>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-3 grid grid-cols-2 gap-4">
+      <CardContent className="p-4 pt-3 grid grid-cols-1 gap-6">
         {/* Best */}
         <div className="space-y-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
