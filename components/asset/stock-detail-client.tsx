@@ -15,7 +15,7 @@ import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetNews } from "./detail/asset-news"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
-import { MarketStats } from "./detail/market-stats"
+import { StockExtendedStats } from "./detail/stock-extended-stats"
 
 interface StockDetailClientProps {
   position: EnrichedPosition
@@ -117,63 +117,60 @@ export function StockDetailClient({ position, transactions }: StockDetailClientP
           </div>
         </div>
 
-        {/* ═══════════ ESTADÍSTICAS Y ALERTAS ═══════════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-3">
+        {/* ═══════════ ESTADÍSTICAS EXTENDIDAS DE ACCIÓN ═══════════ */}
+        <div className="mb-10 animate-fade-in stagger-3">
+          <StockExtendedStats ticker={position.ticker} moneda={position.moneda} precioActual={position.precio_actual} />
+        </div>
+
+        {/* ═══════════ HISTORIAL DE TRANSACCIONES Y ALERTAS ═══════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-4">
           <div className="lg:col-span-2">
             <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-400" />
-              Datos del Mercado
+              <Activity className="h-5 w-5 text-muted-foreground" />
+              Operaciones Recientes
             </h2>
-            <MarketStats ticker={position.ticker} moneda={position.moneda} />
+            <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
+                  <tr>
+                    <th className="px-5 py-4">Fecha</th>
+                    <th className="px-5 py-4">Tipo</th>
+                    <th className="px-5 py-4 text-right">Acciones</th>
+                    <th className="px-5 py-4 text-right">Precio</th>
+                    <th className="px-5 py-4 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/50">
+                  {txTableData.slice().reverse().map((tx) => (
+                    <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
+                        {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                          {tx.tipo_operacion}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
+                      <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                      <td className="px-5 py-4 text-right font-tabular font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
+          
           <div className="lg:col-span-1">
-            <h2 className="text-xl font-bold text-transparent mb-4 flex items-center gap-2 select-none pointer-events-none">
-              <BarChart3 className="h-5 w-5 text-transparent" />
-              Alertas
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-violet-400" />
+              Tus Alertas
             </h2>
             <AssetAlerts 
               ticker={position.ticker} 
               moneda={position.moneda} 
               onOpenAlertsModal={() => setAlertsOpen(true)} 
             />
-          </div>
-        </div>
-
-        {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
-        <div className="animate-fade-in stagger-4">
-          <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-muted-foreground" />
-            Operaciones Recientes
-          </h2>
-          <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
-                <tr>
-                  <th className="px-5 py-4">Fecha</th>
-                  <th className="px-5 py-4">Tipo</th>
-                  <th className="px-5 py-4 text-right">Acciones</th>
-                  <th className="px-5 py-4 text-right">Precio</th>
-                  <th className="px-5 py-4 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/50">
-                {txTableData.slice().reverse().map((tx) => (
-                  <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
-                      {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                        {tx.tipo_operacion}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
-                    <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
-                    <td className="px-5 py-4 text-right font-tabular font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
 

@@ -18,11 +18,21 @@ export async function GET(
 
     const { searchParams } = new URL(request.url)
     const range = searchParams.get('range') || '1mo'
+    const type = searchParams.get('type') || ''
 
     const [quoteResult, chartResult] = await Promise.allSettled([
       yahooFinance.quote(ticker),
       yahooFinance.chart(ticker, { period1: getPeriod1ForRange(range), interval: getInterval(range) })
     ])
+
+    let summaryResult: any = null
+    if (type === 'Acción' || type === 'Stock') {
+       try {
+         summaryResult = await yahooFinance.quoteSummary(ticker, { modules: ['summaryProfile', 'financialData'] })
+       } catch(e) {
+         console.error('Error fetching summary for', ticker, e)
+       }
+    }
 
     let quote: any = null
     if (quoteResult.status === 'fulfilled') {
@@ -47,6 +57,8 @@ export async function GET(
       quote: quote ? {
         marketCap: formatNumber(quote.marketCap),
         peRatio: quote.trailingPE ? quote.trailingPE.toFixed(2) : null,
+        forwardPE: quote.forwardPE ? quote.forwardPE.toFixed(2) : null,
+        eps: quote.epsTrailingTwelveMonths ? quote.epsTrailingTwelveMonths.toFixed(2) : null,
         divYield: quote.trailingAnnualDividendYield ? (quote.trailingAnnualDividendYield * 100).toFixed(2) + '%' : null,
         week52High: quote.fiftyTwoWeekHigh,
         week52Low: quote.fiftyTwoWeekLow,
@@ -54,7 +66,12 @@ export async function GET(
         averageVolume: formatNumber(quote.averageDailyVolume10Day),
         open: quote.regularMarketOpen,
         previousClose: quote.regularMarketPreviousClose,
-        currency: normalizeYahooCurrency(quote.currency || 'USD')
+        currency: normalizeYahooCurrency(quote.currency || 'USD'),
+        averageAnalystRating: quote.averageAnalystRating || null,
+      } : null,
+      summary: summaryResult ? {
+        profile: summaryResult.summaryProfile || null,
+        financials: summaryResult.financialData || null
       } : null,
       chart: chartData
     })
