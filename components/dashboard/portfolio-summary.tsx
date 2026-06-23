@@ -149,7 +149,7 @@ export function PortfolioSummary({
               <div className="flex flex-col gap-1">
                 <span>{totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes"}</span>
                 {liquidezAmount > 0 && (
-                  <span className="text-emerald-400 font-medium flex items-center gap-1">
+                  <span className="text-zinc-400 font-medium flex items-center gap-1">
                     <Wallet className="w-3 h-3" /> Liquidez: <AnimatedNumber value={liquidezAmount} format="currency" hide={hideBalances} />
                   </span>
                 )}

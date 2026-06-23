@@ -11,11 +11,12 @@ interface MobileAssetCardProps {
 }
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  ETF: { bg: "bg-blue-500/10", text: "text-blue-500" },
-  "Fondo Indexado": { bg: "bg-purple-500/10", text: "text-purple-500" },
-  "Fondo Monetario": { bg: "bg-cyan-500/10", text: "text-cyan-500" },
-  Acción: { bg: "bg-amber-500/10", text: "text-amber-500" },
-  Crypto: { bg: "bg-orange-500/10", text: "text-orange-500" },
+  ETF: { bg: "bg-blue-500/20", text: "text-blue-400" },
+  "Fondo Indexado": { bg: "bg-purple-500/20", text: "text-purple-400" },
+  "Fondo Monetario": { bg: "bg-cyan-500/20", text: "text-cyan-400" },
+  Acción: { bg: "bg-amber-500/20", text: "text-amber-400" },
+  Crypto: { bg: "bg-orange-500/20", text: "text-orange-400" },
+  Liquidez: { bg: "bg-zinc-500/20", text: "text-zinc-400" },
 }
 
 export function MobileAssetCard({ position: p }: MobileAssetCardProps) {

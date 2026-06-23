@@ -23,6 +23,7 @@ export default function SettingsPage() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
   const { 
     amoled, setAmoled,
     zenMode, setZenMode,
@@ -32,7 +33,8 @@ export default function SettingsPage() {
     biometrics, setBiometrics,
     twoFactor, setTwoFactor,
     tableDensity, setTableDensity,
-    showPnlPercentOnly, setShowPnlPercentOnly
+    showPnlPercentOnly, setShowPnlPercentOnly,
+    hideBalances, setHideBalances
   } = usePreferences()
 
   const [toggles, setToggles] = useState({
@@ -41,16 +43,15 @@ export default function SettingsPage() {
     weeklyReport: false,
   })
 
+  if (!mounted) return null
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     window.location.href = "/login"
   }
 
-  const launchKioskMode = () => {
-    setZenMode(true)
-    window.location.href = "/" // hard redirect so the page completely resets to Dashboard
-  }
+
 
   const handleToggle = (key: keyof typeof toggles) => {
     setToggles(prev => ({ ...prev, [key]: !prev[key] }))
@@ -72,7 +73,7 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)] mb-10 md:mb-0">
+    <div className="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)] mb-10 md:mb-0 px-4 md:px-0">
       {/* Settings Sidebar */}
       <aside className="w-full md:w-64 shrink-0 flex flex-col">
         <div className="mb-4 md:mb-8">
@@ -112,7 +113,7 @@ export default function SettingsPage() {
       </aside>
 
       {/* Settings Content */}
-      <main className="flex-1 bg-card/30 backdrop-blur-xl border border-border/50 rounded-3xl p-5 md:p-8 md:overflow-y-auto hide-scrollbar">
+      <main className="flex-1 max-w-full overflow-x-hidden bg-card/30 backdrop-blur-xl border border-border/50 rounded-3xl p-5 md:p-8 md:overflow-y-auto hide-scrollbar">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -133,13 +134,13 @@ export default function SettingsPage() {
                 <div>
                   <label className="text-sm font-medium mb-3 block">Tema Principal</label>
                   <div className="flex bg-muted/50 p-1 rounded-xl gap-1 max-w-md" suppressHydrationWarning>
-                    <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${mounted && theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Sun className="w-4 h-4" /> Claro
                     </button>
-                    <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${mounted && theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Moon className="w-4 h-4" /> Oscuro
                     </button>
-                    <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${mounted && theme === 'system' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'system' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Monitor className="w-4 h-4" /> Sistema
                     </button>
                   </div>
@@ -200,17 +201,7 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
-                  <div>
-                    <h3 className="text-sm font-medium flex items-center gap-2">
-                      Monitor Kiosko (Modo Zen) <Monitor className="w-4 h-4 text-muted-foreground" />
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">Activa una pantalla de monitorización a pantalla completa en tu Dashboard.</p>
-                  </div>
-                  <button onClick={launchKioskMode} className="px-4 py-2 bg-primary/10 text-primary font-medium text-sm rounded-lg hover:bg-primary/20 transition-colors">
-                    Lanzar
-                  </button>
-                </div>
+
 
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
                   <div>

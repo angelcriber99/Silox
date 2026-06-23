@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { PieChart, Pie, Cell } from "recharts"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
@@ -15,17 +14,11 @@ const TYPE_COLORS: Record<string, string> = {
   "Fondo Monetario": "#06b6d4",
   Acción: "#f59e0b",
   Crypto: "#f97316",
+  Liquidez: "#a1a1aa",
 }
 
 interface ZenDashboardProps {
   positions: EnrichedPosition[]
-}
-
-interface ChartDatum {
-  name: string
-  value: number
-  color: string
-  percent: number
 }
 
 export function ZenDashboard({ positions }: ZenDashboardProps) {
@@ -38,53 +31,63 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
     return () => clearInterval(timer)
   }, [])
 
-  const chartData = useMemo(() => {
-    const groups = new Map<string, { value: number }>()
-
-    for (const p of positions) {
-      const key = p.tipo
-      const value = p.valor_actual ?? p.coste_total
-
-      if (value > 0) {
-        const existing = groups.get(key) ?? { value: 0 }
-        groups.set(key, { value: existing.value + value })
-      }
-    }
-
-    const total = Array.from(groups.values()).reduce((a, b) => a + b.value, 0)
-    const data: ChartDatum[] = Array.from(groups.entries())
-      .map(([name, groupData]) => ({
-        name,
-        value: groupData.value,
-        color: TYPE_COLORS[name] ?? "#71717a",
-        percent: total > 0 ? (groupData.value / total) * 100 : 0,
-      }))
-      .sort((a, b) => b.value - a.value)
-
-    return { data, total }
-  }, [positions])
-
   // Sort by absolute daily percentage change to show most volatile first
-  const volatilePositions = [...positions].sort((a, b) => {
-    const valA = Math.abs(a.change_percent_24h ?? 0)
-    const valB = Math.abs(b.change_percent_24h ?? 0)
-    return valB - valA
-  })
+  const volatilePositions = [...positions]
+    .filter(p => p.unidades > 0 && (p.valor_actual ?? 0) > 0)
+    .sort((a, b) => {
+      const valA = Math.abs(a.change_percent_24h ?? 0)
+      const valB = Math.abs(b.change_percent_24h ?? 0)
+      return valB - valA
+    })
 
   return (
-    <div className="flex flex-col w-full h-full min-h-[90vh] justify-center items-center p-8 space-y-16 animate-in fade-in duration-1000">
+    <div className="flex flex-col w-full h-full min-h-[90vh] justify-center items-center p-8 animate-in fade-in duration-1000 relative overflow-hidden">
       
-      {/* EXIT ZEN MODE BUTTON */}
-      <button 
-        onClick={() => setZenMode(false)}
-        className="fixed top-6 right-6 p-4 rounded-full bg-background/50 hover:bg-muted border border-border/50 backdrop-blur-md transition-all text-muted-foreground hover:text-foreground z-50 group"
-        title="Salir del Modo Zen"
-      >
-        <Minimize className="w-6 h-6 group-hover:scale-90 transition-transform" />
-      </button>
+      {/* ABSTRACT BACKGROUND EFFECTS */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-[1px] z-10" /> {/* Subtle overlay so text remains readable */}
+        <motion.div 
+          className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-emerald-500/30 blur-[100px] mix-blend-screen"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div 
+          className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-500/30 blur-[100px] mix-blend-screen"
+          animate={{
+            x: [0, -100, 0],
+            y: [0, -50, 0],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div 
+          className="absolute top-[30%] left-[40%] w-[30vw] h-[30vw] rounded-full bg-purple-500/30 blur-[100px] mix-blend-screen"
+          animate={{
+            x: [0, -50, 50, 0],
+            y: [0, 100, -50, 0],
+            scale: [1, 1.1, 0.9, 1],
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
 
-      {/* HEADER: HUGE NUMBERS */}
-      <div className="flex flex-col items-center justify-center text-center space-y-4">
+      {/* FOREGROUND CONTENT */}
+      <div className="relative z-20 flex flex-col w-full max-w-4xl space-y-16 items-center">
+        {/* EXIT ZEN MODE BUTTON */}
+        <button 
+          onClick={() => setZenMode(false)}
+          className="fixed top-6 right-6 p-4 rounded-full bg-background/50 hover:bg-muted border border-border/50 backdrop-blur-md transition-all text-muted-foreground hover:text-foreground z-50 group"
+          title="Salir del Modo Zen"
+        >
+          <Minimize className="w-6 h-6 group-hover:scale-90 transition-transform" />
+        </button>
+
+        {/* HEADER: HUGE NUMBERS */}
+        <div className="flex flex-col items-center justify-center text-center space-y-4">
         <p className="text-muted-foreground tracking-widest uppercase font-semibold text-lg md:text-xl">
           Valor del Portfolio • {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
@@ -107,38 +110,11 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
         </div>
       </div>
 
-      {/* BODY: CHART & LIST */}
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      {/* BODY: LIST ONLY */}
+      <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
         
-        {/* LEFT: DONUT */}
-        <div className="flex justify-center items-center relative">
-          <PieChart width={400} height={400}>
-            <Pie
-              data={chartData.data}
-              innerRadius={130}
-              outerRadius={180}
-              paddingAngle={4}
-              dataKey="value"
-              stroke="none"
-              cornerRadius={10}
-            >
-              {chartData.data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center">
-              <p className="text-lg font-medium text-muted-foreground uppercase tracking-widest mb-1">Activos</p>
-              <p className="text-4xl font-bold text-foreground">
-                {positions.length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT: PROFESSIONAL TERMINAL FEED */}
-        <div className="flex flex-col h-full bg-background/20 rounded-xl border border-border/40 p-1">
+        {/* PROFESSIONAL TERMINAL FEED */}
+        <div className="flex flex-col w-full bg-background/20 rounded-xl border border-border/40 p-1">
           <div className="flex items-center justify-between px-6 py-4 border-b border-border/40 bg-card/20">
             <h2 className="text-sm font-medium tracking-widest text-muted-foreground uppercase flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -154,7 +130,7 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
               const isPositive = pnl >= 0
               
               return (
-                <div key={p.id} className="flex items-center justify-between px-6 py-4 border-b border-border/20 hover:bg-card/40 transition-colors">
+                <div key={p.activo_id} className="flex items-center justify-between px-6 py-4 border-b border-border/20 hover:bg-card/40 transition-colors">
                   <div className="flex items-center gap-4 w-1/3">
                     <div className="w-1 h-full min-h-[24px] rounded-full" style={{ backgroundColor: TYPE_COLORS[p.tipo] ?? '#71717a' }} />
                     <div className="flex flex-col">
@@ -183,6 +159,7 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
           </div>
         </div>
 
+        </div>
       </div>
     </div>
   )
