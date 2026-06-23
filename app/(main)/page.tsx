@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Plus, Activity } from "lucide-react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { useAllTransactions } from "@/lib/hooks/use-transactions"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 
@@ -21,6 +22,7 @@ import { SiloxInsights } from "@/components/dashboard/silox-insights"
 
 export default function Home() {
   const { positions, totals, isLoading, pricesUpdatedAt } = usePortfolio()
+  const { data: allTransactions } = useAllTransactions()
   const { zenMode, setZenMode } = usePreferences()
 
   // Modals
@@ -68,7 +70,7 @@ export default function Home() {
           {!zenMode && <SiloxInsights positions={positions} totals={totals} />}
 
           {/* KPI Cards */}
-          <PortfolioSummary totals={totals} loading={isLoading} />
+          <PortfolioSummary totals={totals} positions={positions} transactions={allTransactions} loading={isLoading} />
 
           {/* Charts Row */}
           <div className={`grid grid-cols-1 ${zenMode ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6`}>
