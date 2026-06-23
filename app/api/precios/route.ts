@@ -71,8 +71,46 @@ export async function POST(request: Request) {
         ])
 
         const originalCurrency = normalizeYahooCurrency(quote.currency)
-        const rawPrice = quote.regularMarketPrice ?? null
-        const changePercent24h = quote.regularMarketChangePercent ?? null
+        let rawPrice = quote.regularMarketPrice ?? null
+        let changePercent24h = quote.regularMarketChangePercent ?? null
+
+        // Coger el precio más reciente si hay pre/post market
+        if (quote.preMarketPrice && quote.regularMarketPreviousClose) {
+          rawPrice = quote.preMarketPrice
+          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+        } else if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
+          rawPrice = quote.postMarketPrice
+          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+        }
+
+        // "Resetear" el rendimiento si es de un día anterior
+        // Usamos el huso horario del mercado en el que cotiza (ej. 'America/New_York')
+        let latestTime = quote.regularMarketTime ? new Date(quote.regularMarketTime) : null
+        if ((quote as any).preMarketTime) {
+          const preTime = new Date((quote as any).preMarketTime)
+          if (!latestTime || preTime > latestTime) latestTime = preTime
+        }
+        if ((quote as any).postMarketTime) {
+          const postTime = new Date((quote as any).postMarketTime)
+          if (!latestTime || postTime > latestTime) latestTime = postTime
+        }
+
+        if (latestTime) {
+          try {
+            const tz = quote.exchangeTimezoneName || 'UTC'
+            const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: 'numeric', day: 'numeric' })
+            const nowStr = formatter.format(new Date())
+            const latestStr = formatter.format(latestTime)
+            
+            if (nowStr !== latestStr && latestTime < new Date()) {
+               // Si la fecha en el huso horario del mercado es distinta (ej. hoy es martes pero el último trade fue el lunes),
+               // entonces reseteamos el rendimiento diario a 0% hasta que empiece el pre-market/mercado de hoy.
+               changePercent24h = 0
+            }
+          } catch (e) {
+            // Ignorar fallos de formato de zona horaria por si acaso
+          }
+        }
 
         let sparkline: number[] = []
         if (chart?.quotes) {
