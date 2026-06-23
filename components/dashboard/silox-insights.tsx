@@ -68,8 +68,9 @@ export function SiloxInsights({
 
       for (const alert of activeAlerts) {
         const position = positions.find(p => p.ticker.toUpperCase() === alert.ticker.toUpperCase())
-        if (position && position.price && position.price > 0) {
-          const distance = Math.abs((position.price - alert.target_price) / alert.target_price)
+        const currentPrice = position?.precio_actual_nativo || position?.precio_actual
+        if (position && currentPrice && currentPrice > 0) {
+          const distance = Math.abs((currentPrice - alert.target_price) / alert.target_price)
           // If within 5% of the target price
           if (distance <= 0.05) {
             const distancePercent = formatPercent(distance * 100)
