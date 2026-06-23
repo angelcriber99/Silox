@@ -461,7 +461,7 @@ export default function DeclararPage() {
             </div>
           </>
         )}
-
+        </div>
       </div>
     </main>
   )
