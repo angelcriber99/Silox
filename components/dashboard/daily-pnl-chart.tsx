@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { useSnapshots } from "@/lib/hooks/use-portfolio"
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, Cell, ReferenceLine } from "recharts"
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, ReferenceLine } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
@@ -102,7 +102,13 @@ export function DailyPnlChart({ currentPnl24h }: { currentPnl24h?: number }) {
   return (
     <div className="w-full h-[350px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
           <XAxis 
             dataKey="date" 
             axisLine={false} 
@@ -112,14 +118,18 @@ export function DailyPnlChart({ currentPnl24h }: { currentPnl24h?: number }) {
             dy={10}
             minTickGap={30}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 2, strokeDasharray: '5 5' }} />
           <ReferenceLine y={0} stroke="#3f3f46" strokeWidth={1} strokeDasharray="3 3" />
-          <Bar dataKey="value" radius={[4, 4, 4, 4]}>
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#10b981' : '#fb7185'} />
-            ))}
-          </Bar>
-        </BarChart>
+          <Area 
+            type="monotone" 
+            dataKey="value" 
+            stroke="#3b82f6" 
+            strokeWidth={3}
+            fillOpacity={1} 
+            fill="url(#colorValue)" 
+            activeDot={{ r: 6, fill: "#3b82f6", stroke: "#18181b", strokeWidth: 2 }}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   )
