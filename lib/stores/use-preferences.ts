@@ -10,12 +10,16 @@ interface PreferencesState {
   celebrationMode: boolean
   zenMode: boolean
   soundEffects: boolean
+  amoled: boolean
+  defaultView: 'historical' | 'daily'
   setHideBalances: (val: boolean) => void
   setCompactView: (val: boolean) => void
   setAccentColor: (color: AccentColor) => void
   setCelebrationMode: (val: boolean) => void
   setZenMode: (val: boolean) => void
   setSoundEffects: (val: boolean) => void
+  setAmoled: (val: boolean) => void
+  setDefaultView: (view: 'historical' | 'daily') => void
 }
 
 export const usePreferences = create<PreferencesState>()(
@@ -27,12 +31,16 @@ export const usePreferences = create<PreferencesState>()(
       celebrationMode: true,
       zenMode: false,
       soundEffects: true,
+      amoled: false,
+      defaultView: 'historical',
       setHideBalances: (val) => set({ hideBalances: val }),
       setCompactView: (val) => set({ compactView: val }),
       setAccentColor: (color) => set({ accentColor: color }),
       setCelebrationMode: (val) => set({ celebrationMode: val }),
       setZenMode: (val) => set({ zenMode: val }),
       setSoundEffects: (val) => set({ soundEffects: val }),
+      setAmoled: (val) => set({ amoled: val }),
+      setDefaultView: (view) => set({ defaultView: view }),
     }),
     {
       name: 'silox-preferences',

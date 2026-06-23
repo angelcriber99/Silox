@@ -1,5 +1,5 @@
-import { Header } from "@/components/layout/header"
-import { MobileShell } from "@/components/mobile/mobile-shell"
+import { ProSidebar } from "@/components/layout/pro-sidebar"
+import { ProBottomNav } from "@/components/mobile/pro-bottom-nav"
 
 export default function MainLayout({
   children,
@@ -7,15 +7,19 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col min-h-screen pb-20 md:pb-0">
-      {/* Desktop header (hidden on mobile since MobileDashboard has its own) */}
-      <div className="hidden md:block">
-        <Header />
-      </div>
-      <main className="flex-1">
-        {children}
+    <div className="flex min-h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <ProSidebar />
+      
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-w-0 pb-24 md:pb-0">
+        <div className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
+          {children}
+        </div>
       </main>
-      <MobileShell />
+
+      {/* Mobile Bottom Navigation */}
+      <ProBottomNav />
     </div>
   )
 }

@@ -13,13 +13,19 @@ const ACCENT_COLORS: Record<AccentColor, string> = {
 }
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
-  const { accentColor } = usePreferences()
+  const { accentColor, amoled } = usePreferences()
 
   useEffect(() => {
     const root = document.documentElement
     const color = ACCENT_COLORS[accentColor] || ACCENT_COLORS.blue
     root.style.setProperty('--primary', color)
-  }, [accentColor])
+    
+    if (amoled) {
+      root.classList.add('amoled')
+    } else {
+      root.classList.remove('amoled')
+    }
+  }, [accentColor, amoled])
 
   return (
     <>

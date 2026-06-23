@@ -170,18 +170,6 @@ export function MobileDashboard({
             >
               {zenMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
-            <button
-              onClick={async () => {
-                hapticFeedback.heavy()
-                const { createClient } = await import("@/lib/supabase/client")
-                const supabase = createClient()
-                await supabase.auth.signOut()
-                window.location.href = "/login"
-              }}
-              className="p-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-all"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
 

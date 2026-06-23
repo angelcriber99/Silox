@@ -5,6 +5,7 @@ import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
+import { Sparkline } from "@/components/asset/sparkline"
 
 interface MobileAssetCardProps {
   position: EnrichedPosition
@@ -57,25 +58,36 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
           </div>
         )}
 
-        {/* Center: Ticker + Name */}
+        {/* Center: Ticker + Name + Sparkline */}
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <div className="flex items-center gap-2">
-            <span className={`${compactView ? 'text-sm' : 'text-[13px]'} font-semibold text-foreground truncate tracking-tight`}>
-              {displayTicker}
-            </span>
-            <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm ${typeStyle.bg} ${typeStyle.text}`}>
-              {p.tipo === "Fondo Indexado"
-                ? "Fondo"
-                : p.tipo === "Fondo Monetario"
-                  ? "Monet."
-                  : p.tipo}
-            </span>
+          <div className="flex items-center justify-between pr-4">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className={`${compactView ? 'text-sm' : 'text-[13px]'} font-semibold text-foreground truncate tracking-tight`}>
+                  {displayTicker}
+                </span>
+                <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm ${typeStyle.bg} ${typeStyle.text}`}>
+                  {p.tipo === "Fondo Indexado"
+                    ? "Fondo"
+                    : p.tipo === "Fondo Monetario"
+                      ? "Monet."
+                      : p.tipo}
+                </span>
+              </div>
+              {!compactView && (
+                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                  {p.nombre || "—"}
+                </p>
+              )}
+            </div>
+            
+            {/* Sparkline */}
+            {!compactView && p.sparkline && p.sparkline.length > 0 && (
+              <div className="opacity-70">
+                <Sparkline data={p.sparkline} color={is24hPositive ? "#10b981" : "#f43f5e"} />
+              </div>
+            )}
           </div>
-          {!compactView && (
-            <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-              {p.nombre || "—"}
-            </p>
-          )}
         </div>
 
         {/* Right: Value + P&L */}
