@@ -53,7 +53,7 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
       }
 
       if (shouldTrigger) {
-        markTriggered(alert.id)
+        removeAlert(alert.id)
         triggeredCount++
         
         // Browser native notification

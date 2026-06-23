@@ -102,10 +102,10 @@ export async function GET(request: Request) {
     const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 
     for (const trigger of triggeredAlerts) {
-      // Marcar en DB como disparada
+      // Eliminar de DB al dispararse
       await supabase
         .from('alertas')
-        .update({ triggered: true })
+        .delete()
         .eq('id', trigger.alerta.id)
 
       // Enviar Telegram
