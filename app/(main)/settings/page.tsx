@@ -62,20 +62,20 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-8rem)]">
+    <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)] mb-10 md:mb-0">
       {/* Settings Sidebar */}
-      <aside className="w-full md:w-64 shrink-0 space-y-1">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Ajustes</h1>
+      <aside className="w-full md:w-64 shrink-0 flex flex-col">
+        <div className="mb-4 md:mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-1 md:mb-2">Ajustes</h1>
           <p className="text-sm text-muted-foreground">Gestiona tu experiencia profesional</p>
         </div>
         
-        <nav className="space-y-1">
+        <nav className="flex md:flex-col gap-2 overflow-x-auto pb-4 md:pb-0 hide-scrollbar snap-x w-full">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${
+              className={`shrink-0 whitespace-nowrap snap-start flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${
                 activeTab === tab.id 
                   ? 'bg-primary/10 text-primary font-medium' 
                   : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
@@ -85,12 +85,12 @@ export default function SettingsPage() {
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
               </div>
-              {activeTab === tab.id && <ChevronRight className="w-4 h-4" />}
+              {activeTab === tab.id && <ChevronRight className="w-4 h-4 hidden md:block" />}
             </button>
           ))}
         </nav>
 
-        <div className="pt-8 mt-8 border-t border-border/50">
+        <div className="hidden md:block pt-8 mt-8 border-t border-border/50">
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-rose-500 hover:bg-rose-500/10 transition-all font-medium"
@@ -102,7 +102,7 @@ export default function SettingsPage() {
       </aside>
 
       {/* Settings Content */}
-      <main className="flex-1 bg-card/30 backdrop-blur-xl border border-border/50 rounded-3xl p-6 md:p-8 overflow-y-auto hide-scrollbar">
+      <main className="flex-1 bg-card/30 backdrop-blur-xl border border-border/50 rounded-3xl p-5 md:p-8 md:overflow-y-auto hide-scrollbar">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
