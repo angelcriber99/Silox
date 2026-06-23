@@ -1,5 +1,6 @@
 import { ProSidebar } from "@/components/layout/pro-sidebar"
 import { ProBottomNav } from "@/components/mobile/pro-bottom-nav"
+import { FaceIdOverlay } from "@/components/mobile/face-id-overlay"
 
 export default function MainLayout({
   children,
@@ -20,6 +21,9 @@ export default function MainLayout({
 
       {/* Mobile Bottom Navigation */}
       <ProBottomNav />
+
+      {/* Mobile FaceID Lock */}
+      <FaceIdOverlay />
     </div>
   )
 }

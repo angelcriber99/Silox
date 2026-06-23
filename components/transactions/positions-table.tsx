@@ -69,7 +69,7 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
 function SkeletonRow() {
   return (
     <TableRow className="border-border/50">
-      {Array.from({ length: 9 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <TableCell key={i}>
           <div className="h-4 w-16 rounded bg-muted animate-shimmer" />
         </TableCell>
@@ -347,22 +347,6 @@ export function PositionsTable({
                             pendiente
                           </span>
                         ))}
-                      </TableCell>
-                      <TableCell className="text-right hidden xl:table-cell">
-                        <div className="flex items-center justify-end gap-4 pr-2">
-                          <div className="flex items-center gap-3">
-                            {hasHistory && p.sparkline[0] > 0 && !hideBalances && (
-                              <span className={`text-xs font-medium font-tabular w-12 text-right ${sparklineColor === "#34d399" ? "text-emerald-400" : "text-rose-400"}`}>
-                                {((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0] * 100) > 0 ? "+" : ""}
-                                {(((p.sparkline[p.sparkline.length - 1] - p.sparkline[0]) / p.sparkline[0]) * 100).toFixed(2)}%
-                              </span>
-                            )}
-                            <Sparkline data={p.sparkline} color={sparklineColor} />
-                          </div>
-                          <div className="w-14 text-right">
-                            <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
-                          </div>
-                        </div>
                       </TableCell>
                       <TableCell className="text-right font-tabular text-foreground font-medium">
                         <div className="flex flex-col items-end gap-1">

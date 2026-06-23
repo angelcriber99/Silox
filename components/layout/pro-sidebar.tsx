@@ -43,9 +43,9 @@ export function ProSidebar() {
     >
       <button 
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className="absolute top-6 -right-3.5 z-50 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-background hover:scale-110 transition-transform"
+        className="absolute top-8 -right-3 z-50 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-background hover:scale-110 transition-transform"
       >
-        {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
 
       <div className="p-6 h-20 flex items-center">
@@ -60,7 +60,7 @@ export function ProSidebar() {
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="font-bold text-xl tracking-tight"
+                className="font-bold text-xl tracking-tight pr-2"
               >
                 Silox<span className="text-primary">Pro</span>
               </motion.span>

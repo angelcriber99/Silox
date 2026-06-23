@@ -23,12 +23,12 @@ export default function SettingsPage() {
     zenMode, setZenMode,
     soundEffects, setSoundEffects,
     defaultView, setDefaultView,
-    accentColor, setAccentColor
+    accentColor, setAccentColor,
+    biometrics, setBiometrics
   } = usePreferences()
 
   const [toggles, setToggles] = useState({
     twoFactor: false,
-    biometrics: true,
     pushNotifs: true,
     emailNotifs: true,
     weeklyReport: false,
@@ -243,8 +243,11 @@ export default function SettingsPage() {
                       <p className="text-xs text-muted-foreground mt-1">Requiere FaceID / TouchID para abrir la app móvil.</p>
                     </div>
                   </div>
-                  <button onClick={() => handleToggle('biometrics')} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${toggles.biometrics ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${toggles.biometrics ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <button onClick={() => {
+                    setBiometrics(!biometrics)
+                    toast.success("Preferencia actualizada")
+                  }} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${biometrics ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${biometrics ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
 

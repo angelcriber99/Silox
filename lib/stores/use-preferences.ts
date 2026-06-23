@@ -13,6 +13,7 @@ interface PreferencesState {
   amoled: boolean
   defaultView: 'historical' | 'daily'
   sidebarCollapsed: boolean
+  biometrics: boolean
   setHideBalances: (val: boolean) => void
   setCompactView: (val: boolean) => void
   setAccentColor: (color: AccentColor) => void
@@ -22,6 +23,7 @@ interface PreferencesState {
   setAmoled: (val: boolean) => void
   setDefaultView: (view: 'historical' | 'daily') => void
   setSidebarCollapsed: (val: boolean) => void
+  setBiometrics: (val: boolean) => void
 }
 
 export const usePreferences = create<PreferencesState>()(
@@ -36,6 +38,7 @@ export const usePreferences = create<PreferencesState>()(
       amoled: false,
       defaultView: 'historical',
       sidebarCollapsed: false,
+      biometrics: false,
       setHideBalances: (val) => set({ hideBalances: val }),
       setCompactView: (val) => set({ compactView: val }),
       setAccentColor: (color) => set({ accentColor: color }),
@@ -45,6 +48,7 @@ export const usePreferences = create<PreferencesState>()(
       setAmoled: (val) => set({ amoled: val }),
       setDefaultView: (view) => set({ defaultView: view }),
       setSidebarCollapsed: (val) => set({ sidebarCollapsed: val }),
+      setBiometrics: (val) => set({ biometrics: val }),
     }),
     {
       name: 'silox-preferences',

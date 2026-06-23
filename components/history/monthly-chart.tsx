@@ -73,16 +73,16 @@ export function MonthlyChart({ transactions, year }: MonthlyChartProps) {
           tickFormatter={(value) => `€${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
         />
         <Tooltip
-          cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
+          cursor={{ fill: 'oklch(var(--muted))', opacity: 0.4 }}
           contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            borderColor: 'hsl(var(--border))',
+            backgroundColor: 'oklch(var(--card))',
+            borderColor: 'oklch(var(--border))',
             borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            color: 'hsl(var(--foreground))'
+            color: 'oklch(var(--foreground))'
           }}
           formatter={(value: any) => [formatCurrency(Number(value) || 0), undefined]}
-          labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
+          labelStyle={{ color: 'oklch(var(--muted-foreground))', marginBottom: '4px' }}
         />
         <Legend 
           wrapperStyle={{ paddingTop: '20px' }}
