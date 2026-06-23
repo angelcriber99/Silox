@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,6 +64,51 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
       {value > 0 ? "+" : ""}{formatted.replace("+", "")}
     </span>
   )
+}
+
+function LivePrice({ 
+  value, 
+  currency, 
+  hideBalances 
+}: { 
+  value: number | null;
+  currency?: string;
+  hideBalances: boolean;
+}) {
+  const [flash, setFlash] = useState<'up'|'down'|null>(null);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (value !== null && prevValue.current !== null && value !== prevValue.current) {
+      if (value > prevValue.current) {
+        setFlash('up');
+      } else {
+        setFlash('down');
+      }
+      const t = setTimeout(() => setFlash(null), 1500);
+      prevValue.current = value;
+      return () => clearTimeout(t);
+    }
+    if (prevValue.current === null && value !== null) {
+      prevValue.current = value;
+    }
+  }, [value]);
+
+  if (hideBalances) return <span>****</span>;
+  if (value === null) return <span className="text-muted-foreground/60 text-xs">pendiente</span>;
+
+  const baseClasses = "transition-colors duration-1000 rounded px-1.5 py-0.5 font-tabular inline-block -mr-1.5";
+  const flashClasses = flash === 'up' 
+    ? 'bg-emerald-500/20 text-emerald-400' 
+    : flash === 'down' 
+      ? 'bg-rose-500/20 text-rose-400 animate-pulse' 
+      : 'bg-transparent text-foreground/80';
+
+  return (
+    <span className={`${baseClasses} ${flashClasses}`}>
+      {formatCurrency(value, currency || 'EUR')}
+    </span>
+  );
 }
 
 function SkeletonRow() {
@@ -338,16 +383,12 @@ export function PositionsTable({
                           ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda))
                           : "—"}
                       </TableCell>
-                      <TableCell className={`text-right font-tabular text-foreground/80 ${cellPadding}`}>
-                        {hideBalances ? "****" : (p.precio_actual_nativo !== null ? (
-                          formatCurrency(p.precio_actual_nativo, p.original_currency || p.moneda)
-                        ) : p.precio_actual !== null ? (
-                          formatCurrency(p.precio_actual, 'EUR')
-                        ) : (
-                          <span className="text-muted-foreground/60 text-xs">
-                            pendiente
-                          </span>
-                        ))}
+                      <TableCell className={`text-right font-tabular ${cellPadding}`}>
+                        <LivePrice 
+                          value={p.precio_actual_nativo !== null ? p.precio_actual_nativo : p.precio_actual}
+                          currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
+                          hideBalances={hideBalances}
+                        />
                       </TableCell>
                       <TableCell className={`text-right font-tabular text-foreground font-medium ${cellPadding}`}>
                         <div className="flex flex-col items-end gap-1">
@@ -466,8 +507,13 @@ export function PositionsTable({
                    <div className="flex justify-between items-end">
                      <div className="flex flex-col">
                        <span className="text-xs text-muted-foreground/80 mb-0.5">Posición</span>
-                       <span className="text-sm font-medium font-tabular text-foreground/80">
-                         {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-muted-foreground/60">x</span> {p.precio_actual !== null ? formatCurrency(p.precio_actual, 'EUR') : "—"}
+                       <span className="text-sm font-medium font-tabular text-foreground/80 flex items-center gap-1">
+                         {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-muted-foreground/60">x</span>
+                         <LivePrice 
+                          value={p.precio_actual}
+                          currency="EUR"
+                          hideBalances={hideBalances}
+                         />
                        </span>
                      </div>
                      <div className="flex flex-col items-end">
