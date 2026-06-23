@@ -104,6 +104,10 @@ export function MobileDashboard({
     return withPercent.reduce((prev, current) => (prev.change_percent_24h! < current.change_percent_24h! ? prev : current))
   }, [positions])
 
+  const liquidezAmount = useMemo(() => {
+    return positions?.find(p => p.tipo === "Liquidez")?.valor_actual || 0
+  }, [positions])
+
   // Loading skeleton
   if (isLoading) {
     return (
@@ -120,10 +124,6 @@ export function MobileDashboard({
       </div>
     )
   }
-
-  const liquidezAmount = useMemo(() => {
-    return positions?.find(p => p.tipo === "Liquidez")?.valor_actual || 0
-  }, [positions])
 
   return (
     <div ref={containerRef} className={`pb-28 flex flex-col ${zenMode ? 'justify-center min-h-[85vh]' : 'min-h-screen'} bg-background`}>
