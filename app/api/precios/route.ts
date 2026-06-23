@@ -15,6 +15,13 @@ interface YahooQuote {
   regularMarketPrice?: number
   regularMarketChangePercent?: number
   currency?: string
+  preMarketPrice?: number
+  postMarketPrice?: number
+  regularMarketPreviousClose?: number
+  regularMarketTime?: string | Date
+  preMarketTime?: string | Date
+  postMarketTime?: string | Date
+  exchangeTimezoneName?: string
 }
 
 const PreciosSchema = z.object({
@@ -86,12 +93,12 @@ export async function POST(request: Request) {
         // "Resetear" el rendimiento si es de un día anterior
         // Usamos el huso horario del mercado en el que cotiza (ej. 'America/New_York')
         let latestTime = quote.regularMarketTime ? new Date(quote.regularMarketTime) : null
-        if ((quote as any).preMarketTime) {
-          const preTime = new Date((quote as any).preMarketTime)
+        if (quote.preMarketTime) {
+          const preTime = new Date(quote.preMarketTime)
           if (!latestTime || preTime > latestTime) latestTime = preTime
         }
-        if ((quote as any).postMarketTime) {
-          const postTime = new Date((quote as any).postMarketTime)
+        if (quote.postMarketTime) {
+          const postTime = new Date(quote.postMarketTime)
           if (!latestTime || postTime > latestTime) latestTime = postTime
         }
 
