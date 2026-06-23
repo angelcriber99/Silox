@@ -28,7 +28,9 @@ const navItems = [
 export function ProSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { sidebarCollapsed, setSidebarCollapsed } = usePreferences()
+  const { sidebarCollapsed, setSidebarCollapsed, zenMode } = usePreferences()
+
+  if (zenMode) return null
 
   const handleLogout = async () => {
     const supabase = createClient()

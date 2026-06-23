@@ -25,7 +25,7 @@ export function MobileDashboard({
   totals,
   isLoading,
 }: MobileDashboardProps) {
-  const { zenMode, setZenMode, soundEffects, hideBalances } = usePreferences()
+  const { zenMode, setZenMode, soundEffects, hideBalances, setHideBalances } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -160,15 +160,15 @@ export function MobileDashboard({
             <button
               onClick={() => {
                 if (soundEffects) playSound('click')
-                setZenMode(!zenMode)
+                setHideBalances(!hideBalances)
               }}
               className={`p-2 rounded-lg flex items-center justify-center transition-all ${
-                zenMode 
+                hideBalances 
                   ? 'bg-primary/10 text-primary' 
                   : 'text-muted-foreground hover:bg-muted/50'
               }`}
             >
-              {zenMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
             <button
               onClick={async () => {
@@ -256,8 +256,7 @@ export function MobileDashboard({
       )}
 
       {/* ─── Resto del Dashboard ────────────────── */}
-      {!zenMode && (
-        <div className="animate-fade-in mt-2 relative z-10">
+      <div className="animate-fade-in mt-2 relative z-10">
           
           {/* ─── Grid de Métricas (2x2) ─────────────── */}
           <div className="px-5 grid grid-cols-2 gap-3 mb-6">
@@ -369,8 +368,7 @@ export function MobileDashboard({
               ))
             )}
           </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

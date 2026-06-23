@@ -12,6 +12,7 @@ import { AllocationChart } from "@/components/dashboard/allocation-chart"
 import { PositionsTable } from "@/components/transactions/positions-table"
 import { TopMovers } from "@/components/dashboard/top-movers"
 import { UpcomingEvents } from "@/components/market/upcoming-events"
+import { ZenDashboard } from "@/components/dashboard/zen-dashboard"
 import { MarketTicker } from "@/components/market/market-ticker"
 import { EditAssetModal } from "@/components/asset/edit-asset-modal"
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal"
@@ -60,20 +61,20 @@ export default function Home() {
 
       {/* ── Desktop Dashboard ────────────────── */}
       <div className="hidden md:flex md:flex-col md:flex-1">
-        {/* Ticker Bar (Removed by user request) */}
+        {zenMode ? (
+          <ZenDashboard positions={positions} />
+        ) : (
+          <div className="flex-1 mx-auto w-full px-6 py-6 space-y-6 max-w-7xl">
 
-        <div className={`flex-1 mx-auto w-full px-6 py-6 space-y-6 ${zenMode ? 'max-w-6xl pt-10' : 'max-w-7xl'}`}>
+            {/* KPI Cards */}
+            <PortfolioSummary totals={totals} positions={positions} transactions={allTransactions} loading={isLoading} />
 
-          {/* KPI Cards */}
-          <PortfolioSummary totals={totals} positions={positions} transactions={allTransactions} loading={isLoading} />
-
-          {/* Charts Row */}
-          <div className={`grid grid-cols-1 ${zenMode ? 'lg:grid-cols-1' : 'lg:grid-cols-3'} gap-6`}>
-            <div className={`${zenMode ? 'col-span-1' : 'lg:col-span-2'} flex flex-col gap-6`}>
-              <AllocationChart positions={positions} />
-            </div>
-            
-            {!zenMode && (
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 flex flex-col gap-6">
+                <AllocationChart positions={positions} />
+              </div>
+              
               <div className="lg:col-span-1 space-y-6 flex flex-col">
                 <TopMovers positions={positions} />
                 <div>
@@ -84,18 +85,16 @@ export default function Home() {
                   />
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          {!zenMode && (
             <PositionsTable
               positions={positions}
               loading={isLoading}
               onAddTransaction={openTransactionModal}
               onEditAsset={openEditAssetModal}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* ── Modals ─────────────────────────────── */}

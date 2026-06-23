@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
 import { 
@@ -16,8 +16,13 @@ import { toast } from "sonner"
 type Tab = 'appearance' | 'display' | 'security' | 'notifications' | 'data' | 'integrations' | 'subscription'
 
 export default function SettingsPage() {
+  const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('appearance')
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const { 
     amoled, setAmoled,
     zenMode, setZenMode,
@@ -40,6 +45,11 @@ export default function SettingsPage() {
     const supabase = createClient()
     await supabase.auth.signOut()
     window.location.href = "/login"
+  }
+
+  const launchKioskMode = () => {
+    setZenMode(true)
+    window.location.href = "/" // hard redirect so the page completely resets to Dashboard
   }
 
   const handleToggle = (key: keyof typeof toggles) => {
@@ -122,14 +132,14 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="text-sm font-medium mb-3 block">Tema Principal</label>
-                  <div className="flex bg-muted/50 p-1 rounded-xl gap-1 max-w-md">
-                    <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                  <div className="flex bg-muted/50 p-1 rounded-xl gap-1 max-w-md" suppressHydrationWarning>
+                    <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${mounted && theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Sun className="w-4 h-4" /> Claro
                     </button>
-                    <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${mounted && theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Moon className="w-4 h-4" /> Oscuro
                     </button>
-                    <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'system' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${mounted && theme === 'system' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
                       <Monitor className="w-4 h-4" /> Sistema
                     </button>
                   </div>
@@ -181,12 +191,24 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
                   <div>
                     <h3 className="text-sm font-medium flex items-center gap-2">
-                      Modo Zen {zenMode ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                      Modo Privacidad {hideBalances ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">Oculta todos los importes monetarios. Ideal para enseñar la app en público.</p>
                   </div>
-                  <button onClick={() => setZenMode(!zenMode)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${zenMode ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${zenMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <button onClick={() => setHideBalances(!hideBalances)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hideBalances ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hideBalances ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
+                  <div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      Monitor Kiosko (Modo Zen) <Monitor className="w-4 h-4 text-muted-foreground" />
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">Activa una pantalla de monitorización a pantalla completa en tu Dashboard.</p>
+                  </div>
+                  <button onClick={launchKioskMode} className="px-4 py-2 bg-primary/10 text-primary font-medium text-sm rounded-lg hover:bg-primary/20 transition-colors">
+                    Lanzar
                   </button>
                 </div>
 
