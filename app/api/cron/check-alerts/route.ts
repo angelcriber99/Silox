@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import YahooFinance from 'yahoo-finance2'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
 
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
@@ -48,7 +50,7 @@ export async function GET(request: Request) {
     await Promise.allSettled(
       uniqueTickers.map(async (ticker) => {
         try {
-          const quote = await YahooFinance.quote(ticker) as any
+          const quote = await yahooFinance.quote(ticker) as any
           if (quote.regularMarketPrice) {
             pricesMap[ticker.toUpperCase()] = {
               price: quote.regularMarketPrice,

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
 
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+
 export const dynamic = 'force-dynamic'
 
 export async function GET(
@@ -18,8 +20,8 @@ export async function GET(
     const range = searchParams.get('range') || '1mo'
 
     const [quoteResult, chartResult] = await Promise.allSettled([
-      YahooFinance.quote(ticker),
-      YahooFinance.chart(ticker, { range: range as any, interval: getInterval(range) })
+      yahooFinance.quote(ticker),
+      yahooFinance.chart(ticker, { period1: getPeriod1ForRange(range), interval: getInterval(range) })
     ])
 
     let quote: any = null
@@ -84,4 +86,20 @@ function formatNumber(num: number | undefined | null) {
   if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
   if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
   return num.toString();
+}
+
+function getPeriod1ForRange(range: string): Date {
+  const d = new Date()
+  switch (range) {
+    case '1d': d.setDate(d.getDate() - 2); break; // Give 2 days to ensure we have data including weekends
+    case '5d': d.setDate(d.getDate() - 7); break;
+    case '1mo': d.setMonth(d.getMonth() - 1); break;
+    case '6mo': d.setMonth(d.getMonth() - 6); break;
+    case 'ytd': d.setMonth(0, 1); break;
+    case '1y': d.setFullYear(d.getFullYear() - 1); break;
+    case '5y': d.setFullYear(d.getFullYear() - 5); break;
+    case 'max': d.setFullYear(1970); break;
+    default: d.setMonth(d.getMonth() - 1); break;
+  }
+  return d
 }

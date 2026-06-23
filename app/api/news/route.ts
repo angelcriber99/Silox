@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import YahooFinance from 'yahoo-finance2'
 
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const ticker = searchParams.get('ticker')
@@ -10,7 +12,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await YahooFinance.search(ticker, { newsCount: 10 })
+    const result = await yahooFinance.search(ticker, { newsCount: 10 })
     return NextResponse.json({ news: (result as any).news || [] })
   } catch (error) {
     console.error('Error fetching news:', error)
