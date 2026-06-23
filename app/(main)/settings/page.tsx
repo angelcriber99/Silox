@@ -24,11 +24,13 @@ export default function SettingsPage() {
     soundEffects, setSoundEffects,
     defaultView, setDefaultView,
     accentColor, setAccentColor,
-    biometrics, setBiometrics
+    biometrics, setBiometrics,
+    twoFactor, setTwoFactor,
+    tableDensity, setTableDensity,
+    showPnlPercentOnly, setShowPnlPercentOnly
   } = usePreferences()
 
   const [toggles, setToggles] = useState({
-    twoFactor: false,
     pushNotifs: true,
     emailNotifs: true,
     weeklyReport: false,
@@ -211,6 +213,31 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 </div>
+
+
+                <div>
+                  <label className="text-sm font-medium mb-3 block">Densidad de las Tablas</label>
+                  <div className="flex bg-muted/50 p-1 rounded-xl gap-1 max-w-md">
+                    <button onClick={() => setTableDensity('relaxed')} className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${tableDensity === 'relaxed' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                      Relajada
+                    </button>
+                    <button onClick={() => setTableDensity('compact')} className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${tableDensity === 'compact' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                      Compacta
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
+                  <div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      Rentabilidad
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">Mostrar P&L solo en porcentaje en las tablas.</p>
+                  </div>
+                  <button onClick={() => setShowPnlPercentOnly(!showPnlPercentOnly)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showPnlPercentOnly ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showPnlPercentOnly ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -230,8 +257,12 @@ export default function SettingsPage() {
                       <p className="text-xs text-muted-foreground mt-1">Añade una capa extra de seguridad usando una app como Authy o Google Authenticator.</p>
                     </div>
                   </div>
-                  <button onClick={() => handleToggle('twoFactor')} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${toggles.twoFactor ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${toggles.twoFactor ? 'translate-x-6' : 'translate-x-1'}`} />
+
+                  <button onClick={() => {
+                    setTwoFactor(!twoFactor)
+                    toast.success("Preferencia de 2FA actualizada")
+                  }} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${twoFactor ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${twoFactor ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
 

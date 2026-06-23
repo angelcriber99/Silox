@@ -43,7 +43,7 @@ export function ProSidebar() {
     >
       <button 
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className="absolute top-8 -right-3 z-50 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-background hover:scale-110 transition-transform"
+        className="absolute top-1/2 -translate-y-1/2 -right-3 z-50 bg-primary text-primary-foreground rounded-full p-1 shadow-lg border-2 border-background hover:scale-110 transition-transform hidden md:flex"
       >
         {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>

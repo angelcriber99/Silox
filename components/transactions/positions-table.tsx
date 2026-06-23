@@ -245,8 +245,7 @@ export function PositionsTable({
                 <SortableHeader label="Unidades" sortKeyName="unidades" className="text-right" />
                 <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Compra</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">P. Actual</TableHead>
-                <TableHead className="text-muted-foreground/80 text-right pr-6 hidden xl:table-cell">Tendencia (7d) / Hoy</TableHead>
-                <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right" />
+                <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right whitespace-nowrap min-w-[120px]" />
                 <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
                 <SortableHeader label="P&L %" sortKeyName="pnl_percent" className="text-right hidden sm:table-cell" />
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />

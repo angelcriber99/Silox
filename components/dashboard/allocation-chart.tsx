@@ -7,6 +7,8 @@ import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { motion } from "framer-motion"
+import { RefreshCw } from "lucide-react"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -36,8 +38,9 @@ interface ChartDatum {
 }
 
 export function AllocationChart({ positions }: AllocationChartProps) {
-  const { hideBalances } = usePreferences()
+  const { hideBalances, zenMode } = usePreferences()
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
+  const [isFlipped, setIsFlipped] = useState(false)
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
 
   const chartData = useMemo(() => {
@@ -79,13 +82,26 @@ export function AllocationChart({ positions }: AllocationChartProps) {
   const hasData = chartData.data.length > 0
 
   return (
-    <Card className="animate-fade-in stagger-2 bg-card border-border backdrop-blur-sm h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Distribución
-          </CardTitle>
-          <div className="flex gap-1 rounded-lg bg-muted p-0.5">
+    <div className="relative perspective-1000 h-full w-full">
+      <motion.div
+        className="w-full h-full preserve-3d"
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {/* Front Face */}
+        <Card className="absolute inset-0 backface-hidden animate-fade-in stagger-2 bg-card border-border backdrop-blur-sm h-full flex flex-col pointer-events-auto overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                Distribución
+                {zenMode && (
+                  <button onClick={() => setIsFlipped(true)} className="ml-2 p-1 hover:bg-muted rounded-full transition-colors" title="Dar la vuelta">
+                    <RefreshCw className="w-4 h-4 text-primary" />
+                  </button>
+                )}
+              </CardTitle>
+              <div className="flex gap-1 rounded-lg bg-muted p-0.5">
             <button
               onClick={() => setGroupBy("tipo")}
               className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
@@ -204,5 +220,42 @@ export function AllocationChart({ positions }: AllocationChartProps) {
         )}
       </CardContent>
     </Card>
+
+    {/* Back Face */}
+    <Card 
+      className="absolute inset-0 backface-hidden animate-fade-in stagger-2 bg-card border-border backdrop-blur-sm h-full flex flex-col pointer-events-auto overflow-hidden"
+      style={{ transform: "rotateY(180deg)" }}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            Resumen de Activos
+            <button onClick={() => setIsFlipped(false)} className="ml-2 p-1 hover:bg-muted rounded-full transition-colors" title="Volver a distribución">
+              <RefreshCw className="w-4 h-4 text-primary" />
+            </button>
+          </CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-y-auto pt-0">
+        <div className="space-y-4 pt-2">
+          {positions.map(p => (
+            <div key={p.activo_id} className="flex justify-between items-center border-b border-border/50 pb-2 last:border-0">
+              <div>
+                <p className="font-medium text-foreground">{p.ticker}</p>
+                <p className="text-xs text-muted-foreground">{p.nombre}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-foreground">{hideBalances ? "****" : formatCurrency(p.valor_actual || 0)}</p>
+                <p className={`text-xs ${p.pnl && p.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {p.pnl && p.pnl > 0 ? "+" : ""}{formatCurrency(p.pnl || 0)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+    </motion.div>
+  </div>
   )
 }

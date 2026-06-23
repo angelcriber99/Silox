@@ -62,11 +62,7 @@ export default function Home() {
       <div className="hidden md:flex md:flex-col md:flex-1">
         {/* Ticker Bar (Removed by user request) */}
 
-        {/* ── Content ────────────────────────────── */}
         <div className={`flex-1 mx-auto w-full px-6 py-6 space-y-6 ${zenMode ? 'max-w-4xl pt-20' : 'max-w-7xl'}`}>
-
-          {/* Insights */}
-          {!zenMode && <SiloxInsights positions={positions} totals={totals} />}
 
           {/* KPI Cards */}
           <PortfolioSummary totals={totals} positions={positions} transactions={allTransactions} loading={isLoading} />

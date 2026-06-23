@@ -14,6 +14,9 @@ interface PreferencesState {
   defaultView: 'historical' | 'daily'
   sidebarCollapsed: boolean
   biometrics: boolean
+  twoFactor: boolean
+  tableDensity: 'compact' | 'relaxed'
+  showPnlPercentOnly: boolean
   setHideBalances: (val: boolean) => void
   setCompactView: (val: boolean) => void
   setAccentColor: (color: AccentColor) => void
@@ -24,6 +27,9 @@ interface PreferencesState {
   setDefaultView: (view: 'historical' | 'daily') => void
   setSidebarCollapsed: (val: boolean) => void
   setBiometrics: (val: boolean) => void
+  setTwoFactor: (val: boolean) => void
+  setTableDensity: (val: 'compact' | 'relaxed') => void
+  setShowPnlPercentOnly: (val: boolean) => void
 }
 
 export const usePreferences = create<PreferencesState>()(
@@ -39,6 +45,9 @@ export const usePreferences = create<PreferencesState>()(
       defaultView: 'historical',
       sidebarCollapsed: false,
       biometrics: false,
+      twoFactor: false,
+      tableDensity: 'compact',
+      showPnlPercentOnly: false,
       setHideBalances: (val) => set({ hideBalances: val }),
       setCompactView: (val) => set({ compactView: val }),
       setAccentColor: (color) => set({ accentColor: color }),
@@ -49,6 +58,9 @@ export const usePreferences = create<PreferencesState>()(
       setDefaultView: (view) => set({ defaultView: view }),
       setSidebarCollapsed: (val) => set({ sidebarCollapsed: val }),
       setBiometrics: (val) => set({ biometrics: val }),
+      setTwoFactor: (val) => set({ twoFactor: val }),
+      setTableDensity: (val) => set({ tableDensity: val }),
+      setShowPnlPercentOnly: (val) => set({ showPnlPercentOnly: val }),
     }),
     {
       name: 'silox-preferences',
