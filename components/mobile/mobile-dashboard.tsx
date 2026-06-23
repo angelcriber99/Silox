@@ -84,9 +84,9 @@ export function MobileDashboard({
   // Sort positions by value (descending)
   const sortedPositions = useMemo(
     () =>
-      [...positions].sort(
-        (a, b) => (b.valor_actual ?? 0) - (a.valor_actual ?? 0)
-      ),
+      [...positions]
+        .filter(p => p.unidades > 0)
+        .sort((a, b) => (b.valor_actual ?? 0) - (a.valor_actual ?? 0)),
     [positions]
   )
 
