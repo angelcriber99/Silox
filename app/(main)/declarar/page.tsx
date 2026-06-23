@@ -459,7 +459,7 @@ export default function DeclararPage() {
                 <TaxChat context={{ añoFiscal: selectedYear, gains: totals.gains, losses: totals.losses, net: totals.net }} />
               </div>
             </div>
-          </div>
+          </>
         )}
 
       </div>
