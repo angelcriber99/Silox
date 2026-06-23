@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAddTransaction } from "@/lib/hooks/use-transactions"
+import { getOrCreateCashAsset } from "@/lib/api/assets"
 import { formatCurrency } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 
@@ -42,6 +43,7 @@ export function AddTransactionModal({
     () => new Date().toISOString().split("T")[0]
   )
   const [notas, setNotas] = useState("")
+  const [useEfectivo, setUseEfectivo] = useState(true)
 
   const addTransaction = useAddTransaction()
 
@@ -52,6 +54,7 @@ export function AddTransactionModal({
     setComision("")
     setFecha(new Date().toISOString().split("T")[0])
     setNotas("")
+    setUseEfectivo(true)
   }
 
   const handleClose = (v: boolean) => {
@@ -95,6 +98,43 @@ export function AddTransactionModal({
       })
 
       const total = cantidadNum * precioNum
+
+      // Cash transaction
+      if (useEfectivo && position.tipo !== "Liquidez") {
+        try {
+          const cashAsset = await getOrCreateCashAsset()
+          
+          let cashTipoOperacion: TipoOperacion = "Compra"
+          let cashAmount = total
+          
+          if (tipoOperacion === "Compra") {
+            cashTipoOperacion = "Venta"
+            cashAmount = total + comisionNum
+          } else if (tipoOperacion === "Venta") {
+            cashTipoOperacion = "Compra"
+            cashAmount = total - comisionNum
+          } else if (tipoOperacion === "Dividendo") {
+            cashTipoOperacion = "Compra"
+            cashAmount = precioNum - comisionNum
+          }
+
+          if (cashAmount > 0) {
+            await addTransaction.mutateAsync({
+              activo_id: cashAsset.id,
+              tipo_operacion: cashTipoOperacion,
+              cantidad: cashAmount,
+              precio_unitario: 1,
+              comision: 0,
+              fecha,
+              notas: `Auto-liquidez de ${tipoOperacion} ${position.ticker}`,
+            })
+          }
+        } catch (e) {
+          console.error("Error updating cash asset", e)
+          toast.error("Aviso: No se pudo actualizar el Efectivo de forma automática.")
+        }
+      }
+
       toast.success(
         `${tipoOperacion} registrada — ${position.ticker}`,
         {
@@ -278,6 +318,27 @@ export function AddTransactionModal({
               disabled={addTransaction.isPending}
             />
           </div>
+
+          {/* Cash Automation Checkbox */}
+          {position?.tipo !== "Liquidez" && (
+            <div className="flex items-center gap-2 pt-1 pb-1">
+              <input
+                type="checkbox"
+                id="useEfectivo"
+                checked={useEfectivo}
+                onChange={(e) => setUseEfectivo(e.target.checked)}
+                className="h-4 w-4 rounded border-border bg-background text-emerald-500 focus:ring-emerald-500/50 cursor-pointer"
+                disabled={addTransaction.isPending}
+              />
+              <Label htmlFor="useEfectivo" className="text-sm font-medium cursor-pointer text-foreground/80">
+                {isCompra
+                  ? "Usar saldo de Efectivo"
+                  : isVenta
+                  ? "Mantener capital en Efectivo"
+                  : "Añadir rendimiento a Efectivo"}
+              </Label>
+            </div>
+          )}
 
           {/* Estimated total */}
           {!isDividendo && totalEstimado > 0 && (

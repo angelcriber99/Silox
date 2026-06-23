@@ -134,6 +134,9 @@ export function PortfolioSummary({
     return items.sort((a, b) => b.historicalPnl - a.historicalPnl)
   }, [positions, transactions])
 
+  const liquidezPos = positions.find(p => p.tipo === "Liquidez")
+  const liquidezAmount = liquidezPos?.valor_actual || 0
+
   return (
     <>
       {/* Hide scrollbar with Tailwind arbitrary variants */}
@@ -142,7 +145,16 @@ export function PortfolioSummary({
           <KPICard
             label="Valor del Portfolio"
             value={hideBalances ? "****" : formatCurrency(totals.totalValue)}
-            subvalue={hideBalances ? null : (totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes")}
+            subvalue={hideBalances ? null : (
+              <div className="flex flex-col gap-1">
+                <span>{totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes"}</span>
+                {liquidezAmount > 0 && (
+                  <span className="text-emerald-400 font-medium flex items-center gap-1">
+                    <Wallet className="w-3 h-3" /> Liquidez: {formatCurrency(liquidezAmount)}
+                  </span>
+                )}
+              </div>
+            )}
             icon={<Wallet className="w-5 h-5 text-muted-foreground/50" />}
             action={
               <button

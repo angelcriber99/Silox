@@ -69,6 +69,40 @@ export async function updateActivo(id: string, updates: {
   return data
 }
 
+export async function getOrCreateCashAsset(): Promise<Activo> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No estás autenticado')
+
+  // Buscar si ya existe
+  const { data: existing, error: searchError } = await supabase
+    .from('activos')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('tipo', 'Liquidez')
+    .limit(1)
+    .single()
+
+  if (existing) return existing
+
+  // Si no existe, lo creamos
+  const { data: newAsset, error: insertError } = await supabase
+    .from('activos')
+    .insert([{
+      user_id: user.id,
+      ticker: 'CASH',
+      nombre: 'Efectivo',
+      tipo: 'Liquidez',
+      estrategia: 'Liquidez',
+      moneda: 'EUR'
+    }])
+    .select()
+    .single()
+
+  if (insertError) throw new Error(`Error creando Efectivo: ${insertError.message}`)
+  return newAsset
+}
+
 export function enrichPositions(
   positions: Posicion[],
   priceDataPayload: { prices: Record<string, PriceData>, fxRates?: Record<string, number> }
@@ -79,7 +113,7 @@ export function enrichPositions(
     const priceData = prices[p.ticker]
     const precio_medio_real = p.unidades > 0 ? p.coste_total / p.unidades : 0
 
-    const fallbackPrice = p.tipo === 'Fondo Monetario' ? 1.00 : precio_medio_real
+    const fallbackPrice = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez') ? 1.00 : precio_medio_real
 
     const precio_actual = priceData?.price ?? fallbackPrice
     const precio_actual_nativo = priceData?.originalPrice ?? fallbackPrice

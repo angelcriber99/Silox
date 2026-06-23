@@ -1,10 +1,11 @@
 "use client"
 
 import { useMemo, useState, useRef } from "react"
-import { Activity, LogOut, Eye, EyeOff, RefreshCw, BarChart2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react"
+import { Activity, LogOut, Eye, EyeOff, RefreshCw, BarChart2, TrendingUp, TrendingDown, ChevronRight, Bell } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
+import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
@@ -26,6 +27,7 @@ export function MobileDashboard({
 }: MobileDashboardProps) {
   const { zenMode, setZenMode, soundEffects, hideBalances } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
+  const [alertsOpen, setAlertsOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   
   const isPositive = totals.totalPnl >= 0
@@ -119,6 +121,10 @@ export function MobileDashboard({
     )
   }
 
+  const liquidezAmount = useMemo(() => {
+    return positions.find(p => p.tipo === "Liquidez")?.valor_actual || 0
+  }, [positions])
+
   return (
     <div ref={containerRef} className={`pb-28 flex flex-col ${zenMode ? 'justify-center min-h-[85vh]' : 'min-h-screen'} bg-background`}>
       
@@ -144,8 +150,16 @@ export function MobileDashboard({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => {
-                if (soundEffects) playSound('click')
                 hapticFeedback.light()
+                setAlertsOpen(true)
+              }}
+              className="p-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-all"
+            >
+              <Bell className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                if (soundEffects) playSound('click')
                 setZenMode(!zenMode)
               }}
               className={`p-2 rounded-lg flex items-center justify-center transition-all ${
@@ -173,9 +187,16 @@ export function MobileDashboard({
 
         {/* ─── KPIs Principales (Sleek & Data-rich) ────────────────── */}
         <motion.div style={{ scale: bigNumberScale, opacity: bigNumberOpacity }} className="flex flex-col gap-1">
-          <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
-            Valor del Portfolio
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
+              Valor del Portfolio
+            </p>
+            {liquidezAmount > 0 && !zenMode && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium tracking-widest uppercase">
+                Liquidez: <AnimatedNumber value={liquidezAmount} format="currency" hide={hideBalances} />
+              </span>
+            )}
+          </div>
           <div className={`font-semibold tracking-tight transition-all ${zenMode ? 'text-5xl my-10 text-foreground text-center' : 'text-4xl text-foreground'}`}>
             <AnimatedNumber 
               value={totals.totalValue} 
@@ -318,7 +339,17 @@ export function MobileDashboard({
             </motion.button>
           </div>
 
-          <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} currentTotalValue={totals.totalValue} />
+          <PerformanceModal 
+            open={performanceOpen} 
+            onOpenChange={setPerformanceOpen} 
+            currentPnl24h={totals.totalPnl24h} 
+            currentTotalValue={totals.totalValue} 
+          />
+
+          <PriceAlerts 
+            open={alertsOpen} 
+            onOpenChange={setAlertsOpen} 
+          />
 
           {/* ─── Lista de Activos (Profesional) ─────────────────── */}
           <div className="px-5 pb-2">
