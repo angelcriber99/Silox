@@ -25,6 +25,8 @@ describe('Empty States UI Verification', () => {
     totalCost: 0,
     totalPnl: 0,
     totalPnlPercent: 0,
+    totalPnl24h: 0,
+    totalPnlPercent24h: 0,
     positionCount: 0,
     hasAllPrices: true,
   }

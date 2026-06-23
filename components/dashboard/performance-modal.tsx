@@ -9,9 +9,10 @@ import { TrendingDown, BarChart2 } from "lucide-react"
 interface PerformanceModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  currentPnl24h?: number
 }
 
-export function PerformanceModal({ open, onOpenChange }: PerformanceModalProps) {
+export function PerformanceModal({ open, onOpenChange, currentPnl24h }: PerformanceModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl bg-background/95 backdrop-blur-xl border-border/50">
@@ -38,7 +39,7 @@ export function PerformanceModal({ open, onOpenChange }: PerformanceModalProps) 
           </TabsList>
           
           <TabsContent value="daily" className="mt-0">
-            <DailyPnlChart />
+            <DailyPnlChart currentPnl24h={currentPnl24h} />
           </TabsContent>
           
           <TabsContent value="drawdown" className="mt-0">

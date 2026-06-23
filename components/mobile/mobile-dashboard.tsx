@@ -313,7 +313,7 @@ export function MobileDashboard({
             </motion.button>
           </div>
 
-          <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} />
+          <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} />
 
           {/* ─── Position List ─────────────────── */}
           <div className="px-5 pb-4 mt-2">

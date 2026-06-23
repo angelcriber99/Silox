@@ -8,11 +8,17 @@ import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { Activity } from "lucide-react"
 
-export function DailyPnlChart() {
+export function DailyPnlChart({ currentPnl24h }: { currentPnl24h?: number }) {
   const { data: snapshots, isLoading } = useSnapshots()
 
   const chartData = useMemo(() => {
-    if (!snapshots || snapshots.length < 2) return []
+    if (!snapshots || snapshots.length === 0) {
+      if (currentPnl24h !== undefined) {
+        const todayStr = new Date().toISOString().split('T')[0]
+        return [{ date: todayStr, value: currentPnl24h }]
+      }
+      return []
+    }
 
     // Sort snapshots by date
     const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -34,8 +40,22 @@ export function DailyPnlChart() {
       })
     }
 
+    if (currentPnl24h !== undefined) {
+      const todayStr = new Date().toISOString().split('T')[0]
+      const lastPoint = dataPoints[dataPoints.length - 1]
+      
+      if (lastPoint && lastPoint.date === todayStr) {
+        lastPoint.value = currentPnl24h
+      } else if (!lastPoint || lastPoint.date !== todayStr) {
+        dataPoints.push({
+          date: todayStr,
+          value: currentPnl24h
+        })
+      }
+    }
+
     return dataPoints
-  }, [snapshots])
+  }, [snapshots, currentPnl24h])
 
   if (isLoading) {
     return (

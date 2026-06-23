@@ -6,7 +6,6 @@ describe('Math Calculations - enrichPositions', () => {
   it('calculates P&L and percentages perfectly for a standard EUR asset', () => {
     const position: Posicion = {
       activo_id: '1',
-      user_id: 'user',
       ticker: 'SAN.MC',
       nombre: 'Banco Santander',
       tipo: 'Acción',
