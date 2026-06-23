@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
@@ -19,6 +19,46 @@ const TYPE_COLORS: Record<string, string> = {
 
 interface ZenDashboardProps {
   positions: EnrichedPosition[]
+}
+
+function ZenLiveValue({ 
+  value, 
+  formatter, 
+  className = "",
+  glow = true
+}: { 
+  value: number; 
+  formatter: (v: number) => string;
+  className?: string;
+  glow?: boolean;
+}) {
+  const [flash, setFlash] = useState<'up'|'down'|null>(null);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (value !== prevValue.current) {
+      if (value > prevValue.current) {
+        setFlash('up');
+      } else {
+        setFlash('down');
+      }
+      const t = setTimeout(() => setFlash(null), 1500);
+      prevValue.current = value;
+      return () => clearTimeout(t);
+    }
+  }, [value]);
+
+  const flashClasses = flash === 'up' 
+    ? `text-emerald-400 ${glow ? 'drop-shadow-[0_0_20px_rgba(52,211,153,0.8)]' : ''}` 
+    : flash === 'down' 
+      ? `text-rose-400 animate-pulse ${glow ? 'drop-shadow-[0_0_20px_rgba(251,113,133,0.8)]' : ''}` 
+      : '';
+
+  return (
+    <span className={`transition-all duration-1000 ${className} ${flashClasses}`}>
+      {formatter(value)}
+    </span>
+  )
 }
 
 export function ZenDashboard({ positions }: ZenDashboardProps) {
@@ -97,15 +137,17 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, type: "spring" }}
         >
-          {formatCurrency(totals.totalValue)}
+          <ZenLiveValue value={totals.totalValue} formatter={formatCurrency} glow={true} />
         </motion.h1>
         
         <div className="flex items-center gap-6 mt-4">
           <p className={`text-4xl md:text-6xl font-bold font-tabular tracking-tight ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {totals.totalPnl24h >= 0 ? '+' : ''}{formatCurrency(totals.totalPnl24h)}
+            {totals.totalPnl24h >= 0 ? '+' : ''}
+            <ZenLiveValue value={totals.totalPnl24h} formatter={formatCurrency} glow={true} />
           </p>
           <div className={`px-4 py-2 rounded-full text-2xl md:text-3xl font-bold bg-background/50 border ${totals.totalPnl24h >= 0 ? 'border-emerald-400/30 text-emerald-400' : 'border-rose-400/30 text-rose-400'}`}>
-            {totals.totalPnlPercent24h >= 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')}
+            {totals.totalPnlPercent24h >= 0 ? '+' : ''}
+            <ZenLiveValue value={totals.totalPnlPercent24h} formatter={(v) => formatPercent(v).replace('+', '')} glow={true} />
           </div>
         </div>
       </div>
@@ -140,17 +182,21 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
                   </div>
                   
                   <div className="w-1/3 text-right">
-                    <p className="text-lg font-mono font-medium">{formatCurrency(val)}</p>
+                    <p className="text-lg font-mono font-medium">
+                      <ZenLiveValue value={val} formatter={formatCurrency} glow={false} />
+                    </p>
                   </div>
                   
                   <div className="w-1/3 flex flex-col items-end">
                     <div className={`flex items-center gap-2 px-3 py-1 rounded bg-background/50 border ${isPositive ? 'border-emerald-500/20 text-emerald-400' : 'border-rose-500/20 text-rose-400'}`}>
-                      <span className="text-sm font-mono font-bold">
-                        {isPositive ? '+' : ''}{formatPercent(percent).replace('+', '')}
+                      <span className="text-sm font-mono font-bold flex items-center gap-0.5">
+                        {isPositive ? '+' : ''}
+                        <ZenLiveValue value={percent} formatter={(v) => formatPercent(v).replace('+', '')} glow={false} />
                       </span>
                     </div>
-                    <p className={`text-sm font-mono mt-1 ${isPositive ? 'text-emerald-500/70' : 'text-rose-500/70'}`}>
-                      {isPositive ? '+' : ''}{formatCurrency(pnl)}
+                    <p className={`text-sm font-mono mt-1 flex items-center gap-0.5 ${isPositive ? 'text-emerald-500/70' : 'text-rose-500/70'}`}>
+                      {isPositive ? '+' : ''}
+                      <ZenLiveValue value={pnl} formatter={formatCurrency} glow={false} />
                     </p>
                   </div>
                 </div>
