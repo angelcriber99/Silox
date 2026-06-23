@@ -10,7 +10,7 @@ export function MobileNav() {
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Movimientos", href: "/movimientos", icon: History },
-    { name: "Chat IA", href: "/#", icon: Sparkles }, // Placeholder for chat or generic action
+    { name: "Historial", href: "/historial", icon: Sparkles },
   ]
 
   return (

@@ -19,6 +19,7 @@ export function Header() {
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Movimientos", href: "/movimientos", icon: History },
+    { name: "Historial", href: "/historial", icon: Activity },
   ]
 
   return (
