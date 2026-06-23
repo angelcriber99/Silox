@@ -8,7 +8,7 @@ import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { motion } from "framer-motion"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, Eye, EyeOff } from "lucide-react"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -39,7 +39,7 @@ interface ChartDatum {
 }
 
 export function AllocationChart({ positions }: AllocationChartProps) {
-  const { hideBalances, zenMode } = usePreferences()
+  const { hideBalances, zenMode, setZenMode } = usePreferences()
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
   const [isFlipped, setIsFlipped] = useState(false)
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
@@ -99,6 +99,13 @@ export function AllocationChart({ positions }: AllocationChartProps) {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 Distribución
+                <button
+                  onClick={() => setZenMode(!zenMode)}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors ml-1"
+                  title="Activar Modo ZEN"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
                 {zenMode && (
                   <button onClick={() => setIsFlipped(true)} className="ml-2 p-1 hover:bg-muted rounded-full transition-colors" title="Dar la vuelta">
                     <RefreshCw className="w-4 h-4 text-primary" />
