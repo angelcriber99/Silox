@@ -245,7 +245,7 @@ export function PositionsTable({
                 <SortableHeader label="Unidades" sortKeyName="unidades" className="text-right" />
                 <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Compra</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">P. Actual</TableHead>
-                <TableHead className="text-muted-foreground/80 text-right pr-6 hidden xl:table-cell">Tendencia (7d) / 24h</TableHead>
+                <TableHead className="text-muted-foreground/80 text-right pr-6 hidden xl:table-cell">Tendencia (7d) / Hoy</TableHead>
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right" />
                 <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
                 <SortableHeader label="P&L %" sortKeyName="pnl_percent" className="text-right hidden sm:table-cell" />
@@ -509,7 +509,7 @@ export function PositionsTable({
                        </div>
                      </div>
                      <div className="flex flex-col items-end mr-4">
-                       <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy (24h)</span>
+                       <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy</span>
                        <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
                      </div>
                      
