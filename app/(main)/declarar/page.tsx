@@ -352,61 +352,94 @@ export default function DeclararPage() {
             )}
 
             {/* Box Mapper UI */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="bg-emerald-900/20 border border-emerald-800/40 rounded-xl p-6 backdrop-blur-sm h-full flex flex-col">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="bg-emerald-500/20 p-3 rounded-xl mt-1 shrink-0">
-                    <FileText className="h-6 w-6 text-emerald-400" />
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <FileText className="h-6 w-6 text-blue-400" />
+                Guía de Casillas para la Renta (MyInvestor y Revolut)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {/* Cuentas Remuneradas */}
+                <div className="bg-blue-900/20 border border-blue-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
+                  <div className="text-blue-400 font-bold text-lg mb-1">Casilla 0027</div>
+                  <div className="font-semibold text-foreground mb-2">Intereses de Cuentas</div>
+                  <p className="text-sm text-muted-foreground mb-4 flex-1">
+                    Intereses generados en cuentas remuneradas (MyInvestor) o cuenta corriente estándar de Revolut.
+                  </p>
+                  <div className="bg-blue-950/50 rounded-lg p-3 text-sm text-blue-200">
+                    Suele venir volcado en el borrador al tener IBAN español. Revisa que coincida con tus extractos.
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-emerald-100 mb-2">Casilla 0327 - Ganancias y Pérdidas</h3>
-                    <p className="text-sm text-emerald-200/80 mb-4">
-                      Apartado <strong>"Ganancias y pérdidas patrimoniales derivadas de transmisiones de otros elementos patrimoniales"</strong> (acciones y fondos).
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="bg-emerald-950/50 border border-emerald-800/50 rounded-lg p-4">
-                        <div className="text-xs text-emerald-400 font-bold mb-1">CASILLA 0327</div>
-                        <div className="text-sm text-emerald-100">Suma total de los <strong>Ingresos de Venta</strong>:</div>
-                        <div className="text-xl font-bold text-foreground mt-1 font-tabular">
-                          {formatCurrency(totals.gains > 0 ? totals.gains + totals.losses : 0)}
-                        </div>
-                      </div>
-                      <div className="bg-emerald-950/50 border border-emerald-800/50 rounded-lg p-4">
-                        <div className="text-xs text-emerald-400 font-bold mb-1">CASILLA 0328</div>
-                        <div className="text-sm text-emerald-100">Suma total de tu <strong>Coste de Adquisición</strong> (incluyendo comisiones).</div>
-                      </div>
+                </div>
+
+                {/* Dividendos */}
+                <div className="bg-violet-900/20 border border-violet-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
+                  <div className="text-violet-400 font-bold text-lg mb-1">Casilla 0029 y 0589</div>
+                  <div className="font-semibold text-foreground mb-2">Dividendos de Acciones</div>
+                  <p className="text-sm text-muted-foreground mb-4 flex-1">
+                    Casilla 0029 para el bruto cobrado. OJO: Casilla 0589 para la <strong>doble imposición internacional</strong> si te han retenido en origen (ej. acciones de EEUU).
+                  </p>
+                  <div className="bg-violet-950/50 rounded-lg p-3">
+                    <div className="text-xs text-violet-400 font-bold mb-1">TOTAL BRUTO COBRADO</div>
+                    <div className="text-lg font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.gross)}</div>
+                  </div>
+                </div>
+
+                {/* Fondos */}
+                <div className="bg-orange-900/20 border border-orange-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
+                  <div className="text-orange-400 font-bold text-lg mb-1">Casillas 310 a 316</div>
+                  <div className="font-semibold text-foreground mb-2">Fondos y C. Flexible</div>
+                  <p className="text-sm text-muted-foreground mb-4 flex-1">
+                    Ganancias de fondos (Roboadvisor MyInvestor) y los intereses de la <strong>Cuenta Flexible de Revolut</strong> (que es un fondo monetario).
+                  </p>
+                  <div className="bg-orange-950/50 rounded-lg p-3 text-sm text-orange-200 font-medium">
+                    ¡Revolut NO retiene por la Flexible! Debes declararlo a mano al sacar el dinero.
+                  </div>
+                </div>
+
+                {/* Acciones */}
+                <div className="bg-emerald-900/20 border border-emerald-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
+                  <div className="text-emerald-400 font-bold text-lg mb-1">Casillas 326 a 338</div>
+                  <div className="font-semibold text-foreground mb-2">Acciones y ETFs</div>
+                  <p className="text-sm text-muted-foreground mb-4 flex-1">
+                    Ganancias y pérdidas por transmisión de acciones. Usa el desglose FIFO superior para rellenar transmisión y adquisición.
+                  </p>
+                  <div className="bg-emerald-950/50 rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                      <div className="text-xs text-emerald-400 font-bold">RENDIMIENTO NETO (FIFO):</div>
+                      <div className="text-lg font-bold font-tabular text-emerald-100">{formatCurrency(totals.net)}</div>
                     </div>
                   </div>
                 </div>
+
+                {/* Criptomonedas */}
+                <div className="bg-yellow-900/20 border border-yellow-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
+                  <div className="text-yellow-400 font-bold text-lg mb-1">Casillas 1800 a 1814</div>
+                  <div className="font-semibold text-foreground mb-2">Criptomonedas</div>
+                  <p className="text-sm text-muted-foreground mb-4 flex-1">
+                    Ventas de cripto a euros o permutas (cambio entre criptos). Si recibes recompensas de staking, van a la Casilla 0033.
+                  </p>
+                  <div className="bg-yellow-950/50 rounded-lg p-3 text-sm text-yellow-200">
+                    Declaración obligatoria de cada permuta o venta en Revolut.
+                  </div>
+                </div>
+
+                {/* Modelos */}
+                <div className="bg-rose-900/20 border border-rose-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
+                  <div className="text-rose-400 font-bold text-lg mb-1">Modelos 720 y 721</div>
+                  <div className="font-semibold text-foreground mb-2">Informativas Extranjero</div>
+                  <p className="text-sm text-muted-foreground flex-1 mb-2">
+                    Obligatorios solo si tienes más de <strong>50.000€</strong> fuera de España a 31 dic.
+                  </p>
+                  <ul className="text-xs text-rose-200 space-y-1 ml-4 list-disc mb-1">
+                    <li><strong>720:</strong> Cuentas, fondos, acciones extranjeras.</li>
+                    <li><strong>721:</strong> Criptomonedas custodiadas fuera.</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="bg-violet-900/20 border border-violet-800/40 rounded-xl p-6 backdrop-blur-sm h-full flex flex-col">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="bg-violet-500/20 p-3 rounded-xl mt-1 shrink-0">
-                    <FileText className="h-6 w-6 text-violet-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-violet-100 mb-2">Casilla 0029 - Intereses y Dividendos</h3>
-                    <p className="text-sm text-violet-200/80 mb-4">
-                      Apartado <strong>"Rendimientos del Capital Mobiliario"</strong> (Dividendos de acciones y rendimientos de cuentas / fondos monetarios que pagan efectivo).
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="bg-violet-950/50 border border-violet-800/50 rounded-lg p-4">
-                        <div className="text-xs text-violet-400 font-bold mb-1">BRUTO (Casilla 0027/0029)</div>
-                        <div className="text-sm text-violet-100">Ingresos íntegros de dividendos:</div>
-                        <div className="text-xl font-bold text-foreground mt-1 font-tabular">
-                          {formatCurrency(dividendTotals.gross)}
-                        </div>
-                      </div>
-                      <div className="bg-violet-950/50 border border-violet-800/50 rounded-lg p-4">
-                        <div className="text-xs text-violet-400 font-bold mb-1">GASTOS (Casilla 0034)</div>
-                        <div className="text-sm text-violet-100">Gastos de administración y depósito:</div>
-                        <div className="text-xl font-bold text-foreground mt-1 font-tabular">
-                          {formatCurrency(dividendTotals.fees)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <div className="bg-muted/50 border border-border rounded-xl p-4 flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
+                <div className="text-sm text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">Compensación de pérdidas:</strong> Las pérdidas de acciones y fondos se compensan primero con ganancias del mismo tipo (patrimoniales). Si el saldo sigue negativo, puedes compensar hasta un <strong>25%</strong> del saldo positivo de tus rendimientos del capital mobiliario (intereses y dividendos). El resto se arrastra hasta los siguientes 4 años.
                 </div>
               </div>
             </div>
