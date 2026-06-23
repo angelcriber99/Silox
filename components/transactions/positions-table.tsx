@@ -106,7 +106,7 @@ export function PositionsTable({
   }
 
   const filteredAndSorted = useMemo(() => {
-    let list = positions
+    let list = positions.filter(p => p.unidades > 0)
     if (searchQuery.trim() !== "") {
       const lowerQuery = searchQuery.toLowerCase()
       list = list.filter(p => 

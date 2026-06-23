@@ -200,7 +200,9 @@ export default function MovimientosPage() {
                 ) : (
                   filteredTransactions.map((tx) => {
                     const isCompra = tx.tipo_operacion === "Compra"
-                    const total = tx.cantidad * tx.precio_unitario + tx.comision
+                    const total = isCompra 
+                      ? tx.cantidad * tx.precio_unitario + tx.comision 
+                      : tx.cantidad * tx.precio_unitario - tx.comision
                     const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'short',
@@ -296,7 +298,9 @@ export default function MovimientosPage() {
             ) : (
               filteredTransactions.map((tx) => {
                  const isCompra = tx.tipo_operacion === "Compra"
-                 const total = tx.cantidad * tx.precio_unitario + tx.comision
+                 const total = isCompra 
+                   ? tx.cantidad * tx.precio_unitario + tx.comision 
+                   : tx.cantidad * tx.precio_unitario - tx.comision
                  const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
                    month: 'short',
                    day: 'numeric'
