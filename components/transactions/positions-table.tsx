@@ -236,7 +236,7 @@ export function PositionsTable({
       <CardContent className="p-0">
         {/* Desktop View (Table) */}
         <div className="hidden md:block overflow-x-auto hide-scrollbar w-full">
-          <Table className="min-w-[1000px] w-full">
+          <Table className="w-full">
             <TableHeader className="bg-muted/40">
               <TableRow className="border-border/50 hover:bg-transparent">
                 <SortableHeader label="Símbolo" sortKeyName="ticker" />

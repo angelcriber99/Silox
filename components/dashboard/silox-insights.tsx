@@ -7,6 +7,33 @@ import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useAlerts } from "@/lib/hooks/use-alerts"
 
+const FINANCIAL_TIPS = [
+  "El interés compuesto es la octava maravilla del mundo. Mantén tu estrategia a largo plazo.",
+  "Revisa tus aportaciones mensuales; mantener un DCA constante reduce el riesgo.",
+  "No intentes predecir el mercado (market timing); el tiempo en el mercado es lo que cuenta.",
+  "Diversificar tu cartera no es solo comprar muchos activos, es comprar activos descorrelacionados.",
+  "Los mercados bajistas son el momento donde se construye la verdadera riqueza.",
+  "Ten siempre un fondo de emergencia en efectivo antes de invertir dinero que puedas necesitar.",
+  "Las emociones son el peor enemigo del inversor. Mantén la cabeza fría cuando el mercado caiga.",
+  "Rebalancea tu cartera al menos una vez al año para mantener tu perfil de riesgo objetivo.",
+  "Entiende los costes y comisiones; a largo plazo tienen un impacto gigante en tu rentabilidad.",
+  "Invertir no es un sprint, es una maratón de décadas.",
+  "Nunca inviertas en algo que no entiendes perfectamente.",
+  "Los dividendos reinvertidos son responsables de una gran parte de la rentabilidad histórica de la bolsa.",
+  "Cuidado con el sesgo de confirmación: busca también opiniones contrarias a tu tesis de inversión.",
+  "El mejor momento para plantar un árbol fue hace 20 años. El segundo mejor momento es hoy.",
+  "Mantén tus gastos de inversión (TER) lo más bajos posible.",
+  "La volatilidad es el precio que pagas por la rentabilidad superior a largo plazo.",
+  "No mires tu cartera todos los días. A largo plazo, el ruido diario no importa.",
+  "Tu mayor activo financiero es tu capacidad de generar ingresos en tu trabajo.",
+  "Evita el 'FOMO'. Si una inversión está en todas partes, a menudo ya es tarde.",
+  "Una caída del 50% requiere una subida del 100% solo para recuperar lo perdido.",
+  "Cíñete a tu plan, especialmente cuando todo el mundo está entrando en pánico.",
+  "Las caídas de mercado del 10-20% ocurren casi cada año. Acéptalas como algo normal.",
+  "No inviertas dinero que vayas a necesitar en los próximos 3-5 años.",
+  "La simplicidad en una cartera (como 2-3 fondos indexados) suele batir a la complejidad.",
+  "Lo que haces importa mucho más de lo que hace el mercado."
+]
 export function SiloxInsights({
   positions,
   totals
@@ -85,19 +112,19 @@ export function SiloxInsights({
       }
     }
 
-    // Insight 5: General Tips
-    list.push("El interés compuesto es la octava maravilla del mundo. Mantén tu estrategia a largo plazo.")
-    list.push("Revisa tus aportaciones mensuales; mantener un DCA constante reduce el riesgo.")
+    // Insight 5: General Tips (Select 3 random tips)
+    const shuffledTips = [...FINANCIAL_TIPS].sort(() => 0.5 - Math.random())
+    list.push(...shuffledTips.slice(0, 3))
 
     return list
   }, [positions, totals, alerts])
 
-  // Auto-rotate insights every 5 seconds
+  // Auto-rotate insights every 30 seconds
   useEffect(() => {
     if (insights.length <= 1) return
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % insights.length)
-    }, 5000)
+    }, 30000)
     return () => clearInterval(timer)
   }, [insights.length])
 
