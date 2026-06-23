@@ -1,10 +1,11 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { Sparkles, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, BellRing } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { useAlerts } from "@/lib/hooks/use-alerts"
 
 export function SiloxInsights({
   positions,
@@ -14,6 +15,7 @@ export function SiloxInsights({
   totals: PortfolioTotals
 }) {
   const { hideBalances } = usePreferences()
+  const { alerts } = useAlerts()
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const insights = useMemo(() => {
@@ -59,31 +61,66 @@ export function SiloxInsights({
       }
     }
 
-    return list
-  }, [positions, totals])
+    // Insight 4: Proximity to active alerts
+    if (alerts && alerts.length > 0) {
+      const activeAlerts = alerts.filter(a => !a.triggered)
+      let alertInsightAdded = false
 
-  // Auto-rotate insights every 8 seconds
+      for (const alert of activeAlerts) {
+        const position = positions.find(p => p.ticker.toUpperCase() === alert.ticker.toUpperCase())
+        if (position && position.price && position.price > 0) {
+          const distance = Math.abs((position.price - alert.target_price) / alert.target_price)
+          // If within 5% of the target price
+          if (distance <= 0.05) {
+            const distancePercent = formatPercent(distance * 100)
+            list.push(`¡Ojo! ${position.nombre || position.ticker} está a solo un ${distancePercent} de tu alerta de ${formatCurrency(alert.target_price, position.moneda)}.`)
+            alertInsightAdded = true
+          }
+        }
+      }
+
+      if (!alertInsightAdded && activeAlerts.length > 0) {
+        list.push(`Tienes ${activeAlerts.length} ${activeAlerts.length === 1 ? 'alerta activa' : 'alertas activas'} vigilando el mercado por ti.`)
+      }
+    }
+
+    // Insight 5: General Tips
+    list.push("El interés compuesto es la octava maravilla del mundo. Mantén tu estrategia a largo plazo.")
+    list.push("Revisa tus aportaciones mensuales; mantener un DCA constante reduce el riesgo.")
+
+    return list
+  }, [positions, totals, alerts])
+
+  // Auto-rotate insights every 5 seconds
   useEffect(() => {
     if (insights.length <= 1) return
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % insights.length)
-    }, 8000)
+    }, 5000)
     return () => clearInterval(timer)
   }, [insights.length])
 
   if (insights.length === 0) return null
 
+  // Define icon based on current insight text to make it more dynamic
+  const currentInsight = insights[currentIndex]
+  const isAlert = currentInsight.includes("¡Ojo!") || currentInsight.includes("alerta")
+  
   return (
     <div className="bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-violet-500/10 border border-border/50 rounded-xl p-4 flex items-center gap-4 relative overflow-hidden group">
-      {/* Sparkles icon */}
+      {/* Dynamic Icon */}
       <div className="bg-background/80 p-2 rounded-full shadow-sm backdrop-blur-md shrink-0">
-        <Sparkles className="w-5 h-5 text-blue-400 animate-pulse" />
+        {isAlert ? (
+          <BellRing className="w-5 h-5 text-amber-400 animate-pulse" />
+        ) : (
+          <Sparkles className="w-5 h-5 text-blue-400 animate-pulse" />
+        )}
       </div>
 
       {/* Insight Text */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground/90 truncate animate-fade-in" key={currentIndex}>
-          {insights[currentIndex]}
+          {currentInsight}
         </p>
       </div>
 
