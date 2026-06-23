@@ -102,6 +102,17 @@ export function PortfolioSummary({
     fifoEvents.forEach(e => {
       realizedByAsset[e.activoId] = (realizedByAsset[e.activoId] || 0) + e.gananciaPatrimonial
     })
+    
+    // Add dividends to realized PnL
+    transactions.forEach(tx => {
+      if (tx.tipo_operacion === "Dividendo") {
+        const qty = Number(tx.cantidad) || 0
+        const price = Number(tx.precio_unitario) || 0
+        const comision = Number(tx.comision) || 0
+        const netDividend = (qty * price) - comision
+        realizedByAsset[tx.activo_id] = (realizedByAsset[tx.activo_id] || 0) + netDividend
+      }
+    })
 
     const items = positions.map(p => {
       const realized = realizedByAsset[p.activo_id] || 0

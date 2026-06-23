@@ -24,7 +24,7 @@ interface AddTransactionModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-type TipoOperacion = "Compra" | "Venta"
+type TipoOperacion = "Compra" | "Venta" | "Dividendo"
 
 const inputClass =
   "bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
@@ -74,12 +74,12 @@ export function AddTransactionModal({
     const precioNum = parseFloat(precioUnitario)
     const comisionNum = comision ? parseFloat(comision) : 0
 
-    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+    if (tipoOperacion !== "Dividendo" && (isNaN(cantidadNum) || cantidadNum <= 0)) {
       toast.error("Cantidad inválida")
       return
     }
     if (isNaN(precioNum) || precioNum < 0) {
-      toast.error("Precio inválido")
+      toast.error("Monto inválido")
       return
     }
 
@@ -87,7 +87,7 @@ export function AddTransactionModal({
       await addTransaction.mutateAsync({
         activo_id: position.activo_id,
         tipo_operacion: tipoOperacion,
-        cantidad: cantidadNum,
+        cantidad: tipoOperacion === "Dividendo" ? 1 : cantidadNum,
         precio_unitario: precioNum,
         comision: comisionNum,
         fecha,
@@ -115,6 +115,8 @@ export function AddTransactionModal({
   const totalEstimado = cantidadNum * precioNum
 
   const isCompra = tipoOperacion === "Compra"
+  const isVenta = tipoOperacion === "Venta"
+  const isDividendo = tipoOperacion === "Dividendo"
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -123,8 +125,10 @@ export function AddTransactionModal({
           <DialogTitle className="flex items-center gap-2 text-foreground">
             {isCompra ? (
               <ArrowUpRight className="h-5 w-5 text-emerald-400" />
-            ) : (
+            ) : isVenta ? (
               <ArrowDownRight className="h-5 w-5 text-rose-400" />
+            ) : (
+              <span className="h-5 w-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-xs">%</span>
             )}
             Nueva Transacción
           </DialogTitle>
@@ -149,28 +153,34 @@ export function AddTransactionModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* Buy/Sell toggle */}
-          <div className="grid grid-cols-2 gap-2">
-            {(["Compra", "Venta"] as const).map((tipo) => {
+          {/* Buy/Sell/Dividend toggle */}
+          <div className="grid grid-cols-3 gap-2">
+            {(["Compra", "Venta", "Dividendo"] as const).map((tipo) => {
               const active = tipoOperacion === tipo
               const isBuy = tipo === "Compra"
+              const isSell = tipo === "Venta"
+              const isDiv = tipo === "Dividendo"
               return (
                 <button
                   key={tipo}
                   type="button"
                   onClick={() => setTipoOperacion(tipo)}
-                  className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-xs sm:text-sm font-medium transition-all duration-200 ${
                     active
                       ? isBuy
                         ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-300"
-                        : "border-rose-500/50 bg-rose-500/10 text-rose-300"
+                        : isSell
+                        ? "border-rose-500/50 bg-rose-500/10 text-rose-300"
+                        : "border-violet-500/50 bg-violet-500/10 text-violet-300"
                       : "border-border bg-muted text-muted-foreground hover:border-zinc-600"
                   }`}
                 >
                   {isBuy ? (
                     <ArrowUpRight className="h-4 w-4" />
-                  ) : (
+                  ) : isSell ? (
                     <ArrowDownRight className="h-4 w-4" />
+                  ) : (
+                    <span className="font-bold">%</span>
                   )}
                   {tipo}
                 </button>
@@ -179,25 +189,27 @@ export function AddTransactionModal({
           </div>
 
           {/* Quantity + Price */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-foreground/80">Cantidad</Label>
-              <Input
-                type="number"
-                min="0.000001"
-                step="any"
-                placeholder="10"
-                value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
-                required
-                className={inputClass}
-                disabled={addTransaction.isPending}
-              />
-            </div>
+          <div className={`grid gap-4 ${isDividendo ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            {!isDividendo && (
+              <div className="space-y-2">
+                <Label className="text-foreground/80">Cantidad</Label>
+                <Input
+                  type="number"
+                  min="0.000001"
+                  step="any"
+                  placeholder="10"
+                  value={cantidad}
+                  onChange={(e) => setCantidad(e.target.value)}
+                  required={!isDividendo}
+                  className={inputClass}
+                  disabled={addTransaction.isPending}
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label className="text-foreground/80 flex items-center justify-between">
-                Precio unitario
-                {position?.precio_actual && (
+                {isDividendo ? "Rendimiento Bruto" : "Precio unitario"}
+                {position?.precio_actual && !isDividendo && (
                   <button
                     type="button"
                     onClick={handlePrefillPrice}
@@ -211,7 +223,7 @@ export function AddTransactionModal({
                 type="number"
                 min="0"
                 step="any"
-                placeholder="82.30"
+                placeholder={isDividendo ? "0.09" : "82.30"}
                 value={precioUnitario}
                 onChange={(e) => setPrecioUnitario(e.target.value)}
                 required
@@ -268,7 +280,7 @@ export function AddTransactionModal({
           </div>
 
           {/* Estimated total */}
-          {totalEstimado > 0 && (
+          {!isDividendo && totalEstimado > 0 && (
             <div className="rounded-lg bg-muted/50 border border-border/40 px-4 py-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground/80">Valor total</span>
@@ -278,6 +290,16 @@ export function AddTransactionModal({
                   }`}
                 >
                   {formatCurrency(totalEstimado)}
+                </span>
+              </div>
+            </div>
+          )}
+          {isDividendo && precioNum > 0 && (
+            <div className="rounded-lg bg-violet-500/10 border border-violet-500/20 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-violet-300/80">Rendimiento Neto</span>
+                <span className="text-lg font-bold font-tabular text-violet-400">
+                  {formatCurrency(precioNum - (parseFloat(comision) || 0))}
                 </span>
               </div>
             </div>
@@ -299,7 +321,9 @@ export function AddTransactionModal({
               className={`min-w-[140px] font-medium transition-all duration-200 ${
                 isCompra
                   ? "bg-emerald-600 hover:bg-emerald-500 text-foreground"
-                  : "bg-rose-600 hover:bg-rose-500 text-foreground"
+                  : isVenta
+                  ? "bg-rose-600 hover:bg-rose-500 text-foreground"
+                  : "bg-violet-600 hover:bg-violet-500 text-foreground"
               }`}
             >
               {addTransaction.isPending ? (

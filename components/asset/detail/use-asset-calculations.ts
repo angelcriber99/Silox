@@ -4,7 +4,7 @@ import type { EnrichedPosition, Transaccion } from '@/lib/types'
 export interface RawTransaction {
   id: string
   fecha: string
-  tipo_operacion: string  // 'Compra' | 'Venta'
+  tipo_operacion: string  // 'Compra' | 'Venta' | 'Dividendo'
   cantidad: number
   precio_unitario: number
   comision: number
@@ -34,19 +34,23 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
 
     let accUnits = 0
     let accCost = 0
+    let accDividends = 0
     const points: { date: string; invested: number; value: number; profit: number }[] = []
 
     for (const tx of sorted) {
       const qty = Number(tx.cantidad) || 0
       const price = Number(tx.precio_unitario) || 0
+      const comision = Number(tx.comision) || 0
       const total = qty * price
 
       if (tx.tipo_operacion === "Compra") {
         accUnits += qty
         accCost += total
-      } else {
+      } else if (tx.tipo_operacion === "Venta") {
         accUnits -= qty
         accCost -= total
+      } else if (tx.tipo_operacion === "Dividendo") {
+        accDividends += (total - comision)
       }
 
       const inv = Math.max(0, Math.round(accCost * 100) / 100)
@@ -55,7 +59,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
         date: new Date(tx.fecha).toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
         invested: inv,
         value: val,
-        profit: Math.round((val - inv) * 100) / 100
+        profit: Math.round((val - inv + accDividends) * 100) / 100
       })
     }
 
@@ -66,7 +70,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
         date: "Hoy",
         invested: inv,
         value: val,
-        profit: Math.round((val - inv) * 100) / 100
+        profit: Math.round((val - inv + accDividends) * 100) / 100
       })
     }
 
@@ -119,10 +123,12 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
   const stats = useMemo(() => {
     const compras = transactions.filter(t => t.tipo_operacion === "Compra")
     const ventas = transactions.filter(t => t.tipo_operacion === "Venta")
+    const dividendos = transactions.filter(t => t.tipo_operacion === "Dividendo")
     const totalComisiones = transactions.reduce((s, t) => s + (Number(t.comision) || 0), 0)
     const totalCompras = compras.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0), 0)
     const totalVentas = ventas.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0), 0)
-    const gananciaIntereses = (position.valor_actual ?? 0) - position.coste_total
+    const totalDividendos = dividendos.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0) - (Number(t.comision) || 0), 0)
+    const gananciaIntereses = (position.valor_actual ?? 0) - position.coste_total + totalDividendos
 
     const precioMedio = position.precio_medio
     const precioActual = position.precio_actual ?? precioMedio
@@ -145,12 +151,13 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
       const total = (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0)
       return total > max ? total : max
     }, 0)
-
     return {
       numCompras: compras.length,
       numVentas: ventas.length,
+      numDividendos: dividendos.length,
       totalCompras,
       totalVentas,
+      totalDividendos,
       totalComisiones,
       gananciaIntereses,
       precioMedio,
@@ -168,7 +175,8 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
   const operacionesDonut = useMemo(() => [
     { name: "Compras", value: stats.numCompras, color: "#10b981" },
     { name: "Ventas", value: stats.numVentas, color: "#f43f5e" },
-  ].filter(d => d.value > 0), [stats.numCompras, stats.numVentas])
+    { name: "Dividendos", value: stats.numDividendos, color: "#8b5cf6" },
+  ].filter(d => d.value > 0), [stats.numCompras, stats.numVentas, stats.numDividendos])
 
   const capitalDonut = useMemo(() => {
     const invested = position.coste_total
@@ -190,7 +198,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
 
       if (tx.tipo_operacion === "Compra") {
         accumulated += total
-      } else {
+      } else if (tx.tipo_operacion === "Venta") {
         accumulated -= total
       }
 
