@@ -1,9 +1,9 @@
 "use client"
 
 import { useMemo, useState, useRef } from "react"
-import { Activity, LogOut, Eye, EyeOff, RefreshCw, BarChart2 } from "lucide-react"
+import { Activity, LogOut, Eye, EyeOff, RefreshCw, BarChart2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
@@ -29,12 +29,16 @@ export function MobileDashboard({
   const [isRefreshing, setIsRefreshing] = useState(false)
   
   const isPositive = totals.totalPnl >= 0
+  const pnlColor = isPositive ? "text-emerald-500" : "text-rose-500"
+  
+  const dailyIsPositive = totals.totalPnl24h >= 0
+  const dailyPnlColor = dailyIsPositive ? "text-emerald-500" : "text-rose-500"
   
   // Scroll animations
   const containerRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll()
-  const bigNumberScale = useTransform(scrollY, [0, 100], [1, 0.9])
-  const bigNumberOpacity = useTransform(scrollY, [0, 100], [1, 0.4])
+  const bigNumberScale = useTransform(scrollY, [0, 100], [1, 0.95])
+  const bigNumberOpacity = useTransform(scrollY, [0, 100], [1, 0.6])
   
   // Pull to refresh animation
   const refreshControls = useAnimation()
@@ -75,7 +79,7 @@ export function MobileDashboard({
     return combined.map((v, i) => ({ i, v }))
   }, [positions])
 
-  const areaColor = isPositive ? "#34d399" : "#fb7185"
+  const areaColor = isPositive ? "#10b981" : "#f43f5e"
 
   // Sort positions by value (descending)
   const sortedPositions = useMemo(
@@ -101,15 +105,15 @@ export function MobileDashboard({
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="px-5 pt-10 pb-24 space-y-6">
-        <div className="flex justify-between items-center mb-8">
-            <div className="h-10 w-32 bg-muted/60 rounded-2xl animate-pulse" />
-            <div className="h-10 w-20 bg-muted/60 rounded-2xl animate-pulse" />
+      <div className="px-5 pt-8 pb-24 space-y-6">
+        <div className="flex justify-between items-center mb-6">
+            <div className="h-6 w-24 bg-muted/60 rounded animate-pulse" />
+            <div className="h-8 w-16 bg-muted/60 rounded animate-pulse" />
         </div>
-        <div className="h-24 w-64 bg-muted/60 rounded-3xl animate-pulse mx-auto" />
-        <div className="h-32 w-full bg-muted/40 rounded-3xl animate-pulse mt-8" />
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-20 w-full bg-muted/40 rounded-3xl animate-pulse" />
+        <div className="h-16 w-56 bg-muted/60 rounded-xl animate-pulse" />
+        <div className="h-32 w-full bg-muted/40 rounded-xl animate-pulse mt-8" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-16 w-full bg-muted/40 rounded-xl animate-pulse" />
         ))}
       </div>
     )
@@ -119,40 +123,38 @@ export function MobileDashboard({
     <div ref={containerRef} className={`pb-28 flex flex-col ${zenMode ? 'justify-center min-h-[85vh]' : 'min-h-screen'} bg-background`}>
       
       {/* Pull to refresh visual hint */}
-      <motion.div className="flex justify-center -mt-10 mb-4 h-10 items-end">
+      <motion.div className="flex justify-center -mt-10 mb-2 h-10 items-end">
         <motion.button 
           onClick={handleRefresh}
           animate={refreshControls}
           className="bg-muted/30 p-2 rounded-full text-muted-foreground/50"
         >
-          <RefreshCw className="w-5 h-5" />
+          <RefreshCw className="w-4 h-4" />
         </motion.button>
       </motion.div>
 
-      {/* ─── Cabecera Súper Limpia ──────────────────────── */}
-      <motion.div className="px-5 pt-2 pb-2 sticky top-0 z-10 bg-background/90 backdrop-blur-2xl">
-        <div className="flex items-center justify-between mb-4">
+      {/* ─── Cabecera Profesional ──────────────────────── */}
+      <motion.div className="px-5 pt-2 pb-4 sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border/40">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <div className="bg-primary/10 text-primary p-2.5 rounded-2xl">
-                <span className="text-xl">🚀</span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Silox</h1>
+            <Activity className="h-5 w-5 text-primary" />
+            <span className="text-sm font-semibold tracking-wide text-foreground uppercase">Portfolio</span>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => {
                 if (soundEffects) playSound('click')
                 hapticFeedback.light()
                 setZenMode(!zenMode)
               }}
-              className={`p-3 rounded-2xl flex items-center justify-center transition-all ${
+              className={`p-2 rounded-lg flex items-center justify-center transition-all ${
                 zenMode 
-                  ? 'bg-primary/20 text-primary' 
-                  : 'bg-muted/50 text-muted-foreground hover:bg-muted/80'
+                  ? 'bg-primary/10 text-primary' 
+                  : 'text-muted-foreground hover:bg-muted/50'
               }`}
             >
-              {zenMode ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              {zenMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
             <button
               onClick={async () => {
@@ -162,19 +164,19 @@ export function MobileDashboard({
                 await supabase.auth.signOut()
                 window.location.href = "/login"
               }}
-              className="p-3 rounded-2xl bg-muted/50 text-muted-foreground hover:bg-muted/80 active:scale-95 transition-all"
+              className="p-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-all"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* ─── El Gran Número (Súper Amigable) ────────────────── */}
-        <motion.div style={{ scale: bigNumberScale, opacity: bigNumberOpacity }} className="text-center mt-6 mb-2">
-          <p className="text-sm text-muted-foreground/80 font-bold uppercase tracking-wider mb-1">
-            Dinero Total 💰
+        {/* ─── KPIs Principales (Sleek & Data-rich) ────────────────── */}
+        <motion.div style={{ scale: bigNumberScale, opacity: bigNumberOpacity }} className="flex flex-col gap-1">
+          <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
+            Valor del Portfolio
           </p>
-          <div className={`font-black font-tabular tracking-tighter leading-none transition-all ${zenMode ? 'text-7xl my-10 text-foreground' : 'text-6xl text-foreground'}`}>
+          <div className={`font-semibold tracking-tight transition-all ${zenMode ? 'text-5xl my-10 text-foreground text-center' : 'text-4xl text-foreground'}`}>
             <AnimatedNumber 
               value={totals.totalValue} 
               format="currency" 
@@ -182,15 +184,23 @@ export function MobileDashboard({
             />
           </div>
 
-          {totals.totalCost > 0 && (
-            <div className="flex items-center justify-center mt-4">
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl font-bold transition-colors ${
-                  isPositive ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
-                }`}
-              >
-                <span className="text-lg">{isPositive ? '💚' : '💔'}</span>
-                <span>
-                  {isPositive ? 'Ganando' : 'Perdiendo'} <AnimatedNumber value={Math.abs(totals.totalPnl)} format="currency" hide={hideBalances} />
+          {!zenMode && totals.totalCost > 0 && (
+            <div className="flex flex-col gap-0.5 mt-1">
+              <div className="flex items-center gap-2">
+                <span className={`text-lg font-medium font-tabular ${pnlColor}`}>
+                  {isPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnl} format="currency" hide={hideBalances} />
+                </span>
+                <span className={`text-sm font-medium font-tabular ${pnlColor} opacity-80`}>
+                  ({isPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />)
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span>Hoy:</span>
+                <span className={`font-medium font-tabular ${dailyPnlColor}`}>
+                  {dailyIsPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnl24h} format="currency" hide={hideBalances} />
+                </span>
+                <span className={`font-medium font-tabular ${dailyPnlColor} opacity-80`}>
+                  ({dailyIsPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />)
                 </span>
               </div>
             </div>
@@ -198,14 +208,14 @@ export function MobileDashboard({
         </motion.div>
       </motion.div>
 
-      {/* ─── Gráfico Suave de Fondo ─────────────── */}
+      {/* ─── Gráfico Nítido ─────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className={`w-full transition-all relative z-0 ${zenMode ? 'h-56 mt-4' : 'h-24 mt-0 opacity-60'}`}>
+        <div className={`w-full transition-all relative z-0 ${zenMode ? 'h-56 mt-4' : 'h-28 mt-2 opacity-90'}`}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={portfolioSparkline} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <AreaChart data={portfolioSparkline} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="mobileAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.3} />
+                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.15} />
                   <stop offset="100%" stopColor={areaColor} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
@@ -214,10 +224,10 @@ export function MobileDashboard({
                 type="monotone"
                 dataKey="v"
                 stroke={areaColor}
-                strokeWidth={4}
+                strokeWidth={2}
                 fill="url(#mobileAreaGrad)"
                 isAnimationActive={true}
-                animationDuration={1500}
+                animationDuration={1000}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -226,93 +236,107 @@ export function MobileDashboard({
 
       {/* ─── Resto del Dashboard ────────────────── */}
       {!zenMode && (
-        <div className="animate-fade-in mt-4 relative z-10">
+        <div className="animate-fade-in mt-2 relative z-10">
           
-          {/* ─── Carrusel GIGANTE y Divertido ─────────────── */}
-          <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-5 pb-8 gap-4 -mx-5 pl-5 pr-5">
+          {/* ─── Grid de Métricas (2x2) ─────────────── */}
+          <div className="px-5 grid grid-cols-2 gap-3 mb-6">
             
-            {/* Hucha */}
-            <div className="snap-center shrink-0 w-[160px] bg-blue-500/10 border-2 border-blue-500/20 rounded-[28px] p-5 shadow-sm">
-              <div className="text-3xl mb-2">🐷</div>
-              <p className="text-xs text-blue-600/80 dark:text-blue-400/80 font-black uppercase tracking-wider mb-1">
-                Tu Hucha
+            {/* Invertido */}
+            <div className="bg-card/40 border border-border/50 rounded-xl p-3 shadow-sm">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                Total Invertido
               </p>
-              <p className="text-xl font-black font-tabular text-blue-700 dark:text-blue-300">
+              <p className="text-sm font-semibold font-tabular text-foreground">
                 <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
               </p>
             </div>
             
-            {/* Mejor Acción */}
-            {bestPerformer && (
-              <div className="snap-center shrink-0 w-[160px] bg-emerald-500/10 border-2 border-emerald-500/20 rounded-[28px] p-5 shadow-sm">
-                <div className="text-3xl mb-2">🚀</div>
-                <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 font-black uppercase tracking-wider mb-1">
-                  Volando Hoy
-                </p>
-                <p className="text-lg font-black text-emerald-700 dark:text-emerald-300 truncate">
-                  {bestPerformer.nombre || bestPerformer.ticker.split('.')[0]}
-                </p>
-                <p className="text-emerald-600 dark:text-emerald-400 font-bold font-tabular text-sm">
-                  +{formatPercent(bestPerformer.change_percent_24h || 0)}
-                </p>
-              </div>
-            )}
+            {/* Rentabilidad Hoy */}
+            <div className="bg-card/40 border border-border/50 rounded-xl p-3 shadow-sm">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                Rendimiento Hoy
+              </p>
+              <p className={`text-sm font-semibold font-tabular ${dailyPnlColor}`}>
+                {dailyIsPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />
+              </p>
+            </div>
 
-            {/* Peor Acción */}
-            {worstPerformer && (
-              <div className="snap-center shrink-0 w-[160px] bg-rose-500/10 border-2 border-rose-500/20 rounded-[28px] p-5 shadow-sm">
-                <div className="text-3xl mb-2">📉</div>
-                <p className="text-xs text-rose-600/80 dark:text-rose-400/80 font-black uppercase tracking-wider mb-1">
-                  Flojita Hoy
-                </p>
-                <p className="text-lg font-black text-rose-700 dark:text-rose-300 truncate">
-                  {worstPerformer.nombre || worstPerformer.ticker.split('.')[0]}
-                </p>
-                <p className="text-rose-600 dark:text-rose-400 font-bold font-tabular text-sm">
-                  {formatPercent(worstPerformer.change_percent_24h || 0)}
-                </p>
-              </div>
-            )}
+            {/* Top Ganadora */}
+            <div className="bg-card/40 border border-border/50 rounded-xl p-3 shadow-sm flex flex-col justify-between">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3 text-emerald-500" /> Top Ganadora
+              </p>
+              {bestPerformer ? (
+                <div>
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {bestPerformer.nombre || bestPerformer.ticker.split('.')[0]}
+                  </p>
+                  <p className="text-emerald-500 font-semibold font-tabular text-xs">
+                    +{formatPercent(bestPerformer.change_percent_24h || 0)}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">N/A</p>
+              )}
+            </div>
+
+            {/* Top Perdedora */}
+            <div className="bg-card/40 border border-border/50 rounded-xl p-3 shadow-sm flex flex-col justify-between">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1 flex items-center gap-1">
+                <TrendingDown className="w-3 h-3 text-rose-500" /> Top Perdedora
+              </p>
+              {worstPerformer ? (
+                <div>
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {worstPerformer.nombre || worstPerformer.ticker.split('.')[0]}
+                  </p>
+                  <p className="text-rose-500 font-semibold font-tabular text-xs">
+                    {formatPercent(worstPerformer.change_percent_24h || 0)}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">N/A</p>
+              )}
+            </div>
           </div>
 
-          {/* Botón de Detalles */}
-          <div className="px-5 mb-8">
+          {/* Botón de Rendimiento */}
+          <div className="px-5 mb-6">
             <motion.button
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 hapticFeedback.light()
                 setPerformanceOpen(true)
               }}
-              className="w-full bg-foreground text-background rounded-3xl p-4 flex items-center justify-center gap-3 font-black text-lg shadow-lg transition-transform"
+              className="w-full bg-muted/40 hover:bg-muted/60 text-foreground text-xs font-semibold rounded-lg p-3 flex items-center justify-between border border-border/50 transition-colors"
             >
-              <BarChart2 className="w-6 h-6" />
-              Ver Estadísticas
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-muted-foreground" />
+                Ver Análisis Detallado
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </motion.button>
           </div>
 
           <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} currentTotalValue={totals.totalValue} />
 
-          {/* ─── Lista de Cromos (Activos) ─────────────────── */}
-          <div className="px-5 pb-4">
-            <h2 className="text-xl font-black text-foreground mb-4">
-              Mis Inversiones 💸
+          {/* ─── Lista de Activos (Profesional) ─────────────────── */}
+          <div className="px-5 pb-2">
+            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Posiciones ({sortedPositions.length})
             </h2>
-            
-            <div className="space-y-3">
-              {sortedPositions.length === 0 ? (
-                <div className="text-center py-16 bg-muted/20 rounded-[32px] border-2 border-dashed border-border/50">
-                  <div className="text-5xl mb-4">🌱</div>
-                  <p className="font-black text-foreground text-xl">Sin nada por aquí</p>
-                  <p className="text-muted-foreground font-medium mt-2 px-8">
-                    Dale al botón <span className="font-bold text-primary">+</span> de abajo para plantar tu primera semilla.
-                  </p>
-                </div>
-              ) : (
-                sortedPositions.map((p) => (
-                  <MobileAssetCard key={p.activo_id} position={p} />
-                ))
-              )}
-            </div>
+          </div>
+          
+          <div className="border-t border-border/30 divide-y divide-border/20">
+            {sortedPositions.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground/60">
+                <p className="text-sm">No tienes posiciones abiertas.</p>
+              </div>
+            ) : (
+              sortedPositions.map((p) => (
+                <MobileAssetCard key={p.activo_id} position={p} />
+              ))
+            )}
           </div>
         </div>
       )}
