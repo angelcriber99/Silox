@@ -48,11 +48,15 @@ export default function DeclararPage() {
   const totals = useMemo(() => {
     let gains = 0
     let losses = 0
+    let saleValue = 0
+    let purchaseValue = 0
     yearEvents.forEach(e => {
       if (e.gananciaPatrimonial > 0) gains += e.gananciaPatrimonial
       else losses += Math.abs(e.gananciaPatrimonial)
+      saleValue += e.ingresoVenta || 0
+      purchaseValue += e.costeAdquisicion || 0
     })
-    return { gains, losses, net: gains - losses }
+    return { gains, losses, net: gains - losses, saleValue, purchaseValue }
   }, [yearEvents])
 
   // Get dividends for selected year
@@ -376,14 +380,20 @@ export default function DeclararPage() {
 
                 {/* Dividendos */}
                 <div className="bg-violet-900/20 border border-violet-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
-                  <div className="text-violet-400 font-bold text-lg mb-1">Casilla 0029 y 0589</div>
-                  <div className="font-semibold text-foreground mb-2">Dividendos de Acciones</div>
+                  <div className="text-violet-400 font-bold text-lg mb-1">Dividendos</div>
+                  <div className="font-semibold text-foreground mb-2">Acciones y ETFs</div>
                   <p className="text-sm text-muted-foreground mb-4 flex-1">
-                    Casilla 0029 para el bruto cobrado. OJO: Casilla 0589 para la <strong>doble imposición internacional</strong> si te han retenido en origen (ej. acciones de EEUU).
+                    Atención a la doble imposición internacional si has cobrado de USA (Casilla 0589).
                   </p>
-                  <div className="bg-violet-950/50 rounded-lg p-3">
-                    <div className="text-xs text-violet-400 font-bold mb-1">TOTAL BRUTO COBRADO</div>
-                    <div className="text-lg font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.gross)}</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-violet-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-violet-400 font-bold mb-1">CASILLA 0029 (BRUTO)</div>
+                      <div className="text-sm font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.gross)}</div>
+                    </div>
+                    <div className="bg-violet-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-violet-400 font-bold mb-1">CASILLA 0034 (GASTOS)</div>
+                      <div className="text-sm font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.fees)}</div>
+                    </div>
                   </div>
                 </div>
 
@@ -392,24 +402,28 @@ export default function DeclararPage() {
                   <div className="text-orange-400 font-bold text-lg mb-1">Casillas 310 a 316</div>
                   <div className="font-semibold text-foreground mb-2">Fondos y C. Flexible</div>
                   <p className="text-sm text-muted-foreground mb-4 flex-1">
-                    Ganancias de fondos (Roboadvisor MyInvestor) y los intereses de la <strong>Cuenta Flexible de Revolut</strong> (que es un fondo monetario).
+                    Tus intereses de la <strong>Cuenta Flexible de Revolut</strong> van aquí. MyInvestor lo mete en el borrador automático.
                   </p>
                   <div className="bg-orange-950/50 rounded-lg p-3 text-sm text-orange-200 font-medium">
-                    ¡Revolut NO retiene por la Flexible! Debes declararlo a mano al sacar el dinero.
+                    <em>Introduce los datos usando tus informes PDF de los bancos.</em>
                   </div>
                 </div>
 
                 {/* Acciones */}
                 <div className="bg-emerald-900/20 border border-emerald-800/40 rounded-xl p-5 backdrop-blur-sm flex flex-col">
-                  <div className="text-emerald-400 font-bold text-lg mb-1">Casillas 326 a 338</div>
-                  <div className="font-semibold text-foreground mb-2">Acciones y ETFs</div>
+                  <div className="text-emerald-400 font-bold text-lg mb-1">Acciones y ETFs</div>
+                  <div className="font-semibold text-foreground mb-2">Ventas del año (FIFO)</div>
                   <p className="text-sm text-muted-foreground mb-4 flex-1">
-                    Ganancias y pérdidas por transmisión de acciones. Usa el desglose FIFO superior para rellenar transmisión y adquisición.
+                    Transmisión de elementos patrimoniales negociados. Cópialo tal cual.
                   </p>
-                  <div className="bg-emerald-950/50 rounded-lg p-3 flex justify-between items-center">
-                    <div>
-                      <div className="text-xs text-emerald-400 font-bold">RENDIMIENTO NETO (FIFO):</div>
-                      <div className="text-lg font-bold font-tabular text-emerald-100">{formatCurrency(totals.net)}</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-emerald-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-emerald-400 font-bold mb-1">CASILLA 0327 (VENTA)</div>
+                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(totals.saleValue)}</div>
+                    </div>
+                    <div className="bg-emerald-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-emerald-400 font-bold mb-1">CASILLA 0328 (COMPRA)</div>
+                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(totals.purchaseValue)}</div>
                     </div>
                   </div>
                 </div>
