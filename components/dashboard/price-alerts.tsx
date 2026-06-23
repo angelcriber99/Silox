@@ -130,9 +130,9 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
                     onChange={(e) => setTargetPrice(e.target.value)}
                     className="w-full bg-muted border border-border rounded-md px-3 py-2 pr-10"
                   />
-                  {ticker && (
+                  {ticker && positions.some(p => p.ticker === ticker) && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60 font-medium pointer-events-none">
-                      {positions.find(p => p.ticker === ticker)?.moneda || 'EUR'}
+                      {positions.find(p => p.ticker === ticker)?.moneda}
                     </span>
                   )}
                 </div>
@@ -158,7 +158,7 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
               )}
               {alerts.map(a => {
                 const pos = positions?.find(p => p.ticker.toUpperCase() === a.ticker.toUpperCase())
-                const currency = pos?.moneda || 'EUR'
+                const currency = pos?.moneda
                 return (
                   <div key={a.id} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${a.triggered ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-card border-border/50'}`}>
                     <div className="flex items-center gap-3">
@@ -178,7 +178,7 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
                           {a.triggered && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-400">Completada</span>}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {a.condition === 'above' ? 'Sube a' : 'Baja a'} <strong className="text-foreground">{formatCurrency(a.target_price, currency)}</strong>
+                          {a.condition === 'above' ? 'Sube a' : 'Baja a'} <strong className="text-foreground">{currency ? formatCurrency(a.target_price, currency) : a.target_price}</strong>
                         </p>
                       </div>
                     </div>
