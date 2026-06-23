@@ -138,135 +138,135 @@ export function PortfolioSummary({
   const liquidezAmount = liquidezPos?.valor_actual || 0
 
   return (
-    <div className="space-y-6">
-      {/* ─── MAIN KPIs ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          label="Valor del Portfolio"
-          value={hideBalances ? "****" : formatCurrency(totals.totalValue)}
-          subvalue={hideBalances ? null : (
-            <div className="flex flex-col gap-1">
-              <span>{totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes"}</span>
-              {liquidezAmount > 0 && (
-                <span className="text-emerald-400 font-medium flex items-center gap-1">
-                  <Wallet className="w-3 h-3" /> Liquidez: {formatCurrency(liquidezAmount)}
+    <>
+      <div className="flex overflow-x-auto gap-4 pb-4 snap-x [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
+          <KPICard
+            label="Valor del Portfolio"
+            value={hideBalances ? "****" : formatCurrency(totals.totalValue)}
+            subvalue={hideBalances ? null : (
+              <div className="flex flex-col gap-1">
+                <span>{totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes"}</span>
+                {liquidezAmount > 0 && (
+                  <span className="text-emerald-400 font-medium flex items-center gap-1">
+                    <Wallet className="w-3 h-3" /> Liquidez: {formatCurrency(liquidezAmount)}
+                  </span>
+                )}
+              </div>
+            )}
+            icon={<Wallet className="w-5 h-5 text-muted-foreground/50" />}
+            action={
+              <button
+                onClick={() => setZenMode(!zenMode)}
+                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+                title={zenMode ? "Salir del Modo ZEN" : "Activar Modo ZEN"}
+              >
+                {zenMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            }
+            loading={loading}
+            delay="stagger-1"
+          />
+        </div>
+        
+        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
+          <KPICard
+            label="Total Invertido"
+            value={hideBalances ? "****" : formatCurrency(totals.totalCost)}
+            subvalue={hideBalances ? null : (
+              <span className="text-muted-foreground">
+                {totals.positionCount} posición(es)
+              </span>
+            )}
+            icon={<Briefcase className="w-5 h-5 text-muted-foreground/50" />}
+            loading={loading}
+            delay="stagger-2"
+          />
+        </div>
+        
+        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
+          <KPICard
+            label="Beneficio / Pérdida"
+            value={hideBalances ? "****" : formatPnl(totals.totalPnl)}
+            valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
+            subvalue={hideBalances ? null : (
+              <span className="text-muted-foreground flex items-center gap-1">
+                Hoy: <span className={totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                  {totals.totalPnl24h > 0 ? "+" : ""}{formatCurrency(totals.totalPnl24h)}
                 </span>
-              )}
-            </div>
-          )}
-          icon={<Wallet className="w-5 h-5 text-muted-foreground/50" />}
-          action={
-            <button
-              onClick={() => setZenMode(!zenMode)}
-              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
-              title={zenMode ? "Salir del Modo ZEN" : "Activar Modo ZEN"}
-            >
-              {zenMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          }
-          loading={loading}
-          delay="stagger-1"
-        />
-        
-        <KPICard
-          label="Total Invertido"
-          value={hideBalances ? "****" : formatCurrency(totals.totalCost)}
-          subvalue={hideBalances ? null : (
-            <span className="text-muted-foreground">
-              {totals.positionCount} posición(es)
-            </span>
-          )}
-          icon={<Briefcase className="w-5 h-5 text-muted-foreground/50" />}
-          loading={loading}
-          delay="stagger-2"
-        />
-        
-        <KPICard
-          label="Beneficio / Pérdida"
-          value={hideBalances ? "****" : formatPnl(totals.totalPnl)}
-          valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
-          subvalue={hideBalances ? null : (
-            <span className="text-muted-foreground flex items-center gap-1">
-              Hoy: <span className={totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                {totals.totalPnl24h > 0 ? "+" : ""}{formatCurrency(totals.totalPnl24h)}
               </span>
-            </span>
-          )}
-          icon={
-            isPositive ? (
-              <TrendingUp className="w-5 h-5 text-emerald-400/50" />
-            ) : (
-              <TrendingDown className="w-5 h-5 text-rose-400/50" />
-            )
-          }
-          extraContent={
-            <button 
-              onClick={() => setPerformanceOpen(true)}
-              className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-lg py-2 px-3 flex items-center justify-center gap-2 font-semibold transition-colors text-xs"
-            >
-              <BarChart2 className="w-4 h-4" />
-              Ver Rendimiento Diario
-            </button>
-          }
-          loading={loading}
-          delay="stagger-3"
-        />
+            )}
+            icon={
+              isPositive ? (
+                <TrendingUp className="w-5 h-5 text-emerald-400/50" />
+              ) : (
+                <TrendingDown className="w-5 h-5 text-rose-400/50" />
+              )
+            }
+            extraContent={
+              <button 
+                onClick={() => setPerformanceOpen(true)}
+                className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-lg py-2 px-3 flex items-center justify-center gap-2 font-semibold transition-colors text-xs"
+              >
+                <BarChart2 className="w-4 h-4" />
+                Ver Rendimiento Diario
+              </button>
+            }
+            loading={loading}
+            delay="stagger-3"
+          />
+        </div>
         
-        <KPICard
-          label="Rentabilidad"
-          value={hideBalances ? "****" : formatPercent(totals.totalPnlPercent)}
-          valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
-          subvalue={hideBalances ? null : (
-            <span className="text-muted-foreground flex items-center gap-1">
-              Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                {formatPercent(totals.totalPnlPercent24h)}
+        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
+          <KPICard
+            label="Rentabilidad"
+            value={hideBalances ? "****" : formatPercent(totals.totalPnlPercent)}
+            valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
+            subvalue={hideBalances ? null : (
+              <span className="text-muted-foreground flex items-center gap-1">
+                Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                  {formatPercent(totals.totalPnlPercent24h)}
+                </span>
               </span>
-            </span>
-          )}
-          icon={
-            <Target
-              className={`w-5 h-5 ${
-                isPositive ? "text-emerald-400/50" : "text-rose-400/50"
-              }`}
-            />
-          }
-          loading={loading}
-          delay="stagger-4"
-        />
+            )}
+            icon={
+              <Target
+                className={`w-5 h-5 ${
+                  isPositive ? "text-emerald-400/50" : "text-rose-400/50"
+                }`}
+              />
+            }
+            loading={loading}
+            delay="stagger-4"
+          />
+        </div>
+
+        {/* Separator */}
+        {!hideBalances && historicalAssets.length > 0 && (
+          <div className="flex items-center px-2 snap-start">
+            <div className="w-px h-16 bg-border/60" />
+          </div>
+        )}
+
+        {/* Historical Profit Mini Cards */}
+        {!hideBalances && historicalAssets.map((asset, index) => (
+          <Link key={`historical-${asset.id}`} href={`/activo/${asset.id}`} className={`min-w-[150px] snap-start h-full animate-fade-in`} style={{ animationDelay: `${400 + index * 100}ms` }}>
+            <Card className="bg-card/40 border-border/50 hover:bg-muted/80 hover:border-border transition-all h-full flex flex-col justify-center backdrop-blur-sm cursor-pointer active:scale-95">
+              <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Ganancia Total
+                </span>
+                <p className="text-sm font-bold text-foreground mb-1 truncate w-full px-2">{asset.ticker}</p>
+                <p className={`text-xl font-bold font-tabular ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {asset.historicalPnl >= 0 ? "+" : ""}{formatCurrency(asset.historicalPnl)}
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
       </div>
 
-      {/* ─── HISTORICAL ASSETS ─── */}
-      {!hideBalances && historicalAssets.length > 0 && (
-        <div className="pt-4 border-t border-border/40">
-          <h3 className="text-sm font-semibold tracking-wide text-muted-foreground mb-4 uppercase">Activos Vendidos</h3>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 opacity-60 hover:opacity-100 transition-opacity duration-300">
-            {historicalAssets.map((asset, i) => (
-              <KPICard
-                key={`historical-${asset.id}`}
-                label={`Histórico: ${asset.ticker}`}
-                value={formatPnl(asset.historicalPnl)}
-                valueColor={asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}
-                subvalue={
-                  <span className="text-muted-foreground">
-                    Vendiste este activo
-                  </span>
-                }
-                icon={
-                  asset.historicalPnl >= 0 ? (
-                    <TrendingUp className="w-5 h-5 text-emerald-400/50" />
-                  ) : (
-                    <TrendingDown className="w-5 h-5 text-rose-400/50" />
-                  )
-                }
-                loading={loading}
-                delay={`stagger-${(i % 4) + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
       <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} currentTotalValue={totals.totalValue} />
-    </div>
+    </>
   )
 }
