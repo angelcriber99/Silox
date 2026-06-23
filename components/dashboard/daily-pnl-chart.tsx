@@ -15,7 +15,7 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
     if (!snapshots || snapshots.length === 0) {
       if (currentTotalValue !== undefined) {
         const todayStr = new Date().toISOString().split('T')[0]
-        return [{ date: todayStr, value: currentTotalValue, pnl: currentPnl24h || 0 }]
+        return [{ date: todayStr, value: currentPnl24h || 0 }]
       }
       return []
     }
@@ -33,13 +33,12 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
         const pnlYesterday = yesterday.total_value - yesterday.total_invested
         pnl = pnlToday - pnlYesterday
       } else {
-        pnl = pnlToday // Primer día no tiene delta, ponemos el PnL total o 0
+        pnl = 0 // El primer día lo empezamos en 0 para evitar picos irreales si faltan datos de inversión
       }
 
       dataPoints.push({
         date: point.date,
-        value: point.total_value,
-        pnl: pnl
+        value: pnl
       })
     }
 
@@ -48,8 +47,7 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
       const lastPoint = dataPoints[dataPoints.length - 1]
       
       if (lastPoint && lastPoint.date === todayStr) {
-        lastPoint.value = currentTotalValue
-        lastPoint.pnl = currentPnl24h !== undefined ? currentPnl24h : lastPoint.pnl
+        lastPoint.value = currentPnl24h !== undefined ? currentPnl24h : lastPoint.value
       } else if (!lastPoint || lastPoint.date !== todayStr) {
         dataPoints.push({
           date: todayStr,
@@ -59,7 +57,7 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
     }
 
     return dataPoints
-  }, [snapshots, currentPnl24h])
+  }, [snapshots, currentPnl24h, currentTotalValue])
 
   if (isLoading) {
     return (
