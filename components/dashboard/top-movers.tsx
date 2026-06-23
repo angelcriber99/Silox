@@ -12,7 +12,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
 
   const validPositions = positions.filter(p => {
     if (sortBy === "percent") {
-      return typeof p.change_percent_24h === 'number' && p.change_percent_24h !== 0
+      return typeof p.change_percent_24h === 'number' && p.change_percent_24h !== 0 && p.unidades > 0
     } else {
       return typeof p.change_amount_24h === 'number' && p.change_amount_24h !== 0 && p.unidades > 0
     }

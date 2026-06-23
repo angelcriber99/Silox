@@ -259,12 +259,6 @@ export default function MovimientosPage() {
                               >
                                 <Pencil className="h-4 w-4" /> Editar
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDelete(tx.id)}
-                                className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 focus:bg-rose-500/10 cursor-pointer flex items-center gap-2"
-                              >
-                                <Trash2 className="h-4 w-4" /> Eliminar
-                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -345,12 +339,6 @@ export default function MovimientosPage() {
                               className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
                             >
                               <Pencil className="h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(tx.id)}
-                              className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 focus:bg-rose-500/10 cursor-pointer flex items-center gap-2"
-                            >
-                              <Trash2 className="h-4 w-4" /> Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

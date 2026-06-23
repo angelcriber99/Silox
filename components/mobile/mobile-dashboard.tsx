@@ -91,13 +91,13 @@ export function MobileDashboard({
   )
 
   const bestPerformer = useMemo(() => {
-    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number' && p.change_percent_24h > 0)
+    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number' && p.change_percent_24h > 0 && p.unidades > 0)
     if (withPercent.length === 0) return null
     return withPercent.reduce((prev, current) => (prev.change_percent_24h! > current.change_percent_24h! ? prev : current))
   }, [positions])
 
   const worstPerformer = useMemo(() => {
-    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number' && p.change_percent_24h < 0)
+    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number' && p.change_percent_24h < 0 && p.unidades > 0)
     if (withPercent.length === 0) return null
     return withPercent.reduce((prev, current) => (prev.change_percent_24h! < current.change_percent_24h! ? prev : current))
   }, [positions])
@@ -191,7 +191,7 @@ export function MobileDashboard({
                   {isPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnl} format="currency" hide={hideBalances} />
                 </span>
                 <span className={`text-sm font-medium font-tabular ${pnlColor} opacity-80`}>
-                  ({isPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />)
+                  (<AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />)
                 </span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -200,7 +200,7 @@ export function MobileDashboard({
                   {dailyIsPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnl24h} format="currency" hide={hideBalances} />
                 </span>
                 <span className={`font-medium font-tabular ${dailyPnlColor} opacity-80`}>
-                  ({dailyIsPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />)
+                  (<AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />)
                 </span>
               </div>
             </div>
@@ -257,7 +257,7 @@ export function MobileDashboard({
                 Rendimiento Hoy
               </p>
               <p className={`text-sm font-semibold font-tabular ${dailyPnlColor}`}>
-                {dailyIsPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />
+                <AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />
               </p>
             </div>
 
@@ -271,9 +271,9 @@ export function MobileDashboard({
                   <p className="text-xs font-semibold text-foreground truncate">
                     {bestPerformer.nombre || bestPerformer.ticker.split('.')[0]}
                   </p>
-                  <p className="text-emerald-500 font-semibold font-tabular text-xs">
-                    +{formatPercent(bestPerformer.change_percent_24h || 0)}
-                  </p>
+                  <span className="text-emerald-400 font-tabular font-medium">
+                    {formatPercent(bestPerformer.change_percent_24h || 0)}
+                  </span>
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">N/A</p>

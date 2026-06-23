@@ -87,11 +87,11 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
           </span>
           <div className={`flex items-center gap-1.5 ${compactView ? '' : 'mt-0.5'}`}>
             <span className={`text-[10px] font-medium font-tabular ${change24hColor}`}>
-              {is24hPositive ? "+" : ""}{hideBalances ? "**.*%" : formatPercent(change24h)}
+              {hideBalances ? "**.*%" : formatPercent(change24h)}
             </span>
             <div className={`flex items-center justify-center px-1.5 py-0.5 rounded ${pnlBg}`}>
               <span className={`text-[9px] font-bold font-tabular ${pnlColor}`}>
-                {isPositive ? "+" : ""}{hideBalances ? "**.*%" : formatPercent(pnlPercent)}
+                {hideBalances ? "**.*%" : formatPercent(pnlPercent)}
               </span>
             </div>
           </div>
