@@ -235,7 +235,7 @@ export function PositionsTable({
       </CardHeader>
       <CardContent className="p-0">
         {/* Desktop View (Table) */}
-        <div className="hidden md:block overflow-x-auto min-h-[500px]">
+        <div className="hidden md:block overflow-x-auto">
           <Table className="min-w-[900px] w-full">
             <TableHeader className="bg-muted/40">
               <TableRow className="border-border/50 hover:bg-transparent">
