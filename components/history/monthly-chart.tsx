@@ -81,7 +81,7 @@ export function MonthlyChart({ transactions, year }: MonthlyChartProps) {
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             color: 'hsl(var(--foreground))'
           }}
-          formatter={(value: number) => [formatCurrency(value), undefined]}
+          formatter={(value: any) => [formatCurrency(Number(value) || 0), undefined]}
           labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
         />
         <Legend 
