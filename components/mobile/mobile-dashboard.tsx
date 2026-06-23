@@ -6,7 +6,7 @@ import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
-import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts"
+import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
 import { hapticFeedback } from "@/lib/utils/haptics"
@@ -78,7 +78,8 @@ export function MobileDashboard({
       }
       combined.push(sum)
     }
-    return combined.map((v, i) => ({ i, v }))
+    const startValue = combined.length > 0 ? combined[0] : 0
+    return combined.map((v, i) => ({ i, v, pnl: v - startValue }))
   }, [positions])
 
   const areaColor = isPositive ? "#10b981" : "#f43f5e"
@@ -241,6 +242,28 @@ export function MobileDashboard({
                 </linearGradient>
               </defs>
               <YAxis hide domain={["dataMin", "dataMax"]} />
+              <Tooltip 
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    const val = data.v;
+                    const pnl = data.pnl;
+                    const isUp = pnl >= 0;
+                    return (
+                      <div className="bg-background/95 backdrop-blur-xl border border-border/50 p-2.5 rounded-xl shadow-2xl flex flex-col gap-0.5 z-50">
+                        <span className="text-sm font-semibold font-tabular text-foreground">
+                          {formatCurrency(val)}
+                        </span>
+                        <span className={`text-xs font-medium font-tabular ${isUp ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {isUp ? '+' : ''}{formatCurrency(pnl)}
+                        </span>
+                      </div>
+                    )
+                  }
+                  return null;
+                }}
+                cursor={{ stroke: areaColor, strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
               <Area
                 type="monotone"
                 dataKey="v"
