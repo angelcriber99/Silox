@@ -14,7 +14,7 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) {
       if (currentTotalValue !== undefined) {
-        const todayStr = new Date().toISOString().split('T')[0]
+        const todayStr = format(new Date(), 'yyyy-MM-dd')
         return [{ date: todayStr, value: currentTotalValue, pnl: currentPnl24h || 0 }]
       }
       return []
@@ -44,7 +44,7 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
     }
 
     if (currentTotalValue !== undefined) {
-      const todayStr = new Date().toISOString().split('T')[0]
+      const todayStr = format(new Date(), 'yyyy-MM-dd')
       const lastPoint = dataPoints[dataPoints.length - 1]
       
       if (lastPoint && lastPoint.date === todayStr) {
