@@ -3,7 +3,6 @@
 import Link from "next/link"
 import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
-import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
 
@@ -11,29 +10,24 @@ interface MobileAssetCardProps {
   position: EnrichedPosition
 }
 
-const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  ETF: { bg: "bg-blue-500/10", text: "text-blue-400" },
-  "Fondo Indexado": { bg: "bg-purple-500/10", text: "text-purple-400" },
-  "Fondo Monetario": { bg: "bg-cyan-500/10", text: "text-cyan-400" },
-  Acción: { bg: "bg-amber-500/10", text: "text-amber-400" },
-  Crypto: { bg: "bg-orange-500/10", text: "text-orange-400" },
+const TYPE_CONFIG: Record<string, { bg: string; text: string; emoji: string }> = {
+  ETF: { bg: "bg-blue-500/10 border-blue-500/20", text: "text-blue-600 dark:text-blue-400", emoji: "🌐" },
+  "Fondo Indexado": { bg: "bg-purple-500/10 border-purple-500/20", text: "text-purple-600 dark:text-purple-400", emoji: "📦" },
+  "Fondo Monetario": { bg: "bg-cyan-500/10 border-cyan-500/20", text: "text-cyan-600 dark:text-cyan-400", emoji: "🏦" },
+  Acción: { bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-600 dark:text-amber-400", emoji: "🏢" },
+  Crypto: { bg: "bg-orange-500/10 border-orange-500/20", text: "text-orange-600 dark:text-orange-400", emoji: "🪙" },
 }
 
 export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
-  const { soundEffects, hideBalances, compactView } = usePreferences()
-  const pnl = p.pnl ?? 0
+  const { soundEffects, hideBalances } = usePreferences()
+  
   const pnlPercent = p.pnl_percent ?? 0
-  const isPositive = pnl >= 0
-  const pnlColor = isPositive ? "text-emerald-400" : "text-rose-400"
-  const pnlBg = isPositive ? "bg-emerald-500/10" : "bg-rose-500/10"
+  const isPositive = pnlPercent >= 0
 
-  const change24h = p.change_percent_24h ?? 0
-  const is24hPositive = change24h >= 0
-  const change24hColor = is24hPositive ? "text-emerald-400" : "text-rose-400"
-
-  const typeStyle = TYPE_COLORS[p.tipo] ?? {
-    bg: "bg-zinc-500/10",
+  const typeConfig = TYPE_CONFIG[p.tipo] ?? {
+    bg: "bg-zinc-500/10 border-zinc-500/20",
     text: "text-muted-foreground",
+    emoji: "📄"
   }
 
   const displayTicker =
@@ -45,61 +39,38 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
     <Link
       href={`/activo/${p.activo_id}`}
       onClick={() => { if (soundEffects) playSound('pop') }}
-      className="block active:scale-[0.98] transition-transform duration-150"
+      className="block active:scale-[0.96] transition-transform duration-150"
     >
-      <div className={`flex items-center gap-4 bg-card/40 hover:bg-muted/50 backdrop-blur-sm transition-colors border-b border-border/30 ${compactView ? 'px-4 py-2' : 'px-5 py-4'}`}>
-        {/* Left: Icon circle (hidden in compact mode) */}
-        {!compactView && (
-          <div
-            className={`h-11 w-11 rounded-xl ${typeStyle.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}
-          >
-            <span className={`text-sm font-bold ${typeStyle.text}`}>
-              {displayTicker.slice(0, 2)}
-            </span>
-          </div>
-        )}
+      <div className={`flex items-center gap-4 bg-card hover:bg-muted/50 border-2 rounded-[28px] p-4 shadow-sm transition-colors ${typeConfig.bg}`}>
+        
+        {/* Left: Emoji Circle */}
+        <div className="h-14 w-14 rounded-2xl bg-background shadow-sm flex items-center justify-center flex-shrink-0 text-2xl">
+          {typeConfig.emoji}
+        </div>
 
         {/* Center: Ticker + Name */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`${compactView ? 'text-sm' : 'text-[15px]'} font-semibold text-foreground truncate`}>
-              {displayTicker}
-            </span>
-            <span
-              className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${typeStyle.bg} ${typeStyle.text}`}
-            >
-              {p.tipo === "Fondo Indexado"
-                ? "Fondo"
-                : p.tipo === "Fondo Monetario"
-                  ? "Monet."
-                  : p.tipo}
+          <p className="text-lg font-black text-foreground truncate leading-tight">
+            {p.nombre || displayTicker}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className={`text-[10px] font-black uppercase tracking-wider ${typeConfig.text}`}>
+              {p.tipo}
             </span>
           </div>
-          {!compactView && (
-            <p className="text-xs text-muted-foreground/80 truncate mt-0.5">
-              {p.nombre || "—"}
-            </p>
-          )}
         </div>
 
         {/* Right: Value + P&L */}
         <div className="flex flex-col items-end flex-shrink-0">
-          <span className={`${compactView ? 'text-sm' : 'text-[15px]'} font-bold font-tabular text-foreground`}>
+          <span className="text-xl font-black font-tabular text-foreground tracking-tight">
             {hideBalances ? "****" : (p.valor_actual !== null
               ? formatCurrency(p.valor_actual, "EUR")
               : "—")}
           </span>
-          <div className={`flex items-center gap-1.5 ${compactView ? '' : 'mt-0.5'}`}>
-            <span className={`text-[11px] font-medium font-tabular ${change24hColor}`}>
-              {hideBalances ? "**.*%" : formatPercent(change24h)}
-            </span>
-            <div
-              className={`flex items-center justify-center px-1.5 py-0.5 rounded-md ${pnlBg}`}
-            >
-              <span className={`text-[10px] font-bold font-tabular ${pnlColor}`}>
-                {hideBalances ? "**.*%" : formatPercent(pnlPercent)}
-              </span>
-            </div>
+          <div className={`mt-1 flex items-center justify-center px-2 py-1 rounded-xl font-bold font-tabular text-xs ${
+            isPositive ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+          }`}>
+            {isPositive ? "+" : ""}{hideBalances ? "**.*%" : formatPercent(pnlPercent)}
           </div>
         </div>
       </div>
