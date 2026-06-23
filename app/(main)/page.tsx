@@ -62,7 +62,7 @@ export default function Home() {
       <div className="hidden md:flex md:flex-col md:flex-1">
         {/* Ticker Bar (Removed by user request) */}
 
-        <div className={`flex-1 mx-auto w-full px-6 py-6 space-y-6 ${zenMode ? 'max-w-4xl pt-20' : 'max-w-7xl'}`}>
+        <div className={`flex-1 mx-auto w-full px-6 py-6 space-y-6 ${zenMode ? 'max-w-6xl pt-10' : 'max-w-7xl'}`}>
 
           {/* KPI Cards */}
           <PortfolioSummary totals={totals} positions={positions} transactions={allTransactions} loading={isLoading} />
