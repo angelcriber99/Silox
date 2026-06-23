@@ -27,26 +27,9 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="daily" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50">
-            <TabsTrigger value="daily" className="data-[state=active]:bg-background">
-              <BarChart2 className="w-4 h-4 mr-2" />
-              Evolución Patrimonio
-            </TabsTrigger>
-            <TabsTrigger value="drawdown" className="data-[state=active]:bg-background">
-              <TrendingDown className="w-4 h-4 mr-2 text-rose-400" />
-              Drawdown
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="daily" className="mt-0">
-            <DailyPnlChart currentPnl24h={currentPnl24h} currentTotalValue={currentTotalValue} />
-          </TabsContent>
-          
-          <TabsContent value="drawdown" className="mt-0">
-            <DrawdownChart />
-          </TabsContent>
-        </Tabs>
+        <div className="mt-4">
+          <DailyPnlChart currentPnl24h={currentPnl24h} currentTotalValue={currentTotalValue} />
+        </div>
       </DialogContent>
     </Dialog>
   )
