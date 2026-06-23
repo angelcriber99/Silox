@@ -10,9 +10,10 @@ interface PerformanceModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentPnl24h?: number
+  currentTotalValue?: number
 }
 
-export function PerformanceModal({ open, onOpenChange, currentPnl24h }: PerformanceModalProps) {
+export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTotalValue }: PerformanceModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl bg-background/95 backdrop-blur-xl border-border/50">
@@ -30,7 +31,7 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h }: Performa
           <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50">
             <TabsTrigger value="daily" className="data-[state=active]:bg-background">
               <BarChart2 className="w-4 h-4 mr-2" />
-              PnL Diario
+              Evolución Patrimonio
             </TabsTrigger>
             <TabsTrigger value="drawdown" className="data-[state=active]:bg-background">
               <TrendingDown className="w-4 h-4 mr-2 text-rose-400" />
@@ -39,7 +40,7 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h }: Performa
           </TabsList>
           
           <TabsContent value="daily" className="mt-0">
-            <DailyPnlChart currentPnl24h={currentPnl24h} />
+            <DailyPnlChart currentPnl24h={currentPnl24h} currentTotalValue={currentTotalValue} />
           </TabsContent>
           
           <TabsContent value="drawdown" className="mt-0">

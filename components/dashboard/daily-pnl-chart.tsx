@@ -13,8 +13,11 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
 
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) {
-      const todayStr = new Date().toISOString().split('T')[0]
-      return [{ date: todayStr, value: currentPnl24h || 0 }]
+      if (currentTotalValue !== undefined) {
+        const todayStr = new Date().toISOString().split('T')[0]
+        return [{ date: todayStr, value: currentTotalValue, pnl: currentPnl24h || 0 }]
+      }
+      return []
     }
 
     const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -30,29 +33,34 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
         const pnlYesterday = yesterday.total_value - yesterday.total_invested
         pnl = pnlToday - pnlYesterday
       } else {
-        pnl = 0 // El primer día lo empezamos en 0 para evitar picos irreales si faltan datos de inversión
+        pnl = pnlToday // O puedes usar 0, pero pnlToday está bien
       }
 
       dataPoints.push({
         date: point.date,
-        value: pnl
+        value: point.total_value, // El eje Y es el patrimonio total
+        pnl: pnl // Pasamos el pnl para el tooltip
       })
     }
 
-    const todayStr = new Date().toISOString().split('T')[0]
-    const lastPoint = dataPoints[dataPoints.length - 1]
-    
-    if (lastPoint && lastPoint.date === todayStr) {
-      lastPoint.value = currentPnl24h !== undefined ? currentPnl24h : lastPoint.value
-    } else if (currentPnl24h !== undefined) {
-      dataPoints.push({
-        date: todayStr,
-        value: currentPnl24h
-      })
+    if (currentTotalValue !== undefined) {
+      const todayStr = new Date().toISOString().split('T')[0]
+      const lastPoint = dataPoints[dataPoints.length - 1]
+      
+      if (lastPoint && lastPoint.date === todayStr) {
+        lastPoint.value = currentTotalValue
+        lastPoint.pnl = currentPnl24h !== undefined ? currentPnl24h : lastPoint.pnl
+      } else if (!lastPoint || lastPoint.date !== todayStr) {
+        dataPoints.push({
+          date: todayStr,
+          value: currentTotalValue,
+          pnl: currentPnl24h || 0
+        })
+      }
     }
 
     return dataPoints
-  }, [snapshots, currentPnl24h])
+  }, [snapshots, currentPnl24h, currentTotalValue])
 
   if (isLoading) {
     return (
@@ -80,18 +88,26 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
-      const isPositive = data.value >= 0
+      const isPositive = data.pnl >= 0
       const formattedDate = format(parseISO(label), "d MMM yyyy", { locale: es })
       
       return (
-        <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md min-w-[150px]">
+        <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md min-w-[170px]">
           <p className="text-muted-foreground text-xs mb-2 font-medium uppercase tracking-wider border-b border-border/50 pb-2">{formattedDate}</p>
+          <div className="mb-2">
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
+              Patrimonio Total
+            </p>
+            <p className="font-bold text-lg font-tabular text-foreground">
+              {formatCurrency(data.value)}
+            </p>
+          </div>
           <div>
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
-              Rendimiento Diario
+              PnL Diario
             </p>
-            <p className={`font-bold text-xl font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {isPositive ? '+' : ''}{formatCurrency(data.value)}
+            <p className={`font-bold text-sm font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {isPositive ? '+' : ''}{formatCurrency(data.pnl)}
             </p>
           </div>
         </div>
@@ -121,9 +137,8 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
           />
           <YAxis hide domain={[minVal - domainPadding, maxVal + domainPadding]} />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 2, strokeDasharray: '5 5' }} />
-          <ReferenceLine y={0} stroke="#3f3f46" strokeWidth={1} strokeDasharray="3 3" />
           <Area 
-            type="monotone" 
+            type="linear" 
             dataKey="value" 
             stroke="#3b82f6" 
             strokeWidth={3}

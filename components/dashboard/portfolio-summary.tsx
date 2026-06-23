@@ -178,7 +178,7 @@ export function PortfolioSummary({
         />
       </div>
 
-      <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} />
+      <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} currentTotalValue={totals.totalValue} />
     </>
   )
 }
