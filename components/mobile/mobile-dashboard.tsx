@@ -87,13 +87,13 @@ export function MobileDashboard({
   )
 
   const bestPerformer = useMemo(() => {
-    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number')
+    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number' && p.change_percent_24h > 0)
     if (withPercent.length === 0) return null
     return withPercent.reduce((prev, current) => (prev.change_percent_24h! > current.change_percent_24h! ? prev : current))
   }, [positions])
 
   const worstPerformer = useMemo(() => {
-    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number')
+    const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number' && p.change_percent_24h < 0)
     if (withPercent.length === 0) return null
     return withPercent.reduce((prev, current) => (prev.change_percent_24h! < current.change_percent_24h! ? prev : current))
   }, [positions])

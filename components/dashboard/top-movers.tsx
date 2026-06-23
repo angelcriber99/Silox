@@ -26,8 +26,11 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
     }
   })
   
-  const best = sorted.slice(0, 3)
-  const worst = sorted.slice().reverse().slice(0, 3).filter(p => !best.find(b => b.ticker === p.ticker))
+  // Best must be positive
+  const best = sorted.filter(p => sortBy === "percent" ? p.change_percent_24h! > 0 : p.change_amount_24h! > 0).slice(0, 3)
+  
+  // Worst must be negative
+  const worst = sorted.slice().reverse().filter(p => sortBy === "percent" ? p.change_percent_24h! < 0 : p.change_amount_24h! < 0).slice(0, 3)
 
   const getDisplayName = (p: EnrichedPosition) => {
     if (p.nombre?.toUpperCase().includes("MSCI")) return "MSCI"
@@ -74,7 +77,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 )}
               </div>
             </div>
-          )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
+          )) : <span className="text-xs text-muted-foreground/60">Todo en rojo hoy 📉</span>}
         </div>
         {/* Worst */}
         <div className="space-y-3">
@@ -95,7 +98,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 )}
               </div>
             </div>
-          )) : <span className="text-xs text-muted-foreground/60">Sin datos</span>}
+          )) : <span className="text-xs text-muted-foreground/60">¡Todo en verde! 🚀</span>}
         </div>
       </CardContent>
     </Card>
