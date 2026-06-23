@@ -168,6 +168,13 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm text-foreground">{a.ticker}</span>
+                          {!a.triggered && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-sm ${
+                              a.condition === 'above' ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400'
+                            }`}>
+                              {a.condition === 'above' ? 'Vender' : 'Comprar'}
+                            </span>
+                          )}
                           {a.triggered && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-sm bg-emerald-500/20 text-emerald-400">Completada</span>}
                         </div>
                         <p className="text-sm text-muted-foreground">
