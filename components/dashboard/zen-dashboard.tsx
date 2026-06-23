@@ -132,7 +132,7 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
           Valor del Portfolio • {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
         <motion.h1 
-          className="text-6xl md:text-[8rem] font-bold font-tabular tracking-tighter text-foreground drop-shadow-2xl"
+          className={`text-6xl md:text-[8rem] font-bold font-tabular tracking-tighter drop-shadow-2xl ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, type: "spring" }}
