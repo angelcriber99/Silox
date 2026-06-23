@@ -107,16 +107,13 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
             <h4 className="text-sm font-medium text-foreground">Nueva Alerta</h4>
             <div className="flex flex-col gap-2">
               <div className="flex gap-2 text-sm">
-                <select
+                <input
+                  type="text"
+                  placeholder="Ticker (ej. CRM)"
                   value={ticker}
-                  onChange={(e) => setTicker(e.target.value)}
-                  className="w-1/3 bg-muted border border-border rounded-md px-3 py-2 uppercase"
-                >
-                  <option value="" disabled>Ticker</option>
-                  {positions.map(p => (
-                    <option key={p.ticker} value={p.ticker}>{p.ticker}</option>
-                  ))}
-                </select>
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  className="w-1/3 bg-muted border border-border rounded-md px-3 py-2 uppercase text-foreground text-sm placeholder:normal-case"
+                />
                 <select 
                   value={condition} 
                   onChange={(e) => setCondition(e.target.value as 'above'|'below')}
