@@ -53,14 +53,39 @@ type SortDir = "asc" | "desc"
 
 function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
   const { hideBalances } = usePreferences()
+  const [flash, setFlash] = useState<'up'|'down'|null>(null);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (value !== null && prevValue.current !== null && value !== prevValue.current) {
+      if (value > prevValue.current) {
+        setFlash('up');
+      } else {
+        setFlash('down');
+      }
+      const t = setTimeout(() => setFlash(null), 1500);
+      prevValue.current = value;
+      return () => clearTimeout(t);
+    }
+    if (prevValue.current === null && value !== null) {
+      prevValue.current = value;
+    }
+  }, [value]);
+
   if (hideBalances) return <span className="text-muted-foreground/60">****</span>
   if (value === null) return <span className="text-muted-foreground/60">—</span>
 
-  const color = value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-muted-foreground"
+  const textColor = value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-muted-foreground"
   const formatted = type === "currency" ? formatPnl(value) : formatPercent(value)
 
+  const flashClasses = flash === 'up' 
+    ? 'bg-emerald-500/20' 
+    : flash === 'down' 
+      ? 'bg-rose-500/20 animate-pulse' 
+      : 'bg-transparent';
+
   return (
-    <span className={`inline-flex items-center gap-1 font-tabular ${color}`}>
+    <span className={`inline-flex items-center gap-1 font-tabular transition-colors duration-1000 rounded px-1.5 py-0.5 -mr-1.5 ${textColor} ${flashClasses}`}>
       {value > 0 ? "+" : ""}{formatted.replace("+", "")}
     </span>
   )
