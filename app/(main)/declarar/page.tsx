@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils/formatters"
 import { Scale, TrendingUp, TrendingDown, ArrowLeft, Info, HelpCircle, FileText } from "lucide-react"
 import { TaxGuide } from "@/components/tax/tax-guide"
 import { TaxChat } from "@/components/tax/tax-chat"
+import { TaxPdfExport } from "@/components/tax/tax-pdf-export"
 import Link from "next/link"
 
 export default function DeclararPage() {
@@ -97,25 +98,28 @@ export default function DeclararPage() {
                 Cálculo automatizado de ganancias y pérdidas patrimoniales (Método FIFO).
               </p>
             </div>
-            
-            <div className="relative">
-              <select 
-                className="appearance-none bg-muted border border-border text-foreground font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-              >
-                {availableYears.map(year => (
-                  <option key={year} value={year}>Año {year}</option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                ▼
+            <div className="flex items-center gap-3">
+              <TaxPdfExport targetId="tax-report-content" filename={`Silox_Informe_Fiscal_${selectedYear}.pdf`} />
+              <div className="relative">
+                <select 
+                  className="appearance-none bg-muted border border-border text-foreground font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                >
+                  {availableYears.map(year => (
+                    <option key={year} value={year}>Año {year}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                  ▼
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {isLoading ? (
+        <div id="tax-report-content" className="flex flex-col gap-8 bg-background pb-8">
+          {isLoading ? (
           <div className="animate-pulse flex flex-col gap-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[1, 2, 3].map(i => <div key={i} className="h-32 bg-card/50 rounded-xl" />)}
@@ -455,7 +459,7 @@ export default function DeclararPage() {
                 <TaxChat context={{ añoFiscal: selectedYear, gains: totals.gains, losses: totals.losses, net: totals.net }} />
               </div>
             </div>
-          </>
+          </div>
         )}
 
       </div>
