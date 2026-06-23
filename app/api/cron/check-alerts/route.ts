@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     const uniqueTickers = Array.from(new Set(alertas.map(a => a.ticker)))
 
     // 4. Obtener precios de Yahoo Finance (en paralelo)
-    const pricesMap: Record<string, { price: number; currency: string }> = {}
+    const pricesMap: Record<string, { price: number; high: number; low: number; currency: string }> = {}
     await Promise.allSettled(
       uniqueTickers.map(async (ticker) => {
         try {
@@ -54,6 +54,8 @@ export async function GET(request: Request) {
           if (quote.regularMarketPrice) {
             pricesMap[ticker.toUpperCase()] = {
               price: quote.regularMarketPrice,
+              high: quote.regularMarketDayHigh || quote.regularMarketPrice,
+              low: quote.regularMarketDayLow || quote.regularMarketPrice,
               currency: normalizeYahooCurrency(quote.currency || 'USD')
             }
           }
@@ -71,16 +73,21 @@ export async function GET(request: Request) {
       if (!current) continue
 
       let shouldTrigger = false
-      if (alerta.condition === 'above' && current.price >= alerta.target_price) {
+      let priceReached = current.price
+
+      if (alerta.condition === 'above' && current.high >= alerta.target_price) {
         shouldTrigger = true
-      } else if (alerta.condition === 'below' && current.price <= alerta.target_price) {
+        priceReached = current.high >= alerta.target_price && current.price < alerta.target_price ? current.high : current.price
+      } else if (alerta.condition === 'below' && current.low <= alerta.target_price) {
         shouldTrigger = true
+        priceReached = current.low <= alerta.target_price && current.price > alerta.target_price ? current.low : current.price
       }
 
       if (shouldTrigger) {
         triggeredAlerts.push({
           alerta,
           currentPrice: current.price,
+          reachedPrice: priceReached,
           currency: current.currency
         })
       }
@@ -107,6 +114,7 @@ export async function GET(request: Request) {
         const emoji = trigger.alerta.condition === 'above' ? '🚀' : '🔻'
         const targetFormateado = new Intl.NumberFormat('es-ES', { style: 'currency', currency: trigger.currency }).format(trigger.alerta.target_price)
         const currentFormateado = new Intl.NumberFormat('es-ES', { style: 'currency', currency: trigger.currency }).format(trigger.currentPrice)
+        const reachedFormateado = new Intl.NumberFormat('es-ES', { style: 'currency', currency: trigger.currency }).format(trigger.reachedPrice)
 
         const mensaje = `
 ${emoji} *¡ALERTA DE PRECIO SILOX!* ${emoji}
@@ -115,6 +123,7 @@ El activo *${trigger.alerta.ticker}* ha ${accion} tu objetivo.
 
 🎯 Objetivo: ${targetFormateado}
 💰 Precio Actual: ${currentFormateado}
+${trigger.currentPrice !== trigger.reachedPrice ? `⚡ *¡OJO!* Tocó los ${reachedFormateado} hoy, pero ahora ha rebotado a ${currentFormateado}.` : ''}
 `
         try {
           await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
