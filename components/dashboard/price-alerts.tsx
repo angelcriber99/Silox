@@ -13,15 +13,22 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 interface PriceAlertsProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialTicker?: string
 }
 
-export function PriceAlerts({ open, onOpenChange }: PriceAlertsProps) {
+export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsProps) {
   const { alerts, addAlert, removeAlert, markTriggered } = useAlerts()
   const { positions } = usePortfolio()
   const { soundEffects } = usePreferences()
-  const [ticker, setTicker] = useState("")
+  const [ticker, setTicker] = useState(initialTicker || "")
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState<'above' | 'below'>('above')
+
+  useEffect(() => {
+    if (open && initialTicker) {
+      setTicker(initialTicker)
+    }
+  }, [open, initialTicker])
 
   // Check alerts
   useEffect(() => {

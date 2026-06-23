@@ -1,5 +1,5 @@
 "use client"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   ArrowLeft, TrendingUp, TrendingDown, Wallet, Layers, Activity,
@@ -7,13 +7,15 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  AreaChart, Area, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from "recharts"
+// Recharts removed as it's now in the InteractiveAssetChart
 import { formatCurrency, formatPercent, formatUnits } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
+import { AssetAlerts } from "./detail/asset-alerts"
+import { AssetNews } from "./detail/asset-news"
+import { PriceAlerts } from "@/components/dashboard/price-alerts"
+import { InteractiveAssetChart } from "./detail/interactive-chart"
+import { MarketStats } from "./detail/market-stats"
 
 interface CryptoDetailClientProps {
   position: EnrichedPosition
@@ -26,21 +28,12 @@ const TIPO_BADGE_STYLES: Record<string, string> = {
 
 export function CryptoDetailClient({ position, transactions }: CryptoDetailClientProps) {
   const {
-    sparklineData,
     evolutionData,
     stats,
     txTableData
   } = useAssetCalculations(position, transactions)
 
-  // Datos simulados de mercado crypto
-  const mockMarketData = {
-    marketCap: "1.2T",
-    volume24h: "32.4B",
-    circulatingSupply: "19.6M",
-    allTimeHigh: position.precio_actual ? position.precio_actual * 2.5 : 69000,
-    allTimeLow: position.precio_actual ? position.precio_actual * 0.1 : 3000,
-    dominance: "52.4%",
-  }
+  const [alertsOpen, setAlertsOpen] = useState(false)
 
   const isPositive = (position.change_percent_24h || 0) >= 0
   const colorHex = isPositive ? "#10b981" : "#f43f5e"
@@ -90,43 +83,10 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
           </div>
         </div>
 
-        {/* ═══════════ GRÁFICO DEL ACTIVO (SPARKLINE AMPLIADO) ═══════════ */}
-        {sparklineData && (
-          <div className="w-full h-[300px] md:h-[400px] mb-8 animate-fade-in stagger-1 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sparklineData.data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colorHex} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={colorHex} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <YAxis domain={['auto', 'auto']} hide />
-                <Tooltip 
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null
-                    return (
-                      <div className="bg-card/90 backdrop-blur-sm border border-border p-3 rounded-lg shadow-xl">
-                        <p className="text-foreground font-bold font-tabular text-lg">
-                          {formatCurrency(payload[0].value as number, position.moneda)}
-                        </p>
-                      </div>
-                    )
-                  }} 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke={colorHex} 
-                  strokeWidth={3} 
-                  fillOpacity={1} 
-                  fill="url(#colorPrice)" 
-                  animationDuration={1500} 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {/* ═══════════ GRÁFICO INTERACTIVO ═══════════ */}
+        <div className="mb-8 animate-fade-in stagger-1">
+          <InteractiveAssetChart ticker={position.ticker} moneda={position.moneda} colorHex={colorHex} />
+        </div>
 
         {/* ═══════════ TU POSICIÓN ═══════════ */}
         <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2 animate-fade-in stagger-1">
@@ -157,41 +117,27 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
           </div>
         </div>
 
-        {/* ═══════════ ESTADÍSTICAS CLAVE (SIMULADAS) ═══════════ */}
-        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2 animate-fade-in stagger-2">
-          <Coins className="h-5 w-5 text-orange-400" />
-          Datos de la Red <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full ml-2">Simulados</span>
-        </h2>
-        <Card className="bg-card border-border backdrop-blur-sm mb-10 animate-fade-in stagger-3">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
-              <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Market Cap</p>
-                <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.marketCap}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Volumen (24h)</p>
-                <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.volume24h}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Acc. Circulante</p>
-                <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.circulatingSupply}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Máximo Histórico</p>
-                <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(mockMarketData.allTimeHigh, position.moneda)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Mínimo Histórico</p>
-                <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(mockMarketData.allTimeLow, position.moneda)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Dominancia</p>
-                <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.dominance}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* ═══════════ ESTADÍSTICAS Y ALERTAS ═══════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-3">
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <Coins className="h-5 w-5 text-orange-400" />
+              Datos de la Red
+            </h2>
+            <MarketStats ticker={position.ticker} moneda={position.moneda} />
+          </div>
+          <div className="lg:col-span-1">
+            <h2 className="text-xl font-bold text-transparent mb-4 flex items-center gap-2 select-none pointer-events-none">
+              <Coins className="h-5 w-5 text-transparent" />
+              Alertas
+            </h2>
+            <AssetAlerts 
+              ticker={position.ticker} 
+              moneda={position.moneda} 
+              onOpenAlertsModal={() => setAlertsOpen(true)} 
+            />
+          </div>
+        </div>
 
         {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
         <div className="animate-fade-in stagger-4">
@@ -230,7 +176,18 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
             </table>
           </div>
         </div>
+
+        {/* ═══════════ NOTICIAS RELEVANTES ═══════════ */}
+        <div className="mt-10 animate-fade-in stagger-5">
+          <AssetNews ticker={position.ticker} />
+        </div>
       </main>
+
+      <PriceAlerts 
+        open={alertsOpen} 
+        onOpenChange={setAlertsOpen} 
+        initialTicker={position.ticker} 
+      />
     </div>
   )
 }

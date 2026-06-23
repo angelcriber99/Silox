@@ -1,5 +1,5 @@
 "use client"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   ArrowLeft, TrendingUp, TrendingDown, Wallet, Layers, Activity,
@@ -7,14 +7,15 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from "recharts"
 import { formatCurrency, formatPercent, formatUnits } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
 import dynamic from 'next/dynamic'
+import { AssetAlerts } from "./detail/asset-alerts"
+import { AssetNews } from "./detail/asset-news"
+import { PriceAlerts } from "@/components/dashboard/price-alerts"
+import { InteractiveAssetChart } from "./detail/interactive-chart"
+import { MarketStats } from "./detail/market-stats"
 
 const AssetContributionsChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetContributionsChart), { ssr: false })
 
@@ -29,22 +30,13 @@ const TIPO_BADGE_STYLES: Record<string, string> = {
 
 export function EtfDetailClient({ position, transactions }: EtfDetailClientProps) {
   const {
-    sparklineData,
     evolutionData,
     monthlyContributionsData,
     stats,
     txTableData
   } = useAssetCalculations(position, transactions)
 
-  // Datos simulados de mercado ETF
-  const mockMarketData = {
-    expenseRatio: "0.20%",
-    aum: "120.5B",
-    holdings: "503",
-    divYield: "1.45%",
-    nav: position.precio_actual ? position.precio_actual * 0.998 : 0,
-    category: "Equity Blend",
-  }
+  const [alertsOpen, setAlertsOpen] = useState(false)
 
   const isPositive = (position.change_percent_24h || 0) >= 0
   const colorHex = isPositive ? "#10b981" : "#f43f5e"
@@ -94,43 +86,10 @@ export function EtfDetailClient({ position, transactions }: EtfDetailClientProps
           </div>
         </div>
 
-        {/* ═══════════ GRÁFICO DEL ACTIVO ═══════════ */}
-        {sparklineData && (
-          <div className="w-full h-[250px] md:h-[350px] mb-8 animate-fade-in stagger-1 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sparklineData.data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colorHex} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={colorHex} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <YAxis domain={['auto', 'auto']} hide />
-                <Tooltip 
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null
-                    return (
-                      <div className="bg-card/90 backdrop-blur-sm border border-border p-3 rounded-lg shadow-xl">
-                        <p className="text-foreground font-bold font-tabular text-lg">
-                          {formatCurrency(payload[0].value as number, position.moneda)}
-                        </p>
-                      </div>
-                    )
-                  }} 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke={colorHex} 
-                  strokeWidth={3} 
-                  fillOpacity={1} 
-                  fill="url(#colorPrice)" 
-                  animationDuration={1500} 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {/* ═══════════ GRÁFICO INTERACTIVO ═══════════ */}
+        <div className="mb-8 animate-fade-in stagger-1">
+          <InteractiveAssetChart ticker={position.ticker} moneda={position.moneda} colorHex={colorHex} />
+        </div>
 
         {/* ═══════════ TU POSICIÓN ═══════════ */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-in stagger-2">
@@ -158,38 +117,21 @@ export function EtfDetailClient({ position, transactions }: EtfDetailClientProps
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-          {/* ═══════════ DATOS DEL FONDO (SIMULADOS) ═══════════ */}
-          <div className="lg:col-span-1 animate-fade-in stagger-3">
-             <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-               <Briefcase className="h-5 w-5 text-blue-400" />
-               Detalles del Fondo <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full ml-2">Simulados</span>
-             </h2>
-             <Card className="bg-card border-border backdrop-blur-sm h-full">
-               <CardContent className="p-6 flex flex-col justify-between h-[calc(100%-24px)]">
-                 <div className="space-y-5">
-                   <div>
-                     <p className="text-sm text-muted-foreground font-medium mb-1">TER (Comisiones)</p>
-                     <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.expenseRatio}</p>
-                   </div>
-                   <div>
-                     <p className="text-sm text-muted-foreground font-medium mb-1">Activos Bajo Gestión (AUM)</p>
-                     <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.aum}</p>
-                   </div>
-                   <div>
-                     <p className="text-sm text-muted-foreground font-medium mb-1">Posiciones (Holdings)</p>
-                     <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.holdings}</p>
-                   </div>
-                   <div>
-                     <p className="text-sm text-muted-foreground font-medium mb-1">Div Yield</p>
-                     <p className="text-lg font-bold text-foreground font-tabular">{mockMarketData.divYield}</p>
-                   </div>
-                   <div>
-                     <p className="text-sm text-muted-foreground font-medium mb-1">NAV</p>
-                     <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(mockMarketData.nav, position.moneda)}</p>
-                   </div>
-                 </div>
-               </CardContent>
-             </Card>
+          {/* ═══════════ DATOS DEL MERCADO ═══════════ */}
+          <div className="lg:col-span-1 animate-fade-in stagger-3 space-y-8">
+            <div>
+               <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                 <Briefcase className="h-5 w-5 text-blue-400" />
+                 Datos del Mercado
+               </h2>
+               <MarketStats ticker={position.ticker} moneda={position.moneda} />
+            </div>
+            
+            <AssetAlerts 
+              ticker={position.ticker} 
+              moneda={position.moneda} 
+              onOpenAlertsModal={() => setAlertsOpen(true)} 
+            />
           </div>
 
           {/* ═══════════ APORTACIONES DCA ═══════════ */}
@@ -235,7 +177,18 @@ export function EtfDetailClient({ position, transactions }: EtfDetailClientProps
             </table>
           </div>
         </div>
+
+        {/* ═══════════ NOTICIAS RELEVANTES ═══════════ */}
+        <div className="mt-10 animate-fade-in stagger-5">
+          <AssetNews ticker={position.ticker} />
+        </div>
       </main>
+
+      <PriceAlerts 
+        open={alertsOpen} 
+        onOpenChange={setAlertsOpen} 
+        initialTicker={position.ticker} 
+      />
     </div>
   )
 }

@@ -19,6 +19,11 @@ import type { EnrichedPosition } from '@/lib/types'
 
 import dynamic from 'next/dynamic'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
+import { AssetAlerts } from "./detail/asset-alerts"
+import { AssetNews } from "./detail/asset-news"
+import { PriceAlerts } from "@/components/dashboard/price-alerts"
+import { InteractiveAssetChart } from "./detail/interactive-chart"
+import { MarketStats } from "./detail/market-stats"
 
 const AssetEvolutionChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetEvolutionChart), { ssr: false })
 const AssetCapitalDonut = dynamic(() => import('./detail/asset-charts').then(m => m.AssetCapitalDonut), { ssr: false })
@@ -45,8 +50,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
   const [monthlyContribution, setMonthlyContribution] = useState(300)
   const [years, setYears] = useState(15)
   const [expectedReturn, setExpectedReturn] = useState(8)
-
-
+  const [alertsOpen, setAlertsOpen] = useState(false)
   const {
     sparklineData,
     evolutionData,
@@ -81,6 +85,9 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
   }, [position.valor_actual, position.coste_total, monthlyContribution, years, expectedReturn])
 
   const finalData = simulationData[simulationData.length - 1]
+
+  const isPositive = (position.change_percent_24h || 0) >= 0
+  const colorHex = isPositive ? "#10b981" : "#f43f5e"
 
   return (
     <div className="min-h-screen bg-background selection:bg-purple-500/30">
@@ -241,6 +248,20 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
           </div>
         </div>
 
+        {/* ═══════════ GRÁFICO INTERACTIVO Y ESTADÍSTICAS ═══════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-1">
+          <div className="lg:col-span-2">
+             <InteractiveAssetChart ticker={position.ticker} moneda={position.moneda} colorHex={colorHex} />
+          </div>
+          <div className="lg:col-span-1">
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-400" />
+              Datos del Mercado
+            </h2>
+            <MarketStats ticker={position.ticker} moneda={position.moneda} />
+          </div>
+        </div>
+
         {/* ═══════════ PRECIO MEDIO vs PRECIO ACTUAL ═══════════ */}
         <Card className="bg-card border-border backdrop-blur-sm mb-10 animate-fade-in stagger-1">
           <CardContent className="pt-6">
@@ -283,7 +304,19 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         {/* ═══════════ APORTACIONES MENSUALES + OPERACIONES ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 animate-fade-in stagger-2">
           {/* Barras de aportaciones */}
-          <AssetContributionsChart monthlyContributionsData={monthlyContributionsData} />
+          <div className="lg:col-span-2">
+            <AssetContributionsChart monthlyContributionsData={monthlyContributionsData} />
+          </div>
+          <div className="lg:col-span-1">
+            <div className="mb-4 flex items-center gap-2 select-none pointer-events-none opacity-0">
+              <span className="text-xl font-bold text-transparent">Alertas</span>
+            </div>
+            <AssetAlerts 
+              ticker={position.ticker} 
+              moneda={position.moneda} 
+              onOpenAlertsModal={() => setAlertsOpen(true)} 
+            />
+          </div>
         </div>
 
         {/* ═══════════ SIMULADOR DE INTERÉS COMPUESTO ═══════════ */}
@@ -448,7 +481,17 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
           </div>
         </div>
 
+        {/* ═══════════ NOTICIAS RELEVANTES ═══════════ */}
+        <div className="mt-10 animate-fade-in stagger-5">
+          <AssetNews ticker={position.ticker} />
+        </div>
       </main>
+
+      <PriceAlerts 
+        open={alertsOpen} 
+        onOpenChange={setAlertsOpen} 
+        initialTicker={position.ticker} 
+      />
     </div>
   )
 }
