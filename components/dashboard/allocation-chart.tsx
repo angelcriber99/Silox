@@ -82,15 +82,18 @@ export function AllocationChart({ positions }: AllocationChartProps) {
   const hasData = chartData.data.length > 0
 
   return (
-    <div className="relative perspective-1000 h-full w-full">
+    <div className="relative w-full h-full min-h-[420px]" style={{ perspective: "1000px" }}>
       <motion.div
-        className="w-full h-full preserve-3d"
+        className="w-full h-full absolute inset-0"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* Front Face */}
-        <Card className="absolute inset-0 backface-hidden animate-fade-in stagger-2 bg-card border-border backdrop-blur-sm h-full flex flex-col pointer-events-auto overflow-hidden">
+        <Card 
+          className="absolute inset-0 bg-card border-border backdrop-blur-sm h-full flex flex-col pointer-events-auto overflow-hidden"
+          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+        >
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -222,39 +225,45 @@ export function AllocationChart({ positions }: AllocationChartProps) {
     </Card>
 
     {/* Back Face */}
-    <Card 
-      className="absolute inset-0 backface-hidden animate-fade-in stagger-2 bg-card border-border backdrop-blur-sm h-full flex flex-col pointer-events-auto overflow-hidden"
-      style={{ transform: "rotateY(180deg)" }}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            Resumen de Activos
-            <button onClick={() => setIsFlipped(false)} className="ml-2 p-1 hover:bg-muted rounded-full transition-colors" title="Volver a distribución">
-              <RefreshCw className="w-4 h-4 text-primary" />
-            </button>
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto pt-0">
-        <div className="space-y-4 pt-2">
-          {positions.map(p => (
-            <div key={p.activo_id} className="flex justify-between items-center border-b border-border/50 pb-2 last:border-0">
-              <div>
-                <p className="font-medium text-foreground">{p.ticker}</p>
-                <p className="text-xs text-muted-foreground">{p.nombre}</p>
+    {zenMode && (
+      <Card 
+        className="absolute inset-0 bg-card border-border backdrop-blur-sm h-full flex flex-col pointer-events-auto overflow-hidden"
+        style={{ 
+          backfaceVisibility: "hidden", 
+          WebkitBackfaceVisibility: "hidden",
+          transform: "rotateY(180deg)" 
+        }}
+      >
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              Resumen de Activos
+              <button onClick={() => setIsFlipped(false)} className="ml-2 p-1 hover:bg-muted rounded-full transition-colors" title="Volver a distribución">
+                <RefreshCw className="w-4 h-4 text-primary" />
+              </button>
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-y-auto pt-0">
+          <div className="space-y-4 pt-2">
+            {positions.map(p => (
+              <div key={p.activo_id} className="flex justify-between items-center border-b border-border/50 pb-2 last:border-0">
+                <div>
+                  <p className="font-medium text-foreground">{p.ticker}</p>
+                  <p className="text-xs text-muted-foreground">{p.nombre}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-foreground">{hideBalances ? "****" : formatCurrency(p.valor_actual || 0)}</p>
+                  <p className={`text-xs ${p.pnl && p.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {p.pnl && p.pnl > 0 ? "+" : ""}{formatCurrency(p.pnl || 0)}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-medium text-foreground">{hideBalances ? "****" : formatCurrency(p.valor_actual || 0)}</p>
-                <p className={`text-xs ${p.pnl && p.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  {p.pnl && p.pnl > 0 ? "+" : ""}{formatCurrency(p.pnl || 0)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )}
     </motion.div>
   </div>
   )

@@ -11,7 +11,8 @@ import {
   History,
   Activity,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Hexagon
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -39,7 +40,7 @@ export function ProSidebar() {
     <motion.aside 
       animate={{ width: sidebarCollapsed ? 80 : 256 }}
       transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-      className="border-r border-border/50 bg-card/30 backdrop-blur-xl flex flex-col h-screen sticky top-0 left-0 hidden md:flex relative z-40 overflow-hidden"
+      className="border-r border-border/50 bg-card/30 backdrop-blur-xl flex flex-col h-screen sticky top-0 left-0 hidden md:flex relative z-40"
     >
       <button 
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -48,10 +49,11 @@ export function ProSidebar() {
         {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
 
-      <div className="p-6 h-20 flex items-center">
-        <Link href="/" className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-          <div className="bg-primary/20 p-2 rounded-xl flex-shrink-0">
-            <LayoutDashboard className="h-6 w-6 text-primary" />
+      <div className="flex flex-col flex-1 w-full h-full overflow-hidden">
+        <div className="px-5 py-6 h-20 flex items-center">
+        <Link href="/" className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
+          <div className="bg-primary/20 rounded-xl flex-shrink-0 w-10 h-10 flex items-center justify-center">
+            <Hexagon className="h-6 w-6 text-primary" />
           </div>
           <AnimatePresence>
             {!sidebarCollapsed && (
@@ -77,9 +79,7 @@ export function ProSidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative ${
-                sidebarCollapsed ? "justify-center px-0" : ""
-              } ${
+              className={`flex items-center px-0 py-2 rounded-xl transition-all relative ${
                 isActive 
                   ? "text-primary font-medium" 
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -95,7 +95,9 @@ export function ProSidebar() {
                   transition={{ duration: 0.2 }}
                 />
               )}
-              <item.icon className="h-5 w-5 z-10 flex-shrink-0" />
+              <div className="w-[48px] flex-shrink-0 flex items-center justify-center py-1 relative z-10">
+                <item.icon className="h-5 w-5" />
+              </div>
               <AnimatePresence>
                 {!sidebarCollapsed && (
                   <motion.span 
@@ -117,12 +119,12 @@ export function ProSidebar() {
       <div className="p-4 border-t border-border/50">
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-3 py-3 w-full rounded-xl text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors ${
-            sidebarCollapsed ? "justify-center px-0" : "px-4"
-          }`}
+          className={`flex items-center px-0 py-2 w-full rounded-xl text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors`}
           title={sidebarCollapsed ? "Cerrar Sesión" : undefined}
         >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
+          <div className="w-[48px] flex-shrink-0 flex items-center justify-center py-1">
+            <LogOut className="h-5 w-5" />
+          </div>
           <AnimatePresence>
             {!sidebarCollapsed && (
               <motion.span 
@@ -137,6 +139,7 @@ export function ProSidebar() {
             )}
           </AnimatePresence>
         </button>
+      </div>
       </div>
     </motion.aside>
   )

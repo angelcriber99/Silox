@@ -9,6 +9,7 @@ import type { PortfolioTotals, EnrichedPosition } from '@/lib/types'
 import { useState, useMemo } from "react"
 import { PerformanceModal } from "./performance-modal"
 import Link from "next/link"
+import { AnimatedNumber } from "@/components/ui/animated-number"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -25,7 +26,7 @@ function SkeletonValue() {
 
 interface KPICardProps {
   label: string
-  value: string
+  value: React.ReactNode
   valueColor?: string
   subvalue?: React.ReactNode
   icon: React.ReactNode
@@ -143,13 +144,13 @@ export function PortfolioSummary({
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
             label="Valor del Portfolio"
-            value={hideBalances ? "****" : formatCurrency(totals.totalValue)}
+            value={<AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />}
             subvalue={hideBalances ? null : (
               <div className="flex flex-col gap-1">
                 <span>{totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes"}</span>
                 {liquidezAmount > 0 && (
                   <span className="text-emerald-400 font-medium flex items-center gap-1">
-                    <Wallet className="w-3 h-3" /> Liquidez: {formatCurrency(liquidezAmount)}
+                    <Wallet className="w-3 h-3" /> Liquidez: <AnimatedNumber value={liquidezAmount} format="currency" hide={hideBalances} />
                   </span>
                 )}
               </div>
@@ -171,8 +172,8 @@ export function PortfolioSummary({
         
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
-            label="Total Invertido"
-            value={hideBalances ? "****" : formatCurrency(totals.totalCost)}
+            label="Coste Total"
+            value={<AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />}
             subvalue={hideBalances ? null : (
               <span className="text-muted-foreground">
                 {totals.positionCount} posición(es)
@@ -187,12 +188,12 @@ export function PortfolioSummary({
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
             label="Beneficio / Pérdida"
-            value={hideBalances ? "****" : formatPnl(totals.totalPnl)}
+            value={<AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />}
             valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
             subvalue={hideBalances ? null : (
               <span className="text-muted-foreground flex items-center gap-1">
-                Hoy: <span className={totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                  {totals.totalPnl24h > 0 ? "+" : ""}{formatCurrency(totals.totalPnl24h)}
+                Hoy: <span className={`font-medium ${totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  <AnimatedNumber value={totals.totalPnl24h} format="pnl" hide={hideBalances} />
                 </span>
               </span>
             )}
@@ -220,12 +221,12 @@ export function PortfolioSummary({
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
             label="Rentabilidad"
-            value={hideBalances ? "****" : formatPercent(totals.totalPnlPercent)}
+            value={<AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />}
             valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
             subvalue={hideBalances ? null : (
               <span className="text-muted-foreground flex items-center gap-1">
                 Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                  {formatPercent(totals.totalPnlPercent24h)}
+                  <AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />
                 </span>
               </span>
             )}
@@ -257,8 +258,8 @@ export function PortfolioSummary({
                   Ganancia Total
                 </span>
                 <p className="text-sm font-bold text-foreground mb-1 truncate w-full px-2">{asset.ticker}</p>
-                <p className={`text-xl font-bold font-tabular ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  {asset.historicalPnl >= 0 ? "+" : ""}{formatCurrency(asset.historicalPnl)}
+                <p className={`text-base font-bold tracking-tight ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  <AnimatedNumber value={asset.historicalPnl} format="pnl" hide={hideBalances} />
                 </p>
               </CardContent>
             </Card>

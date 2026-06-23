@@ -84,7 +84,9 @@ export function PositionsTable({
   onAddTransaction,
   onEditAsset,
 }: PositionsTableProps) {
-  const { hideBalances } = usePreferences()
+  const { hideBalances, tableDensity, showPnlPercentOnly } = usePreferences()
+  
+  const cellPadding = tableDensity === "compact" ? "py-1.5" : "py-4"
   const [filter, setFilter] = useState("Todos")
   const [searchQuery, setSearchQuery] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("valor_actual")
@@ -246,8 +248,8 @@ export function PositionsTable({
                 <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Compra</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">P. Actual</TableHead>
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right whitespace-nowrap min-w-[120px]" />
-                <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />
-                <SortableHeader label="P&L %" sortKeyName="pnl_percent" className="text-right hidden sm:table-cell" />
+                {!showPnlPercentOnly && <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />}
+                <SortableHeader label="P&L %" sortKeyName="pnl_percent" className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}`} />
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
               </TableRow>
             </TableHeader>
@@ -297,7 +299,7 @@ export function PositionsTable({
                       key={p.activo_id}
                       className="border-border/30 hover:bg-muted/30 transition-colors duration-200 group"
                     >
-                      <TableCell className="font-medium text-foreground font-tabular">
+                      <TableCell className={`font-medium text-foreground font-tabular ${cellPadding}`}>
                         <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
                           <span>
                             {displaySymbol}
@@ -312,12 +314,12 @@ export function PositionsTable({
                           )}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-muted-foreground/80 text-sm max-w-[160px] truncate hidden md:table-cell">
+                      <TableCell className={`text-muted-foreground/80 text-sm max-w-[160px] truncate hidden md:table-cell ${cellPadding}`}>
                         <Link href={`/activo/${p.activo_id}`} className="hover:text-foreground/80 transition-colors">
                           {p.nombre || "—"}
                         </Link>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className={cellPadding}>
                         <Badge
                           variant="outline"
                           className={
@@ -328,15 +330,15 @@ export function PositionsTable({
                           {p.tipo}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-foreground/80">
+                      <TableCell className={`text-right font-tabular text-foreground/80 ${cellPadding}`}>
                         {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-muted-foreground/80 hidden lg:table-cell">
+                      <TableCell className={`text-right font-tabular text-muted-foreground/80 hidden lg:table-cell ${cellPadding}`}>
                         {p.precio_medio > 0
                           ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda))
                           : "—"}
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-foreground/80">
+                      <TableCell className={`text-right font-tabular text-foreground/80 ${cellPadding}`}>
                         {hideBalances ? "****" : (p.precio_actual_nativo !== null ? (
                           formatCurrency(p.precio_actual_nativo, p.original_currency || p.moneda)
                         ) : p.precio_actual !== null ? (
@@ -347,7 +349,7 @@ export function PositionsTable({
                           </span>
                         ))}
                       </TableCell>
-                      <TableCell className="text-right font-tabular text-foreground font-medium">
+                      <TableCell className={`text-right font-tabular text-foreground font-medium ${cellPadding}`}>
                         <div className="flex flex-col items-end gap-1">
                           <span>
                             {hideBalances ? "****" : (p.valor_actual !== null
@@ -361,13 +363,15 @@ export function PositionsTable({
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <PnlDisplay value={p.pnl} type="currency" />
-                      </TableCell>
-                      <TableCell className="text-right hidden sm:table-cell">
+                      {!showPnlPercentOnly && (
+                        <TableCell className={`text-right ${cellPadding}`}>
+                          <PnlDisplay value={p.pnl} type="currency" />
+                        </TableCell>
+                      )}
+                      <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"} ${cellPadding}`}>
                         <PnlDisplay value={p.pnl_percent} type="percent" />
                       </TableCell>
-                      <TableCell className="text-right min-w-[100px] w-[100px]">
+                      <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
                         <div className="flex items-center justify-end gap-1 pr-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <Button
                             variant="ghost"

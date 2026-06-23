@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ShieldCheck, Lock, CheckCircle2 } from "lucide-react"
 
 export function TwoFactorModal() {
-  const { twoFactor } = usePreferences()
+  const { twoFactor, setTwoFactor } = usePreferences()
   const [unlocked, setUnlocked] = useState(!twoFactor)
   const [code, setCode] = useState(["", "", "", "", "", ""])
   const [error, setError] = useState(false)
@@ -132,6 +132,13 @@ export function TwoFactorModal() {
               <Lock className="w-3 h-3" />
               <span>Conexión encriptada de extremo a extremo</span>
             </div>
+
+            <button 
+              onClick={() => setTwoFactor(false)}
+              className="text-[11px] text-muted-foreground/60 hover:text-foreground underline underline-offset-4 mt-2 relative z-10 transition-colors"
+            >
+              ¿Atrapado en la demo? Desactivar 2FA
+            </button>
           </motion.div>
         </motion.div>
       )}

@@ -202,18 +202,6 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium mb-3 block">Vista por defecto (Dashboard)</label>
-                  <div className="flex bg-muted/50 p-1 rounded-xl gap-1 max-w-md">
-                    <button onClick={() => setDefaultView('historical')} className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${defaultView === 'historical' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                      Histórico (Total)
-                    </button>
-                    <button onClick={() => setDefaultView('daily')} className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${defaultView === 'daily' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                      Diario (Hoy)
-                    </button>
-                  </div>
-                </div>
-
 
                 <div>
                   <label className="text-sm font-medium mb-3 block">Densidad de las Tablas</label>
