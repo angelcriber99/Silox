@@ -122,7 +122,7 @@ export function MobileDashboard({
   }
 
   const liquidezAmount = useMemo(() => {
-    return positions.find(p => p.tipo === "Liquidez")?.valor_actual || 0
+    return positions?.find(p => p.tipo === "Liquidez")?.valor_actual || 0
   }, [positions])
 
   return (
