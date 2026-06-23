@@ -8,7 +8,7 @@ import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { TrendingUp, TrendingDown } from "lucide-react"
 
 export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
-  const [sortBy, setSortBy] = useState<"percent" | "amount">("percent")
+  const [sortBy, setSortBy] = useState<"percent" | "amount">("amount")
 
   const validPositions = positions.filter(p => {
     if (sortBy === "percent") {

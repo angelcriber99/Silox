@@ -13,11 +13,8 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
 
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) {
-      if (currentTotalValue !== undefined) {
-        const todayStr = new Date().toISOString().split('T')[0]
-        return [{ date: todayStr, value: currentPnl24h || 0 }]
-      }
-      return []
+      const todayStr = new Date().toISOString().split('T')[0]
+      return [{ date: todayStr, value: currentPnl24h || 0 }]
     }
 
     const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -42,22 +39,20 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
       })
     }
 
-    if (currentTotalValue !== undefined) {
-      const todayStr = new Date().toISOString().split('T')[0]
-      const lastPoint = dataPoints[dataPoints.length - 1]
-      
-      if (lastPoint && lastPoint.date === todayStr) {
-        lastPoint.value = currentPnl24h !== undefined ? currentPnl24h : lastPoint.value
-      } else if (!lastPoint || lastPoint.date !== todayStr) {
-        dataPoints.push({
-          date: todayStr,
-          value: currentPnl24h || 0
-        })
-      }
+    const todayStr = new Date().toISOString().split('T')[0]
+    const lastPoint = dataPoints[dataPoints.length - 1]
+    
+    if (lastPoint && lastPoint.date === todayStr) {
+      lastPoint.value = currentPnl24h !== undefined ? currentPnl24h : lastPoint.value
+    } else if (currentPnl24h !== undefined) {
+      dataPoints.push({
+        date: todayStr,
+        value: currentPnl24h
+      })
     }
 
     return dataPoints
-  }, [snapshots, currentPnl24h, currentTotalValue])
+  }, [snapshots, currentPnl24h])
 
   if (isLoading) {
     return (
