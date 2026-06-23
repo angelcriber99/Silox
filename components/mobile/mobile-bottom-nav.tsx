@@ -21,7 +21,7 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
     { name: "Historial", href: "/movimientos", icon: History },
     { name: "Añadir", href: "#", icon: Plus, isFab: true },
     { name: "Declarar", href: "/declarar", icon: FileText },
-    { name: "Perfil", href: "/perfil", icon: Settings },
+    { name: "Ajustes", href: "/settings", icon: Settings },
   ]
 
   const handlePress = () => {
