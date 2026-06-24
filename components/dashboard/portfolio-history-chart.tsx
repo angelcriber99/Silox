@@ -51,13 +51,20 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
       
       if (lastPoint && lastPoint.date === todayStr) {
         lastPoint.value = currentTotalValue
-        lastPoint.pnl = currentPnl24h !== undefined ? currentPnl24h : lastPoint.pnl
+        const prevPoint = dataPoints.length > 1 ? dataPoints[dataPoints.length - 2] : null
+        const todayTotalPnl = (currentTotalValue !== undefined && snapshots.length > 0) ? (currentTotalValue - snapshots[snapshots.length-1].total_invested) : 0
+        const yesterdayTotalPnl = prevPoint ? prevPoint.totalPnl : 0
+        lastPoint.pnl = todayTotalPnl - yesterdayTotalPnl
+        lastPoint.totalPnl = todayTotalPnl
       } else if (!lastPoint || lastPoint.date !== todayStr) {
+        const todayTotalPnl = (currentTotalValue !== undefined && snapshots.length > 0) ? (currentTotalValue - snapshots[snapshots.length-1].total_invested) : 0
+        const yesterdayTotalPnl = lastPoint ? lastPoint.totalPnl : 0
+        
         dataPoints.push({
           date: todayStr,
           value: currentTotalValue,
-          pnl: currentPnl24h || 0,
-          totalPnl: (currentTotalValue !== undefined && snapshots.length > 0) ? (currentTotalValue - snapshots[snapshots.length-1].total_invested) : 0,
+          pnl: todayTotalPnl - yesterdayTotalPnl,
+          totalPnl: todayTotalPnl,
           isFirstDay: dataPoints.length === 0
         })
       }
