@@ -183,7 +183,7 @@ export function computePortfolioTotals(
     (sum, p) => sum + (p.valor_actual ?? 0),
     0
   )
-  const totalCost = withValues.reduce((sum, p) => sum + p.coste_total_eur, 0)
+  const totalCost = positions.reduce((sum, p) => sum + p.coste_total_eur, 0)
   const totalPnl = totalValue - totalCost
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
 

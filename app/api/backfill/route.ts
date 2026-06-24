@@ -98,10 +98,10 @@ export async function GET() {
             const costeTxUsd = (t.cantidad * t.precio_unitario) + t.comision
             current.coste_eur += costeTxUsd * txUsdToEurRate
           } else {
-            // Venta reduce el coste proporcionalmente
-            const ratio = t.cantidad / current.unidades
+            // Venta resta el valor total de la venta del coste (para mantener realized PNL)
+            const valorVentaUsd = (t.cantidad * t.precio_unitario) - (t.comision || 0)
             current.unidades -= t.cantidad
-            current.coste_eur -= current.coste_eur * ratio
+            current.coste_eur -= valorVentaUsd * txUsdToEurRate
           }
           positionsMap.set(key, current)
         }
@@ -119,9 +119,9 @@ export async function GET() {
 
       // Calcular valor de las posiciones ese día
       for (const [activo_id, pos] of positionsMap.entries()) {
-        if (pos.unidades <= 0) continue
-
         total_invested += pos.coste_eur
+
+        if (pos.unidades <= 0) continue
 
         const history = historicalData[pos.ticker] || []
         // Buscar el precio de cierre más cercano <= targetDate
