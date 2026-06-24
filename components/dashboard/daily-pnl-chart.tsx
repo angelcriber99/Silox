@@ -7,9 +7,11 @@ import { formatCurrency } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { Activity } from "lucide-react"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl24h?: number, currentTotalValue?: number }) {
   const { data: snapshots, isLoading } = useSnapshots()
+  const { hideBalances } = usePreferences()
 
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) {
@@ -99,7 +101,7 @@ export function DailyPnlChart({ currentPnl24h, currentTotalValue }: { currentPnl
               <p className="font-bold text-xs uppercase tracking-wider text-muted-foreground mt-1">Mercado Cerrado</p>
             ) : (
               <p className={`font-bold text-lg font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {isPositive ? '+' : ''}{formatCurrency(data.pnl)}
+                {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.pnl)}`}
               </p>
             )}
           </div>

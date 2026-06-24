@@ -11,6 +11,7 @@ import { ExportExcelButton } from "@/components/transactions/export-excel-button
 import { Input } from "@/components/ui/input"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import Link from "next/link"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 import {
   DropdownMenu,
@@ -23,6 +24,7 @@ export default function MovimientosPage() {
   const { data: transactions, isLoading } = useTransactions(1000)
   const deleteTransaction = useDeleteTransaction()
   const { positions } = usePortfolio()
+  const { hideBalances } = usePreferences()
 
   // State for modals
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -234,18 +236,18 @@ export default function MovimientosPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80">
-                          {formatUnits(tx.cantidad)}
+                          {hideBalances ? "****" : formatUnits(tx.cantidad)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80">
-                          {tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                          {hideBalances ? "****" : tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground/80">
-                          {tx.comision > 0 ? formatCurrency(tx.comision) : "0,00"}
+                          {hideBalances ? "****" : (tx.comision > 0 ? formatCurrency(tx.comision) : "0,00")}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-medium ${
                           isCompra ? "text-emerald-400" : "text-rose-400"
                         }`}>
-                          {isCompra ? "-" : "+"}{formatCurrency(total)}
+                          {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total)}`}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-center">
                           <DropdownMenu>
@@ -322,10 +324,10 @@ export default function MovimientosPage() {
                      <div className="flex items-center gap-2 flex-shrink-0">
                        <div className="flex flex-col items-end">
                           <span className={`text-[15px] font-bold font-tabular leading-tight ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
-                            {isCompra ? "-" : "+"}{formatCurrency(total)}
+                            {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total)}`}
                           </span>
                           <span className="text-xs font-medium text-muted-foreground/80 font-tabular mt-0.5">
-                            {formatUnits(tx.cantidad)} a {tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}€
+                            {hideBalances ? "****" : `${formatUnits(tx.cantidad)} a ${tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}€`}
                           </span>
                        </div>
                        

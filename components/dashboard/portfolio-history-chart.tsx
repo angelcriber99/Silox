@@ -7,9 +7,11 @@ import { formatCurrency } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { Activity } from "lucide-react"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { currentTotalValue?: number, currentPnl24h?: number }) {
   const { data: snapshots, isLoading } = useSnapshots()
+  const { hideBalances } = usePreferences()
 
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) {
@@ -113,7 +115,7 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
               Patrimonio Total
             </p>
             <p className="font-bold text-lg font-tabular text-foreground">
-              {formatCurrency(data.value)}
+              {hideBalances ? "****" : formatCurrency(data.value)}
             </p>
           </div>
           <div>
@@ -121,7 +123,7 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
               Beneficio Total (All-time)
             </p>
             <p className={`font-bold text-sm font-tabular ${data.totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {data.totalPnl >= 0 ? '+' : ''}{formatCurrency(data.totalPnl)}
+              {hideBalances ? "****" : `${data.totalPnl >= 0 ? '+' : ''}${formatCurrency(data.totalPnl)}`}
             </p>
           </div>
           <div className="mt-2">
@@ -134,7 +136,7 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
               <p className="font-bold text-xs uppercase tracking-wider text-muted-foreground mt-1">Mercado Cerrado</p>
             ) : (
               <p className={`font-bold text-sm font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {isPositive ? '+' : ''}{formatCurrency(data.pnl)}
+                {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.pnl)}`}
               </p>
             )}
           </div>

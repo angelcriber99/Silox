@@ -7,10 +7,12 @@ import type { EnrichedPosition } from '@/lib/types'
 import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
   const [sortBy, setSortBy] = useState<"percent" | "amount">("amount")
   const t = useTranslations('Dashboard')
+  const { hideBalances } = usePreferences()
 
   const validPositions = positions.filter(p => {
     if (sortBy === "percent") {
@@ -75,7 +77,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 {sortBy === "percent" ? (
                   <span className="text-emerald-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
                 ) : (
-                  <span className="text-emerald-400 font-tabular">{formatPnl(p.change_amount_24h!)}</span>
+                  <span className="text-emerald-400 font-tabular">{hideBalances ? "****" : formatPnl(p.change_amount_24h!)}</span>
                 )}
               </div>
             </div>
@@ -96,7 +98,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 {sortBy === "percent" ? (
                   <span className="text-rose-400 font-tabular">{formatPercent(p.change_percent_24h || 0)}</span>
                 ) : (
-                  <span className="text-rose-400 font-tabular">{formatPnl(p.change_amount_24h!)}</span>
+                  <span className="text-rose-400 font-tabular">{hideBalances ? "****" : formatPnl(p.change_amount_24h!)}</span>
                 )}
               </div>
             </div>
