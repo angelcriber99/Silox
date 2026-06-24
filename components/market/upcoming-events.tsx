@@ -140,7 +140,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Calendar className="h-4 w-4 text-amber-400" />
-          {t('upcoming_events')}
+          <span>{t('upcoming_events')}</span>
           {loading && events.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
         </CardTitle>
         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/80 hover:text-foreground/80" onClick={onAddEvent}>

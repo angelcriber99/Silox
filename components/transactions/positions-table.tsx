@@ -231,7 +231,7 @@ export function PositionsTable({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Layers className="h-4 w-4" />
-            {t('positions')}
+            <span>{t('positions')}</span>
           </CardTitle>
 
           {/* Filters & Search */}

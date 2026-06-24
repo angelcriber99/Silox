@@ -100,7 +100,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                {t('distribution')}
+                <span>{t('distribution')}</span>
                 <button
                   onClick={() => setZenMode(!zenMode)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors ml-1"
