@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { usePreferences } from "@/lib/stores/use-preferences"
+import { usePreferences, type Language } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
+import { useTranslations } from "next-intl"
+import { useRouter } from "next/navigation"
 import { 
   Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell, 
   Volume2, Shield, Download, CreditCard, Link as LinkIcon, 
@@ -19,12 +21,15 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('appearance')
   const { theme, setTheme } = useTheme()
+  const t = useTranslations('Settings')
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const { 
+    language, setLanguage,
     amoled, setAmoled,
     zenMode, setZenMode,
     soundEffects, setSoundEffects,
@@ -62,14 +67,22 @@ export default function SettingsPage() {
     toast.success(msg)
   }
 
+  const handleLanguageChange = (lang: Language) => {
+    setLanguage(lang)
+    document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000`
+    toast.success("Idioma actualizado / Language updated")
+    // Use window.location.reload() instead of router.refresh() to ensure the root layout locale updates instantly
+    window.location.reload()
+  }
+
   const tabs: { id: Tab, label: string, icon: any }[] = [
-    { id: 'appearance', label: 'Apariencia', icon: Palette },
-    { id: 'display', label: 'Visualización', icon: Eye },
-    { id: 'security', label: 'Seguridad', icon: Shield },
-    { id: 'notifications', label: 'Notificaciones', icon: Bell },
-    { id: 'data', label: 'Datos y Privacidad', icon: Download },
-    { id: 'integrations', label: 'Integraciones', icon: LinkIcon },
-    { id: 'subscription', label: 'Suscripción', icon: CreditCard },
+    { id: 'appearance', label: t('tab_appearance'), icon: Palette },
+    { id: 'display', label: t('tab_display'), icon: Eye },
+    { id: 'security', label: t('tab_security'), icon: Shield },
+    { id: 'notifications', label: t('tab_notifications'), icon: Bell },
+    { id: 'data', label: t('tab_data'), icon: Download },
+    { id: 'integrations', label: t('tab_integrations'), icon: LinkIcon },
+    { id: 'subscription', label: t('tab_subscription'), icon: CreditCard },
   ]
 
   return (
@@ -77,8 +90,8 @@ export default function SettingsPage() {
       {/* Settings Sidebar */}
       <aside className="w-full md:w-64 shrink-0 flex flex-col">
         <div className="mb-4 md:mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-1 md:mb-2">Ajustes</h1>
-          <p className="text-sm text-muted-foreground">Gestiona tu experiencia profesional</p>
+          <h1 className="text-3xl font-bold tracking-tight mb-1 md:mb-2">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         
         <nav className="flex md:flex-col gap-2 overflow-x-auto pb-4 md:pb-0 hide-scrollbar snap-x w-full">
@@ -107,7 +120,7 @@ export default function SettingsPage() {
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-rose-500 hover:bg-rose-500/10 transition-all font-medium"
           >
             <Shield className="w-4 h-4" />
-            Cerrar Sesión
+            {t('logout')}
           </button>
         </div>
       </aside>
@@ -127,21 +140,36 @@ export default function SettingsPage() {
             {activeTab === 'appearance' && (
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold mb-1">Apariencia</h2>
+                  <h2 className="text-xl font-semibold mb-1">{t('title')}</h2>
                   <p className="text-sm text-muted-foreground mb-6">Personaliza los colores y el tema de la aplicación.</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-3 block">Tema Principal</label>
+                  <label className="text-sm font-medium mb-3 block">{t('language')}</label>
+                  <div className="flex flex-wrap bg-muted/50 p-1 rounded-xl gap-1 max-w-md">
+                    {(['es', 'en', 'fr', 'de'] as Language[]).map(lang => (
+                      <button 
+                        key={lang}
+                        onClick={() => handleLanguageChange(lang)} 
+                        className={`flex-1 py-2.5 px-3 text-sm font-medium rounded-lg transition-all ${language === lang ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                      >
+                        {t(`language_${lang}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-3 block">{t('theme_title')}</label>
                   <div className="flex bg-muted/50 p-1 rounded-xl gap-1 max-w-md" suppressHydrationWarning>
                     <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                      <Sun className="w-4 h-4" /> Claro
+                      <Sun className="w-4 h-4" /> {t('theme_light')}
                     </button>
                     <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                      <Moon className="w-4 h-4" /> Oscuro
+                      <Moon className="w-4 h-4" /> {t('theme_dark')}
                     </button>
                     <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${theme === 'system' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                      <Monitor className="w-4 h-4" /> Sistema
+                      <Monitor className="w-4 h-4" /> {t('theme_system')}
                     </button>
                   </div>
                 </div>
@@ -149,8 +177,8 @@ export default function SettingsPage() {
                 {theme === 'dark' && (
                   <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
                     <div>
-                      <h3 className="text-sm font-medium flex items-center gap-2">Modo AMOLED <Zap className="w-3 h-3 text-yellow-400" /></h3>
-                      <p className="text-xs text-muted-foreground mt-1">Negros puros para ahorrar batería en pantallas OLED y un look más premium.</p>
+                      <h3 className="text-sm font-medium flex items-center gap-2">{t('amoled_title')} <Zap className="w-3 h-3 text-yellow-400" /></h3>
+                      <p className="text-xs text-muted-foreground mt-1">{t('amoled_desc')}</p>
                     </div>
                     <button onClick={() => setAmoled(!amoled)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${amoled ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${amoled ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -159,7 +187,7 @@ export default function SettingsPage() {
                 )}
                 
                 <div>
-                  <label className="text-sm font-medium mb-3 block">Color de Acento</label>
+                  <label className="text-sm font-medium mb-3 block">{t('accent_title')}</label>
                   <div className="flex gap-4">
                     {(['blue', 'emerald', 'violet', 'rose', 'amber'] as const).map((color) => (
                       <button
@@ -185,16 +213,16 @@ export default function SettingsPage() {
             {activeTab === 'display' && (
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold mb-1">Visualización</h2>
-                  <p className="text-sm text-muted-foreground mb-6">Controla cómo se muestra la información en tu dashboard.</p>
+                  <h2 className="text-xl font-semibold mb-1">{t('tab_display')}</h2>
+                  <p className="text-sm text-muted-foreground mb-6"></p>
                 </div>
 
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
                   <div>
                     <h3 className="text-sm font-medium flex items-center gap-2">
-                      Modo Privacidad {hideBalances ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                      {t('privacy_title')} {hideBalances ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1">Oculta todos los importes monetarios. Ideal para enseñar la app en público.</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('privacy_desc')}</p>
                   </div>
                   <button onClick={() => setHideBalances(!hideBalances)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hideBalances ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hideBalances ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -206,9 +234,9 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50">
                   <div>
                     <h3 className="text-sm font-medium flex items-center gap-2">
-                      Efectos de Sonido <Volume2 className="w-4 h-4 text-muted-foreground" />
+                      {t('sound_title')} <Volume2 className="w-4 h-4 text-muted-foreground" />
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1">Reproducir sonidos sutiles al realizar transacciones o navegar.</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('sound_desc')}</p>
                   </div>
                   <button onClick={() => setSoundEffects(!soundEffects)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${soundEffects ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${soundEffects ? 'translate-x-6' : 'translate-x-1'}`} />

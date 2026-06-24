@@ -2,8 +2,10 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type AccentColor = 'blue' | 'emerald' | 'violet' | 'rose' | 'amber'
+export type Language = 'es' | 'en' | 'fr' | 'de'
 
 interface PreferencesState {
+  language: Language
   hideBalances: boolean
   compactView: boolean
   accentColor: AccentColor
@@ -17,6 +19,7 @@ interface PreferencesState {
   twoFactor: boolean
   tableDensity: 'compact' | 'relaxed'
   showPnlPercentOnly: boolean
+  setLanguage: (lang: Language) => void
   setHideBalances: (val: boolean) => void
   setCompactView: (val: boolean) => void
   setAccentColor: (color: AccentColor) => void
@@ -35,6 +38,7 @@ interface PreferencesState {
 export const usePreferences = create<PreferencesState>()(
   persist(
     (set) => ({
+      language: 'es',
       hideBalances: false,
       compactView: false,
       accentColor: 'blue',
@@ -48,6 +52,7 @@ export const usePreferences = create<PreferencesState>()(
       twoFactor: false,
       tableDensity: 'compact',
       showPnlPercentOnly: false,
+      setLanguage: (lang) => set({ language: lang }),
       setHideBalances: (val) => set({ hideBalances: val }),
       setCompactView: (val) => set({ compactView: val }),
       setAccentColor: (color) => set({ accentColor: color }),

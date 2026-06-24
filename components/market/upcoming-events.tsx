@@ -6,6 +6,7 @@ import { Calendar, Plus, CalendarDays, DollarSign, Wallet, Loader2 } from "lucid
 import { Button } from "@/components/ui/button"
 import type { EnrichedPosition, EventoRecurrente } from '@/lib/types'
 import { fetchEventosRecurrentes } from '@/lib/api/market'
+import { useTranslations } from 'next-intl'
 
 interface UpcomingEventsProps {
   positions: EnrichedPosition[]
@@ -26,6 +27,7 @@ interface UnifiedEvent {
 export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingEventsProps) {
   const [events, setEvents] = useState<UnifiedEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const t = useTranslations('Dashboard')
 
   useEffect(() => {
     let mounted = true
@@ -138,7 +140,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Calendar className="h-4 w-4 text-amber-400" />
-          Próximos Eventos
+          {t('upcoming_events')}
           {loading && events.length > 0 && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
         </CardTitle>
         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/80 hover:text-foreground/80" onClick={onAddEvent}>
@@ -162,8 +164,8 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         ) : events.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
             <CalendarDays className="h-8 w-8 text-zinc-700 mb-2" />
-            <p className="text-xs text-muted-foreground/80 font-medium">No hay eventos próximos</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1 max-w-[200px]">Añade eventos manuales o compra acciones con dividendos</p>
+            <p className="text-xs text-muted-foreground/80 font-medium">{t('no_upcoming_events')}</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 max-w-[200px]">{t('add_manual_events')}</p>
           </div>
         ) : (
           <div className="max-h-[140px] overflow-y-auto pr-1 space-y-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700">

@@ -10,6 +10,7 @@ import { useState, useMemo } from "react"
 import { PerformanceModal } from "./performance-modal"
 import Link from "next/link"
 import { AnimatedNumber } from "@/components/ui/animated-number"
+import { useTranslations } from "next-intl"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -94,6 +95,7 @@ export function PortfolioSummary({
   const { hideBalances, zenMode, setZenMode } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const isPositive = totals.totalPnl >= 0
+  const t = useTranslations('Dashboard')
 
   const historicalAssets = useMemo(() => {
     if (!positions.length) return []
@@ -143,11 +145,11 @@ export function PortfolioSummary({
       <div className="flex overflow-x-auto gap-4 pb-4 snap-x [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
-            label="Valor del Portfolio"
+            label={t('portfolio_value')}
             value={<AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />}
             subvalue={hideBalances ? null : (
               <div className="flex flex-col gap-1">
-                <span>{totals.hasAllPrices ? "Precios sincronizados" : "Precios pendientes"}</span>
+                <span>{totals.hasAllPrices ? t('prices_synced') : t('prices_pending')}</span>
                 {liquidezAmount > 0 && (
                   <span className="text-zinc-400 font-medium flex items-center gap-1">
                     <Wallet className="w-3 h-3" /> Liquidez: <AnimatedNumber value={liquidezAmount} format="currency" hide={hideBalances} />
@@ -163,11 +165,11 @@ export function PortfolioSummary({
         
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
-            label="Coste Total"
+            label={t('total_cost')}
             value={<AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />}
             subvalue={hideBalances ? null : (
               <span className="text-muted-foreground">
-                {totals.positionCount} posición(es)
+                {totals.positionCount} {t('positions_count')}
               </span>
             )}
             icon={<Briefcase className="w-5 h-5 text-muted-foreground/50" />}
@@ -178,12 +180,12 @@ export function PortfolioSummary({
         
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
-            label="Beneficio / Pérdida"
+            label={t('pnl')}
             value={<AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />}
             valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
             subvalue={hideBalances ? null : (
               <span className="text-muted-foreground flex items-center gap-1">
-                Hoy: <span className={`font-medium ${totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {t('today')}: <span className={`font-medium ${totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   <AnimatedNumber value={totals.totalPnl24h} format="pnl" hide={hideBalances} />
                 </span>
               </span>
@@ -201,7 +203,7 @@ export function PortfolioSummary({
                 className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-lg py-2 px-3 flex items-center justify-center gap-2 font-semibold transition-colors text-xs"
               >
                 <BarChart2 className="w-4 h-4" />
-                Ver Rendimiento Diario
+                {t('daily_performance')}
               </button>
             }
             loading={loading}
@@ -211,12 +213,12 @@ export function PortfolioSummary({
         
         <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
           <KPICard
-            label="Rentabilidad"
+            label={t('profitability')}
             value={<AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />}
             valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
             subvalue={hideBalances ? null : (
               <span className="text-muted-foreground flex items-center gap-1">
-                Hoy: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                {t('today')}: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
                   <AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />
                 </span>
               </span>
@@ -246,7 +248,7 @@ export function PortfolioSummary({
             <Card className="bg-card/40 border-border/50 hover:bg-muted/80 hover:border-border transition-all h-full flex flex-col justify-center backdrop-blur-sm cursor-pointer active:scale-95">
               <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                  Ganancia Total
+                  {t('total_gain')}
                 </span>
                 <p className="text-sm font-bold text-foreground mb-1 truncate w-full px-2">{asset.ticker}</p>
                 <p className={`text-base font-bold tracking-tight ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>

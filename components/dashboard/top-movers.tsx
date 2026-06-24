@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { TrendingUp, TrendingDown } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
   const [sortBy, setSortBy] = useState<"percent" | "amount">("amount")
+  const t = useTranslations('Dashboard')
 
   const validPositions = positions.filter(p => {
     if (sortBy === "percent") {
@@ -41,7 +43,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
   return (
     <Card className="bg-card border-border">
       <CardHeader className="p-4 pb-2 border-b border-border/50 flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-sm font-medium text-muted-foreground">🔥 Top Movimientos (24h)</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{t('top_movers')}</CardTitle>
         <div className="flex bg-muted/50 rounded-md p-0.5">
           <button 
             onClick={() => setSortBy("percent")}
@@ -62,7 +64,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
         <div className="space-y-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
             <TrendingUp className="w-3.5 h-3.5" />
-            Ganadoras
+            {t('winners')}
           </div>
           {best.length > 0 ? best.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm gap-2">
@@ -77,13 +79,13 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 )}
               </div>
             </div>
-          )) : <span className="text-xs text-muted-foreground/60">Todo en rojo hoy 📉</span>}
+          )) : <span className="text-xs text-muted-foreground/60">{t('all_red')}</span>}
         </div>
         {/* Worst */}
         <div className="space-y-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-400 uppercase tracking-wider mb-2">
             <TrendingDown className="w-3.5 h-3.5" />
-            Perdedoras
+            {t('losers')}
           </div>
           {worst.length > 0 ? worst.map(p => (
             <div key={p.ticker} className="flex justify-between items-center text-sm gap-2">
@@ -98,7 +100,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 )}
               </div>
             </div>
-          )) : <span className="text-xs text-muted-foreground/60">¡Todo en verde! 🚀</span>}
+          )) : <span className="text-xs text-muted-foreground/60">{t('all_green')}</span>}
         </div>
       </CardContent>
     </Card>

@@ -5,6 +5,8 @@ import { PreferencesProvider } from "@/components/providers/preferences-provider
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import "./globals.css";
 
 const inter = Inter({
@@ -43,14 +45,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="es"
+      lang={locale}
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
@@ -61,11 +66,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider>
-            <PreferencesProvider>
-              {children}
-            </PreferencesProvider>
-          </QueryProvider>
+          <NextIntlClientProvider messages={messages}>
+            <QueryProvider>
+              <PreferencesProvider>
+                {children}
+              </PreferencesProvider>
+            </QueryProvider>
+          </NextIntlClientProvider>
           <Toaster
             theme="dark"
             position="bottom-right"

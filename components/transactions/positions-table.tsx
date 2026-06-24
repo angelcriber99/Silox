@@ -23,6 +23,7 @@ import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useAlerts } from "@/lib/hooks/use-alerts"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 interface PositionsTableProps {
   positions: EnrichedPosition[]
@@ -155,9 +156,10 @@ export function PositionsTable({
   onEditAsset,
 }: PositionsTableProps) {
   const { hideBalances, tableDensity, showPnlPercentOnly } = usePreferences()
+  const t = useTranslations('Dashboard')
   
   const cellPadding = tableDensity === "compact" ? "py-1.5" : "py-4"
-  const [filter, setFilter] = useState("Todos")
+  const [filter, setFilter] = useState(t('filter_all'))
   const [searchQuery, setSearchQuery] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("valor_actual")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
@@ -187,7 +189,7 @@ export function PositionsTable({
         (p.isin && p.isin.toLowerCase().includes(lowerQuery))
       )
     }
-    if (filter !== "Todos") {
+    if (filter !== t('filter_all')) {
       list = list.filter((p) => p.tipo === filter)
     }
     return list.slice().sort((a, b) => {
@@ -229,7 +231,7 @@ export function PositionsTable({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Layers className="h-4 w-4" />
-            Posiciones
+            {t('positions')}
           </CardTitle>
 
           {/* Filters & Search */}
@@ -238,7 +240,7 @@ export function PositionsTable({
             <div className="relative">
               <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground/80" />
               <Input
-                placeholder="Buscar activo..."
+                placeholder={t('search_asset')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 text-xs bg-background border-border w-full sm:w-[160px] lg:w-[200px] text-foreground focus-visible:ring-primary/30"
@@ -248,12 +250,13 @@ export function PositionsTable({
             {/* Filter tabs */}
             <div className="flex gap-1 flex-wrap">
               {FILTER_OPTIONS.map((opt) => {
+                const optText = opt === "Todos" ? t('filter_all') : opt;
                 const disabled =
                   opt !== "Todos" && !typesWithData.has(opt)
                 return (
                   <button
                     key={opt}
-                    onClick={() => !disabled && setFilter(opt)}
+                    onClick={() => !disabled && setFilter(optText)}
                     disabled={disabled}
                     className={`px-3 py-1 text-xs rounded-lg font-medium transition-all duration-200 ${
                       filter === opt
@@ -263,7 +266,7 @@ export function PositionsTable({
                           : "text-muted-foreground/80 hover:text-foreground/80 hover:bg-muted"
                     }`}
                   >
-                    {opt}
+                    {optText}
                   </button>
                 )
               })}
@@ -288,7 +291,7 @@ export function PositionsTable({
                 className="bg-transparent border-border text-muted-foreground hover:text-foreground transition-colors duration-200"
               >
                 <Bell className="h-4 w-4 mr-2" />
-                Alertas
+                {t('alerts')}
               </Button>
               {hasTriggeredAlerts && (
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 border-2 border-background animate-pulse" />
@@ -300,7 +303,7 @@ export function PositionsTable({
               className="bg-blue-600 hover:bg-blue-500 text-white transition-colors duration-200"
             >
               <Plus className="mr-2 h-3.5 w-3.5" />
-              Añadir Activo
+              {t('add_asset')}
             </Button>
           </div>
         </div>
@@ -311,14 +314,14 @@ export function PositionsTable({
           <Table className="w-full">
             <TableHeader className="bg-muted/40">
               <TableRow className="border-border/50 hover:bg-transparent">
-                <SortableHeader label="Símbolo" sortKeyName="ticker" />
-                <TableHead className="text-muted-foreground/80 hidden md:table-cell">Nombre</TableHead>
-                <SortableHeader label="Tipo" sortKeyName="tipo" />
-                <SortableHeader label="Unidades" sortKeyName="unidades" className="text-right" />
-                <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Compra</TableHead>
-                <TableHead className="text-muted-foreground/80 text-right">P. Actual</TableHead>
-                <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right whitespace-nowrap min-w-[120px]" />
-                <SortableHeader label="Hoy" sortKeyName="change_percent_24h" className="text-right hidden sm:table-cell" />
+                <SortableHeader label={t('symbol')} sortKeyName="ticker" />
+                <TableHead className="text-muted-foreground/80 hidden md:table-cell">{t('name')}</TableHead>
+                <SortableHeader label={t('dist_type')} sortKeyName="tipo" />
+                <SortableHeader label={t('units')} sortKeyName="unidades" className="text-right" />
+                <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">{t('purchase_price')}</TableHead>
+                <TableHead className="text-muted-foreground/80 text-right">{t('current_price')}</TableHead>
+                <SortableHeader label={t('value')} sortKeyName="valor_actual" className="text-right whitespace-nowrap min-w-[120px]" />
+                <SortableHeader label={t('today')} sortKeyName="change_percent_24h" className="text-right hidden sm:table-cell" />
                 {!showPnlPercentOnly && <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />}
                 <SortableHeader label="P&L %" sortKeyName="pnl_percent" className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}`} />
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
@@ -342,13 +345,13 @@ export function PositionsTable({
                       <div>
                         <p className="font-medium text-muted-foreground/80">
                           {searchQuery.trim() !== ""
-                            ? `No hay resultados para "${searchQuery}"`
-                            : filter !== "Todos"
-                              ? `Sin posiciones de tipo "${filter}"`
-                              : "Tu cartera está vacía"}
+                            ? `${t('no_results')} "${searchQuery}"`
+                            : filter !== t('filter_all')
+                              ? `${t('no_results')} "${filter}"`
+                              : t('empty_portfolio')}
                         </p>
                         <p className="text-xs text-muted-foreground/60 mt-1">
-                          Añade un activo y registra tu primera operación
+                          {t('add_first_asset')}
                         </p>
                       </div>
                     </div>

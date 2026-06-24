@@ -18,17 +18,19 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
+import { useTranslations } from "next-intl"
+
 const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Movimientos", href: "/movimientos", icon: History },
-  { name: "Historial", href: "/historial", icon: TrendingUp },
-  { name: "Ajustes", href: "/settings", icon: Settings },
+  { key: "dashboard", href: "/", icon: LayoutDashboard },
+  { key: "portfolio", href: "/movimientos", icon: History },
+  { key: "settings", href: "/settings", icon: Settings },
 ]
 
 export function ProSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { sidebarCollapsed, setSidebarCollapsed, zenMode } = usePreferences()
+  const t = useTranslations('Navigation')
 
   if (zenMode) return null
 
@@ -76,17 +78,18 @@ export function ProSidebar() {
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto hide-scrollbar">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+          const name = t(item.key)
           
           return (
             <Link
-              key={item.name}
+              key={item.key}
               href={item.href}
               className={`flex items-center px-0 py-2 rounded-xl transition-all relative ${
                 isActive 
                   ? "text-primary font-medium" 
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
-              title={sidebarCollapsed ? item.name : undefined}
+              title={sidebarCollapsed ? name : undefined}
             >
               {isActive && (
                 <motion.div 
@@ -109,7 +112,7 @@ export function ProSidebar() {
                     transition={{ duration: 0.2 }}
                     className="z-10 whitespace-nowrap"
                   >
-                    {item.name}
+                    {name}
                   </motion.span>
                 )}
               </AnimatePresence>

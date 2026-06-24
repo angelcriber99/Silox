@@ -9,6 +9,7 @@ import { computePortfolioTotals } from "@/lib/api/assets"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { motion } from "framer-motion"
 import { RefreshCw, Eye, EyeOff } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -43,6 +44,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
   const [isFlipped, setIsFlipped] = useState(false)
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
+  const t = useTranslations('Dashboard')
 
   const chartData = useMemo(() => {
     const groups = new Map<string, { value: number; pnl24h: number; valorAyer: number }>()
@@ -98,7 +100,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                Distribución
+                {t('distribution')}
                 <button
                   onClick={() => setZenMode(!zenMode)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors ml-1"
@@ -121,7 +123,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                   : "text-muted-foreground/80 hover:text-foreground/80"
               }`}
             >
-              Tipo
+              {t('dist_type')}
             </button>
             <button
               onClick={() => setGroupBy("estrategia")}
@@ -131,7 +133,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                   : "text-muted-foreground/80 hover:text-foreground/80"
               }`}
             >
-              Estrategia
+              {t('dist_strategy')}
             </button>
           </div>
         </div>
