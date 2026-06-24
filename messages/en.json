@@ -67,6 +67,11 @@
     "value": "Value",
     "no_results": "No results",
     "empty_portfolio": "Your portfolio is empty",
-    "add_first_asset": "Add an asset and record your first transaction"
+    "add_first_asset": "Add an asset and record your first transaction",
+    "type_etf": "ETF",
+    "type_index_fund": "Index Fund",
+    "type_money_market": "Money Market",
+    "type_stock": "Stock",
+    "type_crypto": "Crypto"
   }
 }

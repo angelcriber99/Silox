@@ -67,6 +67,11 @@
     "value": "Valeur",
     "no_results": "Aucun résultat",
     "empty_portfolio": "Votre portefeuille est vide",
-    "add_first_asset": "Ajoutez un actif et enregistrez votre première transaction"
+    "add_first_asset": "Ajoutez un actif et enregistrez votre première transaction",
+    "type_etf": "ETF",
+    "type_index_fund": "Fonds Indiciel",
+    "type_money_market": "Fonds Monétaire",
+    "type_stock": "Action",
+    "type_crypto": "Crypto"
   }
 }

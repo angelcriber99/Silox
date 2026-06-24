@@ -67,6 +67,11 @@
     "value": "Wert",
     "no_results": "Keine Ergebnisse",
     "empty_portfolio": "Ihr Portfolio ist leer",
-    "add_first_asset": "Fügen Sie ein Asset hinzu und erfassen Sie Ihre erste Transaktion"
+    "add_first_asset": "Fügen Sie ein Asset hinzu und erfassen Sie Ihre erste Transaktion",
+    "type_etf": "ETF",
+    "type_index_fund": "Indexfonds",
+    "type_money_market": "Geldmarktfonds",
+    "type_stock": "Aktie",
+    "type_crypto": "Krypto"
   }
 }

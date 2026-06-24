@@ -67,6 +67,11 @@
     "value": "Valor",
     "no_results": "No hay resultados",
     "empty_portfolio": "Tu cartera está vacía",
-    "add_first_asset": "Añade un activo y registra tu primera operación"
+    "add_first_asset": "Añade un activo y registra tu primera operación",
+    "type_etf": "ETF",
+    "type_index_fund": "Fondo Indexado",
+    "type_money_market": "Fondo Monetario",
+    "type_stock": "Acción",
+    "type_crypto": "Crypto"
   }
 }

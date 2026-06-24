@@ -33,6 +33,7 @@ type GroupBy = "tipo" | "estrategia"
 
 interface ChartDatum {
   name: string
+  originalName: string
   value: number
   color: string
   percent: number
@@ -45,6 +46,17 @@ export function AllocationChart({ positions }: AllocationChartProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const t = useTranslations('Dashboard')
+
+  const translateType = (type: string) => {
+    const map: Record<string, string> = {
+      "ETF": "type_etf",
+      "Fondo Indexado": "type_index_fund",
+      "Fondo Monetario": "type_money_market",
+      "Acción": "type_stock",
+      "Crypto": "type_crypto",
+    }
+    return map[type] ? t(map[type]) : type
+  }
 
   const chartData = useMemo(() => {
     const groups = new Map<string, { value: number; pnl24h: number; valorAyer: number }>()
@@ -71,7 +83,8 @@ export function AllocationChart({ positions }: AllocationChartProps) {
     const total = Array.from(groups.values()).reduce((a, b) => a + b.value, 0)
     const data: ChartDatum[] = Array.from(groups.entries())
       .map(([name, groupData]) => ({
-        name,
+        name: groupBy === "tipo" ? translateType(name) : name,
+        originalName: name,
         value: groupData.value,
         color: colors[name] ?? "#71717a",
         percent: total > 0 ? (groupData.value / total) * 100 : 0,
@@ -80,7 +93,7 @@ export function AllocationChart({ positions }: AllocationChartProps) {
       .sort((a, b) => b.value - a.value)
 
     return { data, total }
-  }, [positions, groupBy])
+  }, [positions, groupBy, t])
 
   const hasData = chartData.data.length > 0
 

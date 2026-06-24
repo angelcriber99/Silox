@@ -49,6 +49,17 @@ const FILTER_OPTIONS = [
   "Crypto",
 ] as const
 
+const translateType = (type: string, t: any) => {
+  const map: Record<string, string> = {
+    "ETF": "type_etf",
+    "Fondo Indexado": "type_index_fund",
+    "Fondo Monetario": "type_money_market",
+    "Acción": "type_stock",
+    "Crypto": "type_crypto",
+  }
+  return map[type] ? t(map[type]) : type
+}
+
 type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent" | "change_percent_24h"
 type SortDir = "asc" | "desc"
 
@@ -250,7 +261,7 @@ export function PositionsTable({
             {/* Filter tabs */}
             <div className="flex gap-1 flex-wrap">
               {FILTER_OPTIONS.map((opt) => {
-                const optText = opt === "Todos" ? t('filter_all') : opt;
+                const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
                 const disabled =
                   opt !== "Todos" && !typesWithData.has(opt)
                 return (
@@ -401,7 +412,7 @@ export function PositionsTable({
                             "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
                           }
                         >
-                          {p.tipo}
+                          {translateType(p.tipo, t)}
                         </Badge>
                       </TableCell>
                       <TableCell className={`text-right font-tabular text-foreground/80 ${cellPadding}`}>
@@ -536,7 +547,7 @@ export function PositionsTable({
                           TIPO_BADGE_STYLES[p.tipo] ?? "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
                         }`}
                       >
-                        {p.tipo}
+                        {translateType(p.tipo, t)}
                       </Badge>
                    </div>
 
