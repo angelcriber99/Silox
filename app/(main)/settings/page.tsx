@@ -364,6 +364,28 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
+                <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-4">
+                  <div className="flex gap-4 items-start">
+                    <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg mt-1"><Server className="w-5 h-5" /></div>
+                    <div>
+                      <h3 className="text-sm font-medium text-amber-500">Recalcular Historial (Sincronización)</h3>
+                      <p className="text-xs text-muted-foreground mt-1 mb-4">Si ves picos extraños en tu gráfica de rendimiento por haber introducido operaciones con fechas pasadas, usa esto para recalcular toda la historia usando tus transacciones reales.</p>
+                      <Button onClick={async () => {
+                        toast.loading("Recalculando historial...");
+                        try {
+                          await fetch('/api/backfill');
+                          toast.dismiss();
+                          toast.success("Historial sincronizado correctamente.");
+                          setTimeout(() => window.location.reload(), 1500);
+                        } catch (e) {
+                          toast.dismiss();
+                          toast.error("Error al sincronizar historial.");
+                        }
+                      }} variant="outline" className="text-xs border-amber-500/20 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400">Sincronizar Historial</Button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 space-y-4">
                   <div className="flex gap-4 items-start">
                     <div className="p-2 bg-rose-500/10 text-rose-500 rounded-lg mt-1"><Lock className="w-5 h-5" /></div>

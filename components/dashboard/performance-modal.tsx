@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DailyPnlChart } from "./daily-pnl-chart"
+import { PortfolioHistoryChart } from "./portfolio-history-chart"
 import { DrawdownChart } from "./drawdown-chart"
 import { TrendingDown, BarChart2 } from "lucide-react"
 
@@ -28,7 +29,18 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
         </DialogHeader>
 
         <div className="mt-4">
-          <DailyPnlChart currentPnl24h={currentPnl24h} currentTotalValue={currentTotalValue} />
+          <Tabs defaultValue="patrimonio" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="patrimonio">Evolución del Patrimonio</TabsTrigger>
+              <TabsTrigger value="pnl">PnL Diario</TabsTrigger>
+            </TabsList>
+            <TabsContent value="patrimonio" className="mt-4">
+              <PortfolioHistoryChart currentTotalValue={currentTotalValue} />
+            </TabsContent>
+            <TabsContent value="pnl" className="mt-4">
+              <DailyPnlChart currentPnl24h={currentPnl24h} currentTotalValue={currentTotalValue} />
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>
