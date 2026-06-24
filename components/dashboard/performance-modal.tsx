@@ -35,7 +35,7 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
               <TabsTrigger value="pnl">PnL Diario</TabsTrigger>
             </TabsList>
             <TabsContent value="patrimonio" className="mt-4">
-              <PortfolioHistoryChart currentTotalValue={currentTotalValue} />
+              <PortfolioHistoryChart currentTotalValue={currentTotalValue} currentPnl24h={currentPnl24h} />
             </TabsContent>
             <TabsContent value="pnl" className="mt-4">
               <DailyPnlChart currentPnl24h={currentPnl24h} currentTotalValue={currentTotalValue} />

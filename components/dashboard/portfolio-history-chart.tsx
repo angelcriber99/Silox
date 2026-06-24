@@ -8,23 +8,40 @@ import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { Activity } from "lucide-react"
 
-export function PortfolioHistoryChart({ currentTotalValue }: { currentTotalValue?: number }) {
+export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { currentTotalValue?: number, currentPnl24h?: number }) {
   const { data: snapshots, isLoading } = useSnapshots()
 
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) {
       if (currentTotalValue !== undefined) {
         const todayStr = format(new Date(), 'yyyy-MM-dd')
-        return [{ date: todayStr, value: currentTotalValue }]
+        return [{ date: todayStr, value: currentTotalValue, pnl: currentPnl24h || 0 }]
       }
       return []
     }
 
     const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    const dataPoints = sorted.map(point => ({
-      date: point.date,
-      value: point.total_value,
-    }))
+    const dataPoints = []
+
+    for (let i = 0; i < sorted.length; i++) {
+      const point = sorted[i]
+      const pnlToday = point.total_value - point.total_invested
+      let pnl = 0
+      
+      if (i > 0) {
+        const yesterday = sorted[i - 1]
+        const pnlYesterday = yesterday.total_value - yesterday.total_invested
+        pnl = pnlToday - pnlYesterday
+      } else {
+        pnl = 0 
+      }
+
+      dataPoints.push({
+        date: point.date,
+        value: point.total_value,
+        pnl: pnl
+      })
+    }
 
     if (currentTotalValue !== undefined) {
       const todayStr = format(new Date(), 'yyyy-MM-dd')
@@ -32,16 +49,18 @@ export function PortfolioHistoryChart({ currentTotalValue }: { currentTotalValue
       
       if (lastPoint && lastPoint.date === todayStr) {
         lastPoint.value = currentTotalValue
+        lastPoint.pnl = currentPnl24h !== undefined ? currentPnl24h : lastPoint.pnl
       } else if (!lastPoint || lastPoint.date !== todayStr) {
         dataPoints.push({
           date: todayStr,
           value: currentTotalValue,
+          pnl: currentPnl24h || 0
         })
       }
     }
 
     return dataPoints
-  }, [snapshots, currentTotalValue])
+  }, [snapshots, currentTotalValue, currentPnl24h])
 
   if (isLoading) {
     return (
@@ -69,17 +88,26 @@ export function PortfolioHistoryChart({ currentTotalValue }: { currentTotalValue
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
+      const isPositive = data.pnl >= 0
       const formattedDate = format(parseISO(label), "d MMM yyyy", { locale: es })
       
       return (
         <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md min-w-[170px]">
           <p className="text-muted-foreground text-xs mb-2 font-medium uppercase tracking-wider border-b border-border/50 pb-2">{formattedDate}</p>
-          <div>
+          <div className="mb-2">
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
               Patrimonio Total
             </p>
             <p className="font-bold text-lg font-tabular text-foreground">
               {formatCurrency(data.value)}
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
+              PnL Diario
+            </p>
+            <p className={`font-bold text-sm font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {isPositive ? '+' : ''}{formatCurrency(data.pnl)}
             </p>
           </div>
         </div>
