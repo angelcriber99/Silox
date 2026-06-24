@@ -1,5 +1,7 @@
 "use server"
 
+import { unstable_cache } from 'next/cache'
+
 import YahooFinance from 'yahoo-finance2'
 import {
   convertSeriesToEur,
@@ -61,7 +63,7 @@ export interface MarketPricesResult {
   displayCurrency: string
 }
 
-export async function fetchMarketPrices(
+async function _fetchMarketPrices(
   tickers: string[],
   convertToEurFlag: boolean = false
 ): Promise<MarketPricesResult> {
@@ -148,3 +150,28 @@ export async function fetchMarketPrices(
     displayCurrency: convertToEurFlag ? 'EUR' : 'native',
   }
 }
+
+export async function fetchMarketPrices(
+  tickers: string[],
+  convertToEurFlag: boolean = false
+): Promise<MarketPricesResult> {
+  if (!tickers || tickers.length === 0) {
+    throw new Error('No tickers provided')
+  }
+
+  // Create a unique cache key based on the requested tickers
+  const sortedTickers = [...tickers].sort()
+  const cacheKey = `market-prices-${sortedTickers.join('-')}-${convertToEurFlag}`
+  
+  // Cache for 5 minutes (300 seconds)
+  const getCachedPrices = unstable_cache(
+    async () => {
+      return _fetchMarketPrices(sortedTickers, convertToEurFlag)
+    },
+    [cacheKey],
+    { revalidate: 300, tags: ['market-prices'] }
+  )
+
+  return getCachedPrices()
+}
+
