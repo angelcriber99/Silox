@@ -8,13 +8,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   if (error) throw new Error(`Error cargando posiciones: ${error.message}`)
 
-  return (data ?? []).map((row) => ({
-    ...row,
-    unidades: Number(row.unidades),
-    coste_total: Number(row.coste_total),
-    comisiones_total: Number(row.comisiones_total),
-    num_operaciones: Number(row.num_operaciones),
-  }))
+  return data ?? []
 }
 
 export async function fetchActivos(): Promise<Activo[]> {
@@ -33,7 +27,7 @@ export async function insertActivo(activo: {
   nombre?: string
   tipo: string
   estrategia: string
-  moneda?: string
+  moneda: string
 }): Promise<Activo> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()

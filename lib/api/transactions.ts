@@ -11,12 +11,7 @@ export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
 
   if (error) throw new Error(`Error cargando transacciones: ${error.message}`)
 
-  return (data ?? []).map((row) => ({
-    ...row,
-    cantidad: Number(row.cantidad),
-    precio_unitario: Number(row.precio_unitario),
-    comision: Number(row.comision),
-  }))
+  return (data as any) as Transaccion[]
 }
 
 export async function fetchAllTransactionsForTax(): Promise<Transaccion[]> {
@@ -30,12 +25,7 @@ export async function fetchAllTransactionsForTax(): Promise<Transaccion[]> {
 
   if (error) throw new Error(`Error obteniendo transacciones fiscales: ${error.message}`)
   
-  return (data ?? []).map(t => ({
-    ...t,
-    cantidad: Number(t.cantidad),
-    precio_unitario: Number(t.precio_unitario),
-    comision: Number(t.comision),
-  }))
+  return (data as any) as Transaccion[]
 }
 
 export async function insertTransaccion(tx: {
@@ -58,12 +48,7 @@ export async function insertTransaccion(tx: {
     .single()
 
   if (error) throw new Error(`Error registrando transacción: ${error.message}`)
-  return {
-    ...data,
-    cantidad: Number(data.cantidad),
-    precio_unitario: Number(data.precio_unitario),
-    comision: Number(data.comision),
-  }
+  return (data as any) as Transaccion
 }
 
 export async function updateTransaccion(id: string, updates: {
@@ -82,12 +67,7 @@ export async function updateTransaccion(id: string, updates: {
     .single()
 
   if (error) throw new Error(`Error actualizando transacción: ${error.message}`)
-  return {
-    ...data,
-    cantidad: Number(data.cantidad),
-    precio_unitario: Number(data.precio_unitario),
-    comision: Number(data.comision),
-  }
+  return (data as any) as Transaccion
 }
 
 export async function deleteTransaccion(id: string): Promise<void> {

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { EventoRecurrente, PriceData } from '@/lib/types'
+import { fetchMarketPrices } from '@/lib/actions/market'
 
 export async function fetchEventosRecurrentes(): Promise<EventoRecurrente[]> {
   const { data, error } = await createClient()
@@ -60,25 +61,21 @@ export async function fetchPrices(
 ): Promise<{ prices: Record<string, PriceData>, fxRates?: Record<string, number> }> {
   if (tickers.length === 0) return { prices: {} }
 
-  const res = await fetch('/api/precios', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tickers, convertToEur: true }),
-  })
-
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Error obteniendo precios')
-
-  const prices: Record<string, PriceData> = {}
-  for (const [ticker, val] of Object.entries(data.prices)) {
-    const v = val as PriceData
-    prices[ticker] = {
-      price: v.price ?? null,
-      sparkline: v.sparkline ?? [],
-      originalPrice: v.originalPrice ?? null,
-      originalCurrency: v.originalCurrency,
-      changePercent24h: v.changePercent24h ?? null,
+  try {
+    const data = await fetchMarketPrices(tickers, true)
+    
+    const prices: Record<string, PriceData> = {}
+    for (const [ticker, val] of Object.entries(data.prices)) {
+      prices[ticker] = {
+        price: val.price ?? null,
+        sparkline: val.sparkline ?? [],
+        originalPrice: val.originalPrice ?? null,
+        originalCurrency: val.originalCurrency,
+        changePercent24h: val.changePercent24h ?? null,
+      }
     }
+    return { prices, fxRates: data.fxRates }
+  } catch (err: any) {
+    throw new Error(err.message || 'Error obteniendo precios')
   }
-  return { prices, fxRates: data.fxRates }
 }
