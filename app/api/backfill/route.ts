@@ -53,8 +53,8 @@ export async function GET() {
 
     for (const ticker of tickers) {
       try {
-        const history = await yahooFinance.historical(ticker, { period1: period1Str })
-        historicalData[ticker] = history
+        const result = await yahooFinance.chart(ticker, { period1: period1, interval: '1d' })
+        historicalData[ticker] = result.quotes || []
       } catch (e) {
         console.error(`Error fetching history for ${ticker}:`, e)
         historicalData[ticker] = []
