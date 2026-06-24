@@ -86,7 +86,7 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)] mb-10 md:mb-0 px-4 md:px-0">
+    <div className="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)] py-6 md:py-8 px-4 md:px-6 mb-10 md:mb-0">
       {/* Settings Sidebar */}
       <aside className="w-full md:w-64 shrink-0 flex flex-col">
         <div className="mb-4 md:mb-8">
