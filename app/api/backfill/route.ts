@@ -71,7 +71,7 @@ export async function GET() {
       let total_value = 0
 
       // Reconstruir posiciones en ese día
-      const positionsMap = new Map<string, { unidades: number, coste: number, moneda: string, ticker: string }>()
+      const positionsMap = new Map<string, { unidades: number, coste_eur: number, moneda: string, ticker: string }>()
 
       for (const t of transacciones) {
         const tDate = new Date(t.fecha)
@@ -79,19 +79,29 @@ export async function GET() {
           const key = t.activo_id
           const current = positionsMap.get(key) || { 
             unidades: 0, 
-            coste: 0, 
+            coste_eur: 0, 
             moneda: (t.activo as any).moneda,
             ticker: (t.activo as any).ticker
           }
 
+          let txUsdToEurRate = 1
+          if (hasUsd && current.moneda === 'USD') {
+            const eurUsdHistory = historicalData['EURUSD=X'] || []
+            const ratePoint = eurUsdHistory.slice().reverse().find(p => new Date(p.date) <= tDate)
+            if (ratePoint) {
+              txUsdToEurRate = 1 / ratePoint.close
+            }
+          }
+
           if (t.tipo_operacion === 'Compra') {
             current.unidades += t.cantidad
-            current.coste += (t.cantidad * t.precio_unitario) + t.comision
+            const costeTxUsd = (t.cantidad * t.precio_unitario) + t.comision
+            current.coste_eur += costeTxUsd * txUsdToEurRate
           } else {
             // Venta reduce el coste proporcionalmente
             const ratio = t.cantidad / current.unidades
             current.unidades -= t.cantidad
-            current.coste -= current.coste * ratio
+            current.coste_eur -= current.coste_eur * ratio
           }
           positionsMap.set(key, current)
         }
@@ -111,11 +121,7 @@ export async function GET() {
       for (const [activo_id, pos] of positionsMap.entries()) {
         if (pos.unidades <= 0) continue
 
-        let investedInEur = pos.coste
-        if (pos.moneda === 'USD') {
-          investedInEur = investedInEur * usdToEurRate
-        }
-        total_invested += investedInEur
+        total_invested += pos.coste_eur
 
         const history = historicalData[pos.ticker] || []
         // Buscar el precio de cierre más cercano <= targetDate
