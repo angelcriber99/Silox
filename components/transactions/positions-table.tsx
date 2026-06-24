@@ -139,7 +139,7 @@ function LivePrice({
 function SkeletonRow() {
   return (
     <TableRow className="border-border/50">
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 9 }).map((_, i) => (
         <TableCell key={i}>
           <div className="h-4 w-16 rounded bg-muted animate-shimmer" />
         </TableCell>
@@ -318,6 +318,7 @@ export function PositionsTable({
                 <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">P. Compra</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">P. Actual</TableHead>
                 <SortableHeader label="Valor" sortKeyName="valor_actual" className="text-right whitespace-nowrap min-w-[120px]" />
+                <SortableHeader label="Hoy" sortKeyName="change_percent_24h" className="text-right hidden sm:table-cell" />
                 {!showPnlPercentOnly && <SortableHeader label="P&L" sortKeyName="pnl" className="text-right" />}
                 <SortableHeader label="P&L %" sortKeyName="pnl_percent" className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}`} />
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
@@ -331,7 +332,7 @@ export function PositionsTable({
               ) : filteredAndSorted.length === 0 ? (
                 <TableRow className="border-border/50 hover:bg-transparent">
                   <TableCell
-                    colSpan={11}
+                    colSpan={12}
                     className="text-center text-muted-foreground/60 py-16"
                   >
                     <div className="flex flex-col items-center gap-3">
@@ -428,6 +429,9 @@ export function PositionsTable({
                             </span>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className={`text-right hidden sm:table-cell ${cellPadding}`}>
+                        <PnlDisplay value={p.change_percent_24h ?? null} type="percent" />
                       </TableCell>
                       {!showPnlPercentOnly && (
                         <TableCell className={`text-right ${cellPadding}`}>
