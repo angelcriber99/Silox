@@ -56,33 +56,33 @@ export function MonthlyChart({ transactions, year }: MonthlyChartProps) {
         data={data}
         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} opacity={0.5} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} opacity={0.5} />
         <XAxis 
           dataKey="name" 
-          stroke="hsl(var(--muted-foreground))" 
+          stroke="var(--muted-foreground)" 
           fontSize={12}
           tickLine={false}
           axisLine={false}
           dy={10}
         />
         <YAxis 
-          stroke="hsl(var(--muted-foreground))" 
+          stroke="var(--muted-foreground)" 
           fontSize={12}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => `€${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
         />
         <Tooltip
-          cursor={{ fill: 'oklch(var(--muted))', opacity: 0.4 }}
+          cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
           contentStyle={{
-            backgroundColor: 'oklch(var(--card))',
-            borderColor: 'oklch(var(--border))',
+            backgroundColor: 'var(--card)',
+            borderColor: 'var(--border)',
             borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            color: 'oklch(var(--foreground))'
+            color: 'var(--foreground)'
           }}
           formatter={(value: any) => [formatCurrency(Number(value) || 0), undefined]}
-          labelStyle={{ color: 'oklch(var(--muted-foreground))', marginBottom: '4px' }}
+          labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '4px' }}
         />
         <Legend 
           wrapperStyle={{ paddingTop: '20px' }}
