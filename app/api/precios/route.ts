@@ -90,34 +90,7 @@ export async function POST(request: Request) {
           changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
         }
 
-        // "Resetear" el rendimiento si es de un día anterior
-        // Usamos el huso horario del mercado en el que cotiza (ej. 'America/New_York')
-        let latestTime = quote.regularMarketTime ? new Date(quote.regularMarketTime) : null
-        if (quote.preMarketTime) {
-          const preTime = new Date(quote.preMarketTime)
-          if (!latestTime || preTime > latestTime) latestTime = preTime
-        }
-        if (quote.postMarketTime) {
-          const postTime = new Date(quote.postMarketTime)
-          if (!latestTime || postTime > latestTime) latestTime = postTime
-        }
 
-        if (latestTime) {
-          try {
-            const tz = quote.exchangeTimezoneName || 'UTC'
-            const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: 'numeric', day: 'numeric' })
-            const nowStr = formatter.format(new Date())
-            const latestStr = formatter.format(latestTime)
-            
-            if (nowStr !== latestStr && latestTime < new Date()) {
-               // Si la fecha en el huso horario del mercado es distinta (ej. hoy es martes pero el último trade fue el lunes),
-               // entonces reseteamos el rendimiento diario a 0% hasta que empiece el pre-market/mercado de hoy.
-               changePercent24h = 0
-            }
-          } catch (e) {
-            // Ignorar fallos de formato de zona horaria por si acaso
-          }
-        }
 
         let sparkline: number[] = []
         if (chart?.quotes) {
