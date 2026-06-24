@@ -111,7 +111,11 @@ export async function GET() {
       for (const [activo_id, pos] of positionsMap.entries()) {
         if (pos.unidades <= 0) continue
 
-        total_invested += pos.coste // El coste asumo que ya está convertido a EUR o es la inversión original (simplificación)
+        let investedInEur = pos.coste
+        if (pos.moneda === 'USD') {
+          investedInEur = investedInEur * usdToEurRate
+        }
+        total_invested += investedInEur
 
         const history = historicalData[pos.ticker] || []
         // Buscar el precio de cierre más cercano <= targetDate
