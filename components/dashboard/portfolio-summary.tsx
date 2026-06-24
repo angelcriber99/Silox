@@ -69,7 +69,7 @@ function KPICard({
               {value}
             </p>
             {subvalue && (
-              <p className="text-xs text-muted-foreground/80 mt-1">{subvalue}</p>
+              <div className="text-xs text-muted-foreground/80 mt-1">{subvalue}</div>
             )}
           </div>
         )}
