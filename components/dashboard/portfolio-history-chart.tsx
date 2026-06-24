@@ -39,7 +39,8 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
       dataPoints.push({
         date: point.date,
         value: point.total_value,
-        pnl: pnl
+        pnl: pnl,
+        isFirstDay: i === 0
       })
     }
 
@@ -54,7 +55,8 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
         dataPoints.push({
           date: todayStr,
           value: currentTotalValue,
-          pnl: currentPnl24h || 0
+          pnl: currentPnl24h || 0,
+          isFirstDay: dataPoints.length === 0
         })
       }
     }
@@ -89,7 +91,10 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
     if (active && payload && payload.length) {
       const data = payload[0].payload
       const isPositive = data.pnl >= 0
-      const formattedDate = format(parseISO(label), "d MMM yyyy", { locale: es })
+      const dateObj = parseISO(label)
+      const formattedDate = format(dateObj, "d MMM yyyy", { locale: es })
+      const dayOfWeek = dateObj.getDay()
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
       
       return (
         <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md min-w-[170px]">
@@ -106,9 +111,15 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
               PnL Diario
             </p>
-            <p className={`font-bold text-sm font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {isPositive ? '+' : ''}{formatCurrency(data.pnl)}
-            </p>
+            {data.isFirstDay ? (
+              <p className="font-bold text-sm font-tabular text-muted-foreground">---</p>
+            ) : (isWeekend && Math.abs(data.pnl) < 1) ? (
+              <p className="font-bold text-xs uppercase tracking-wider text-muted-foreground mt-1">Mercado Cerrado</p>
+            ) : (
+              <p className={`font-bold text-sm font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {isPositive ? '+' : ''}{formatCurrency(data.pnl)}
+              </p>
+            )}
           </div>
         </div>
       )
