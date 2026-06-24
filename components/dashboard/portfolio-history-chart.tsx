@@ -40,6 +40,7 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
         date: point.date,
         value: point.total_value,
         pnl: pnl,
+        totalPnl: pnlToday,
         isFirstDay: i === 0
       })
     }
@@ -56,6 +57,7 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
           date: todayStr,
           value: currentTotalValue,
           pnl: currentPnl24h || 0,
+          totalPnl: (currentTotalValue !== undefined && snapshots.length > 0) ? (currentTotalValue - snapshots[snapshots.length-1].total_invested) : 0,
           isFirstDay: dataPoints.length === 0
         })
       }
@@ -108,6 +110,14 @@ export function PortfolioHistoryChart({ currentTotalValue, currentPnl24h }: { cu
             </p>
           </div>
           <div>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
+              Beneficio Total (All-time)
+            </p>
+            <p className={`font-bold text-sm font-tabular ${data.totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {data.totalPnl >= 0 ? '+' : ''}{formatCurrency(data.totalPnl)}
+            </p>
+          </div>
+          <div className="mt-2">
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
               PnL Diario
             </p>
