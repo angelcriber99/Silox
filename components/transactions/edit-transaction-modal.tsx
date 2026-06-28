@@ -52,6 +52,8 @@ export function EditTransactionModal({
   const [comisionMoneda, setComisionMoneda] = useState<string>("EUR")
   const [fecha, setFecha] = useState("")
   const [notas, setNotas] = useState("")
+  const [retencionOrigen, setRetencionOrigen] = useState("")
+  const [retencionDestino, setRetencionDestino] = useState("")
 
   const updateTransaction = useUpdateTransaction()
 
@@ -64,6 +66,8 @@ export function EditTransactionModal({
       setPrecioMoneda(transaction.activo?.moneda || "EUR")
       setComision(transaction.comision > 0 ? transaction.comision.toString() : "")
       setComisionMoneda(transaction.activo?.moneda || "EUR")
+      setRetencionOrigen(transaction.retencion_origen && transaction.retencion_origen > 0 ? transaction.retencion_origen.toString() : "")
+      setRetencionDestino(transaction.retencion_destino && transaction.retencion_destino > 0 ? transaction.retencion_destino.toString() : "")
       // format date to YYYY-MM-DD
       const dateStr = transaction.fecha.split("T")[0]
       setFecha(dateStr)
@@ -82,6 +86,8 @@ export function EditTransactionModal({
     const cantidadNum = parseFloat(cantidad)
     const precioNum = parseFloat(precioUnitario)
     const comisionNum = comision ? parseFloat(comision) : 0
+    const retencionOrigenNum = retencionOrigen ? parseFloat(retencionOrigen) : 0
+    const retencionDestinoNum = retencionDestino ? parseFloat(retencionDestino) : 0
 
     if (tipoOperacion !== "Dividendo" && (isNaN(cantidadNum) || cantidadNum <= 0)) {
       toast.error("Cantidad inválida")
@@ -103,6 +109,8 @@ export function EditTransactionModal({
           precio_moneda: tipoOperacion === "Dividendo" ? precioMoneda : undefined,
           comision: comisionNum,
           comision_moneda: comisionMoneda,
+          retencion_origen: retencionOrigenNum,
+          retencion_destino: retencionDestinoNum,
           fecha,
           notas: notas.trim() || undefined,
         }
@@ -320,6 +328,48 @@ export function EditTransactionModal({
             </div>
           </div>
 
+          {/* Retention fields for Dividends */}
+          {isDividendo && (
+            <div className="grid grid-cols-2 gap-4 pb-2 border-b border-border/40 mb-2">
+              <div className="space-y-2">
+                <Label className="text-foreground/80 text-xs">Retención Origen (EEUU)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.00"
+                    value={retencionOrigen}
+                    onChange={(e) => setRetencionOrigen(e.target.value)}
+                    className={inputClass}
+                    disabled={updateTransaction.isPending}
+                  />
+                  <div className="flex items-center text-xs text-muted-foreground bg-muted/50 px-2 rounded-md border border-border">
+                    {precioMoneda}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground/80 text-xs">Retención Destino (España)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.00"
+                    value={retencionDestino}
+                    onChange={(e) => setRetencionDestino(e.target.value)}
+                    className={inputClass}
+                    disabled={updateTransaction.isPending}
+                  />
+                  <div className="flex items-center text-xs text-muted-foreground bg-muted/50 px-2 rounded-md border border-border">
+                    {precioMoneda}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Notes */}
           <div className="space-y-2">
             <Label className="text-foreground/80">
@@ -355,7 +405,7 @@ export function EditTransactionModal({
               <div className="flex items-center justify-between">
                 <span className="text-xs text-violet-300/80">Rendimiento Neto</span>
                 <span className="text-lg font-bold font-tabular text-violet-400">
-                  {formatCurrency(precioNum - (parseFloat(comision) || 0))}
+                  {formatCurrency(precioNum - (parseFloat(comision) || 0) - (parseFloat(retencionOrigen) || 0) - (parseFloat(retencionDestino) || 0))}
                 </span>
               </div>
             </div>
