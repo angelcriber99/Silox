@@ -124,7 +124,7 @@ export function AllocationChart({ positions, marketState = 'CLOSED' }: Allocatio
       >
         {/* Front Face */}
         <Card 
-          className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
         >
           <CardHeader className="pb-2">
@@ -386,7 +386,7 @@ export function AllocationChart({ positions, marketState = 'CLOSED' }: Allocatio
     {/* Back Face */}
     {zenMode && (
       <Card 
-        className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+        className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
         style={{ 
           backfaceVisibility: "hidden", 
           WebkitBackfaceVisibility: "hidden",
