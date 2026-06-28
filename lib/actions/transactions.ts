@@ -195,15 +195,16 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
       const ticker = (oldTx.activo as any)?.ticker || (oldTx.activo as any)?.[0]?.ticker
       const oldNoteFormat = `Auto-liquidez de ${oldTx.tipo_operacion} ${ticker}`
       
-      const { data: oldCashTx } = await supabase
+      const { data: oldCashTx, error: err } = await supabase
         .from('transacciones')
         .select('id, notas')
         .eq('user_id', user.id)
         .eq('notas', oldNoteFormat)
-        .single()
+        .eq('fecha', oldTx.fecha)
+        .limit(1)
         
-      if (oldCashTx) {
-        cashTx = oldCashTx
+      if (oldCashTx && oldCashTx.length > 0) {
+        cashTx = oldCashTx[0]
       }
     }
   }
@@ -284,6 +285,7 @@ export async function deleteTransaccionAction(id: string): Promise<void> {
         .delete()
         .eq('user_id', user.id)
         .eq('notas', oldNoteFormat)
+        .eq('fecha', oldTx.fecha)
     }
   }
 }
