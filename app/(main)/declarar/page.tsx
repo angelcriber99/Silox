@@ -71,11 +71,18 @@ export default function DeclararPage() {
   const dividendTotals = useMemo(() => {
     let gross = 0
     let fees = 0
+    let retOrigen = 0
+    let retDestino = 0
     yearDividends.forEach(d => {
-      gross += (Number(d.cantidad) * Number(d.precio_unitario))
+      // Gross is now based on precio_unitario only (since cantidad is 0 for dividends after fix)
+      const isLegacy = Number(d.cantidad) === 0.000001
+      const g = isLegacy ? Number(d.precio_unitario) : (Number(d.precio_unitario))
+      gross += g
       fees += Number(d.comision)
+      retOrigen += Number(d.retencion_origen || 0)
+      retDestino += Number(d.retencion_destino || 0)
     })
-    return { gross, fees, net: gross - fees }
+    return { gross, fees, retOrigen, retDestino, baseImponible: gross - fees, net: gross - fees - retOrigen - retDestino }
   }, [yearDividends])
 
   return (
@@ -208,7 +215,7 @@ export default function DeclararPage() {
                   Rendimiento Neto a Tributar
                 </div>
                 <div className={`text-3xl font-bold font-tabular text-violet-300`}>
-                  {dividendTotals.net > 0 ? "+" : ""}{formatCurrency(dividendTotals.net)}
+                  {dividendTotals.baseImponible > 0 ? "+" : ""}{formatCurrency(dividendTotals.baseImponible)}
                 </div>
                 <p className="text-sm text-violet-300/80 mt-2 font-medium">
                   Base imponible del ahorro generada.
@@ -314,9 +321,11 @@ export default function DeclararPage() {
                       <tr>
                         <th className="px-6 py-4 font-medium">Fecha</th>
                         <th className="px-6 py-4 font-medium">Activo</th>
-                        <th className="px-6 py-4 font-medium text-right">Rendimiento Bruto</th>
-                        <th className="px-6 py-4 font-medium text-right">Comisiones</th>
-                        <th className="px-6 py-4 font-medium text-right">Rendimiento Neto</th>
+                        <th className="px-6 py-4 font-medium text-right">Bruto</th>
+                        <th className="px-6 py-4 font-medium text-right">Ret. Origen</th>
+                        <th className="px-6 py-4 font-medium text-right">Ret. Destino</th>
+                        <th className="px-6 py-4 font-medium text-right">Comisión</th>
+                        <th className="px-6 py-4 font-medium text-right">Neto Cobrado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-violet-900/20">
@@ -325,9 +334,12 @@ export default function DeclararPage() {
                           month: 'short',
                           day: 'numeric'
                         })
-                        const gross = (Number(e.cantidad) * Number(e.precio_unitario))
+                        const isLegacy = Number(e.cantidad) === 0.000001
+                        const gross = isLegacy ? Number(e.precio_unitario) : (Number(e.precio_unitario))
                         const fee = Number(e.comision)
-                        const net = gross - fee
+                        const retOrigen = Number(e.retencion_origen || 0)
+                        const retDestino = Number(e.retencion_destino || 0)
+                        const net = gross - fee - retOrigen - retDestino
 
                         return (
                           <tr key={idx} className="hover:bg-violet-900/10 transition-colors group">
@@ -343,6 +355,12 @@ export default function DeclararPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground align-top">
                               {formatCurrency(gross)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-rose-400/80 align-top">
+                              {retOrigen > 0 ? `-${formatCurrency(retOrigen)}` : "—"}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-rose-400/80 align-top">
+                              {retDestino > 0 ? `-${formatCurrency(retDestino)}` : "—"}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-rose-400/80 align-top">
                               {fee > 0 ? `-${formatCurrency(fee)}` : "—"}
@@ -383,9 +401,9 @@ export default function DeclararPage() {
                   <div className="text-violet-400 font-bold text-lg mb-1">Dividendos</div>
                   <div className="font-semibold text-foreground mb-2">Acciones y ETFs</div>
                   <p className="text-sm text-muted-foreground mb-4 flex-1">
-                    Atención a la doble imposición internacional si has cobrado de USA (Casilla 0589).
+                    Atención a la doble imposición internacional si has cobrado de USA (Casilla 0588).
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="bg-violet-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-violet-400 font-bold mb-1">CASILLA 0029 (BRUTO)</div>
                       <div className="text-sm font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.gross)}</div>
@@ -395,6 +413,13 @@ export default function DeclararPage() {
                       <div className="text-sm font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.fees)}</div>
                     </div>
                   </div>
+                  {dividendTotals.retOrigen > 0 && (
+                    <div className="bg-rose-950/50 rounded-lg p-3 border border-rose-900/50">
+                      <div className="text-[10px] text-rose-400 font-bold mb-1">CASILLA 0588 (DOBLE IMPOSICIÓN)</div>
+                      <div className="text-sm font-bold font-tabular text-rose-100">{formatCurrency(dividendTotals.retOrigen)}</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Impuesto retenido en origen (ej. 15% W-8BEN) a deducir.</div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Fondos */}

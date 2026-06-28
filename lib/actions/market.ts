@@ -24,6 +24,7 @@ interface YahooQuote {
   preMarketTime?: string | Date
   postMarketTime?: string | Date
   exchangeTimezoneName?: string
+  marketState?: string
 }
 
 async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
@@ -55,12 +56,14 @@ export interface PriceEntry {
   changePercent24h?: number | null
   originalPrice?: number | null
   originalCurrency?: string
+  marketState?: string
 }
 
 export interface MarketPricesResult {
   prices: Record<string, PriceEntry>
   fxRates?: FxRatesToEur
   displayCurrency: string
+  marketState: string
 }
 
 async function _fetchMarketPrices(
@@ -86,13 +89,19 @@ async function _fetchMarketPrices(
       const originalCurrency = normalizeYahooCurrency(quote.currency)
       let rawPrice = quote.regularMarketPrice ?? null
       let changePercent24h = quote.regularMarketChangePercent ?? null
+      let marketState = quote.marketState ?? 'CLOSED'
+      let regularMarketTime = quote.regularMarketTime ?? null
 
-      if (quote.preMarketPrice && quote.regularMarketPreviousClose) {
+      if (quote.preMarketPrice && quote.regularMarketPreviousClose && quote.marketState === 'PRE') {
         rawPrice = quote.preMarketPrice
         changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
-      } else if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
+      } else if (quote.postMarketPrice && quote.regularMarketPreviousClose && quote.marketState === 'POST') {
         rawPrice = quote.postMarketPrice
         changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+      }
+
+      if (!marketState || marketState === 'CLOSED' || marketState === 'POST' || marketState === 'PRE') {
+        changePercent24h = 0
       }
 
       let sparkline: number[] = []
@@ -119,18 +128,21 @@ async function _fetchMarketPrices(
         changePercent24h,
         originalPrice: rawPrice,
         originalCurrency,
+        marketState
       }
     })
   )
 
   const prices: Record<string, PriceEntry> = {}
+  let globalMarketState = 'CLOSED'
+  let hasOpenMarket = false
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i]
     const ticker = tickers[i]
 
     if (result.status === 'fulfilled') {
-      const { price, sparkline, currency, changePercent24h, originalPrice, originalCurrency } = result.value
+      const { price, sparkline, currency, changePercent24h, originalPrice, originalCurrency, marketState } = result.value
       prices[ticker] = {
         price,
         sparkline,
@@ -138,6 +150,12 @@ async function _fetchMarketPrices(
         changePercent24h,
         originalPrice,
         originalCurrency,
+        marketState
+      }
+      
+      if (marketState === 'REGULAR' || marketState === 'PRE') {
+        hasOpenMarket = true
+        globalMarketState = 'REGULAR'
       }
     } else if (ticker) {
       prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null }
@@ -148,6 +166,7 @@ async function _fetchMarketPrices(
     prices,
     fxRates,
     displayCurrency: convertToEurFlag ? 'EUR' : 'native',
+    marketState: globalMarketState,
   }
 }
 

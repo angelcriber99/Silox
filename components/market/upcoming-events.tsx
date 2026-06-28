@@ -37,7 +37,8 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         setLoading(true)
         
         // 1. Fetch automatic dividends
-        const tickers = Array.from(new Set(positions.map(p => p.ticker)))
+        const activePositions = positions.filter(p => p.unidades > 0)
+        const tickers = Array.from(new Set(activePositions.map(p => p.ticker)))
         const res = await fetch('/api/events', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -58,7 +59,10 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         }))
 
         // 2. Fetch manual recurring events
-        const manualEvents = await fetchEventosRecurrentes().catch(() => [])
+        const manualEventsAll = await fetchEventosRecurrentes().catch(() => [])
+        const manualEvents = manualEventsAll.filter(e => 
+          activePositions.some(p => p.activo_id === e.activo_id)
+        )
         
         const now = new Date()
         const currentMonth = now.getMonth()

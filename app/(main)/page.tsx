@@ -22,7 +22,7 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import { SiloxInsights } from "@/components/dashboard/silox-insights"
 
 export default function Home() {
-  const { positions, totals, isLoading, pricesUpdatedAt } = usePortfolio()
+  const { positions, totals, isLoading, pricesUpdatedAt, marketState } = usePortfolio()
   const { data: allTransactions } = useAllTransactions()
   const { zenMode, setZenMode } = usePreferences()
 
@@ -56,6 +56,7 @@ export default function Home() {
           positions={positions}
           totals={totals}
           isLoading={isLoading}
+          marketState={marketState}
         />
       </div>
 
@@ -72,11 +73,11 @@ export default function Home() {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 flex flex-col gap-6">
-                <AllocationChart positions={positions} />
+                <AllocationChart positions={positions} marketState={marketState} />
               </div>
               
               <div className="lg:col-span-1 space-y-6 flex flex-col">
-                <TopMovers positions={positions} />
+                <TopMovers positions={positions} marketState={marketState} />
                 <div>
                   <UpcomingEvents 
                     positions={positions} 

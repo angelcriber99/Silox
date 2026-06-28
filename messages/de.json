@@ -33,6 +33,7 @@
     "settings": "Einstellungen"
   },
   "Dashboard": {
+    "portfolio": "Portfolio",
     "portfolio_value": "Portfoliowert",
     "total_cost": "Gesamtkosten",
     "pnl": "Gewinn / Verlust",

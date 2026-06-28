@@ -3,15 +3,25 @@
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useEffect, useRef } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
-import { fetchPosiciones, enrichPositions, computePortfolioTotals, saveDailySnapshot } from '@/lib/api/assets'
+import { fetchPosiciones, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
+import { saveDailySnapshotAction } from '@/lib/actions/assets'
 import { usePrices } from "./use-prices"
 import { createClient } from '@/lib/supabase/client'
+import { fetchPendingTransactions } from '@/lib/api/transactions'
 
 export function usePositions() {
   return useQuery({
     queryKey: ["positions"],
     queryFn: fetchPosiciones,
     staleTime: 60_000, // 1 minute, but invalidated via websockets instantly
+  })
+}
+
+export function usePendingTransactions() {
+  return useQuery({
+    queryKey: ["pending-transactions"],
+    queryFn: fetchPendingTransactions,
+    staleTime: 60_000,
   })
 }
 
@@ -22,6 +32,11 @@ export function usePortfolio() {
     error: positionsError,
     refetch: refetchPositions,
   } = usePositions()
+  
+  const {
+    data: pendingTxs,
+    refetch: refetchPending,
+  } = usePendingTransactions()
 
   const tickers = useMemo(
     () => (positions ?? []).filter((p) => p.unidades > 0).map((p) => p.ticker),
@@ -37,8 +52,29 @@ export function usePortfolio() {
 
   const enriched: EnrichedPosition[] = useMemo(() => {
     if (!positions) return []
-    return enrichPositions(positions, pricePayload ?? { prices: {} })
-  }, [positions, pricePayload])
+    const enrichedList = enrichPositions(positions, pricePayload ?? { prices: {} })
+    
+    if (pendingTxs && pendingTxs.length > 0) {
+      let pendingCashChange = 0
+      pendingTxs.forEach(tx => {
+        if (tx.tipo_operacion === 'Venta') {
+          pendingCashChange += (tx.cantidad * tx.precio_unitario) - (tx.comision || 0)
+        } else if (tx.tipo_operacion === 'Compra') {
+          pendingCashChange -= (tx.cantidad * tx.precio_unitario) + (tx.comision || 0)
+        }
+      })
+      
+      if (pendingCashChange !== 0) {
+        const cashPos = enrichedList.find(p => p.tipo === 'Liquidez')
+        if (cashPos) {
+          cashPos.valor_actual = (cashPos.valor_actual || 0) + pendingCashChange
+          cashPos.valor_actual_nativo = (cashPos.valor_actual_nativo || 0) + pendingCashChange
+        }
+      }
+    }
+    
+    return enrichedList
+  }, [positions, pricePayload, pendingTxs])
 
   const totals: PortfolioTotals = useMemo(
     () => computePortfolioTotals(enriched),
@@ -51,7 +87,7 @@ export function usePortfolio() {
   useEffect(() => {
     if (!positionsLoading && !pricesLoading && totals.totalValue > 0 && !snapshotSaved.current) {
       snapshotSaved.current = true
-      saveDailySnapshot(totals.totalValue, totals.totalCost).catch(console.error)
+      saveDailySnapshotAction(totals.totalValue, totals.totalCost).catch(console.error)
     }
   }, [totals.totalValue, totals.totalCost, positionsLoading, pricesLoading])
 
@@ -66,16 +102,18 @@ export function usePortfolio() {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transacciones' }, () => {
         refetchPositions()
+        refetchPending()
       })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [refetchPositions])
+  }, [refetchPositions, refetchPending])
 
   const refetch = async () => {
     await refetchPositions()
+    await refetchPending()
     await refetchPrices()
   }
 
@@ -88,6 +126,7 @@ export function usePortfolio() {
     refetch,
     refetchPrices,
     pricesUpdatedAt,
+    marketState: pricePayload?.marketState ?? 'CLOSED',
   }
 }
 

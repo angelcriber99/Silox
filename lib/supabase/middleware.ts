@@ -60,7 +60,7 @@ export async function updateSession(request: NextRequest) {
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https://avatars.githubusercontent.com;
     font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://query1.finance.yahoo.com https://query2.finance.yahoo.com;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co;
     frame-src 'none';
     object-src 'none';
     base-uri 'self';
@@ -79,6 +79,7 @@ export async function updateSession(request: NextRequest) {
     'max-age=31536000; includeSubDomains; preload'
   )
   supabaseResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()')
+  supabaseResponse.headers.set('X-Request-ID', crypto.randomUUID())
 
   return supabaseResponse
 }

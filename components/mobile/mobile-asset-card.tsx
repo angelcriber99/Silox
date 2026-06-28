@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import Link from "next/link"
 import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
@@ -19,7 +20,7 @@ const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   Liquidez: { bg: "bg-zinc-500/20", text: "text-zinc-400" },
 }
 
-export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
+export const MobileAssetCard = React.memo(function MobileAssetCard({ position: p }: MobileAssetCardProps) {
   const { soundEffects, hideBalances, compactView } = usePreferences()
   
   const pnlPercent = p.pnl_percent ?? 0
@@ -100,4 +101,4 @@ export function MobileAssetCard({ position: p }: MobileAssetCardProps) {
       </div>
     </Link>
   )
-}
+})

@@ -107,10 +107,11 @@ export function enrichPositions(
     const priceData = prices[p.ticker]
     const precio_medio_real = p.unidades > 0 ? p.coste_total / p.unidades : 0
 
-    const fallbackPrice = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez') ? 1.00 : precio_medio_real
+    const isCashAsset = p.ticker === 'CASH'
+    const fallbackPrice = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez' || isCashAsset) ? 1.00 : precio_medio_real
 
-    const precio_actual = priceData?.price ?? fallbackPrice
-    const precio_actual_nativo = priceData?.originalPrice ?? fallbackPrice
+    const precio_actual = isCashAsset ? 1.00 : (priceData?.price ?? fallbackPrice)
+    const precio_actual_nativo = isCashAsset ? 1.00 : (priceData?.originalPrice ?? fallbackPrice)
     const original_currency = priceData?.originalCurrency ?? p.moneda
     const change_percent_24h = priceData?.changePercent24h ?? null
     let sparkline = priceData?.sparkline ?? []
@@ -156,6 +157,7 @@ export function enrichPositions(
       precio_actual,
       precio_actual_nativo,
       original_currency,
+      tipo: p.ticker === 'CASH' ? 'Liquidez' : p.tipo,
       valor_actual: valor_actual_eur,
       valor_actual_nativo,
       coste_total_eur,

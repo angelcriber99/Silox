@@ -13,22 +13,28 @@ import { hapticFeedback } from "@/lib/utils/haptics"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion, useScroll, useTransform, useAnimation } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
   totals: PortfolioTotals
   isLoading: boolean
+  marketState?: string
 }
 
 export function MobileDashboard({
   positions,
   totals,
   isLoading,
+  marketState = 'CLOSED',
 }: MobileDashboardProps) {
   const { zenMode, setZenMode, soundEffects, hideBalances, setHideBalances } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterType, setFilterType] = useState<string>("All")
+  const t = useTranslations("Dashboard")
   
   const isPositive = totals.totalPnl >= 0
   const pnlColor = isPositive ? "text-emerald-500" : "text-rose-500"
@@ -42,6 +48,15 @@ export function MobileDashboard({
   const bigNumberScale = useTransform(scrollY, [0, 100], [1, 0.95])
   const bigNumberOpacity = useTransform(scrollY, [0, 100], [1, 0.6])
   
+  const getMarketStateLabel = () => {
+    switch(marketState) {
+      case 'REGULAR': return t("market_open");
+      case 'PRE': return t("market_pre");
+      case 'POST': return t("market_post");
+      default: return t("market_closed");
+    }
+  }
+
   // Pull to refresh animation
   const refreshControls = useAnimation()
 
@@ -84,14 +99,29 @@ export function MobileDashboard({
 
   const areaColor = isPositive ? "#10b981" : "#f43f5e"
 
-  // Sort positions by value (descending)
-  const sortedPositions = useMemo(
-    () =>
-      [...positions]
-        .filter(p => p.unidades > 0)
-        .sort((a, b) => (b.valor_actual ?? 0) - (a.valor_actual ?? 0)),
-    [positions]
-  )
+  // Sort and filter positions
+  const sortedPositions = useMemo(() => {
+    let result = [...positions].filter(p => p.unidades > 0)
+    
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase()
+      result = result.filter(p => 
+        p.ticker.toLowerCase().includes(lowerQuery) || 
+        (p.nombre && p.nombre.toLowerCase().includes(lowerQuery))
+      )
+    }
+
+    if (filterType !== "All") {
+      result = result.filter(p => p.tipo === filterType)
+    }
+
+    return result.sort((a, b) => (b.valor_actual ?? 0) - (a.valor_actual ?? 0))
+  }, [positions, searchQuery, filterType])
+
+  const assetTypes = useMemo(() => {
+    const types = new Set(positions.filter(p => p.unidades > 0).map(p => p.tipo))
+    return ["All", ...Array.from(types)]
+  }, [positions])
 
   const bestPerformer = useMemo(() => {
     const withPercent = positions.filter(p => typeof p.change_percent_24h === 'number' && p.change_percent_24h > 0 && p.unidades > 0)
@@ -141,11 +171,11 @@ export function MobileDashboard({
       </motion.div>
 
       {/* ─── Cabecera Profesional ──────────────────────── */}
-      <motion.div className="px-5 pt-2 pb-4 sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border/40">
+      <motion.div className="px-5 pt-4 pb-4 sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border/40">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold tracking-wide text-foreground uppercase">Portfolio</span>
+            <span className="text-sm font-semibold tracking-wide text-foreground uppercase">{t("portfolio")}</span>
           </div>
           
           <div className="flex items-center gap-1.5">
@@ -189,8 +219,12 @@ export function MobileDashboard({
         {/* ─── KPIs Principales (Sleek & Data-rich) ────────────────── */}
         <motion.div style={{ scale: bigNumberScale, opacity: bigNumberOpacity }} className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
-              Valor del Portfolio
+            <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              {t("portfolio_value")}
+              <span className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm border ${marketState === 'CLOSED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${marketState === 'CLOSED' ? 'bg-rose-500/80' : 'bg-emerald-500 animate-pulse'}`} />
+                <span className="text-[9px] tracking-widest">{getMarketStateLabel()}</span>
+              </span>
             </p>
             {liquidezAmount > 0 && !zenMode && (
               <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium tracking-widest uppercase">
@@ -217,7 +251,7 @@ export function MobileDashboard({
                 </span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span>Hoy:</span>
+                <span>{t("today")}:</span>
                 <span className={`font-medium font-tabular ${dailyPnlColor}`}>
                   {dailyIsPositive ? "+" : ""}<AnimatedNumber value={totals.totalPnl24h} format="currency" hide={hideBalances} />
                 </span>
@@ -287,7 +321,7 @@ export function MobileDashboard({
             {/* Invertido */}
             <div className="bg-card/40 border border-border/50 rounded-xl p-3 shadow-sm">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
-                Total Invertido
+                {t("total_cost")}
               </p>
               <p className="text-sm font-semibold font-tabular text-foreground">
                 <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
@@ -297,7 +331,7 @@ export function MobileDashboard({
             {/* Rentabilidad Hoy */}
             <div className="bg-card/40 border border-border/50 rounded-xl p-3 shadow-sm">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
-                Rendimiento Hoy
+                {t("profitability")} {t("today")}
               </p>
               <p className={`text-sm font-semibold font-tabular ${dailyPnlColor}`}>
                 <AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />
@@ -307,7 +341,7 @@ export function MobileDashboard({
             {/* Top Ganadora */}
             <div className="bg-card/40 border border-border/50 rounded-xl p-3 shadow-sm flex flex-col justify-between">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3 text-emerald-500" /> Top Ganadora
+                <TrendingUp className="w-3 h-3 text-emerald-500" /> {t("top_movers")}
               </p>
               {bestPerformer ? (
                 <div>
@@ -315,7 +349,7 @@ export function MobileDashboard({
                     {bestPerformer.nombre || bestPerformer.ticker.split('.')[0]}
                   </p>
                   <span className="text-emerald-400 font-tabular font-medium">
-                    {formatPercent(bestPerformer.change_percent_24h || 0)}
+                    {hideBalances ? "**.*%" : formatPercent(bestPerformer.change_percent_24h || 0)}
                   </span>
                 </div>
               ) : (
@@ -334,7 +368,7 @@ export function MobileDashboard({
                     {worstPerformer.nombre || worstPerformer.ticker.split('.')[0]}
                   </p>
                   <p className="text-rose-500 font-semibold font-tabular text-xs">
-                    {formatPercent(worstPerformer.change_percent_24h || 0)}
+                    {hideBalances ? "**.*%" : formatPercent(worstPerformer.change_percent_24h || 0)}
                   </p>
                 </div>
               ) : (
@@ -355,7 +389,7 @@ export function MobileDashboard({
             >
               <div className="flex items-center gap-2">
                 <BarChart2 className="w-4 h-4 text-muted-foreground" />
-                Ver Análisis Detallado
+                {t("daily_performance")}
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </motion.button>
@@ -366,6 +400,7 @@ export function MobileDashboard({
             onOpenChange={setPerformanceOpen} 
             currentPnl24h={totals.totalPnl24h} 
             currentTotalValue={totals.totalValue} 
+            currentTotalCost={totals.totalCost}
           />
 
           <PriceAlerts 
@@ -374,10 +409,38 @@ export function MobileDashboard({
           />
 
           {/* ─── Lista de Activos (Profesional) ─────────────────── */}
-          <div className="px-5 pb-2">
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Posiciones ({sortedPositions.length})
-            </h2>
+          <div className="px-5 pb-2 sticky top-[4.5rem] z-20 bg-background/95 backdrop-blur shadow-sm">
+            <div className="flex flex-col gap-3 py-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  {t("positions")} ({sortedPositions.length})
+                </h2>
+              </div>
+              <input
+                type="text"
+                placeholder={t("search_asset")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-muted/40 border border-border/50 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 touch-target"
+              />
+              {assetTypes.length > 2 && (
+                <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+                  {assetTypes.map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setFilterType(type)}
+                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        filterType === type 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted/40 text-muted-foreground border border-border/50'
+                      }`}
+                    >
+                      {type === "All" ? t("filter_all") : type}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="border-t border-border/30 divide-y divide-border/20">

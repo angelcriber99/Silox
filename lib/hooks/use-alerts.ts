@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { fetchAlerts, addAlert, deleteAlert, markAlertTriggered, type PriceAlert } from "@/lib/api/alerts"
+import { fetchAlerts } from "@/lib/api/alerts"
+import { addAlertAction, deleteAlertAction, markAlertTriggeredAction } from "@/lib/actions/alerts"
 
 export function useAlerts() {
   const queryClient = useQueryClient()
@@ -10,21 +11,21 @@ export function useAlerts() {
   })
 
   const addMutation = useMutation({
-    mutationFn: addAlert,
+    mutationFn: addAlertAction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alerts"] })
     },
   })
 
   const removeMutation = useMutation({
-    mutationFn: deleteAlert,
+    mutationFn: deleteAlertAction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alerts"] })
     },
   })
 
   const markTriggeredMutation = useMutation({
-    mutationFn: markAlertTriggered,
+    mutationFn: markAlertTriggeredAction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alerts"] })
     },

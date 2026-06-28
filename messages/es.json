@@ -33,11 +33,16 @@
     "settings": "Ajustes"
   },
   "Dashboard": {
+    "portfolio": "Portfolio",
     "portfolio_value": "Valor del Portfolio",
     "total_cost": "Coste Total",
     "pnl": "Beneficio / Pérdida",
     "profitability": "Rentabilidad",
     "today": "Hoy",
+    "market_open": "Mercado Abierto",
+    "market_closed": "Cerrado (Abre 15:30)",
+    "market_pre": "Pre-Market",
+    "market_post": "Post-Market",
     "prices_synced": "Precios sincronizados",
     "prices_pending": "Precios pendientes",
     "positions_count": "posición(es)",

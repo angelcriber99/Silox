@@ -35,6 +35,11 @@ export interface Transaccion {
   cantidad: number
   precio_unitario: number
   comision: number
+  retencion_origen?: number
+  retencion_origen_moneda?: string
+  retencion_destino?: number
+  retencion_destino_moneda?: string
+  estado?: 'Completada' | 'Pendiente'
   fecha: string
   notas: string | null
   created_at: string

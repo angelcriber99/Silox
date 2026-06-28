@@ -228,6 +228,11 @@ export default function MovimientosPage() {
                             {isCompra ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                             {tx.tipo_operacion}
                           </span>
+                          {tx.estado === "Pendiente" && (
+                            <span className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                              Pendiente
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col">
@@ -242,12 +247,12 @@ export default function MovimientosPage() {
                           {hideBalances ? "****" : tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground/80">
-                          {hideBalances ? "****" : (tx.comision > 0 ? formatCurrency(tx.comision) : "0,00")}
+                          {hideBalances ? "****" : (tx.comision > 0 ? formatCurrency(tx.comision, tx.activo?.moneda || "EUR") : "0,00")}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-medium ${
                           isCompra ? "text-emerald-400" : "text-rose-400"
                         }`}>
-                          {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total)}`}
+                          {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-center">
                           <DropdownMenu>
@@ -317,17 +322,24 @@ export default function MovimientosPage() {
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="font-bold text-foreground text-[15px] truncate">{ticker}</span>
-                          <span className="text-xs font-medium text-muted-foreground/80 truncate">{isCompra ? "Compra" : "Venta"} • {date}</span>
+                          <span className="text-xs font-medium text-muted-foreground/80 truncate">
+                            {isCompra ? "Compra" : "Venta"} • {date}
+                            {tx.estado === "Pendiente" && (
+                              <span className="ml-1.5 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                Pendiente
+                              </span>
+                            )}
+                          </span>
                         </div>
                      </div>
 
                      <div className="flex items-center gap-2 flex-shrink-0">
                        <div className="flex flex-col items-end">
                           <span className={`text-[15px] font-bold font-tabular leading-tight ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
-                            {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total)}`}
+                            {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
                           </span>
                           <span className="text-xs font-medium text-muted-foreground/80 font-tabular mt-0.5">
-                            {hideBalances ? "****" : `${formatUnits(tx.cantidad)} a ${tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}€`}
+                            {hideBalances ? "****" : `${formatUnits(tx.cantidad)} a ${formatCurrency(tx.precio_unitario, tx.activo?.moneda || "EUR")}`}
                           </span>
                        </div>
                        

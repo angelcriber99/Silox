@@ -447,6 +447,11 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                       <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                         {tx.tipo_operacion}
                       </span>
+                      {tx.estado === 'Pendiente' && (
+                        <span className="ml-1 inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          Pendiente
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
                     <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>

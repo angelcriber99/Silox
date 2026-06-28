@@ -33,7 +33,8 @@
     "settings": "Paramètres"
   },
   "Dashboard": {
-    "portfolio_value": "Valeur du portefeuille",
+    "portfolio": "Portefeuille",
+    "portfolio_value": "Valeur du Portefeuille",
     "total_cost": "Coût total",
     "pnl": "Bénéfice / Perte",
     "profitability": "Rentabilité",

@@ -11,11 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAddTransaction } from "@/lib/hooks/use-transactions"
-import { getOrCreateCashAsset } from "@/lib/api/assets"
+import { getOrCreateCashAssetAction } from "@/lib/actions/assets"
 import { formatCurrency } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 
@@ -35,10 +42,17 @@ export function AddTransactionModal({
   open,
   onOpenChange,
 }: AddTransactionModalProps) {
-  const [tipoOperacion, setTipoOperacion] = useState<TipoOperacion>("Compra")
+  const [tipoOperacion, setTipoOperacion] = useState<
+    "Compra" | "Venta" | "Dividendo"
+  >("Compra")
+  const [estado, setEstado] = useState<"Completada" | "Pendiente">("Completada")
   const [cantidad, setCantidad] = useState("")
   const [precioUnitario, setPrecioUnitario] = useState("")
+  const [precioMoneda, setPrecioMoneda] = useState<string>(position?.moneda || "EUR")
+  const [retencionOrigen, setRetencionOrigen] = useState("")
+  const [retencionDestino, setRetencionDestino] = useState("")
   const [comision, setComision] = useState("")
+  const [comisionMoneda, setComisionMoneda] = useState<string>(position?.moneda || "EUR")
   const [fecha, setFecha] = useState(
     () => new Date().toISOString().split("T")[0]
   )
@@ -49,9 +63,14 @@ export function AddTransactionModal({
 
   const resetForm = () => {
     setTipoOperacion("Compra")
+    setEstado("Completada")
     setCantidad("")
     setPrecioUnitario("")
+    setPrecioMoneda(position?.moneda || "EUR")
+    setRetencionOrigen("")
+    setRetencionDestino("")
     setComision("")
+    setComisionMoneda(position?.moneda || "EUR")
     setFecha(new Date().toISOString().split("T")[0])
     setNotas("")
     setUseEfectivo(true)
@@ -73,9 +92,11 @@ export function AddTransactionModal({
     e.preventDefault()
     if (!position) return
 
-    const cantidadNum = parseFloat(cantidad)
+    const cantidadNum = tipoOperacion === "Dividendo" ? 0 : parseFloat(cantidad)
     const precioNum = parseFloat(precioUnitario)
     const comisionNum = comision ? parseFloat(comision) : 0
+    const retencionOrigenNum = retencionOrigen ? parseFloat(retencionOrigen) : 0
+    const retencionDestinoNum = retencionDestino ? parseFloat(retencionDestino) : 0
 
     if (tipoOperacion !== "Dividendo" && (isNaN(cantidadNum) || cantidadNum <= 0)) {
       toast.error("Cantidad inválida")
@@ -90,9 +111,14 @@ export function AddTransactionModal({
       await addTransaction.mutateAsync({
         activo_id: position.activo_id,
         tipo_operacion: tipoOperacion,
-        cantidad: tipoOperacion === "Dividendo" ? 1 : cantidadNum,
+        estado: estado,
+        cantidad: cantidadNum,
         precio_unitario: precioNum,
+        precio_moneda: isDividendo ? precioMoneda : undefined,
         comision: comisionNum,
+        comision_moneda: comisionMoneda,
+        retencion_origen: retencionOrigenNum,
+        retencion_destino: retencionDestinoNum,
         fecha,
         notas: notas.trim() || undefined,
       })
@@ -102,7 +128,7 @@ export function AddTransactionModal({
       // Cash transaction
       if (useEfectivo && position.tipo !== "Liquidez") {
         try {
-          const cashAsset = await getOrCreateCashAsset()
+          const cashAsset = await getOrCreateCashAssetAction()
           
           let cashTipoOperacion: TipoOperacion = "Compra"
           let cashAmount = total
@@ -115,7 +141,7 @@ export function AddTransactionModal({
             cashAmount = total - comisionNum
           } else if (tipoOperacion === "Dividendo") {
             cashTipoOperacion = "Compra"
-            cashAmount = precioNum - comisionNum
+            cashAmount = precioNum - retencionOrigenNum - retencionDestinoNum - comisionNum
           }
 
           if (cashAmount > 0) {
@@ -138,7 +164,9 @@ export function AddTransactionModal({
       toast.success(
         `${tipoOperacion} registrada — ${position.ticker}`,
         {
-          description: `${cantidadNum} uds. × ${formatCurrency(precioNum)} = ${formatCurrency(total)}`,
+          description: isDividendo
+            ? `Rendimiento Bruto: ${formatCurrency(precioNum, precioMoneda || 'EUR')}`
+            : `${cantidadNum} uds. × ${formatCurrency(precioNum, position.moneda || 'EUR')} = ${formatCurrency(total, position.moneda || 'EUR')}`,
         }
       )
 
@@ -228,6 +256,34 @@ export function AddTransactionModal({
             })}
           </div>
 
+          <div className="space-y-2">
+            <Label className="text-foreground/80">Estado</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setEstado("Completada")}
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  estado === "Completada"
+                    ? "border-blue-500/50 bg-blue-500/10 text-blue-300"
+                    : "border-border bg-muted text-muted-foreground hover:border-zinc-600"
+                }`}
+              >
+                Completada
+              </button>
+              <button
+                type="button"
+                onClick={() => setEstado("Pendiente")}
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  estado === "Pendiente"
+                    ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
+                    : "border-border bg-muted text-muted-foreground hover:border-zinc-600"
+                }`}
+              >
+                Pendiente
+              </button>
+            </div>
+          </div>
+
           {/* Quantity + Price */}
           <div className={`grid gap-4 ${isDividendo ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {!isDividendo && (
@@ -259,17 +315,33 @@ export function AddTransactionModal({
                   </button>
                 )}
               </Label>
-              <Input
-                type="number"
-                min="0"
-                step="any"
-                placeholder={isDividendo ? "0.09" : "82.30"}
-                value={precioUnitario}
-                onChange={(e) => setPrecioUnitario(e.target.value)}
-                required
-                className={inputClass}
-                disabled={addTransaction.isPending}
-              />
+              <div className={isDividendo ? "flex gap-2" : ""}>
+                <Input
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder={isDividendo ? "0.09" : "82.30"}
+                  value={precioUnitario}
+                  onChange={(e) => setPrecioUnitario(e.target.value)}
+                  required
+                  className={inputClass}
+                  disabled={addTransaction.isPending}
+                />
+                {isDividendo && (
+                  <Select value={precioMoneda} onValueChange={setPrecioMoneda}>
+                    <SelectTrigger className={`w-[80px] ${inputClass}`}>
+                      <SelectValue placeholder="Moneda" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      {position?.moneda && position.moneda !== "EUR" && position.moneda !== "USD" && (
+                        <SelectItem value={position.moneda}>{position.moneda}</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           </div>
 
@@ -277,19 +349,32 @@ export function AddTransactionModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-foreground/80">
-                Comisión{" "}
-                <span className="text-muted-foreground/60 font-normal">(opc.)</span>
+                Comisión <span className="text-muted-foreground/60 font-normal">(opc.)</span>
               </Label>
-              <Input
-                type="number"
-                min="0"
-                step="any"
-                placeholder="0.00"
-                value={comision}
-                onChange={(e) => setComision(e.target.value)}
-                className={inputClass}
-                disabled={addTransaction.isPending}
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder="0.00"
+                  value={comision}
+                  onChange={(e) => setComision(e.target.value)}
+                  className={inputClass}
+                  disabled={addTransaction.isPending}
+                />
+                <Select value={comisionMoneda} onValueChange={setComisionMoneda}>
+                  <SelectTrigger className={`w-[80px] ${inputClass}`}>
+                    <SelectValue placeholder="Moneda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    {position?.moneda && position.moneda !== "EUR" && position.moneda !== "USD" && (
+                      <SelectItem value={position.moneda}>{position.moneda}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-foreground/80">Fecha</Label>
@@ -318,6 +403,48 @@ export function AddTransactionModal({
               disabled={addTransaction.isPending}
             />
           </div>
+
+          {/* Retention fields for Dividends */}
+          {isDividendo && (
+            <div className="grid grid-cols-2 gap-4 pb-2 border-b border-border/40 mb-2">
+              <div className="space-y-2">
+                <Label className="text-foreground/80 text-xs">Retención Origen (EEUU)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.00"
+                    value={retencionOrigen}
+                    onChange={(e) => setRetencionOrigen(e.target.value)}
+                    className={inputClass}
+                    disabled={addTransaction.isPending}
+                  />
+                  <div className="flex items-center text-xs text-muted-foreground bg-muted/50 px-2 rounded-md border border-border">
+                    {precioMoneda}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground/80 text-xs">Retención Destino (España)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.00"
+                    value={retencionDestino}
+                    onChange={(e) => setRetencionDestino(e.target.value)}
+                    className={inputClass}
+                    disabled={addTransaction.isPending}
+                  />
+                  <div className="flex items-center text-xs text-muted-foreground bg-muted/50 px-2 rounded-md border border-border">
+                    {precioMoneda}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Cash Automation Checkbox */}
           {position?.tipo !== "Liquidez" && (
@@ -350,17 +477,17 @@ export function AddTransactionModal({
                     isCompra ? "text-emerald-400" : "text-rose-400"
                   }`}
                 >
-                  {formatCurrency(totalEstimado)}
+                  {formatCurrency(totalEstimado, position?.moneda || 'EUR')}
                 </span>
               </div>
             </div>
           )}
           {isDividendo && precioNum > 0 && (
-            <div className="rounded-lg bg-violet-500/10 border border-violet-500/20 px-4 py-3">
+            <div className="rounded-lg bg-violet-500/10 border border-violet-500/20 px-4 py-3 mt-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-violet-300/80">Rendimiento Neto</span>
                 <span className="text-lg font-bold font-tabular text-violet-400">
-                  {formatCurrency(precioNum - (parseFloat(comision) || 0))}
+                  {formatCurrency(precioNum - (parseFloat(retencionOrigen) || 0) - (parseFloat(retencionDestino) || 0) - (parseFloat(comision) || 0), position?.moneda || 'EUR')}
                 </span>
               </div>
             </div>

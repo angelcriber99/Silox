@@ -11,6 +11,7 @@ import { PerformanceModal } from "./performance-modal"
 import Link from "next/link"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useTranslations } from "next-intl"
+import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -94,6 +95,9 @@ export function PortfolioSummary({
 }: PortfolioSummaryProps) {
   const { hideBalances, zenMode, setZenMode } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
+  const [cashAssetId, setCashAssetId] = useState<string | null>(null)
+  
   const isPositive = totals.totalPnl >= 0
   const t = useTranslations('Dashboard')
 
@@ -148,12 +152,27 @@ export function PortfolioSummary({
             label={t('portfolio_value')}
             value={<AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />}
             subvalue={hideBalances ? null : (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 <span>{totals.hasAllPrices ? t('prices_synced') : t('prices_pending')}</span>
                 {liquidezAmount > 0 && (
-                  <span className="text-zinc-400 font-medium flex items-center gap-1">
-                    <Wallet className="w-3 h-3" /> Liquidez: <AnimatedNumber value={liquidezAmount} format="currency" hide={hideBalances} />
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-400 font-medium flex items-center gap-1">
+                      <Wallet className="w-3 h-3" /> Liquidez: <AnimatedNumber value={liquidezAmount} format="currency" hide={hideBalances} />
+                    </span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (liquidezPos) {
+                          setCashAssetId(liquidezPos.activo_id)
+                          setWithdrawModalOpen(true)
+                        }
+                      }}
+                      className="bg-border/60 hover:bg-border text-muted-foreground hover:text-foreground text-[10px] px-2 py-0.5 rounded transition-colors"
+                      title="Retirar a banco"
+                    >
+                      Retirar
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -260,7 +279,8 @@ export function PortfolioSummary({
         ))}
       </div>
 
-      <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} currentTotalValue={totals.totalValue} />
+      <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} currentTotalValue={totals.totalValue} currentTotalCost={totals.totalCost} />
+      <WithdrawCashModal open={withdrawModalOpen} onOpenChange={setWithdrawModalOpen} cashAssetId={cashAssetId || ""} />
     </>
   )
 }

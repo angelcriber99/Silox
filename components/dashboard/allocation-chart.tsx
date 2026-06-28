@@ -2,17 +2,19 @@
 
 import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts"
 import type { EnrichedPosition } from '@/lib/types'
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { motion } from "framer-motion"
-import { RefreshCw, Eye, EyeOff } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { RefreshCw, Eye, EyeOff, PieChart as PieChartIcon, BarChart3, Wallet } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
+  marketState?: string
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -30,6 +32,7 @@ const STRATEGY_COLORS: Record<string, string> = {
 }
 
 type GroupBy = "tipo" | "estrategia"
+type ViewMode = "composition" | "performance"
 
 interface ChartDatum {
   name: string
@@ -38,12 +41,16 @@ interface ChartDatum {
   color: string
   percent: number
   pnlPercent24h: number
+  pnlAmount24h: number
 }
 
-export function AllocationChart({ positions }: AllocationChartProps) {
+export function AllocationChart({ positions, marketState = 'CLOSED' }: AllocationChartProps) {
   const { hideBalances, zenMode, setZenMode } = usePreferences()
+  const [viewMode, setViewMode] = useState<ViewMode>("composition")
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
   const [isFlipped, setIsFlipped] = useState(false)
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
+  const [cashAssetId, setCashAssetId] = useState<string>("")
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const t = useTranslations('Dashboard')
 
@@ -80,6 +87,10 @@ export function AllocationChart({ positions }: AllocationChartProps) {
       }
     }
 
+    if (groupBy === "tipo" && !groups.has("Liquidez")) {
+      groups.set("Liquidez", { value: 0, pnl24h: 0, valorAyer: 0 })
+    }
+
     const total = Array.from(groups.values()).reduce((a, b) => a + b.value, 0)
     const data: ChartDatum[] = Array.from(groups.entries())
       .map(([name, groupData]) => ({
@@ -88,9 +99,15 @@ export function AllocationChart({ positions }: AllocationChartProps) {
         value: groupData.value,
         color: colors[name] ?? "#71717a",
         percent: total > 0 ? (groupData.value / total) * 100 : 0,
-        pnlPercent24h: groupData.valorAyer > 0 ? (groupData.pnl24h / groupData.valorAyer) * 100 : 0
+        pnlPercent24h: groupData.valorAyer > 0 ? (groupData.pnl24h / groupData.valorAyer) * 100 : 0,
+        pnlAmount24h: groupData.pnl24h
       }))
-      .sort((a, b) => b.value - a.value)
+      .sort((a, b) => {
+        // Siempre poner liquidez al final si su valor es 0
+        if (a.originalName === "Liquidez" && a.value === 0) return 1
+        if (b.originalName === "Liquidez" && b.value === 0) return -1
+        return b.value - a.value
+      })
 
     return { data, total }
   }, [positions, groupBy, t])
@@ -114,6 +131,12 @@ export function AllocationChart({ positions }: AllocationChartProps) {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <span>{t('distribution')}</span>
+                <span className={`ml-1 flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm border ${marketState === 'CLOSED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${marketState === 'CLOSED' ? 'bg-rose-500/80' : 'bg-emerald-500 animate-pulse'}`} />
+                  <span className="text-[9px] tracking-widest uppercase">
+                    {marketState === 'REGULAR' ? t("market_open") : marketState === 'PRE' ? t("market_pre") : marketState === 'POST' ? t("market_post") : t("market_closed")}
+                  </span>
+                </span>
                 <button
                   onClick={() => setZenMode(!zenMode)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors ml-1"
@@ -127,34 +150,126 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                   </button>
                 )}
               </CardTitle>
-              <div className="flex gap-1 rounded-lg bg-muted p-0.5">
-            <button
-              onClick={() => setGroupBy("tipo")}
-              className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
-                groupBy === "tipo"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground/80 hover:text-foreground/80"
-              }`}
-            >
-              {t('dist_type')}
-            </button>
-            <button
-              onClick={() => setGroupBy("estrategia")}
-              className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
-                groupBy === "estrategia"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground/80 hover:text-foreground/80"
-              }`}
-            >
-              {t('dist_strategy')}
-            </button>
-          </div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1 rounded-lg bg-muted p-0.5">
+                  <button
+                    onClick={() => setViewMode("composition")}
+                    className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                      viewMode === "composition"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground/80 hover:text-foreground/80"
+                    }`}
+                  >
+                    <PieChartIcon className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Composición</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode("performance")}
+                    className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                      viewMode === "performance"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground/80 hover:text-foreground/80"
+                    }`}
+                  >
+                    <BarChart3 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Rendimiento Hoy</span>
+                  </button>
+                </div>
+                <div className="flex gap-1 rounded-lg bg-muted p-0.5">
+                  <button
+                    onClick={() => setGroupBy("tipo")}
+                    className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
+                      groupBy === "tipo"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground/80 hover:text-foreground/80"
+                    }`}
+                  >
+                    {t('dist_type')}
+                  </button>
+                  <button
+                    onClick={() => setGroupBy("estrategia")}
+                    className={`px-3 py-1 text-xs rounded-md font-medium transition-all duration-200 ${
+                      groupBy === "estrategia"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground/80 hover:text-foreground/80"
+                    }`}
+                  >
+                    {t('dist_strategy')}
+                  </button>
+                </div>
+              </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0 flex-1 flex flex-col justify-center">
         {!hasData ? (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
             Añade activos con transacciones para ver la distribución
+          </div>
+        ) : viewMode === "performance" ? (
+          <div className="w-full h-full min-h-[320px] pt-6">
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={chartData.data} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+                <XAxis 
+                  type="number" 
+                  tickFormatter={(val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val)} 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={12} 
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis 
+                  dataKey="name" 
+                  type="category" 
+                  stroke="hsl(var(--foreground))" 
+                  fontSize={13} 
+                  fontWeight={500}
+                  tickLine={false}
+                  axisLine={false}
+                  width={120}
+                />
+                <Tooltip
+                  cursor={{fill: 'hsl(var(--muted))', opacity: 0.4}}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null
+                    const d = payload[0].payload as ChartDatum
+                    return (
+                      <div className="rounded-xl bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl z-50 relative">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
+                          <p className="text-sm font-bold text-foreground uppercase tracking-wider">{d.name}</p>
+                        </div>
+                        <div className="mt-1">
+                          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Rendimiento Hoy</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className={`text-2xl font-bold font-tabular ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {d.pnlAmount24h > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.pnlAmount24h)}
+                            </p>
+                            <p className={`text-sm font-medium ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              ({d.pnlPercent24h > 0 ? '+' : ''}{formatPercent(d.pnlPercent24h).replace('+', '')})
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }}
+                />
+                <ReferenceLine x={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} />
+                <Bar 
+                  dataKey="pnlAmount24h" 
+                  barSize={24}
+                >
+                  {chartData.data.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.pnlAmount24h >= 0 ? '#10b981' : '#f43f5e'} 
+                      radius={entry.pnlAmount24h >= 0 ? [0, 4, 4, 0] as any : [4, 0, 0, 4] as any}
+                      className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         ) : (
           <div className="flex flex-row flex-wrap items-center justify-center lg:gap-16 gap-8 py-4 w-full">
@@ -207,9 +322,14 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                     {hideBalances ? "****" : formatCurrency(totals.totalValue > 0 ? totals.totalValue : chartData.total)}
                   </p>
                   {!hideBalances && (
-                    <p className={`text-[11px] font-medium mt-0.5 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
-                    </p>
+                    <div className="flex flex-col items-center mt-1">
+                      <p className={`text-sm font-bold ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {totals.totalPnl24h > 0 ? '+' : ''}{formatCurrency(totals.totalPnl24h)}
+                      </p>
+                      <p className={`text-[10px] font-medium mt-0.5 opacity-80 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -227,17 +347,33 @@ export function AllocationChart({ positions }: AllocationChartProps) {
                     <p className="text-base font-medium text-foreground/90 group-hover:text-foreground transition-colors truncate leading-tight">
                       {d.name}
                     </p>
-                    <p className={`text-[11px] font-medium mt-0.5 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {d.pnlPercent24h > 0 ? '+' : ''}{formatPercent(d.pnlPercent24h).replace('+', '')} hoy
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5 justify-start">
+                      {marketState === 'CLOSED' ? (
+                        <p className="text-[10px] font-medium opacity-60 uppercase tracking-wide">
+                          MERCADO CERRADO
+                        </p>
+                      ) : (
+                        <>
+                          <p className={`text-xs font-bold ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <span className="text-[10px] uppercase opacity-70 mr-1 font-semibold">Hoy:</span>
+                            {d.pnlAmount24h > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.pnlAmount24h)}
+                          </p>
+                          <p className={`text-[10px] font-medium opacity-80 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            ({d.pnlPercent24h > 0 ? '+' : ''}{formatPercent(d.pnlPercent24h).replace('+', '')})
+                          </p>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-base font-bold font-tabular text-foreground">
-                      {hideBalances ? "****" : formatCurrency(d.value)}
-                    </p>
-                    <p className="text-xs font-medium font-tabular text-muted-foreground">
-                      {d.percent.toFixed(1)}%
-                    </p>
+                  <div className="text-right flex-shrink-0 flex items-center">
+                    <div className="flex flex-col items-end">
+                      <p className="text-base font-bold font-tabular text-foreground">
+                        {hideBalances ? "****" : formatCurrency(d.value)}
+                      </p>
+                      <p className="text-xs font-medium font-tabular text-muted-foreground">
+                        {d.percent.toFixed(1)}%
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -288,6 +424,13 @@ export function AllocationChart({ positions }: AllocationChartProps) {
       </Card>
     )}
     </motion.div>
+
+    <WithdrawCashModal 
+      open={withdrawModalOpen} 
+      onOpenChange={setWithdrawModalOpen} 
+      cashAssetId={cashAssetId} 
+    />
   </div>
   )
 }
+

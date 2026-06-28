@@ -11,6 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,10 +41,15 @@ export function EditTransactionModal({
   open,
   onOpenChange,
 }: EditTransactionModalProps) {
-  const [tipoOperacion, setTipoOperacion] = useState<TipoOperacion>("Compra")
+  const [tipoOperacion, setTipoOperacion] = useState<
+    "Compra" | "Venta" | "Dividendo"
+  >("Compra")
+  const [estado, setEstado] = useState<"Completada" | "Pendiente">("Completada")
   const [cantidad, setCantidad] = useState("")
   const [precioUnitario, setPrecioUnitario] = useState("")
+  const [precioMoneda, setPrecioMoneda] = useState<string>("EUR")
   const [comision, setComision] = useState("")
+  const [comisionMoneda, setComisionMoneda] = useState<string>("EUR")
   const [fecha, setFecha] = useState("")
   const [notas, setNotas] = useState("")
 
@@ -46,9 +58,12 @@ export function EditTransactionModal({
   useEffect(() => {
     if (transaction && open) {
       setTipoOperacion(transaction.tipo_operacion)
+      setEstado(transaction.estado || "Completada")
       setCantidad(transaction.cantidad.toString())
       setPrecioUnitario(transaction.precio_unitario.toString())
+      setPrecioMoneda(transaction.activo?.moneda || "EUR")
       setComision(transaction.comision > 0 ? transaction.comision.toString() : "")
+      setComisionMoneda(transaction.activo?.moneda || "EUR")
       // format date to YYYY-MM-DD
       const dateStr = transaction.fecha.split("T")[0]
       setFecha(dateStr)
@@ -82,9 +97,12 @@ export function EditTransactionModal({
         id: transaction.id,
         updates: {
           tipo_operacion: tipoOperacion,
+          estado: estado,
           cantidad: tipoOperacion === "Dividendo" ? 1 : cantidadNum,
           precio_unitario: precioNum,
+          precio_moneda: tipoOperacion === "Dividendo" ? precioMoneda : undefined,
           comision: comisionNum,
+          comision_moneda: comisionMoneda,
           fecha,
           notas: notas.trim() || undefined,
         }
@@ -177,6 +195,34 @@ export function EditTransactionModal({
             })}
           </div>
 
+          <div className="space-y-2">
+            <Label className="text-foreground/80">Estado</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setEstado("Completada")}
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  estado === "Completada"
+                    ? "border-blue-500/50 bg-blue-500/10 text-blue-300"
+                    : "border-border bg-muted text-muted-foreground hover:border-zinc-600"
+                }`}
+              >
+                Completada
+              </button>
+              <button
+                type="button"
+                onClick={() => setEstado("Pendiente")}
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  estado === "Pendiente"
+                    ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
+                    : "border-border bg-muted text-muted-foreground hover:border-zinc-600"
+                }`}
+              >
+                Pendiente
+              </button>
+            </div>
+          </div>
+
           {/* Quantity + Price */}
           <div className={`grid gap-4 ${isDividendo ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {!isDividendo && (
@@ -197,19 +243,35 @@ export function EditTransactionModal({
             )}
             <div className="space-y-2">
               <Label className="text-foreground/80 flex items-center justify-between">
-                {isDividendo ? "Rendimiento Bruto" : "Precio unitario"}
+                {tipoOperacion === "Dividendo" ? "Rendimiento Bruto" : "Precio unitario"}
               </Label>
-              <Input
-                type="number"
-                min="0"
-                step="any"
-                placeholder={isDividendo ? "0.09" : "82.30"}
-                value={precioUnitario}
-                onChange={(e) => setPrecioUnitario(e.target.value)}
-                required
-                className={inputClass}
-                disabled={updateTransaction.isPending}
-              />
+              <div className={tipoOperacion === "Dividendo" ? "flex gap-2" : ""}>
+                <Input
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder={tipoOperacion === "Dividendo" ? "0.09" : "82.30"}
+                  value={precioUnitario}
+                  onChange={(e) => setPrecioUnitario(e.target.value)}
+                  required
+                  className={inputClass}
+                  disabled={updateTransaction.isPending}
+                />
+                {tipoOperacion === "Dividendo" && (
+                  <Select value={precioMoneda} onValueChange={setPrecioMoneda}>
+                    <SelectTrigger className={`w-[80px] ${inputClass}`}>
+                      <SelectValue placeholder="Moneda" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      {transaction?.activo?.moneda && transaction.activo.moneda !== "EUR" && transaction.activo.moneda !== "USD" && (
+                        <SelectItem value={transaction.activo.moneda}>{transaction.activo.moneda}</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           </div>
 
@@ -220,16 +282,30 @@ export function EditTransactionModal({
                 Comisión{" "}
                 <span className="text-muted-foreground/60 font-normal">(opc.)</span>
               </Label>
-              <Input
-                type="number"
-                min="0"
-                step="any"
-                placeholder="0.00"
-                value={comision}
-                onChange={(e) => setComision(e.target.value)}
-                className={inputClass}
-                disabled={updateTransaction.isPending}
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder="0.00"
+                  value={comision}
+                  onChange={(e) => setComision(e.target.value)}
+                  className={inputClass}
+                  disabled={updateTransaction.isPending}
+                />
+                <Select value={comisionMoneda} onValueChange={setComisionMoneda}>
+                  <SelectTrigger className={`w-[80px] ${inputClass}`}>
+                    <SelectValue placeholder="Moneda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    {transaction?.activo?.moneda && transaction.activo.moneda !== "EUR" && transaction.activo.moneda !== "USD" && (
+                      <SelectItem value={transaction.activo.moneda}>{transaction.activo.moneda}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-foreground/80">Fecha</Label>

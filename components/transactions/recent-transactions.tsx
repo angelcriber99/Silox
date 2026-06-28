@@ -84,9 +84,14 @@ export function RecentTransactions() {
                           <span className="text-muted-foreground/80 text-[10px]">.{ticker.split('.').slice(1).join('.')}</span>
                         )}
                       </span>
+                      {tx.estado === "Pendiente" && (
+                        <span className="ml-1 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          Pendiente
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground/80 mt-0.5">
-                      {formatUnits(tx.cantidad)} uds. × {formatCurrency(tx.precio_unitario)}
+                      {formatUnits(tx.cantidad)} uds. × {formatCurrency(tx.precio_unitario, tx.activo?.moneda || "EUR")}
                     </p>
                   </div>
 
@@ -98,7 +103,7 @@ export function RecentTransactions() {
                       }`}
                     >
                       {isCompra ? "+" : "-"}
-                      {formatCurrency(total)}
+                      {formatCurrency(total, tx.activo?.moneda || "EUR")}
                     </p>
                     <p className="text-[10px] text-muted-foreground/60 mt-0.5">
                       {formatRelative(tx.fecha)}

@@ -9,12 +9,12 @@ import { TrendingUp, TrendingDown } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
-export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
+export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: EnrichedPosition[], marketState?: string }) {
   const [sortBy, setSortBy] = useState<"percent" | "amount">("amount")
   const t = useTranslations('Dashboard')
   const { hideBalances } = usePreferences()
 
-  const validPositions = positions.filter(p => {
+  const validPositions = marketState === 'CLOSED' ? [] : positions.filter(p => {
     if (sortBy === "percent") {
       return typeof p.change_percent_24h === 'number' && p.change_percent_24h !== 0 && p.unidades > 0
     } else {
@@ -48,16 +48,16 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
         <CardTitle className="text-sm font-medium text-muted-foreground">{t('top_movers')}</CardTitle>
         <div className="flex bg-muted/50 rounded-md p-0.5">
           <button 
-            onClick={() => setSortBy("percent")}
-            className={`px-2 py-0.5 text-[10px] font-medium rounded-sm transition-colors ${sortBy === "percent" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            %
-          </button>
-          <button 
             onClick={() => setSortBy("amount")}
             className={`px-2 py-0.5 text-[10px] font-medium rounded-sm transition-colors ${sortBy === "amount" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
           >
             €
+          </button>
+          <button 
+            onClick={() => setSortBy("percent")}
+            className={`px-2 py-0.5 text-[10px] font-medium rounded-sm transition-colors ${sortBy === "percent" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            %
           </button>
         </div>
       </CardHeader>
@@ -81,7 +81,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 )}
               </div>
             </div>
-          )) : <span className="text-xs text-muted-foreground/60">{t('all_red')}</span>}
+          )) : <span className="text-xs text-muted-foreground/60">{marketState === 'CLOSED' ? t('market_closed') : t('all_red')}</span>}
         </div>
         {/* Worst */}
         <div className="space-y-3">
@@ -102,7 +102,7 @@ export function TopMovers({ positions }: { positions: EnrichedPosition[] }) {
                 )}
               </div>
             </div>
-          )) : <span className="text-xs text-muted-foreground/60">{t('all_green')}</span>}
+          )) : <span className="text-xs text-muted-foreground/60">{marketState === 'CLOSED' ? t('market_closed') : t('all_green')}</span>}
         </div>
       </CardContent>
     </Card>

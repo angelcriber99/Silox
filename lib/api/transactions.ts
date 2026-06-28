@@ -4,10 +4,35 @@ import type { Transaccion } from '@/lib/types'
 export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
   const { data, error } = await createClient()
     .from('transacciones')
-    .select('*, activo:activos(ticker, nombre, tipo)')
+    .select('*, activo:activos(ticker, nombre, tipo, moneda)')
     .order('fecha', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  if (error) throw new Error(`Error cargando transacciones: ${error.message}`)
+
+  return (data as any) as Transaccion[]
+}
+
+export async function fetchPendingTransactions(): Promise<Transaccion[]> {
+  const { data, error } = await createClient()
+    .from('transacciones')
+    .select('*, activo:activos(ticker, nombre, tipo, moneda)')
+    .eq('estado', 'Pendiente')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(`Error cargando transacciones pendientes: ${error.message}`)
+
+  return (data as any) as Transaccion[]
+}
+
+export async function fetchTransactions(limitCount = 100): Promise<Transaccion[]> {
+  const { data, error } = await createClient()
+    .from('transacciones')
+    .select('*, activo:activos(ticker, nombre, tipo, moneda)')
+    .order('fecha', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limitCount)
 
   if (error) throw new Error(`Error cargando transacciones: ${error.message}`)
 
