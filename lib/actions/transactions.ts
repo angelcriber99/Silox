@@ -175,12 +175,38 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
   if (error) throw new Error(`Error actualizando transacción: ${error.message}`)
 
   // Sync cash transaction
-  const { data: cashTx } = await supabase
+  let { data: cashTx } = await supabase
     .from('transacciones')
-    .select('id')
+    .select('id, notas')
     .eq('user_id', user.id)
     .like('notas', `%[Auto-Cash:${id}]%`)
     .single()
+
+  // Fallback for older auto-cash transactions created before the ID tagging
+  if (!cashTx) {
+    // Get the ticker to match the exact old note format
+    const { data: oldTx } = await supabase
+      .from('transacciones')
+      .select('activo:activos(ticker), tipo_operacion, fecha')
+      .eq('id', id)
+      .single()
+      
+    if (oldTx) {
+      const ticker = (oldTx.activo as any)?.ticker || (oldTx.activo as any)?.[0]?.ticker
+      const oldNoteFormat = `Auto-liquidez de ${oldTx.tipo_operacion} ${ticker}`
+      
+      const { data: oldCashTx } = await supabase
+        .from('transacciones')
+        .select('id, notas')
+        .eq('user_id', user.id)
+        .eq('notas', oldNoteFormat)
+        .single()
+        
+      if (oldCashTx) {
+        cashTx = oldCashTx
+      }
+    }
+  }
 
   if (cashTx) {
     let cashAmount = 0
@@ -200,10 +226,15 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
     }
 
     if (cashAmount > 0) {
+      const newNotas = cashTx.notas.includes(`[Auto-Cash:${id}]`) 
+        ? cashTx.notas 
+        : `[Auto-Cash:${id}] ${cashTx.notas}`
+
       await supabase.from('transacciones').update({
         tipo_operacion: cashTipo,
         cantidad: cashAmount,
-        fecha: updateData.fecha || data.fecha
+        fecha: updateData.fecha || data.fecha,
+        notas: newNotas
       }).eq('id', cashTx.id)
     } else {
       await supabase.from('transacciones').delete().eq('id', cashTx.id)
@@ -227,9 +258,31 @@ export async function deleteTransaccionAction(id: string): Promise<void> {
   if (error) throw new Error(`Error eliminando transacción: ${error.message}`)
 
   // Delete associated cash transaction
-  await supabase
+  const { data: cashTx } = await supabase
     .from('transacciones')
-    .delete()
+    .select('id')
     .eq('user_id', user.id)
     .like('notas', `%[Auto-Cash:${id}]%`)
+    .single()
+
+  if (cashTx) {
+    await supabase.from('transacciones').delete().eq('id', cashTx.id)
+  } else {
+    // Fallback delete
+    const { data: oldTx } = await supabase
+      .from('transacciones')
+      .select('activo:activos(ticker), tipo_operacion')
+      .eq('id', id)
+      .single()
+      
+    if (oldTx) {
+      const ticker = (oldTx.activo as any)?.ticker || (oldTx.activo as any)?.[0]?.ticker
+      const oldNoteFormat = `Auto-liquidez de ${oldTx.tipo_operacion} ${ticker}`
+      await supabase
+        .from('transacciones')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('notas', oldNoteFormat)
+    }
+  }
 }
