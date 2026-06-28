@@ -19,6 +19,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 interface ZenDashboardProps {
   positions: EnrichedPosition[]
+  marketState?: "OPEN" | "CLOSED"
 }
 
 function ZenLiveValue({
@@ -58,7 +59,7 @@ function ZenLiveValue({
   )
 }
 
-export function ZenDashboard({ positions }: ZenDashboardProps) {
+export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const { setZenMode } = usePreferences()
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const [time, setTime] = useState(new Date())
@@ -83,6 +84,19 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
     }
     return p.ticker.split(".")[0]
   }
+
+  // Sort positions: top total earners (val - cost)
+  const topEarners = useMemo(() => {
+    return [...positions]
+      .filter(p => p.unidades > 0 && (p.valor_actual ?? p.coste_total) > 0)
+      .sort((a, b) => {
+        const valA = a.valor_actual ?? a.coste_total
+        const valB = b.valor_actual ?? b.coste_total
+        const pnlA = valA - a.coste_total
+        const pnlB = valB - b.coste_total
+        return pnlB - pnlA
+      })
+  }, [positions])
 
   return (
     <div className="flex flex-col w-full h-full min-h-[90vh] justify-center items-center animate-in fade-in duration-1000 relative overflow-hidden">
@@ -130,17 +144,29 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
       {/* ── Main content ────────────────────────────────────────────── */}
       <div className="relative z-20 flex flex-col w-full max-w-5xl items-center px-6">
 
-        {/* Time */}
+        {/* Time and Market Status */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex items-center gap-2 text-muted-foreground/40 mb-6"
+          className="flex items-center gap-4 mb-6"
         >
-          <Clock className="w-4 h-4" />
-          <span className="text-sm font-medium tracking-widest font-tabular">
-            {time.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-          </span>
+          <div className="flex items-center gap-2 text-muted-foreground/40">
+            <Clock className="w-4 h-4" />
+            <span className="text-sm font-medium tracking-widest font-tabular">
+              {time.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          </div>
+          {marketState && (
+            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
+              marketState === "OPEN" 
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                : "bg-zinc-500/10 border-zinc-500/20 text-zinc-400"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${marketState === "OPEN" ? "bg-emerald-400 animate-pulse" : "bg-zinc-400"}`} />
+              {marketState === "OPEN" ? "Mercado Abierto" : "Mercado Cerrado"}
+            </div>
+          )}
         </motion.div>
 
         {/* Portfolio value — the hero */}
@@ -153,7 +179,7 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
             Valor del Portfolio
           </p>
-          <h1 className="text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold font-tabular tracking-tighter leading-none text-foreground">
+          <h1 className={`text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold font-tabular tracking-tighter leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
             <ZenLiveValue value={totals.totalValue} formatter={formatCurrency} glow={true} />
           </h1>
         </motion.div>
@@ -186,27 +212,28 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
           </div>
         </motion.div>
 
-        {/* ── Positions feed ────────────────────────────────────────── */}
+        {/* ── Positions feeds ────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="w-full max-w-4xl"
+          className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          <div className="bg-card/15 backdrop-blur-xl rounded-2xl border border-border/20 overflow-hidden">
+          {/* Daily Movers Feed */}
+          <div className="bg-card/15 backdrop-blur-xl rounded-2xl border border-border/20 overflow-hidden flex flex-col h-[400px]">
             {/* Feed header */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-border/15">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-border/15 shrink-0">
               <div className="flex items-center gap-2 text-muted-foreground/40">
                 <span className={`w-2 h-2 rounded-full ${isPositive ? "bg-emerald-400" : "bg-rose-400"} animate-pulse`} />
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em]">Posiciones activas</span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em]">Movimientos 24h</span>
               </div>
               <span className="text-[10px] font-semibold text-muted-foreground/30 uppercase tracking-widest">
-                {activePositions.length} activos
+                Top Volatilidad
               </span>
             </div>
 
             {/* Position rows */}
-            <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
+            <div className="flex-1 overflow-y-auto hide-scrollbar">
               {activePositions.map((p, i) => {
                 const val = p.valor_actual ?? p.coste_total
                 const percent = p.change_percent_24h ?? 0
@@ -224,13 +251,13 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
                     className="flex items-center justify-between px-6 py-4 border-b border-border/10 last:border-0 hover:bg-card/20 transition-colors"
                   >
                     {/* Left: color bar + ticker */}
-                    <div className="flex items-center gap-3 w-[180px]">
+                    <div className="flex items-center gap-3 w-[150px]">
                       <div
                         className="w-1 h-8 rounded-full flex-shrink-0"
                         style={{ backgroundColor: TYPE_COLORS[p.tipo] ?? "#71717a" }}
                       />
                       <div>
-                        <p className="text-[15px] font-bold tracking-tight text-foreground">
+                        <p className="text-[15px] font-bold tracking-tight text-foreground truncate max-w-[120px]">
                           {getDisplayTicker(p)}
                         </p>
                         <p className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
@@ -239,15 +266,8 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
                       </div>
                     </div>
 
-                    {/* Center: value */}
-                    <div className="flex-1 text-right px-4">
-                      <p className="text-[15px] font-semibold font-tabular text-foreground/80">
-                        <ZenLiveValue value={val} formatter={formatCurrency} glow={false} />
-                      </p>
-                    </div>
-
                     {/* Right: change */}
-                    <div className="flex items-center gap-3 w-[200px] justify-end">
+                    <div className="flex items-center gap-3 justify-end flex-1">
                       <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border backdrop-blur-sm ${
                         isPosPositive
                           ? "bg-emerald-500/5 border-emerald-500/15 text-emerald-400"
@@ -260,6 +280,75 @@ export function ZenDashboard({ positions }: ZenDashboardProps) {
                       </div>
                       <span className={`text-[12px] font-medium font-tabular w-[80px] text-right ${isPosPositive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
                         {pnl24h >= 0 ? "+" : ""}{formatCurrency(pnl24h)}
+                      </span>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Top Earners Feed */}
+          <div className="bg-card/15 backdrop-blur-xl rounded-2xl border border-border/20 overflow-hidden flex flex-col h-[400px]">
+            {/* Feed header */}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-border/15 shrink-0">
+              <div className="flex items-center gap-2 text-muted-foreground/40">
+                <span className="w-2 h-2 rounded-full bg-blue-400" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em]">Top Ganancias</span>
+              </div>
+              <span className="text-[10px] font-semibold text-muted-foreground/30 uppercase tracking-widest">
+                Total Histórico
+              </span>
+            </div>
+
+            {/* Position rows */}
+            <div className="flex-1 overflow-y-auto hide-scrollbar">
+              {topEarners.map((p, i) => {
+                const val = p.valor_actual ?? p.coste_total
+                const pnlTotal = val - p.coste_total
+                const percentTotal = p.coste_total > 0 ? (pnlTotal / p.coste_total) * 100 : 0
+                const isPosPositive = pnlTotal >= 0
+
+                const TrendIcon = pnlTotal > 0 ? TrendingUp : pnlTotal < 0 ? TrendingDown : Minus
+
+                return (
+                  <motion.div
+                    key={p.activo_id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 + i * 0.05 }}
+                    className="flex items-center justify-between px-6 py-4 border-b border-border/10 last:border-0 hover:bg-card/20 transition-colors"
+                  >
+                    {/* Left: color bar + ticker */}
+                    <div className="flex items-center gap-3 w-[150px]">
+                      <div
+                        className="w-1 h-8 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: TYPE_COLORS[p.tipo] ?? "#71717a" }}
+                      />
+                      <div>
+                        <p className="text-[15px] font-bold tracking-tight text-foreground truncate max-w-[120px]">
+                          {getDisplayTicker(p)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
+                          {p.tipo}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right: change */}
+                    <div className="flex items-center gap-3 justify-end flex-1">
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border backdrop-blur-sm ${
+                        isPosPositive
+                          ? "bg-emerald-500/5 border-emerald-500/15 text-emerald-400"
+                          : "bg-rose-500/5 border-rose-500/15 text-rose-400"
+                      }`}>
+                        <TrendIcon className="w-3.5 h-3.5" />
+                        <span className="text-[13px] font-bold font-tabular">
+                          {formatPercent(percentTotal)}
+                        </span>
+                      </div>
+                      <span className={`text-[12px] font-medium font-tabular w-[80px] text-right ${isPosPositive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
+                        {pnlTotal >= 0 ? "+" : ""}{formatCurrency(pnlTotal)}
                       </span>
                     </div>
                   </motion.div>

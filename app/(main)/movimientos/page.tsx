@@ -211,7 +211,7 @@ export default function MovimientosPage() {
                     if (isCompra) {
                       total = tx.cantidad * tx.precio_unitario + tx.comision
                     } else if (isDividendo) {
-                      total = tx.cantidad * tx.precio_unitario - tx.comision - (tx.retencion_origen || 0) - (tx.retencion_destino || 0)
+                      total = tx.precio_unitario - tx.comision - (tx.retencion_origen || 0) - (tx.retencion_destino || 0)
                     } else {
                       total = tx.cantidad * tx.precio_unitario - tx.comision
                     }
