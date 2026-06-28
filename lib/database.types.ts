@@ -122,6 +122,7 @@ export interface Database {
           fecha: string
           notas: string | null
           created_at: string
+          estado: string
         }
         Insert: {
           id?: string
@@ -134,6 +135,7 @@ export interface Database {
           fecha: string
           notas?: string | null
           created_at?: string
+          estado?: string
         }
         Update: {
           id?: string
@@ -146,6 +148,7 @@ export interface Database {
           fecha?: string
           notas?: string | null
           created_at?: string
+          estado?: string
         }
         Relationships: [
           {
