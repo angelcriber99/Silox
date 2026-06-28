@@ -273,7 +273,7 @@ export async function deleteTransaccionAction(id: string): Promise<void> {
     // Fallback delete
     const { data: oldTx } = await supabase
       .from('transacciones')
-      .select('activo:activos(ticker), tipo_operacion')
+      .select('activo:activos(ticker), tipo_operacion, fecha')
       .eq('id', id)
       .single()
       
