@@ -226,9 +226,10 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
     }
 
     if (cashAmount > 0) {
-      const newNotas = cashTx.notas.includes(`[Auto-Cash:${id}]`) 
-        ? cashTx.notas 
-        : `[Auto-Cash:${id}] ${cashTx.notas}`
+      const currentNotas = cashTx.notas || ""
+      const newNotas = currentNotas.includes(`[Auto-Cash:${id}]`) 
+        ? currentNotas 
+        : `[Auto-Cash:${id}] ${currentNotas}`.trim()
 
       await supabase.from('transacciones').update({
         tipo_operacion: cashTipo,
