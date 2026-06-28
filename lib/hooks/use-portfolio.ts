@@ -69,6 +69,7 @@ export function usePortfolio() {
         if (cashPos) {
           cashPos.valor_actual = (cashPos.valor_actual || 0) + pendingCashChange
           cashPos.valor_actual_nativo = (cashPos.valor_actual_nativo || 0) + pendingCashChange
+          cashPos.coste_total_eur = (cashPos.coste_total_eur || 0) + pendingCashChange
         }
       }
     }

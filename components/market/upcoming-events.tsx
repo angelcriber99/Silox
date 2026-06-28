@@ -37,7 +37,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         setLoading(true)
         
         // 1. Fetch automatic dividends
-        const activePositions = positions.filter(p => p.unidades > 0)
+        const activePositions = positions.filter(p => p.unidades > 0 && p.ticker !== 'CASH' && p.tipo !== 'Liquidez')
         const tickers = Array.from(new Set(activePositions.map(p => p.ticker)))
         const res = await fetch('/api/events', {
           method: 'POST',
