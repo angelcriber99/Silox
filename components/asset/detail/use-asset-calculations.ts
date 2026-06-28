@@ -10,6 +10,7 @@ export interface RawTransaction {
   comision: number
   notas: string | null
   created_at: string
+  estado?: string
 }
 
 export function useAssetCalculations(position: EnrichedPosition, transactions: RawTransaction[]) {
