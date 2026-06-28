@@ -140,8 +140,8 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
   }
 
   return (
-    <Card className="bg-card border-border backdrop-blur-sm">
-      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+    <Card className="bg-card/40 border-border/40 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
+      <CardHeader className="p-4 pb-2 border-b border-border/20 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           <Calendar className="h-4 w-4 text-amber-400" />
           <span>{t('upcoming_events')}</span>
@@ -152,7 +152,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         </Button>
       </CardHeader>
       <CardContent 
-        className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2 max-h-[200px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
+        className="flex flex-col gap-3 overflow-y-auto p-4 pt-3 max-h-[200px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700"
       >
 
         {loading && events.length === 0 ? (

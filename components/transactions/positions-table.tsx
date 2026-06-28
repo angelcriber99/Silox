@@ -237,8 +237,8 @@ export function PositionsTable({
   )
 
   return (
-    <Card className="animate-fade-in stagger-3 bg-card border-border backdrop-blur-sm overflow-hidden">
-      <CardHeader className="pb-3">
+    <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden">
+      <CardHeader className="p-4 md:p-6 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Layers className="h-4 w-4" />

@@ -43,8 +43,8 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
   }
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="p-4 pb-2 border-b border-border/50 flex flex-row items-center justify-between space-y-0">
+    <Card className="bg-card/40 border-border/40 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
+      <CardHeader className="p-4 pb-2 border-b border-border/20 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm font-medium text-muted-foreground">{t('top_movers')}</CardTitle>
         <div className="flex bg-muted/50 rounded-md p-0.5">
           <button 

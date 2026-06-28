@@ -93,35 +93,40 @@ export function PortfolioSummary({
   }
 
   return (
-    <>
+    <div className="relative overflow-hidden">
+      {/* Subtle background glow for the hero area */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+      
       {/* ── Hero: main value ─────────────────────────────────────────── */}
-      <div className="px-6 pt-6 pb-5 border-b border-border/20">
-        <div className="flex items-start justify-between gap-6">
+      <div className="relative px-6 pt-8 pb-8">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           {/* Left: Value block */}
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1.5">
+            <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               Valor del Portfolio
             </p>
-            <div className="text-[38px] font-bold tracking-tight text-foreground leading-none mb-2">
+            <div className="text-5xl md:text-[56px] font-bold tracking-tight leading-none mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
               <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
+            
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 w-fit">
               {/* Total PnL */}
               <div className={`flex items-center gap-1.5 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                <span className="text-[15px] font-bold font-tabular">
+                <span className="text-[16px] font-bold font-tabular">
                   {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
                 </span>
-                <span className="text-[13px] font-semibold opacity-80">
+                <span className="text-[14px] font-semibold opacity-80">
                   ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
                 </span>
               </div>
 
-              <span className="text-border/60 text-sm">·</span>
+              <span className="w-px h-4 bg-border/60" />
 
               {/* 24h */}
-              <div className={`flex items-center gap-1 text-[12px] font-medium ${daily24Positive ? "text-emerald-400/80" : "text-rose-400/80"}`}>
-                <span className="text-muted-foreground/40 font-normal">Hoy</span>
+              <div className={`flex items-center gap-1 text-[13px] font-medium ${daily24Positive ? "text-emerald-400/90" : "text-rose-400/90"}`}>
+                <span className="text-muted-foreground font-normal">Hoy</span>
                 <span className="font-semibold font-tabular">
                   {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                 </span>
@@ -133,24 +138,25 @@ export function PortfolioSummary({
               </div>
 
               {/* Prices sync badge */}
-              <span className={`text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                totals.hasAllPrices
-                  ? "text-emerald-400/70 border-emerald-500/20 bg-emerald-500/5"
-                  : "text-amber-400/70 border-amber-500/20 bg-amber-500/5"
-              }`}>
-                {totals.hasAllPrices ? "Precios actualizados" : "Precios pendientes"}
-              </span>
+              {!totals.hasAllPrices && (
+                <>
+                  <span className="w-px h-4 bg-border/60" />
+                  <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border text-amber-400/70 border-amber-500/20 bg-amber-500/5">
+                    Precios pendientes
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
           {/* Right: Quick actions */}
-          <div className="flex flex-col gap-2 flex-shrink-0">
+          <div className="flex flex-row md:flex-col gap-3 flex-shrink-0">
             <button
               onClick={() => setPerformanceOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-[12px] font-semibold"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"
             >
-              <BarChart2 className="w-3.5 h-3.5" />
-              Rendimiento Diario
+              <BarChart2 className="w-4 h-4" />
+              Rendimiento
             </button>
             {liquidezAmount > 0 && (
               <button
@@ -160,10 +166,11 @@ export function PortfolioSummary({
                     setWithdrawModalOpen(true)
                   }
                 }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 hover:bg-muted/70 text-muted-foreground border border-border/40 transition-all text-[12px] font-medium"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/60 hover:bg-card text-foreground border border-border/40 transition-all text-[13px] font-medium backdrop-blur-md shadow-sm"
               >
-                <Wallet className="w-3.5 h-3.5" />
-                Liquidez: {hideBalances ? "••••" : formatCurrency(liquidezAmount)}
+                <Wallet className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Liquidez:</span>
+                <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
               </button>
             )}
           </div>
@@ -171,71 +178,77 @@ export function PortfolioSummary({
       </div>
 
       {/* ── KPI grid ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-x divide-y divide-border/20">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-6 pb-6">
 
         {/* Invested */}
-        <div className="p-5 flex flex-col gap-1">
+        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Invertido</span>
-            <Briefcase className="w-3.5 h-3.5 text-muted-foreground/25" />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Invertido</span>
+            <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">
+              <Briefcase className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-[18px] font-bold font-tabular text-foreground">
+          <p className="text-xl md:text-2xl font-bold font-tabular text-foreground">
             <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
           </p>
-          <p className="text-[11px] text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground/60">
             {totals.positionCount} posiciones activas
           </p>
         </div>
 
         {/* P&L */}
-        <div className="p-5 flex flex-col gap-1">
+        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Ganancia / Pérdida</span>
-            {isPositive
-              ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400/50" />
-              : <TrendingDown className="w-3.5 h-3.5 text-rose-400/50" />}
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Ganancia Total</span>
+            <div className={`p-1.5 rounded-lg ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+              {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+            </div>
           </div>
-          <p className={`text-[18px] font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+          <p className={`text-xl md:text-2xl font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
             <AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />
           </p>
-          <p className="text-[11px] text-muted-foreground/50">
-            Total acumulado
+          <p className="text-xs text-muted-foreground/60">
+            Acumulado histórico
           </p>
         </div>
 
         {/* Rentabilidad % */}
-        <div className="p-5 flex flex-col gap-1">
+        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Rentabilidad</span>
-            <Target className={`w-3.5 h-3.5 ${isPositive ? "text-emerald-400/50" : "text-rose-400/50"}`} />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Rentabilidad</span>
+            <div className={`p-1.5 rounded-lg ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+              <Target className="w-4 h-4" />
+            </div>
           </div>
-          <p className={`text-[18px] font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+          <p className={`text-xl md:text-2xl font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
             <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
           </p>
-          <p className={`text-[11px] ${daily24Positive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
+          <p className={`text-xs ${daily24Positive ? "text-emerald-400/80" : "text-rose-400/80"}`}>
             Hoy: {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
           </p>
         </div>
 
         {/* Historical best */}
-        <div className="p-5 flex flex-col gap-1">
+        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Mejor activo</span>
-            <Activity className="w-3.5 h-3.5 text-muted-foreground/25" />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Mejor activo</span>
+            <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">
+              <Activity className="w-4 h-4" />
+            </div>
           </div>
           {historicalAssets.length > 0 ? (
             <>
-              <Link href={`/activo/${historicalAssets[0].id}`} className="group">
-                <p className="text-[15px] font-bold text-foreground group-hover:text-primary transition-colors">
+              <Link href={`/activo/${historicalAssets[0].id}`} className="group w-fit">
+                <p className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors truncate">
                   {historicalAssets[0].ticker}
                 </p>
               </Link>
-              <p className={`text-[11px] font-semibold font-tabular ${historicalAssets[0].historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {hideBalances ? "••••" : formatPnl(historicalAssets[0].historicalPnl)}
+              <p className={`text-xs font-semibold font-tabular ${historicalAssets[0].historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {hideBalances ? "••••" : formatPnl(historicalAssets[0].historicalPnl)} histórico
               </p>
             </>
           ) : (
-            <p className="text-[13px] text-muted-foreground/40">Sin datos</p>
+            <p className="text-sm text-muted-foreground/40 mt-1">Sin datos</p>
           )}
         </div>
       </div>
@@ -277,6 +290,6 @@ export function PortfolioSummary({
         onOpenChange={setWithdrawModalOpen}
         cashAssetId={cashAssetId || ""}
       />
-    </>
+    </div>
   )
 }
