@@ -85,7 +85,7 @@ export async function insertTransaccionAction(formData: unknown): Promise<Transa
 
   const { data, error } = await supabase
     .from('transacciones')
-    .insert([insertData])
+    .insert([insertData as any])
     .select()
     .single()
 
@@ -117,7 +117,7 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
       .eq('id', id)
       .single()
 
-    const assetMoneda = trx?.activo?.[0]?.moneda || trx?.activo?.moneda || 'EUR'
+    const assetMoneda = (trx?.activo as any)?.[0]?.moneda || (trx?.activo as any)?.moneda || 'EUR'
     let comisionNote = ''
     
     if (validatedData.comision_moneda !== assetMoneda && validatedData.comision > 0) {
@@ -166,7 +166,7 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
 
   const { data, error } = await supabase
     .from('transacciones')
-    .update(updateData)
+    .update(updateData as any)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
