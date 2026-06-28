@@ -59,6 +59,7 @@ export function PortfolioSummary({
       }
     })
     return positions
+      .filter(p => p.unidades > 0)
       .map(p => ({
         id: p.activo_id,
         ticker: p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
@@ -122,7 +123,7 @@ export function PortfolioSummary({
               <div className={`flex items-center gap-1 text-[12px] font-medium ${daily24Positive ? "text-emerald-400/80" : "text-rose-400/80"}`}>
                 <span className="text-muted-foreground/40 font-normal">Hoy</span>
                 <span className="font-semibold font-tabular">
-                  {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatPercent(totals.totalPnlPercent24h)}`}
+                  {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                 </span>
                 {!hideBalances && (
                   <span className="opacity-70">
@@ -212,7 +213,7 @@ export function PortfolioSummary({
             <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
           </p>
           <p className={`text-[11px] ${daily24Positive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
-            Hoy: {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatPercent(totals.totalPnlPercent24h)}`}
+            Hoy: {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
           </p>
         </div>
 

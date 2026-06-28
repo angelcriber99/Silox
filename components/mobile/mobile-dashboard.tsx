@@ -14,6 +14,7 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
+import { useSnapshots } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion, useAnimation } from "framer-motion"
 import { useTranslations } from "next-intl"
@@ -72,6 +73,8 @@ export function MobileDashboard({
   const [filterType, setFilterType] = useState<string>("All")
   const t = useTranslations("Dashboard")
 
+  const { data: snapshots } = useSnapshots()
+
   const isPositive      = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
   const areaColor       = isPositive ? "#10b981" : "#f43f5e"
@@ -102,23 +105,17 @@ export function MobileDashboard({
 
   // Portfolio sparkline
   const portfolioSparkline = useMemo(() => {
-    if (positions.length === 0) return []
-    const maxLen = Math.max(...positions.map(p => p.sparkline?.length ?? 0))
-    if (maxLen < 2) return []
-    const combined: number[] = []
-    for (let i = 0; i < maxLen; i++) {
-      let sum = 0
-      for (const p of positions) {
-        if (p.unidades > 0 && p.sparkline && p.sparkline.length > 0) {
-          const idx = Math.floor((i / maxLen) * p.sparkline.length)
-          sum += p.sparkline[Math.min(idx, p.sparkline.length - 1)] * p.unidades
-        }
-      }
-      combined.push(sum)
-    }
-    const start = combined[0] || 0
-    return combined.map((v, i) => ({ i, v, pnl: v - start }))
-  }, [positions])
+    if (!snapshots || snapshots.length === 0) return []
+    const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    const last7 = sorted.slice(-7)
+    if (last7.length < 2) return []
+    const start = last7[0].total_value
+    return last7.map((s, i) => ({
+      i,
+      v: s.total_value,
+      pnl: s.total_value - start
+    }))
+  }, [snapshots])
 
   // Sorted + filtered positions
   const sortedPositions = useMemo(() => {
@@ -282,7 +279,7 @@ export function MobileDashboard({
                 {/* 24h PnL */}
                 <div className={`flex items-center gap-1 text-[11px] font-medium font-tabular ${daily24Positive ? "text-emerald-400/80" : "text-rose-400/80"}`}>
                   <span className="text-muted-foreground/40">Hoy</span>
-                  <span>{hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatPercent(totals.totalPnlPercent24h)}`}</span>
+                  <span>{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
                 </div>
               </div>
             )}

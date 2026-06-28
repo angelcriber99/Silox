@@ -57,7 +57,7 @@ export function ProSidebar() {
     <motion.aside
       animate={{ width: sidebarCollapsed ? 72 : 240 }}
       transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-      className="border-r border-white/5 bg-card/20 backdrop-blur-2xl flex flex-col h-screen sticky top-0 left-0 hidden md:flex relative z-40 overflow-hidden"
+      className="border-r border-white/5 bg-card/20 backdrop-blur-2xl flex flex-col h-screen sticky top-0 left-0 hidden md:flex relative z-40"
     >
       {/* Collapse toggle */}
       <button
