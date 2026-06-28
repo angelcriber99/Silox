@@ -47,6 +47,7 @@ export interface Transaccion {
     ticker: string
     nombre: string | null
     tipo: string
+    moneda: string
   }
 }
 
