@@ -32,7 +32,7 @@ export default function MovimientosPage() {
 
   // State for filters
   const [searchQuery, setSearchQuery] = useState("")
-  const [typeFilter, setTypeFilter] = useState<"Todos" | "Compra" | "Venta">("Todos")
+  const [typeFilter, setTypeFilter] = useState<"Todos" | "Compra" | "Venta" | "Dividendo">("Todos")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
 
@@ -138,6 +138,7 @@ export default function MovimientosPage() {
               <option value="Todos">Todas las operaciones</option>
               <option value="Compra">Solo Compras</option>
               <option value="Venta">Solo Ventas</option>
+              <option value="Dividendo">Solo Dividendos</option>
             </select>
             
             <div className="flex items-center gap-2 flex-shrink-0 bg-background border border-border rounded-lg px-3 py-2">
