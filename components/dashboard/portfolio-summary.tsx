@@ -1,11 +1,14 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
-import { Target, Briefcase, Wallet, BarChart2, TrendingUp, TrendingDown } from "lucide-react"
+import {
+  TrendingUp, TrendingDown, Wallet, Briefcase,
+  BarChart2, Target, ArrowUpRight, ArrowDownRight,
+  Activity, Minus,
+} from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
-import type { PortfolioTotals, EnrichedPosition } from '@/lib/types'
+import type { PortfolioTotals, EnrichedPosition } from "@/lib/types"
 import { useState, useMemo } from "react"
 import { PerformanceModal } from "./performance-modal"
 import Link from "next/link"
@@ -20,72 +23,9 @@ interface PortfolioSummaryProps {
   loading?: boolean
 }
 
-function SkeletonValue() {
-  return (
-    <div className="h-7 w-28 rounded bg-muted animate-shimmer mt-1" />
-  )
+function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`rounded-lg bg-muted/40 animate-pulse ${className}`} />
 }
-
-interface KPICardProps {
-  label: string
-  value: React.ReactNode
-  valueColor?: string
-  subvalue?: React.ReactNode
-  icon: React.ReactNode
-  loading?: boolean
-  delay?: string
-  action?: React.ReactNode
-  extraContent?: React.ReactNode
-}
-
-function KPICard({
-  label,
-  value,
-  valueColor = "text-foreground",
-  subvalue,
-  icon,
-  loading = false,
-  delay = "stagger-1",
-  action,
-  extraContent,
-}: KPICardProps) {
-  return (
-    <Card
-      className={`animate-fade-in ${delay} bg-card border-border backdrop-blur-sm hover:border-border/60 transition-all duration-300 relative flex flex-col h-full`}
-    >
-      <CardContent className="p-5 flex-1 flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wider">
-            {label}
-          </span>
-          <div className="flex items-center gap-2">
-            {action}
-            {icon}
-          </div>
-        </div>
-        {loading ? (
-          <SkeletonValue />
-        ) : (
-          <div className="flex-1">
-            <p className={`text-2xl font-bold font-tabular tracking-tight ${valueColor}`}>
-              {value}
-            </p>
-            {subvalue && (
-              <div className="text-xs text-muted-foreground/80 mt-1">{subvalue}</div>
-            )}
-          </div>
-        )}
-        {extraContent && (
-          <div className="mt-4">
-            {extraContent}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-import { Eye, EyeOff } from "lucide-react"
 
 export function PortfolioSummary({
   totals,
@@ -93,194 +33,249 @@ export function PortfolioSummary({
   transactions = [],
   loading = false,
 }: PortfolioSummaryProps) {
-  const { hideBalances, zenMode, setZenMode } = usePreferences()
+  const { hideBalances } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [cashAssetId, setCashAssetId] = useState<string | null>(null)
-  
+  const t = useTranslations("Dashboard")
+
   const isPositive = totals.totalPnl >= 0
-  const t = useTranslations('Dashboard')
-
-  const historicalAssets = useMemo(() => {
-    if (!positions.length) return []
-    const fifoEvents = calculateFIFO(transactions || [])
-    
-    const realizedByAsset: Record<string, number> = {}
-    fifoEvents.forEach(e => {
-      realizedByAsset[e.activoId] = (realizedByAsset[e.activoId] || 0) + e.gananciaPatrimonial
-    })
-    
-    // Add dividends to realized PnL
-    transactions.forEach(tx => {
-      if (tx.tipo_operacion === "Dividendo") {
-        const qty = Number(tx.cantidad) || 0
-        const price = Number(tx.precio_unitario) || 0
-        const comision = Number(tx.comision) || 0
-        const netDividend = (qty * price) - comision
-        realizedByAsset[tx.activo_id] = (realizedByAsset[tx.activo_id] || 0) + netDividend
-      }
-    })
-
-    const items = positions.map(p => {
-      const realized = realizedByAsset[p.activo_id] || 0
-      const unrealized = p.pnl || 0
-      const totalHistoricalPnl = realized + unrealized
-      
-      const displayTicker = p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
-          ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
-          : p.ticker.split(".")[0]
-
-      return {
-        id: p.activo_id,
-        ticker: displayTicker,
-        tipo: p.tipo,
-        historicalPnl: totalHistoricalPnl
-      }
-    })
-
-    return items.sort((a, b) => b.historicalPnl - a.historicalPnl)
-  }, [positions, transactions])
+  const daily24Positive = totals.totalPnl24h >= 0
 
   const liquidezPos = positions.find(p => p.tipo === "Liquidez")
   const liquidezAmount = liquidezPos?.valor_actual || 0
 
+  const historicalAssets = useMemo(() => {
+    if (!positions.length) return []
+    const fifoEvents = calculateFIFO(transactions || [])
+    const realizedByAsset: Record<string, number> = {}
+    fifoEvents.forEach(e => {
+      realizedByAsset[e.activoId] = (realizedByAsset[e.activoId] || 0) + e.gananciaPatrimonial
+    })
+    transactions.forEach(tx => {
+      if (tx.tipo_operacion === "Dividendo") {
+        const netDiv = (Number(tx.cantidad) || 0) * (Number(tx.precio_unitario) || 0) - (Number(tx.comision) || 0)
+        realizedByAsset[tx.activo_id] = (realizedByAsset[tx.activo_id] || 0) + netDiv
+      }
+    })
+    return positions
+      .map(p => ({
+        id: p.activo_id,
+        ticker: p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
+          ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
+          : p.ticker.split(".")[0],
+        historicalPnl: (realizedByAsset[p.activo_id] || 0) + (p.pnl || 0),
+      }))
+      .sort((a, b) => b.historicalPnl - a.historicalPnl)
+  }, [positions, transactions])
+
+  if (loading) {
+    return (
+      <div className="w-full">
+        {/* Hero skeleton */}
+        <div className="p-6 pb-5 border-b border-border/30">
+          <Skeleton className="h-4 w-32 mb-3" />
+          <Skeleton className="h-10 w-56 mb-2" />
+          <Skeleton className="h-5 w-40" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-x divide-border/30">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="p-5">
+              <Skeleton className="h-3 w-20 mb-3" />
+              <Skeleton className="h-6 w-28 mb-1" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
-      <div className="flex overflow-x-auto gap-4 pb-4 snap-x [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-          <KPICard
-            label={t('portfolio_value')}
-            value={<AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />}
-            subvalue={hideBalances ? null : (
-              <div className="flex flex-col gap-1.5">
-                <span>{totals.hasAllPrices ? t('prices_synced') : t('prices_pending')}</span>
-                {liquidezAmount > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-zinc-400 font-medium flex items-center gap-1">
-                      <Wallet className="w-3 h-3" /> Liquidez: <AnimatedNumber value={liquidezAmount} format="currency" hide={hideBalances} />
-                    </span>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (liquidezPos) {
-                          setCashAssetId(liquidezPos.activo_id)
-                          setWithdrawModalOpen(true)
-                        }
-                      }}
-                      className="bg-border/60 hover:bg-border text-muted-foreground hover:text-foreground text-[10px] px-2 py-0.5 rounded transition-colors"
-                      title="Retirar a banco"
-                    >
-                      Retirar
-                    </button>
-                  </div>
+      {/* ── Hero: main value ─────────────────────────────────────────── */}
+      <div className="px-6 pt-6 pb-5 border-b border-border/20">
+        <div className="flex items-start justify-between gap-6">
+          {/* Left: Value block */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1.5">
+              Valor del Portfolio
+            </p>
+            <div className="text-[38px] font-bold tracking-tight text-foreground leading-none mb-2">
+              <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Total PnL */}
+              <div className={`flex items-center gap-1.5 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                <span className="text-[15px] font-bold font-tabular">
+                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+                </span>
+                <span className="text-[13px] font-semibold opacity-80">
+                  ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
+                </span>
+              </div>
+
+              <span className="text-border/60 text-sm">·</span>
+
+              {/* 24h */}
+              <div className={`flex items-center gap-1 text-[12px] font-medium ${daily24Positive ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+                <span className="text-muted-foreground/40 font-normal">Hoy</span>
+                <span className="font-semibold font-tabular">
+                  {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatPercent(totals.totalPnlPercent24h)}`}
+                </span>
+                {!hideBalances && (
+                  <span className="opacity-70">
+                    ({daily24Positive ? "+" : ""}{formatCurrency(totals.totalPnl24h)})
+                  </span>
                 )}
               </div>
-            )}
-            icon={<Wallet className="w-5 h-5 text-muted-foreground/50" />}
-            loading={loading}
-            delay="stagger-1"
-          />
-        </div>
-        
-        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-          <KPICard
-            label={t('total_cost')}
-            value={<AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />}
-            subvalue={hideBalances ? null : (
-              <span className="text-muted-foreground">
-                {totals.positionCount} {t('positions_count')}
-              </span>
-            )}
-            icon={<Briefcase className="w-5 h-5 text-muted-foreground/50" />}
-            loading={loading}
-            delay="stagger-2"
-          />
-        </div>
-        
-        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-          <KPICard
-            label={t('pnl')}
-            value={<AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />}
-            valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
-            subvalue={hideBalances ? null : (
-              <span className="text-muted-foreground flex items-center gap-1">
-                {t('today')}: <span className={`font-medium ${totals.totalPnl24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  <AnimatedNumber value={totals.totalPnl24h} format="pnl" hide={hideBalances} />
-                </span>
-              </span>
-            )}
-            icon={
-              isPositive ? (
-                <TrendingUp className="w-5 h-5 text-emerald-400/50" />
-              ) : (
-                <TrendingDown className="w-5 h-5 text-rose-400/50" />
-              )
-            }
-            extraContent={
-              <button 
-                onClick={() => setPerformanceOpen(true)}
-                className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-lg py-2 px-3 flex items-center justify-center gap-2 font-semibold transition-colors text-xs"
-              >
-                <BarChart2 className="w-4 h-4" />
-                {t('daily_performance')}
-              </button>
-            }
-            loading={loading}
-            delay="stagger-3"
-          />
-        </div>
-        
-        <div className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-          <KPICard
-            label={t('profitability')}
-            value={<AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />}
-            valueColor={isPositive ? "text-emerald-400" : "text-rose-400"}
-            subvalue={hideBalances ? null : (
-              <span className="text-muted-foreground flex items-center gap-1">
-                {t('today')}: <span className={totals.totalPnlPercent24h >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                  <AnimatedNumber value={totals.totalPnlPercent24h} format="percent" hide={hideBalances} />
-                </span>
-              </span>
-            )}
-            icon={
-              <Target
-                className={`w-5 h-5 ${
-                  isPositive ? "text-emerald-400/50" : "text-rose-400/50"
-                }`}
-              />
-            }
-            loading={loading}
-            delay="stagger-4"
-          />
-        </div>
 
-        {/* Separator */}
-        {!hideBalances && historicalAssets.length > 0 && (
-          <div className="flex items-center px-2 snap-start">
-            <div className="w-px h-16 bg-border/60" />
+              {/* Prices sync badge */}
+              <span className={`text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                totals.hasAllPrices
+                  ? "text-emerald-400/70 border-emerald-500/20 bg-emerald-500/5"
+                  : "text-amber-400/70 border-amber-500/20 bg-amber-500/5"
+              }`}>
+                {totals.hasAllPrices ? "Precios actualizados" : "Precios pendientes"}
+              </span>
+            </div>
           </div>
-        )}
 
-        {/* Historical Profit Mini Cards */}
-        {!hideBalances && historicalAssets.map((asset, index) => (
-          <Link key={`historical-${asset.id}`} href={`/activo/${asset.id}`} className={`min-w-[150px] snap-start h-full animate-fade-in`} style={{ animationDelay: `${400 + index * 100}ms` }}>
-            <Card className="bg-card/40 border-border/50 hover:bg-muted/80 hover:border-border transition-all h-full flex flex-col justify-center backdrop-blur-sm cursor-pointer active:scale-95">
-              <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                  {t('total_gain')}
-                </span>
-                <p className="text-sm font-bold text-foreground mb-1 truncate w-full px-2">{asset.ticker}</p>
-                <p className={`text-base font-bold tracking-tight ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  <AnimatedNumber value={asset.historicalPnl} format="pnl" hide={hideBalances} />
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+          {/* Right: Quick actions */}
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <button
+              onClick={() => setPerformanceOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-[12px] font-semibold"
+            >
+              <BarChart2 className="w-3.5 h-3.5" />
+              Rendimiento Diario
+            </button>
+            {liquidezAmount > 0 && (
+              <button
+                onClick={() => {
+                  if (liquidezPos) {
+                    setCashAssetId(liquidezPos.activo_id)
+                    setWithdrawModalOpen(true)
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 hover:bg-muted/70 text-muted-foreground border border-border/40 transition-all text-[12px] font-medium"
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                Liquidez: {hideBalances ? "••••" : formatCurrency(liquidezAmount)}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      <PerformanceModal open={performanceOpen} onOpenChange={setPerformanceOpen} currentPnl24h={totals.totalPnl24h} currentTotalValue={totals.totalValue} currentTotalCost={totals.totalCost} />
-      <WithdrawCashModal open={withdrawModalOpen} onOpenChange={setWithdrawModalOpen} cashAssetId={cashAssetId || ""} />
+      {/* ── KPI grid ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-x divide-y divide-border/20">
+
+        {/* Invested */}
+        <div className="p-5 flex flex-col gap-1">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Invertido</span>
+            <Briefcase className="w-3.5 h-3.5 text-muted-foreground/25" />
+          </div>
+          <p className="text-[18px] font-bold font-tabular text-foreground">
+            <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
+          </p>
+          <p className="text-[11px] text-muted-foreground/50">
+            {totals.positionCount} posiciones activas
+          </p>
+        </div>
+
+        {/* P&L */}
+        <div className="p-5 flex flex-col gap-1">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Ganancia / Pérdida</span>
+            {isPositive
+              ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400/50" />
+              : <TrendingDown className="w-3.5 h-3.5 text-rose-400/50" />}
+          </div>
+          <p className={`text-[18px] font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+            <AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />
+          </p>
+          <p className="text-[11px] text-muted-foreground/50">
+            Total acumulado
+          </p>
+        </div>
+
+        {/* Rentabilidad % */}
+        <div className="p-5 flex flex-col gap-1">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Rentabilidad</span>
+            <Target className={`w-3.5 h-3.5 ${isPositive ? "text-emerald-400/50" : "text-rose-400/50"}`} />
+          </div>
+          <p className={`text-[18px] font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+            <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
+          </p>
+          <p className={`text-[11px] ${daily24Positive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
+            Hoy: {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatPercent(totals.totalPnlPercent24h)}`}
+          </p>
+        </div>
+
+        {/* Historical best */}
+        <div className="p-5 flex flex-col gap-1">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">Mejor activo</span>
+            <Activity className="w-3.5 h-3.5 text-muted-foreground/25" />
+          </div>
+          {historicalAssets.length > 0 ? (
+            <>
+              <Link href={`/activo/${historicalAssets[0].id}`} className="group">
+                <p className="text-[15px] font-bold text-foreground group-hover:text-primary transition-colors">
+                  {historicalAssets[0].ticker}
+                </p>
+              </Link>
+              <p className={`text-[11px] font-semibold font-tabular ${historicalAssets[0].historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {hideBalances ? "••••" : formatPnl(historicalAssets[0].historicalPnl)}
+              </p>
+            </>
+          ) : (
+            <p className="text-[13px] text-muted-foreground/40">Sin datos</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Historical per-asset strip (scrollable) ─────────────────── */}
+      {!hideBalances && historicalAssets.length > 1 && (
+        <div className="px-6 py-3 border-t border-border/20 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/30 flex-shrink-0 mr-1">
+            Ganancia total por activo
+          </span>
+          {historicalAssets.map(asset => (
+            <Link
+              key={asset.id}
+              href={`/activo/${asset.id}`}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-105 ${
+                asset.historicalPnl >= 0
+                  ? "bg-emerald-500/5 border-emerald-500/15 hover:bg-emerald-500/10"
+                  : "bg-rose-500/5 border-rose-500/15 hover:bg-rose-500/10"
+              }`}
+            >
+              <span className="text-[11px] font-bold text-foreground/80">{asset.ticker}</span>
+              <span className={`text-[11px] font-bold font-tabular ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {asset.historicalPnl >= 0 ? "+" : ""}{formatCurrency(asset.historicalPnl)}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <PerformanceModal
+        open={performanceOpen}
+        onOpenChange={setPerformanceOpen}
+        currentPnl24h={totals.totalPnl24h}
+        currentTotalValue={totals.totalValue}
+        currentTotalCost={totals.totalCost}
+      />
+      <WithdrawCashModal
+        open={withdrawModalOpen}
+        onOpenChange={setWithdrawModalOpen}
+        cashAssetId={cashAssetId || ""}
+      />
     </>
   )
 }

@@ -1,11 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Activity } from "lucide-react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
-import type { EnrichedPosition } from '@/lib/types'
-import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
+import type { EnrichedPosition } from "@/lib/types"
 
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary"
 import { AllocationChart } from "@/components/dashboard/allocation-chart"
@@ -13,20 +11,17 @@ import { PositionsTable } from "@/components/transactions/positions-table"
 import { TopMovers } from "@/components/dashboard/top-movers"
 import { UpcomingEvents } from "@/components/market/upcoming-events"
 import { ZenDashboard } from "@/components/dashboard/zen-dashboard"
-import { MarketTicker } from "@/components/market/market-ticker"
 import { EditAssetModal } from "@/components/asset/edit-asset-modal"
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal"
 import { AddEventModal } from "@/components/market/add-event-modal"
 import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { SiloxInsights } from "@/components/dashboard/silox-insights"
 
 export default function Home() {
   const { positions, totals, isLoading, pricesUpdatedAt, marketState } = usePortfolio()
   const { data: allTransactions } = useAllTransactions()
-  const { zenMode, setZenMode } = usePreferences()
+  const { zenMode } = usePreferences()
 
-  // Modals
   const [addTxOpen, setAddTxOpen] = useState(false)
   const [editAssetOpen, setEditAssetOpen] = useState(false)
   const [addEventOpen, setAddEventOpen] = useState(false)
@@ -37,20 +32,15 @@ export default function Home() {
     setSelectedPosition(position)
     setAddTxOpen(true)
   }
-
   const openEditAssetModal = (position: EnrichedPosition) => {
     setSelectedPosition(position)
     setEditAssetOpen(true)
   }
 
-  // ─────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────
-
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col">
 
-      {/* ── Mobile Dashboard ─────────────────── */}
+      {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden">
         <MobileDashboard
           positions={positions}
@@ -60,70 +50,75 @@ export default function Home() {
         />
       </div>
 
-      {/* ── Desktop Dashboard ────────────────── */}
+      {/* ── Desktop ─────────────────────────────────────────────────── */}
       <div className="hidden md:flex md:flex-col md:flex-1">
         {zenMode ? (
           <ZenDashboard positions={positions} />
         ) : (
-          <div className="flex-1 mx-auto w-full px-6 py-6 space-y-6 max-w-7xl">
+          <div className="flex-1 flex flex-col">
 
-            {/* KPI Cards */}
-            <PortfolioSummary totals={totals} positions={positions} transactions={allTransactions} loading={isLoading} />
+            {/* ── Portfolio Header (sticky) ─────────────────────────── */}
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-2xl border-b border-border/30">
+              <PortfolioSummary
+                totals={totals}
+                positions={positions}
+                transactions={allTransactions}
+                loading={isLoading}
+              />
+            </div>
 
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 flex flex-col gap-6">
-                <AllocationChart positions={positions} marketState={marketState} />
-              </div>
-              
-              <div className="lg:col-span-1 space-y-6 flex flex-col">
-                <TopMovers positions={positions} marketState={marketState} />
-                <div>
-                  <UpcomingEvents 
-                    positions={positions} 
-                    onAddEvent={() => { setEditEventData(null); setAddEventOpen(true); }} 
-                    onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true); }}
+            {/* ── Main Content ──────────────────────────────────────── */}
+            <div className="flex-1 p-6 space-y-6 max-w-[1600px] w-full mx-auto">
+
+              {/* Row 1: Chart (wide) + Right panel */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-5">
+
+                {/* Allocation / Performance chart */}
+                <div className="min-w-0">
+                  <AllocationChart positions={positions} marketState={marketState} />
+                </div>
+
+                {/* Right column: Top Movers + Events */}
+                <div className="flex flex-col gap-5">
+                  <TopMovers positions={positions} marketState={marketState} />
+                  <UpcomingEvents
+                    positions={positions}
+                    onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
+                    onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
                   />
                 </div>
               </div>
+
+              {/* Row 2: Positions Table */}
+              <PositionsTable
+                positions={positions}
+                loading={isLoading}
+                onAddTransaction={openTransactionModal}
+                onEditAsset={openEditAssetModal}
+              />
+
             </div>
 
-            <PositionsTable
-              positions={positions}
-              loading={isLoading}
-              onAddTransaction={openTransactionModal}
-              onEditAsset={openEditAssetModal}
-            />
+            {/* Price updated footer */}
+            {pricesUpdatedAt && (
+              <div className="text-[10px] text-muted-foreground/30 text-center py-3 border-t border-border/20">
+                Precios actualizados: {new Date(pricesUpdatedAt).toLocaleString("es-ES")}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* ── Modals ─────────────────────────────── */}
-      <EditAssetModal
-        position={selectedPosition}
-        open={editAssetOpen}
-        onOpenChange={setEditAssetOpen}
-      />
-      <AddTransactionModal
-        position={selectedPosition}
-        open={addTxOpen}
-        onOpenChange={setAddTxOpen}
-      />
+      {/* ── Modals ─────────────────────────────────────────────────── */}
+      <EditAssetModal position={selectedPosition} open={editAssetOpen} onOpenChange={setEditAssetOpen} />
+      <AddTransactionModal position={selectedPosition} open={addTxOpen} onOpenChange={setAddTxOpen} />
       <AddEventModal
         open={addEventOpen}
         onOpenChange={setAddEventOpen}
         positions={positions}
         initialData={editEventData}
-        onSuccess={() => {
-          window.location.reload()
-        }}
+        onSuccess={() => window.location.reload()}
       />
-
-      {pricesUpdatedAt && (
-        <div className="text-[10px] text-muted-foreground/40 text-center pb-4 w-full flex justify-center items-center">
-          Última actualización de precios: {new Date(pricesUpdatedAt).toLocaleString('es-ES')}
-        </div>
-      )}
     </main>
   )
 }
