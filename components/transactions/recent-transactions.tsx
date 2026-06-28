@@ -39,9 +39,17 @@ export function RecentTransactions() {
           </div>
         ) : (
           <div className="space-y-1 max-h-[320px] overflow-y-auto pr-1">
-            {transactions.map((tx) => {
+            {transactions.filter(tx => !(tx.notas?.includes("[Auto-Cash:") || tx.notas?.includes("Auto-liquidez"))).map((tx) => {
               const isCompra = tx.tipo_operacion === "Compra"
-              const total = tx.cantidad * tx.precio_unitario
+              const isDividendo = tx.tipo_operacion === "Dividendo"
+              let total = 0
+              if (isCompra) {
+                total = tx.cantidad * tx.precio_unitario + tx.comision
+              } else if (isDividendo) {
+                total = tx.cantidad * tx.precio_unitario - tx.comision - (tx.retencion_origen || 0) - (tx.retencion_destino || 0)
+              } else {
+                total = tx.cantidad * tx.precio_unitario - tx.comision
+              }
               const ticker =
                 tx.activo && typeof tx.activo === "object" && !Array.isArray(tx.activo)
                   ? (tx.activo.tipo === "Fondo Indexado" || tx.activo.tipo === "Fondo Monetario")
@@ -61,7 +69,9 @@ export function RecentTransactions() {
                     className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${
                       isCompra
                         ? "bg-emerald-500/10 text-emerald-400"
-                        : "bg-rose-500/10 text-rose-400"
+                        : isDividendo 
+                          ? "bg-violet-500/10 text-violet-400"
+                          : "bg-rose-500/10 text-rose-400"
                     }`}
                   >
                     {isCompra ? (
@@ -75,7 +85,7 @@ export function RecentTransactions() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium text-foreground/90">
-                        {isCompra ? "Compra" : "Venta"}
+                        {isCompra ? "Compra" : isDividendo ? "Dividendo" : "Venta"}
                       </span>
                       <span className="text-xs text-muted-foreground/80">·</span>
                       <span className="text-sm font-tabular text-foreground/80">
@@ -99,7 +109,7 @@ export function RecentTransactions() {
                   <div className="text-right flex-shrink-0">
                     <p
                       className={`text-sm font-tabular font-medium ${
-                        isCompra ? "text-emerald-400" : "text-rose-400"
+                        isCompra ? "text-emerald-400" : isDividendo ? "text-violet-400" : "text-rose-400"
                       }`}
                     >
                       {isCompra ? "+" : "-"}

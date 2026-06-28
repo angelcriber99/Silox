@@ -173,6 +173,43 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
     .single()
 
   if (error) throw new Error(`Error actualizando transacción: ${error.message}`)
+
+  // Sync cash transaction
+  const { data: cashTx } = await supabase
+    .from('transacciones')
+    .select('id')
+    .eq('user_id', user.id)
+    .like('notas', `%[Auto-Cash:${id}]%`)
+    .single()
+
+  if (cashTx) {
+    let cashAmount = 0
+    let cashTipo = "Compra"
+    const total = (updateData.cantidad || data.cantidad || 0) * (updateData.precio_unitario || data.precio_unitario || 0)
+    const comisionNum = updateData.comision || data.comision || 0
+    
+    if (updateData.tipo_operacion === "Compra") {
+      cashTipo = "Venta"
+      cashAmount = total + comisionNum
+    } else if (updateData.tipo_operacion === "Venta") {
+      cashTipo = "Compra"
+      cashAmount = total - comisionNum
+    } else if (updateData.tipo_operacion === "Dividendo") {
+      cashTipo = "Compra"
+      cashAmount = (updateData.precio_unitario || (data as any).precio_unitario || 0) - (updateData.retencion_origen || (data as any).retencion_origen || 0) - (updateData.retencion_destino || (data as any).retencion_destino || 0) - comisionNum
+    }
+
+    if (cashAmount > 0) {
+      await supabase.from('transacciones').update({
+        tipo_operacion: cashTipo,
+        cantidad: cashAmount,
+        fecha: updateData.fecha || data.fecha
+      }).eq('id', cashTx.id)
+    } else {
+      await supabase.from('transacciones').delete().eq('id', cashTx.id)
+    }
+  }
+
   return data as any
 }
 
@@ -188,4 +225,11 @@ export async function deleteTransaccionAction(id: string): Promise<void> {
     .eq('user_id', user.id)
 
   if (error) throw new Error(`Error eliminando transacción: ${error.message}`)
+
+  // Delete associated cash transaction
+  await supabase
+    .from('transacciones')
+    .delete()
+    .eq('user_id', user.id)
+    .like('notas', `%[Auto-Cash:${id}]%`)
 }

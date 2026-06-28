@@ -108,7 +108,7 @@ export function AddTransactionModal({
     }
 
     try {
-      await addTransaction.mutateAsync({
+      const createdTx = await addTransaction.mutateAsync({
         activo_id: position.activo_id,
         tipo_operacion: tipoOperacion,
         estado: estado,
@@ -144,7 +144,7 @@ export function AddTransactionModal({
             cashAmount = precioNum - retencionOrigenNum - retencionDestinoNum - comisionNum
           }
 
-          if (cashAmount > 0) {
+          if (cashAmount > 0 && createdTx?.id) {
             await addTransaction.mutateAsync({
               activo_id: cashAsset.id,
               tipo_operacion: cashTipoOperacion,
@@ -152,7 +152,7 @@ export function AddTransactionModal({
               precio_unitario: 1,
               comision: 0,
               fecha,
-              notas: `Auto-liquidez de ${tipoOperacion} ${position.ticker}`,
+              notas: `[Auto-Cash:${createdTx.id}] Auto-liquidez de ${tipoOperacion} ${position.ticker}`,
             })
           }
         } catch (e) {

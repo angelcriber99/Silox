@@ -60,6 +60,10 @@ export default function MovimientosPage() {
     const currentYear = now.getFullYear()
 
     return transactions.filter((tx) => {
+      // 0. Exclude Auto-liquidez (internal cash syncing)
+      if (tx.notas?.includes("[Auto-Cash:") || tx.notas?.includes("Auto-liquidez")) {
+        return false
+      }
       // 1. Text Search (Asset name or ticker)
       const matchesSearch = searchQuery === "" || 
         tx.activo?.nombre?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -202,9 +206,15 @@ export default function MovimientosPage() {
                 ) : (
                   filteredTransactions.map((tx) => {
                     const isCompra = tx.tipo_operacion === "Compra"
-                    const total = isCompra 
-                      ? tx.cantidad * tx.precio_unitario + tx.comision 
-                      : tx.cantidad * tx.precio_unitario - tx.comision
+                    const isDividendo = tx.tipo_operacion === "Dividendo"
+                    let total = 0
+                    if (isCompra) {
+                      total = tx.cantidad * tx.precio_unitario + tx.comision
+                    } else if (isDividendo) {
+                      total = tx.cantidad * tx.precio_unitario - tx.comision - (tx.retencion_origen || 0) - (tx.retencion_destino || 0)
+                    } else {
+                      total = tx.cantidad * tx.precio_unitario - tx.comision
+                    }
                     const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'short',
@@ -223,9 +233,9 @@ export default function MovimientosPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                            isCompra ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                            isCompra ? "bg-emerald-500/10 text-emerald-400" : isDividendo ? "bg-violet-500/10 text-violet-400" : "bg-rose-500/10 text-rose-400"
                           }`}>
-                            {isCompra ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                            {isCompra ? <ArrowUpRight className="h-3 w-3" /> : isDividendo ? <ArrowDownRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                             {tx.tipo_operacion}
                           </span>
                           {tx.estado === "Pendiente" && (
@@ -250,7 +260,7 @@ export default function MovimientosPage() {
                           {hideBalances ? "****" : (tx.comision > 0 ? formatCurrency(tx.comision, tx.activo?.moneda || "EUR") : "0,00")}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-medium ${
-                          isCompra ? "text-emerald-400" : "text-rose-400"
+                          isCompra ? "text-emerald-400" : isDividendo ? "text-violet-400" : "text-rose-400"
                         }`}>
                           {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
                         </td>
