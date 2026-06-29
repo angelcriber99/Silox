@@ -28,8 +28,10 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
       
       const amount = tx.cantidad || 0
 
-      if (isDeposit) totalDepositos += amount
-      if (isWithdrawal) totalRetiradas += amount
+      if (tx.estado !== 'Pendiente') {
+        if (isDeposit) totalDepositos += amount
+        if (isWithdrawal) totalRetiradas += amount
+      }
     })
 
     return { totalDepositos, totalRetiradas }
@@ -114,24 +116,34 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
         </h2>
         
         <div className="space-y-4 animate-fade-in stagger-3">
-          {txTableData.length > 0 ? txTableData.map((tx: any) => (
+          {txTableData.length > 0 ? txTableData.map((tx: any) => {
+            const isDeposit = tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Depósito' || tx.tipo_operacion === 'Ingreso'
+            return (
             <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/40 backdrop-blur-sm hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-4">
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${tx.tipo === 'Compra' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isDeposit ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                   <DollarSign className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-semibold">{tx.tipo === 'Compra' ? 'Ingreso / Depósito' : 'Retirada / Venta'}</p>
+                  <p className="font-semibold">
+                    {isDeposit ? 'Ingreso / Depósito' : 'Retirada / Venta'}
+                    {tx.estado === 'Pendiente' && (
+                      <span className="ml-2 inline-flex px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        Pendiente
+                      </span>
+                    )}
+                  </p>
                   <p className="text-sm text-muted-foreground">{new Date(tx.fecha).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className={`font-bold font-tabular ${tx.tipo === 'Compra' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {tx.tipo === 'Compra' ? '+' : '-'}{formatCurrency(tx.totalEur, 'EUR')}
+                <p className={`font-bold font-tabular ${isDeposit ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {isDeposit ? '+' : '-'}{formatCurrency(tx.cantidad, 'EUR')}
                 </p>
               </div>
             </div>
-          )) : (
+            )
+          }) : (
             <div className="text-center py-12 border border-dashed rounded-xl bg-card/20">
               <History className="h-10 w-10 text-muted-foreground mx-auto mb-4 opacity-50" />
               <p className="text-muted-foreground font-medium">No hay movimientos de efectivo todavía</p>
