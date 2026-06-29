@@ -158,13 +158,6 @@ export function PortfolioSummary({
               <BarChart2 className="w-4 h-4" />
               Rendimiento
             </button>
-            <Link
-              href="/advisor"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"
-            >
-              <Sparkles className="w-4 h-4" />
-              Advisor
-            </Link>
             {liquidezAmount > 0 && (
               <button
                 onClick={() => {
