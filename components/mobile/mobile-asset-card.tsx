@@ -108,22 +108,9 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
                 {cfg.label}
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground/70 truncate leading-none mb-2">
+            <p className="text-[11px] text-muted-foreground/60 truncate leading-none">
               {displayName}
             </p>
-
-            {/* Weight bar */}
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-[3px] rounded-full bg-muted/40 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${weight}%`, backgroundColor: cfg.accent, opacity: 0.7 }}
-                />
-              </div>
-              <span className="text-[10px] font-medium text-muted-foreground/60 font-tabular w-8 text-right flex-shrink-0">
-                {weight.toFixed(1)}%
-              </span>
-            </div>
           </div>
 
           {/* Right: Value + Sparkline + PnL */}

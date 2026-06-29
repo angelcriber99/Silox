@@ -199,28 +199,28 @@ export function MobileDashboard({
 
       {/* ─── Sticky Header ───────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-2xl border-b border-white/5">
-        <div className="px-4 pt-5 pb-4">
+        <div className="px-4 pt-safe-top pt-4 pb-3">
 
           {/* Top row: brand + actions */}
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center border border-primary/20">
                 <Activity className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <span className="text-[13px] font-bold text-foreground tracking-tight">Silox</span>
-                <div className={`flex items-center gap-1 mt-0 ${isMarketOpen ? "text-emerald-400" : "text-muted-foreground/50"}`}>
+                <span className="text-[14px] font-bold text-foreground tracking-tight">Silox</span>
+                <div className={`flex items-center gap-1 ${isMarketOpen ? "text-emerald-400" : "text-muted-foreground/50"}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground/30"}`} />
                   <span className="text-[9px] font-semibold uppercase tracking-widest">{getMarketLabel()}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleRefresh}
-                className="h-8 w-8 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground"
+                className="h-8 w-8 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors"
               >
                 <motion.div animate={refreshControls}>
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -229,7 +229,7 @@ export function MobileDashboard({
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
-                className="h-8 w-8 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground"
+                className="h-8 w-8 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors"
               >
                 <Bell className="w-3.5 h-3.5" />
               </motion.button>
@@ -251,34 +251,32 @@ export function MobileDashboard({
 
           {/* Main KPI block */}
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 mb-1.5 flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-primary animate-pulse" />
               Valor del portfolio
             </p>
-            <div className="text-[42px] font-bold tracking-tight text-foreground leading-none mb-2">
+            <div className="text-[44px] font-bold tracking-tight text-foreground leading-none mb-3">
               <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
             </div>
 
             {totals.totalCost > 0 && (
-              <div className="flex items-center gap-3">
-                {/* Total PnL */}
-                <div className={`flex items-center gap-1 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Total PnL pill */}
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
                   {isPositive
-                    ? <TrendingUp className="w-3.5 h-3.5" />
-                    : <TrendingDown className="w-3.5 h-3.5" />}
-                  <span className="text-[15px] font-bold font-tabular">
+                    ? <TrendingUp className="w-3 h-3" />
+                    : <TrendingDown className="w-3 h-3" />}
+                  <span className="text-[13px] font-bold font-tabular">
                     {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
                   </span>
-                  <span className="text-[12px] font-semibold font-tabular opacity-80">
+                  <span className="text-[11px] font-semibold font-tabular opacity-80">
                     ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
                   </span>
                 </div>
 
-                {/* Divider */}
-                <span className="text-muted-foreground/20 text-sm">·</span>
-
-                {/* 24h PnL */}
-                <div className={`flex items-center gap-1 text-[11px] font-medium font-tabular ${daily24Positive ? "text-emerald-400/80" : "text-rose-400/80"}`}>
-                  <span className="text-muted-foreground/40">Hoy</span>
+                {/* 24h badge */}
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full bg-card/60 border border-border/30 text-[11px] font-semibold font-tabular ${daily24Positive ? "text-emerald-400" : "text-rose-400"}`}>
+                  <span className="text-muted-foreground/50 font-normal text-[10px]">Hoy</span>
                   <span>{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
                 </div>
               </div>
@@ -289,26 +287,29 @@ export function MobileDashboard({
 
       {/* ─── Sparkline ────────────────────────────────────────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className="h-24 w-full relative">
+        <div className="h-28 w-full relative -mt-1">
+          {/* Gradient overlay top for seamless blend */}
+          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-background/40 to-transparent z-10 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-background/20 to-transparent z-10 pointer-events-none" />
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={portfolioSparkline} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+            <AreaChart data={portfolioSparkline} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
               <defs>
                 <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.2} />
+                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.3} />
                   <stop offset="100%" stopColor={areaColor} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <YAxis hide domain={["dataMin", "dataMax"]} />
+              <YAxis hide domain={["dataMin - 200", "dataMax + 200"]} />
               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null
                   const d = payload[0].payload
                   const isUp = d.pnl >= 0
                   return (
-                    <div className="bg-background/95 backdrop-blur-xl border border-border/40 rounded-xl px-3 py-2 shadow-2xl">
+                    <div className="bg-card/95 backdrop-blur-xl border border-border/40 rounded-xl px-3 py-2 shadow-2xl">
                       <p className="text-[13px] font-bold font-tabular text-foreground">{formatCurrency(d.v)}</p>
                       <p className={`text-[11px] font-medium font-tabular ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
-                        {isUp ? "+" : ""}{formatCurrency(d.pnl)}
+                        {isUp ? "+" : ""}{formatCurrency(d.pnl)} vs inicio semana
                       </p>
                     </div>
                   )
@@ -330,8 +331,8 @@ export function MobileDashboard({
       )}
 
       {/* ─── Scrollable metrics pills ──────────────────────────────────── */}
-      <div className="px-4 mt-3 mb-4">
-        <div className="flex gap-2.5 overflow-x-auto hide-scrollbar pb-1">
+      <div className="px-4 mt-2 mb-4">
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
           <MetricPill
             label="Invertido"
             value={formatCurrency(totals.totalCost)}
@@ -368,7 +369,7 @@ export function MobileDashboard({
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={() => { hapticFeedback.light(); setPerformanceOpen(true) }}
-            className="flex-shrink-0 flex flex-col gap-0.5 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 min-w-[110px]"
+            className="flex-shrink-0 flex flex-col gap-0.5 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3 min-w-[110px] hover:bg-primary/15 transition-colors"
           >
             <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">Análisis</span>
             <div className="flex items-center gap-1 text-primary">
