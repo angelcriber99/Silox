@@ -74,7 +74,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   // Sort positions: most volatile first, hide zero-movement
   const activePositions = useMemo(() => {
     return [...positions]
-      .filter(p => p.unidades > 0 && (p.valor_actual ?? 0) > 0)
+      .filter(p => p.unidades > 0 && (p.valor_actual ?? 0) > 0 && p.tipo !== 'Liquidez' && p.ticker !== 'CASH')
       .sort((a, b) => Math.abs(b.change_percent_24h ?? 0) - Math.abs(a.change_percent_24h ?? 0))
   }, [positions])
 
@@ -88,7 +88,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   // Sort positions: top total earners (val - cost)
   const topEarners = useMemo(() => {
     return [...positions]
-      .filter(p => p.unidades > 0 && (p.valor_actual ?? p.coste_total) > 0)
+      .filter(p => p.unidades > 0 && (p.valor_actual ?? p.coste_total) > 0 && p.tipo !== 'Liquidez' && p.ticker !== 'CASH')
       .sort((a, b) => {
         const valA = a.valor_actual ?? a.coste_total
         const valB = b.valor_actual ?? b.coste_total

@@ -15,6 +15,8 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
   const { hideBalances } = usePreferences()
 
   const validPositions = marketState === 'CLOSED' ? [] : positions.filter(p => {
+    if (p.tipo === 'Liquidez' || p.ticker === 'CASH') return false
+    
     if (sortBy === "percent") {
       return typeof p.change_percent_24h === 'number' && p.change_percent_24h !== 0 && p.unidades > 0
     } else {
