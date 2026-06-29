@@ -26,7 +26,9 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
       const isDeposit = tipo === 'compra' || tipo === 'deposito' || tipo === 'ingreso'
       const isWithdrawal = tipo === 'venta' || tipo === 'retiro' || tipo === 'retirada'
       
-      const amount = tx.cantidad || 0
+      const qty = Number(tx.cantidad) || 0
+      const price = Number(tx.precio_unitario) || 0
+      const amount = qty * price
 
       if (tx.estado !== 'Pendiente') {
         if (isDeposit) totalDepositos += amount
@@ -138,7 +140,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
               </div>
               <div className="text-right">
                 <p className={`font-bold font-tabular ${isDeposit ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {isDeposit ? '+' : '-'}{formatCurrency(tx.cantidad, 'EUR')}
+                  {isDeposit ? '+' : '-'}{formatCurrency(tx.total, 'EUR')}
                 </p>
               </div>
             </div>
