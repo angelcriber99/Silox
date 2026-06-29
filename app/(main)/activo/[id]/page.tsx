@@ -9,6 +9,7 @@ import { FundDetailClient } from "@/components/asset/fund-detail-client"
 import { StockDetailClient } from "@/components/asset/stock-detail-client"
 import { CryptoDetailClient } from "@/components/asset/crypto-detail-client"
 import { EtfDetailClient } from "@/components/asset/etf-detail-client"
+import { LiquidityDetailClient } from "@/components/asset/liquidity-detail-client"
 import type { EnrichedPosition } from '@/lib/types'
 
 export default function ActivoPage() {
@@ -16,6 +17,7 @@ export default function ActivoPage() {
   const id = params.id as string
 
   const [position, setPosition] = useState<EnrichedPosition | null>(null)
+  const [assetDetails, setAssetDetails] = useState<any>(null)
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,6 +40,12 @@ export default function ActivoPage() {
         const pricePayload = await fetchPrices([rawPosition.ticker])
         const enrichedPositions = enrichPositions([rawPosition], pricePayload)
         setPosition(enrichedPositions[0])
+
+        if (rawPosition.tipo === "Acción" || rawPosition.tipo === "ETF") {
+          const { fetchAssetDetails } = await import('@/lib/actions/market')
+          const details = await fetchAssetDetails(rawPosition.ticker)
+          setAssetDetails(details)
+        }
 
         // Fetch transactions
         const { data: txs } = await supabase
@@ -79,12 +87,14 @@ export default function ActivoPage() {
     )
   }
 
-  if (position.tipo === "Acción") {
-    return <StockDetailClient position={position} transactions={transactions} />
+  if (position.tipo === "Liquidez") {
+    return <LiquidityDetailClient position={position} transactions={transactions} />
+  } else if (position.tipo === "Acción") {
+    return <StockDetailClient position={position} transactions={transactions} assetDetails={assetDetails} />
   } else if (position.tipo === "Crypto") {
     return <CryptoDetailClient position={position} transactions={transactions} />
   } else if (position.tipo === "ETF") {
-    return <EtfDetailClient position={position} transactions={transactions} />
+    return <EtfDetailClient position={position} transactions={transactions} assetDetails={assetDetails} />
   }
 
   // Default for "Fondo Indexado", "Fondo Monetario", and any other unrecognized type

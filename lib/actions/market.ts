@@ -81,6 +81,19 @@ async function _fetchMarketPrices(
 
   const results = await Promise.allSettled(
     tickers.map(async (ticker: string) => {
+      if (ticker === 'CASH') {
+        return {
+          ticker,
+          price: 1.0,
+          sparkline: [1, 1, 1, 1, 1, 1, 1],
+          currency: 'EUR',
+          changePercent24h: 0,
+          originalPrice: 1.0,
+          originalCurrency: 'EUR',
+          marketState: 'OPEN'
+        }
+      }
+
       const [quote, chart] = await Promise.all([
         yahooFinance.quote(ticker) as Promise<YahooQuote>,
         yahooFinance.chart(ticker, { period1: d, interval: '1d' }).catch(() => null),
@@ -192,5 +205,49 @@ export async function fetchMarketPrices(
   )
 
   return getCachedPrices()
+}
+
+export async function fetchAssetDetails(ticker: string) {
+  if (!ticker || ticker === 'CASH') return null
+
+  try {
+    const summary: any = await yahooFinance.quoteSummary(ticker, {
+      modules: [
+        'financialData',
+        'defaultKeyStatistics',
+        'summaryDetail',
+        'recommendationTrend'
+      ]
+    })
+    
+    const fd = summary.financialData || {}
+    const ks = summary.defaultKeyStatistics || {}
+    const sd = summary.summaryDetail || {}
+    const rt = summary.recommendationTrend?.trend?.[0] || {}
+
+    return {
+      currentPrice: fd.currentPrice,
+      targetMeanPrice: fd.targetMeanPrice,
+      recommendationKey: fd.recommendationKey,
+      analystStrongBuy: rt.strongBuy,
+      analystBuy: rt.buy,
+      analystHold: rt.hold,
+      analystSell: rt.sell,
+      analystStrongSell: rt.strongSell,
+      forwardPE: ks.forwardPE,
+      trailingPE: sd.trailingPE,
+      dividendYield: sd.dividendYield,
+      profitMargins: fd.profitMargins,
+      returnOnEquity: fd.returnOnEquity,
+      fiftyTwoWeekHigh: sd.fiftyTwoWeekHigh,
+      fiftyTwoWeekLow: sd.fiftyTwoWeekLow,
+      twoHundredDayAverage: sd.twoHundredDayAverage,
+      marketCap: sd.marketCap,
+      volume: sd.volume
+    }
+  } catch (error) {
+    console.error(`Error fetching asset details for ${ticker}:`, error)
+    return null
+  }
 }
 

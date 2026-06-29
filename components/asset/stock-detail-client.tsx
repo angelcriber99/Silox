@@ -20,13 +20,14 @@ import { StockExtendedStats } from "./detail/stock-extended-stats"
 interface StockDetailClientProps {
   position: EnrichedPosition
   transactions: RawTransaction[]
+  assetDetails?: any
 }
 
 const TIPO_BADGE_STYLES: Record<string, string> = {
   Acción: "bg-amber-500/10 text-amber-400 border-amber-500/20",
 }
 
-export function StockDetailClient({ position, transactions }: StockDetailClientProps) {
+export function StockDetailClient({ position, transactions, assetDetails }: StockDetailClientProps) {
   const {
     evolutionData,
     stats,

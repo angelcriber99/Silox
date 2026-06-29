@@ -22,13 +22,14 @@ const AssetContributionsChart = dynamic(() => import('./detail/asset-charts').th
 interface EtfDetailClientProps {
   position: EnrichedPosition
   transactions: RawTransaction[]
+  assetDetails?: any
 }
 
 const TIPO_BADGE_STYLES: Record<string, string> = {
   ETF: "bg-blue-500/10 text-blue-400 border-blue-500/20",
 }
 
-export function EtfDetailClient({ position, transactions }: EtfDetailClientProps) {
+export function EtfDetailClient({ position, transactions, assetDetails }: EtfDetailClientProps) {
   const {
     evolutionData,
     monthlyContributionsData,
@@ -92,7 +93,53 @@ export function EtfDetailClient({ position, transactions }: EtfDetailClientProps
         </div>
 
         {/* ═══════════ TU POSICIÓN ═══════════ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-in stagger-2">
+        {/* ═══════════ DATOS FUNDAMENTALES ═══════════ */}
+        {assetDetails && (
+          <div className="mb-10 animate-fade-in stagger-3">
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-blue-400" />
+              Métricas Fundamentales
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="bg-card/40 border-border backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground font-medium mb-1">Rentabilidad por Div</p>
+                  <p className="text-xl font-bold text-foreground font-tabular">
+                    {assetDetails.dividendYield ? (assetDetails.dividendYield * 100).toFixed(2) + '%' : "N/A"}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/40 border-border backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground font-medium mb-1">Volumen</p>
+                  <p className="text-xl font-bold text-foreground font-tabular">
+                    {assetDetails.volume ? assetDetails.volume.toLocaleString() : "N/A"}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/40 border-border backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground font-medium mb-1">Media 200 Sesiones</p>
+                  <p className="text-xl font-bold text-foreground font-tabular">
+                    {assetDetails.twoHundredDayAverage ? formatCurrency(assetDetails.twoHundredDayAverage, position.moneda) : "N/A"}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/40 border-border backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground font-medium mb-1">Rango 52 Semanas</p>
+                  <p className="text-xl font-bold text-foreground font-tabular truncate">
+                    {assetDetails.fiftyTwoWeekLow && assetDetails.fiftyTwoWeekHigh
+                      ? `${formatCurrency(assetDetails.fiftyTwoWeekLow, position.moneda)} - ${formatCurrency(assetDetails.fiftyTwoWeekHigh, position.moneda)}`
+                      : "N/A"}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 animate-fade-in stagger-3">
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Participaciones</span>
             <p className="text-2xl font-bold text-foreground font-tabular mt-1">{formatUnits(position.unidades)}</p>
