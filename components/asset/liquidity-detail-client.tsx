@@ -22,10 +22,11 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
     let totalRetiradas = 0
 
     transactions.forEach(tx => {
-      const isDeposit = tx.tipo.toLowerCase() === 'compra' || tx.tipo.toLowerCase() === 'deposito' || tx.tipo.toLowerCase() === 'ingreso'
-      const isWithdrawal = tx.tipo.toLowerCase() === 'venta' || tx.tipo.toLowerCase() === 'retiro' || tx.tipo.toLowerCase() === 'retirada'
+      const tipo = tx.tipo_operacion?.toLowerCase() || ''
+      const isDeposit = tipo === 'compra' || tipo === 'deposito' || tipo === 'ingreso'
+      const isWithdrawal = tipo === 'venta' || tipo === 'retiro' || tipo === 'retirada'
       
-      const amount = tx.unidades || tx.precio_eur || 0
+      const amount = tx.cantidad || 0
 
       if (isDeposit) totalDepositos += amount
       if (isWithdrawal) totalRetiradas += amount
