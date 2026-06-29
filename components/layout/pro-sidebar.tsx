@@ -22,6 +22,7 @@ import { useEffect, useState } from "react"
 
 const navItems = [
   { key: "dashboard", label: "Dashboard",   href: "/",           icon: LayoutDashboard },
+  { key: "advisor",    label: "Advisor",     href: "/advisor",    icon: Activity        },
   { key: "portfolio",  label: "Historial",   href: "/movimientos", icon: History         },
   { key: "declarar",   label: "Declarar",    href: "/declarar",   icon: FileText        },
   { key: "settings",   label: "Ajustes",     href: "/settings",   icon: Settings        },
