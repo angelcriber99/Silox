@@ -99,20 +99,20 @@ export function PortfolioSummary({
       
       {/* ── Hero: main value ─────────────────────────────────────────── */}
       <div className="relative px-6 pt-8 pb-8">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <div className="flex flex-col items-center justify-center text-center">
           {/* Left: Value block */}
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+          <div className="flex flex-col items-center z-10">
+            <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center justify-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               Valor del Portfolio
             </p>
-            <div className="text-5xl md:text-[56px] font-bold tracking-tight leading-none mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <div className="text-5xl md:text-[56px] font-bold tracking-tight leading-none mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
               <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
             </div>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 w-fit">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 w-fit">
               {/* Total PnL */}
-              <div className={`flex items-center gap-1.5 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+              <div className={`flex items-center justify-center gap-1.5 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="text-[16px] font-bold font-tabular">
                   {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
@@ -150,7 +150,7 @@ export function PortfolioSummary({
           </div>
 
           {/* Right: Quick actions */}
-          <div className="flex flex-row md:flex-col gap-3 flex-shrink-0">
+          <div className="flex flex-row md:absolute md:top-8 md:right-6 md:flex-col gap-3 mt-4 md:mt-0 z-20">
             <button
               onClick={() => setPerformanceOpen(true)}
               className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"
