@@ -1,26 +1,49 @@
 "use client"
 
 import { useNotes } from "@/lib/stores/use-notes"
-import { X, StickyNote, Save } from "lucide-react"
+import { X, StickyNote, Plus, Folder, Trash2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { toast } from "sonner"
 
 export function NotesModal() {
-  const { isOpen, setIsOpen, content, setContent } = useNotes()
-  const [localContent, setLocalContent] = useState(content)
+  const { isOpen, setIsOpen, notes, activeNoteId, addNote, updateNote, deleteNote, setActiveNoteId } = useNotes()
+  
+  // Local state for smooth typing without triggering full re-renders immediately
+  const [localTitle, setLocalTitle] = useState("")
+  const [localContent, setLocalContent] = useState("")
 
-  // Sync with store when opening
+  const activeNote = useMemo(() => notes.find(n => n.id === activeNoteId), [notes, activeNoteId])
+
+  // Sync local state when active note changes
   useEffect(() => {
-    if (isOpen) {
-      setLocalContent(content)
+    if (activeNote) {
+      setLocalTitle(activeNote.title)
+      setLocalContent(activeNote.content)
+    } else {
+      setLocalTitle("")
+      setLocalContent("")
     }
-  }, [isOpen, content])
+  }, [activeNoteId, activeNote?.id]) // intentionally only sync when ID changes, not on every content update
 
-  const handleSave = () => {
-    setContent(localContent)
-    toast.success("Plan estratégico guardado")
-    setIsOpen(false)
+  // Auto-save logic
+  useEffect(() => {
+    if (activeNote && (localTitle !== activeNote.title || localContent !== activeNote.content)) {
+      const timer = setTimeout(() => {
+        updateNote(activeNote.id, localContent, localTitle)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [localTitle, localContent, activeNote, updateNote])
+
+  const handleAddNote = () => {
+    addNote("Nueva Nota")
+  }
+
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    deleteNote(id)
+    toast.success("Nota eliminada")
   }
 
   return (
@@ -38,58 +61,91 @@ export function NotesModal() {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 p-4"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-5xl -translate-x-1/2 -translate-y-1/2 p-4"
           >
-            <div className="bg-card/90 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh]">
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-border/30 flex items-center justify-between bg-card/50">
-                <div className="flex items-center gap-2 text-amber-500">
-                  <div className="p-2 bg-amber-500/10 rounded-lg">
-                    <StickyNote className="w-5 h-5" />
+            <div className="bg-card/90 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl overflow-hidden flex h-[85vh]">
+              
+              {/* Sidebar */}
+              <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col">
+                <div className="px-4 py-4 border-b border-border/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-amber-500 font-semibold">
+                    <StickyNote className="w-4 h-4" />
+                    <span>Planes</span>
                   </div>
-                  <h2 className="font-semibold text-lg">Plan Estratégico</h2>
+                  <button
+                    onClick={handleAddNote}
+                    className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 transition-colors"
+                    title="Nueva Nota"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
+                
+                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                  {notes.length === 0 ? (
+                    <div className="text-center p-4 text-sm text-muted-foreground">
+                      No hay notas. Crea una para empezar.
+                    </div>
+                  ) : (
+                    notes.map(note => (
+                      <button
+                        key={note.id}
+                        onClick={() => setActiveNoteId(note.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all group ${
+                          activeNoteId === note.id 
+                            ? "bg-amber-500/10 text-amber-500 font-medium" 
+                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Folder className={`w-3.5 h-3.5 flex-shrink-0 ${activeNoteId === note.id ? "fill-amber-500/20" : ""}`} />
+                          <span className="truncate">{note.title || "Sin Título"}</span>
+                        </div>
+                        <Trash2 
+                          className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity hover:text-rose-500 flex-shrink-0" 
+                          onClick={(e) => handleDelete(note.id, e)}
+                        />
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="flex-1 flex flex-col bg-card/30 relative">
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
+                  className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/80 text-muted-foreground transition-colors z-10"
                 >
                   <X className="w-5 h-5" />
                 </button>
-              </div>
 
-              {/* Body */}
-              <div className="p-6 flex-1 overflow-hidden flex flex-col">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Anota aquí tus planes de entrada, salida, tesis de inversión y alarmas. 
-                  Se guarda automáticamente en tu navegador.
-                </p>
-                <textarea
-                  value={localContent}
-                  onChange={(e) => {
-                    setLocalContent(e.target.value)
-                    // Auto-save logic (debounced implicitly by just updating the local state, but we also save to store)
-                    setContent(e.target.value)
-                  }}
-                  placeholder="Ej: Si BABA toca los 87$, comprar 1.000€. Stop loss en 85$..."
-                  className="w-full flex-1 min-h-[400px] p-4 bg-background/50 rounded-xl border border-border/50 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all resize-none font-mono text-[13px] leading-relaxed"
-                />
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-border/30 bg-card/50 flex items-center justify-end gap-3">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
-                >
-                  Cerrar
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-amber-500 text-amber-950 hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"
-                >
-                  <Save className="w-4 h-4" />
-                  Guardar Plan
-                </button>
+                {activeNote ? (
+                  <div className="flex-1 flex flex-col p-8 pt-10">
+                    <input
+                      type="text"
+                      value={localTitle}
+                      onChange={(e) => setLocalTitle(e.target.value)}
+                      placeholder="Título (Ej: $BABA, Plan de Pensiones...)"
+                      className="text-2xl font-bold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground/30 mb-6"
+                    />
+                    <textarea
+                      value={localContent}
+                      onChange={(e) => setLocalContent(e.target.value)}
+                      placeholder="Escribe tu tesis de inversión, niveles de entrada, alarmas..."
+                      className="flex-1 w-full bg-transparent border-none outline-none resize-none font-mono text-[13px] leading-relaxed text-muted-foreground placeholder:text-muted-foreground/30"
+                    />
+                    <div className="text-xs text-muted-foreground/40 text-right mt-4 flex items-center justify-end gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500/50 animate-pulse" />
+                      Autoguardado activado
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/50">
+                    <StickyNote className="w-12 h-12 mb-4 opacity-20" />
+                    <p>Selecciona una nota o crea una nueva</p>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
