@@ -64,7 +64,7 @@ export function usePortfolio() {
         unidades: newUnidades,
         coste_total: newCoste
       }
-    }).filter(pos => pos.unidades > 0 || pos.ticker === 'CASH' || pos.ticker === 'REVOLUT')
+    })
   }, [positions, pendingTxs])
 
   const tickers = useMemo(
