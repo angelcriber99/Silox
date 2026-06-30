@@ -107,6 +107,7 @@ export function usePortfolio() {
     refetchPrices,
     pricesUpdatedAt,
     marketState: pricePayload?.marketState ?? 'CLOSED',
+    pendingTxs: pendingTxs ?? [],
   }
 }
 

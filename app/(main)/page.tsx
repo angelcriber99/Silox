@@ -16,9 +16,10 @@ import { AddTransactionModal } from "@/components/transactions/add-transaction-m
 import { AddEventModal } from "@/components/market/add-event-modal"
 import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { PendingOrders } from "@/components/transactions/pending-orders"
 
 export default function Home() {
-  const { positions, totals, isLoading, pricesUpdatedAt, marketState } = usePortfolio()
+  const { positions, totals, isLoading, pricesUpdatedAt, marketState, pendingTxs } = usePortfolio()
   const { data: allTransactions } = useAllTransactions()
   const { zenMode } = usePreferences()
 
@@ -88,6 +89,9 @@ export default function Home() {
                   />
                 </div>
               </div>
+
+              {/* Row 1.5: Pending Orders */}
+              <PendingOrders transactions={pendingTxs} />
 
               {/* Row 2: Positions Table */}
               <PositionsTable

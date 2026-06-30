@@ -60,8 +60,13 @@ export default function MovimientosPage() {
     const currentYear = now.getFullYear()
 
     return transactions.filter((tx) => {
-      // 0. Exclude Auto-liquidez (internal cash syncing)
-      if (tx.notas?.includes("[Auto-Cash:") || tx.notas?.includes("Auto-liquidez")) {
+      // 0. Exclude Efectivo/CASH (since they clutter the view when buying assets)
+      if (
+        tx.notas?.includes("[Auto-Cash:") || 
+        tx.notas?.includes("Auto-liquidez") ||
+        tx.activo?.ticker === 'CASH' ||
+        tx.activo?.nombre?.toLowerCase() === 'efectivo'
+      ) {
         return false
       }
       // 1. Text Search (Asset name or ticker)
