@@ -148,6 +148,7 @@ export function AddTransactionModal({
             await addTransaction.mutateAsync({
               activo_id: cashAsset.id,
               tipo_operacion: cashTipoOperacion,
+              estado: estado,
               cantidad: cashAmount,
               precio_unitario: 1,
               comision: 0,

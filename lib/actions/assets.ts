@@ -49,9 +49,9 @@ export async function getOrCreateCashAssetAction(): Promise<Activo> {
     .from('activos')
     .select('*')
     .eq('user_id', user.id)
-    .eq('tipo', 'Liquidez')
+    .eq('ticker', 'CASH')
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (existing) return existing
 
