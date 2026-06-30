@@ -16,7 +16,6 @@ import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useTranslations } from "next-intl"
 import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 import { useNotes } from "@/lib/stores/use-notes"
-import { NotesModal } from "./notes-modal"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -299,7 +298,6 @@ export function PortfolioSummary({
         onOpenChange={setWithdrawModalOpen}
         cashAssetId={cashAssetId || ""}
       />
-      <NotesModal />
     </div>
   )
 }
