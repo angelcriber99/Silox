@@ -220,7 +220,9 @@ export async function updateTransaccionAction(id: string, formData: unknown): Pr
       cashAmount = total + comisionNum
     } else if (updateData.tipo_operacion === "Venta") {
       cashTipo = "Compra"
-      cashAmount = total - comisionNum
+      const retencionOrigen = updateData.retencion_origen ?? (data as any).retencion_origen ?? 0
+      const retencionDestino = updateData.retencion_destino ?? (data as any).retencion_destino ?? 0
+      cashAmount = total - retencionOrigen - retencionDestino - comisionNum
     } else if (updateData.tipo_operacion === "Dividendo") {
       cashTipo = "Compra"
       cashAmount = (updateData.precio_unitario || (data as any).precio_unitario || 0) - (updateData.retencion_origen || (data as any).retencion_origen || 0) - (updateData.retencion_destino || (data as any).retencion_destino || 0) - comisionNum

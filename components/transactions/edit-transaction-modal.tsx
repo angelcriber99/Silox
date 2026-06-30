@@ -328,8 +328,8 @@ export function EditTransactionModal({
             </div>
           </div>
 
-          {/* Retention fields for Dividends */}
-          {isDividendo && (
+          {/* Retention fields for Dividends and Sales */}
+          {(isDividendo || tipoOperacion === "Venta") && (
             <div className="grid grid-cols-2 gap-4 pb-2 border-b border-border/40 mb-2">
               <div className="space-y-2">
                 <Label className="text-foreground/80 text-xs">Retención Origen (EEUU)</Label>
