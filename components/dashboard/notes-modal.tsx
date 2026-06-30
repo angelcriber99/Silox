@@ -61,12 +61,12 @@ export function NotesModal() {
             className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 pointer-events-none"
           >
             <div 
-              className="bg-zinc-950 border border-zinc-800 shadow-2xl rounded-2xl overflow-hidden flex w-full max-w-5xl h-[85vh] max-h-[800px] pointer-events-auto"
+              className="bg-background border border-border shadow-2xl rounded-2xl overflow-hidden flex w-full max-w-5xl h-[85vh] max-h-[800px] pointer-events-auto"
             >
               
               {/* Sidebar */}
-              <div className="w-72 border-r border-zinc-800 bg-zinc-900/50 flex flex-col flex-shrink-0">
-                <div className="px-5 py-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900 flex-shrink-0">
+              <div className="w-72 border-r border-border bg-card/50 flex flex-col flex-shrink-0">
+                <div className="px-5 py-5 border-b border-border flex items-center justify-between bg-card flex-shrink-0">
                   <div className="flex items-center gap-2 text-amber-500 font-bold text-lg">
                     <StickyNote className="w-5 h-5" />
                     <span>Mis Planes</span>
@@ -84,7 +84,7 @@ export function NotesModal() {
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {notes.length === 0 ? (
                     <div className="text-center p-6 mt-10">
-                      <p className="text-sm text-zinc-500 mb-4">No tienes ninguna nota todavía.</p>
+                      <p className="text-sm text-muted-foreground mb-4">No tienes ninguna nota todavía.</p>
                       <button
                         onClick={handleAddNote}
                         className="px-4 py-2 bg-amber-500 text-amber-950 font-semibold rounded-xl hover:bg-amber-400 transition-colors w-full"
@@ -100,7 +100,7 @@ export function NotesModal() {
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all group ${
                           activeNoteId === note.id 
                             ? "bg-amber-500/15 text-amber-500 font-bold border border-amber-500/30 shadow-sm" 
-                            : "text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200 border border-transparent"
+                            : "text-muted-foreground hover:bg-muted/80 hover:text-foreground border border-transparent"
                         }`}
                       >
                         <div className="flex items-center gap-3 truncate">
@@ -118,10 +118,10 @@ export function NotesModal() {
               </div>
 
               {/* Main Content Area */}
-              <div className="flex-1 flex flex-col bg-zinc-950 relative">
+              <div className="flex-1 flex flex-col bg-background relative">
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="absolute top-5 right-5 p-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors z-10"
+                  className="absolute top-5 right-5 p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors z-10"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -133,24 +133,24 @@ export function NotesModal() {
                       value={localTitle}
                       onChange={(e) => setLocalTitle(e.target.value)}
                       placeholder="Título (Ej: $BABA, Plan de Pensiones...)"
-                      className="text-3xl font-extrabold bg-transparent border-none outline-none text-white placeholder:text-zinc-700 mb-8"
+                      className="text-3xl font-extrabold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground/50 mb-8"
                     />
                     <textarea
                       value={localContent}
                       onChange={(e) => setLocalContent(e.target.value)}
                       placeholder="Escribe tu tesis de inversión, niveles de entrada, alarmas..."
-                      className="flex-1 w-full bg-transparent border-none outline-none resize-none font-mono text-[14px] leading-relaxed text-zinc-300 placeholder:text-zinc-700"
+                      className="flex-1 w-full bg-transparent border-none outline-none resize-none font-mono text-[14px] leading-relaxed text-muted-foreground placeholder:text-muted-foreground/30"
                     />
-                    <div className="text-xs text-zinc-600 text-right mt-4 flex items-center justify-end gap-2 font-medium">
+                    <div className="text-xs text-muted-foreground/70 text-right mt-4 flex items-center justify-end gap-2 font-medium">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                       Autoguardado activado
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
+                  <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
                     <StickyNote className="w-16 h-16 mb-6 opacity-20" />
-                    <p className="text-lg font-medium mb-2">Selecciona una nota para empezar</p>
-                    <p className="text-sm text-zinc-600 mb-6">O crea una nueva desde el panel lateral.</p>
+                    <p className="text-lg font-medium mb-2 text-foreground">Selecciona una nota para empezar</p>
+                    <p className="text-sm text-muted-foreground mb-6">O crea una nueva desde el panel lateral.</p>
                     <button
                       onClick={handleAddNote}
                       className="px-6 py-3 bg-amber-500/10 text-amber-500 font-semibold rounded-xl hover:bg-amber-500/20 transition-colors border border-amber-500/20"
