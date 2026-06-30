@@ -38,9 +38,38 @@ export function usePortfolio() {
     refetch: refetchPending,
   } = usePendingTransactions()
 
+  const adjustedPositions = useMemo(() => {
+    if (!positions) return []
+    const pending = pendingTxs ?? []
+    
+    return positions.map(pos => {
+      const posPending = pending.filter(tx => tx.activo?.ticker === pos.ticker)
+      if (posPending.length === 0) return pos
+      
+      let newUnidades = pos.unidades
+      let newCoste = pos.coste_total
+      
+      for (const tx of posPending) {
+        if (tx.tipo_operacion === 'Compra') {
+          newUnidades -= tx.cantidad
+          newCoste -= (tx.cantidad * tx.precio_unitario)
+        } else if (tx.tipo_operacion === 'Venta') {
+          newUnidades += tx.cantidad
+          newCoste += (tx.cantidad * tx.precio_unitario)
+        }
+      }
+      
+      return {
+        ...pos,
+        unidades: newUnidades,
+        coste_total: newCoste
+      }
+    }).filter(pos => pos.unidades > 0 || pos.ticker === 'CASH' || pos.ticker === 'REVOLUT')
+  }, [positions, pendingTxs])
+
   const tickers = useMemo(
-    () => (positions ?? []).filter((p) => p.unidades > 0).map((p) => p.ticker),
-    [positions]
+    () => adjustedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker),
+    [adjustedPositions]
   )
 
   const {
@@ -51,10 +80,10 @@ export function usePortfolio() {
   } = usePrices(tickers)
 
   const enriched: EnrichedPosition[] = useMemo(() => {
-    if (!positions) return []
-    const enrichedList = enrichPositions(positions, pricePayload ?? { prices: {} })
+    if (!adjustedPositions) return []
+    const enrichedList = enrichPositions(adjustedPositions, pricePayload ?? { prices: {} })
     return enrichedList
-  }, [positions, pricePayload])
+  }, [adjustedPositions, pricePayload])
 
   const totals: PortfolioTotals = useMemo(
     () => computePortfolioTotals(enriched),
