@@ -53,29 +53,8 @@ export function usePortfolio() {
   const enriched: EnrichedPosition[] = useMemo(() => {
     if (!positions) return []
     const enrichedList = enrichPositions(positions, pricePayload ?? { prices: {} })
-    
-    if (pendingTxs && pendingTxs.length > 0) {
-      let pendingCashChange = 0
-      pendingTxs.forEach(tx => {
-        if (tx.tipo_operacion === 'Venta') {
-          pendingCashChange += (tx.cantidad * tx.precio_unitario) - (tx.comision || 0)
-        } else if (tx.tipo_operacion === 'Compra') {
-          pendingCashChange -= (tx.cantidad * tx.precio_unitario) + (tx.comision || 0)
-        }
-      })
-      
-      if (pendingCashChange !== 0) {
-        const cashPos = enrichedList.find(p => p.tipo === 'Liquidez')
-        if (cashPos) {
-          cashPos.valor_actual = (cashPos.valor_actual || 0) + pendingCashChange
-          cashPos.valor_actual_nativo = (cashPos.valor_actual_nativo || 0) + pendingCashChange
-          cashPos.coste_total_eur = (cashPos.coste_total_eur || 0) + pendingCashChange
-        }
-      }
-    }
-    
     return enrichedList
-  }, [positions, pricePayload, pendingTxs])
+  }, [positions, pricePayload])
 
   const totals: PortfolioTotals = useMemo(
     () => computePortfolioTotals(enriched),
