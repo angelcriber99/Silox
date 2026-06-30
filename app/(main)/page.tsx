@@ -58,8 +58,8 @@ export default function Home() {
         ) : (
           <div className="flex-1 flex flex-col">
 
-            {/* ── Portfolio Header (sticky) ─────────────────────────── */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-2xl border-b border-border/30">
+            {/* ── Portfolio Header ─────────────────────────── */}
+            <div className="bg-background/95 border-b border-border/30">
               <PortfolioSummary
                 totals={totals}
                 positions={positions}
