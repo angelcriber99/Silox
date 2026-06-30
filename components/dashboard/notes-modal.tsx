@@ -58,13 +58,15 @@ export function NotesModal() {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 z-[70] w-full max-w-6xl -translate-x-1/2 -translate-y-1/2 p-4"
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 pointer-events-none"
           >
-            <div className="bg-zinc-950 border border-zinc-800 shadow-2xl rounded-2xl overflow-hidden flex h-[90vh]">
+            <div 
+              className="bg-zinc-950 border border-zinc-800 shadow-2xl rounded-2xl overflow-hidden flex w-full max-w-5xl h-[85vh] max-h-[800px] pointer-events-auto"
+            >
               
               {/* Sidebar */}
-              <div className="w-72 border-r border-zinc-800 bg-zinc-900/50 flex flex-col">
-                <div className="px-5 py-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
+              <div className="w-72 border-r border-zinc-800 bg-zinc-900/50 flex flex-col flex-shrink-0">
+                <div className="px-5 py-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900 flex-shrink-0">
                   <div className="flex items-center gap-2 text-amber-500 font-bold text-lg">
                     <StickyNote className="w-5 h-5" />
                     <span>Mis Planes</span>
