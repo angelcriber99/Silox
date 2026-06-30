@@ -113,46 +113,25 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
             </p>
           </div>
 
-          {/* Right: Value + Sparkline + PnL */}
-          <div className="flex flex-col items-end flex-shrink-0 gap-1">
-            {/* Sparkline */}
-            {sparkData && sparkData.length > 1 ? (
-              <div className="w-16 h-8">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={sparkData}>
-                    <Line
-                      type="monotone"
-                      dataKey="v"
-                      stroke={sparkColor}
-                      strokeWidth={1.5}
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="w-16 h-8 flex items-center justify-center">
-                <div className="w-12 h-[1px] bg-muted/30" />
-              </div>
-            )}
-
+          {/* Right: Value + Daily Change */}
+          <div className="flex flex-col items-end flex-shrink-0 justify-center">
             {/* Current value */}
-            <span className="text-[13px] font-bold font-tabular text-foreground">
+            <span className="text-[15px] font-bold font-tabular text-foreground">
               {hideBalances ? "••••" : (p.valor_actual !== null ? formatCurrency(p.valor_actual) : "—")}
             </span>
 
-            {/* Change 24h + Total PnL */}
-            <div className="flex items-center gap-1.5">
-              <div className={`flex items-center gap-0.5 ${trendColor}`}>
-                <TrendIcon className="w-3 h-3" />
-                <span className={`text-[10px] font-semibold font-tabular`}>
-                  {hideBalances ? "•••" : formatPercent(change24h)}
-                </span>
-              </div>
-              <span className="text-muted-foreground/30 text-[10px]">|</span>
-              <span className={`text-[10px] font-medium font-tabular px-1 py-0.5 rounded ${isPositive ? "text-emerald-400 bg-emerald-500/10" : "text-rose-400 bg-rose-500/10"}`}>
-                {hideBalances ? "•••" : formatPercent(pnlPercent)}
+            {/* Daily Change (Amount and Percent) */}
+            <div className={`flex items-center gap-1 mt-0.5 ${trendColor}`}>
+              <TrendIcon className="w-3.5 h-3.5" />
+              <span className="text-[12px] font-semibold font-tabular">
+                {hideBalances ? "•••" : (
+                  <>
+                    {p.change_amount_24h !== undefined && p.change_amount_24h !== null
+                      ? `${p.change_amount_24h >= 0 ? '+' : ''}${formatCurrency(p.change_amount_24h)}`
+                      : ""}
+                    <span className="ml-1 opacity-70">({formatPercent(change24h)})</span>
+                  </>
+                )}
               </span>
             </div>
           </div>
