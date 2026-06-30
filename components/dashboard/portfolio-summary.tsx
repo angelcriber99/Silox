@@ -15,6 +15,8 @@ import Link from "next/link"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useTranslations } from "next-intl"
 import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
+import { useNotes } from "@/lib/stores/use-notes"
+import { NotesModal } from "./notes-modal"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -173,6 +175,13 @@ export function PortfolioSummary({
                 <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
               </button>
             )}
+            <button
+              onClick={() => useNotes.getState().setIsOpen(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
+              Plan Estratégico
+            </button>
           </div>
         </div>
       </div>
@@ -290,6 +299,7 @@ export function PortfolioSummary({
         onOpenChange={setWithdrawModalOpen}
         cashAssetId={cashAssetId || ""}
       />
+      <NotesModal />
     </div>
   )
 }
