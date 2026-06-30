@@ -50,13 +50,17 @@ export default function DeclararPage() {
     let losses = 0
     let saleValue = 0
     let purchaseValue = 0
+    let retOrigen = 0
+    let retDestino = 0
     yearEvents.forEach(e => {
       if (e.gananciaPatrimonial > 0) gains += e.gananciaPatrimonial
       else losses += Math.abs(e.gananciaPatrimonial)
       saleValue += e.ingresoVenta || 0
       purchaseValue += e.costeAdquisicion || 0
+      retOrigen += e.retencionOrigen || 0
+      retDestino += e.retencionDestino || 0
     })
-    return { gains, losses, net: gains - losses, saleValue, purchaseValue }
+    return { gains, losses, net: gains - losses, saleValue, purchaseValue, retOrigen, retDestino }
   }, [yearEvents])
 
   // Get dividends for selected year
@@ -451,6 +455,13 @@ export default function DeclararPage() {
                       <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(totals.purchaseValue)}</div>
                     </div>
                   </div>
+                  {(totals.retDestino > 0 || totals.retOrigen > 0) && (
+                    <div className="bg-rose-950/50 rounded-lg p-3 border border-rose-900/50 mt-2">
+                      <div className="text-[10px] text-rose-400 font-bold mb-1">RETENCIONES PAGADAS EN VENTAS</div>
+                      <div className="text-sm font-bold font-tabular text-rose-100">{formatCurrency(totals.retDestino + totals.retOrigen)}</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Impuestos ya pagados al Estado. ¡No olvides deducirlos!</div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Criptomonedas */}

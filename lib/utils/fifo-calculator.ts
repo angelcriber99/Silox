@@ -10,6 +10,8 @@ export interface TaxEvent {
   ingresoVenta: number // (qty * price) - comision
   costeAdquisicion: number // sum of (qty * buyPrice + buyComision) of sold lots
   gananciaPatrimonial: number // ingresoVenta - costeAdquisicion
+  retencionDestino?: number
+  retencionOrigen?: number
   detalles: string // Explicación de qué lotes se vendieron
 }
 
@@ -84,6 +86,8 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           ingresoVenta,
           costeAdquisicion: totalCostBasis,
           gananciaPatrimonial,
+          retencionDestino: tx.retencion_destino || 0,
+          retencionOrigen: tx.retencion_origen || 0,
           detalles: `Corresponde a: ${soldLotsDetails.join(" y ")}.`
         })
       }
