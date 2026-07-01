@@ -163,7 +163,8 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           {memeConfigs.map((config, i) => (
               <motion.div
                 key={i}
-                className="absolute opacity-60 drop-shadow-[0_0_20px_rgba(255,255,255,0.7)] flex items-center justify-center"
+                className={`absolute opacity-60 flex items-center justify-center ${config.emoji.includes("/") ? "" : "drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"}`}
+                style={{ willChange: "transform" }}
                 initial={{ x: config.startX, y: config.startY, scale: 0 }}
                 animate={{ 
                   x: [config.startX, config.midX, config.endX, config.midX, config.startX],
