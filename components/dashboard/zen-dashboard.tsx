@@ -89,7 +89,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   // Sort positions: top total earners (val - cost)
   const topEarners = useMemo(() => {
     return [...positions]
-      .filter(p => p.unidades > 0 && (p.valor_actual ?? p.coste_total) > 0 && p.tipo !== 'Liquidez' && p.ticker !== 'CASH')
+      .filter(p => p.unidades > 0 && (p.valor_actual ?? p.coste_total) > 0 && p.tipo !== 'Liquidez' && p.tipo !== 'Fondo Monetario' && p.ticker !== 'CASH')
       .sort((a, b) => {
         const valA = a.valor_actual ?? a.coste_total
         const valB = b.valor_actual ?? b.coste_total
@@ -141,7 +141,13 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
       {/* ── Meme Emojis ─────────────────────────────────────────────── */}
       {memeMode && (
         <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
-          {["🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸"].map((emoji, i) => {
+          {[
+            "🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸",
+            "https://media.tenor.com/7-Gk2U840iAAAAAj/stonks-up.gif",
+            "https://media.tenor.com/bL6B0xQ5sC0AAAAj/doge-dogecoin.gif",
+            "https://media.tenor.com/g_1H8J14yC8AAAAj/nyan-cat.gif",
+            "https://media.tenor.com/5l3iZfXW9aQAAAAj/cat-jam.gif"
+          ].map((emoji, i) => {
             const startX = `${Math.random() * 100}vw`
             const midX = `${Math.random() * 100}vw`
             const endX = `${Math.random() * 100}vw`
@@ -152,17 +158,21 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
             return (
               <motion.div
                 key={i}
-                className="absolute text-5xl md:text-7xl opacity-50 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                className="absolute opacity-60 drop-shadow-[0_0_20px_rgba(255,255,255,0.7)] flex items-center justify-center"
                 initial={{ x: startX, y: startY, scale: 0 }}
                 animate={{ 
                   x: [startX, midX, endX, midX, startX],
                   y: [startY, midY, endY, midY, startY],
-                  rotate: [0, 90, 180, 270, 360],
-                  scale: [0.8, 1.5, 0.8, 1.5, 0.8]
+                  rotate: emoji.startsWith("http") ? 0 : [0, 90, 180, 270, 360],
+                  scale: emoji.startsWith("http") ? [0.8, 1.2, 0.8, 1.2, 0.8] : [0.8, 1.5, 0.8, 1.5, 0.8]
                 }}
                 transition={{ duration: 20 + Math.random() * 20, repeat: Infinity, ease: "linear" }}
               >
-                {emoji}
+                {emoji.startsWith("http") ? (
+                  <img src={emoji} className="w-32 h-32 md:w-48 md:h-48 object-contain" alt="meme" />
+                ) : (
+                  <span className="text-5xl md:text-7xl">{emoji}</span>
+                )}
               </motion.div>
             )
           })}
@@ -275,7 +285,27 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           {/* Daily Movers Feed */}
-          <div className="bg-card/15 backdrop-blur-xl rounded-2xl border border-border/20 overflow-hidden flex flex-col h-[400px]">
+          <motion.div 
+            className={`backdrop-blur-xl rounded-2xl border overflow-hidden flex flex-col h-[400px] ${memeMode ? 'bg-card/30' : 'bg-card/15 border-border/20'}`}
+            animate={memeMode ? { 
+              boxShadow: [
+                "0 0 20px 0px rgba(255,0,0,0.5)",
+                "0 0 20px 0px rgba(255,165,0,0.5)",
+                "0 0 20px 0px rgba(255,255,0,0.5)",
+                "0 0 20px 0px rgba(0,128,0,0.5)",
+                "0 0 20px 0px rgba(0,0,255,0.5)",
+                "0 0 20px 0px rgba(75,0,130,0.5)",
+                "0 0 20px 0px rgba(238,130,238,0.5)",
+                "0 0 20px 0px rgba(255,0,0,0.5)"
+              ],
+              borderColor: [
+                "rgba(255,0,0,1)", "rgba(255,165,0,1)", "rgba(255,255,0,1)", 
+                "rgba(0,128,0,1)", "rgba(0,0,255,1)", "rgba(75,0,130,1)", 
+                "rgba(238,130,238,1)", "rgba(255,0,0,1)"
+              ]
+            } : { boxShadow: "none", borderColor: "rgba(255,255,255,0.1)" }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
             {/* Feed header */}
             <div className="flex items-center justify-between px-6 py-3 border-b border-border/15 shrink-0">
               <div className="flex items-center gap-2 text-muted-foreground/40">
@@ -341,10 +371,30 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                 )
               })}
             </div>
-          </div>
+          </motion.div>
 
           {/* Top Earners Feed */}
-          <div className="bg-card/15 backdrop-blur-xl rounded-2xl border border-border/20 overflow-hidden flex flex-col h-[400px]">
+          <motion.div 
+            className={`backdrop-blur-xl rounded-2xl border overflow-hidden flex flex-col h-[400px] ${memeMode ? 'bg-card/30' : 'bg-card/15 border-border/20'}`}
+            animate={memeMode ? { 
+              boxShadow: [
+                "0 0 20px 0px rgba(0,0,255,0.5)",
+                "0 0 20px 0px rgba(75,0,130,0.5)",
+                "0 0 20px 0px rgba(238,130,238,0.5)",
+                "0 0 20px 0px rgba(255,0,0,0.5)",
+                "0 0 20px 0px rgba(255,165,0,0.5)",
+                "0 0 20px 0px rgba(255,255,0,0.5)",
+                "0 0 20px 0px rgba(0,128,0,0.5)",
+                "0 0 20px 0px rgba(0,0,255,0.5)"
+              ],
+              borderColor: [
+                "rgba(0,0,255,1)", "rgba(75,0,130,1)", "rgba(238,130,238,1)", 
+                "rgba(255,0,0,1)", "rgba(255,165,0,1)", "rgba(255,255,0,1)", 
+                "rgba(0,128,0,1)", "rgba(0,0,255,1)"
+              ]
+            } : { boxShadow: "none", borderColor: "rgba(255,255,255,0.1)" }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
             {/* Feed header */}
             <div className="flex items-center justify-between px-6 py-3 border-b border-border/15 shrink-0">
               <div className="flex items-center gap-2 text-muted-foreground/40">
@@ -410,7 +460,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                 )
               })}
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>
