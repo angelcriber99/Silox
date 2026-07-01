@@ -465,7 +465,7 @@ export function PositionsTable({
                         <PnlDisplay value={p.pnl_percent} type="percent" />
                       </TableCell>
                       <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
-                        <div className="flex items-center justify-end gap-1 pr-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="flex items-center justify-end gap-1 pr-6 transition-opacity duration-200">
                           {(() => {
                             const assetNotes = parseAssetNotes(p.notas);
                             const currentPrice = p.precio_actual_nativo !== null ? p.precio_actual_nativo : (p.precio_actual || 0);
@@ -474,42 +474,48 @@ export function PositionsTable({
                               w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price))
                             );
                             
+                            const showWavesPermanently = hasActiveWaves || hasTriggeredWave;
+                            
                             return (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
-                                title={`Olas (Waves) — ${p.ticker}`}
-                                className={`h-7 w-7 transition-colors ${
-                                  hasTriggeredWave 
-                                    ? "text-rose-400 bg-rose-500/10 animate-pulse" 
-                                    : hasActiveWaves 
-                                      ? "text-amber-400 bg-amber-500/10" 
-                                      : "text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10"
-                                }`}
-                              >
-                                <Waves className="h-4 w-4" />
-                              </Button>
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
+                                  title={`Olas (Waves) — ${p.ticker}`}
+                                  className={`h-7 w-7 transition-all duration-200 ${
+                                    showWavesPermanently ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                  } ${
+                                    hasTriggeredWave 
+                                      ? "text-rose-400 bg-rose-500/10 animate-pulse" 
+                                      : hasActiveWaves 
+                                        ? "text-amber-400 bg-amber-500/10" 
+                                        : "text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10"
+                                  }`}
+                                >
+                                  <Waves className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => onEditAsset(p)}
+                                  title={`Editar activo — ${p.ticker}`}
+                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-200"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => onAddTransaction(p)}
+                                  title={`Añadir transacción — ${p.ticker}`}
+                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground/60 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200"
+                                >
+                                  <PlusCircle className="h-4 w-4" />
+                                </Button>
+                              </>
                             );
                           })()}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEditAsset(p)}
-                            title={`Editar activo — ${p.ticker}`}
-                            className="h-7 w-7 text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onAddTransaction(p)}
-                            title={`Añadir transacción — ${p.ticker}`}
-                            className="h-7 w-7 text-muted-foreground/60 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
