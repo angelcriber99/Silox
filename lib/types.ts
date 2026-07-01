@@ -11,6 +11,7 @@ export interface Posicion {
   comisiones_total: number
   num_operaciones: number
   ultima_operacion: string | null
+  notas: string | null
 }
 
 export interface EnrichedPosition extends Posicion {

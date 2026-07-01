@@ -2,13 +2,25 @@ import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
-  const { data, error } = await createClient()
+  const supabase = createClient()
+  const { data: posiciones, error: errorPos } = await supabase
     .from('posiciones')
     .select('*')
 
-  if (error) throw new Error(`Error cargando posiciones: ${error.message}`)
+  if (errorPos) throw new Error(`Error cargando posiciones: ${errorPos.message}`)
 
-  return data ?? []
+  const { data: activos, error: errorAct } = await supabase
+    .from('activos')
+    .select('id, notas')
+
+  if (errorAct) throw new Error(`Error cargando activos (notas): ${errorAct.message}`)
+
+  const notasMap = new Map(activos.map(a => [a.id, a.notas]))
+
+  return (posiciones ?? []).map(p => ({
+    ...p,
+    notas: notasMap.get(p.activo_id) ?? null
+  }))
 }
 
 export async function fetchActivos(): Promise<Activo[]> {
@@ -51,6 +63,7 @@ export async function updateActivo(id: string, updates: {
   tipo?: string
   estrategia?: string
   moneda?: string
+  notas?: string | null
 }): Promise<Activo> {
   const { data, error } = await createClient()
     .from('activos')

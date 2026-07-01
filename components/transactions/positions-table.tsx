@@ -24,6 +24,8 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import { useAlerts } from "@/lib/hooks/use-alerts"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { WaveTrackerModal, parseAssetNotes } from "@/components/asset/wave-tracker-modal"
+import { Waves } from "lucide-react"
 
 interface PositionsTableProps {
   positions: EnrichedPosition[]
@@ -177,6 +179,8 @@ export function PositionsTable({
   const [addAssetOpen, setAddAssetOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
+  const [waveModalOpen, setWaveModalOpen] = useState(false)
+  const [waveAsset, setWaveAsset] = useState<EnrichedPosition | null>(null)
   const { alerts } = useAlerts()
 
   const hasTriggeredAlerts = alerts.some(a => a.triggered)
@@ -462,6 +466,32 @@ export function PositionsTable({
                       </TableCell>
                       <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
                         <div className="flex items-center justify-end gap-1 pr-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          {(() => {
+                            const assetNotes = parseAssetNotes(p.notas);
+                            const currentPrice = p.precio_actual_nativo !== null ? p.precio_actual_nativo : (p.precio_actual || 0);
+                            const hasActiveWaves = assetNotes.waves.some(w => w.active);
+                            const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => 
+                              w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price))
+                            );
+                            
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
+                                title={`Olas (Waves) — ${p.ticker}`}
+                                className={`h-7 w-7 transition-colors ${
+                                  hasTriggeredWave 
+                                    ? "text-rose-400 bg-rose-500/10 animate-pulse" 
+                                    : hasActiveWaves 
+                                      ? "text-amber-400 bg-amber-500/10" 
+                                      : "text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10"
+                                }`}
+                              >
+                                <Waves className="h-4 w-4" />
+                              </Button>
+                            );
+                          })()}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -600,6 +630,31 @@ export function PositionsTable({
                      </div>
                      
                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const assetNotes = parseAssetNotes(p.notas);
+                          const currentPrice = p.precio_actual_nativo !== null ? p.precio_actual_nativo : (p.precio_actual || 0);
+                          const hasActiveWaves = assetNotes.waves.some(w => w.active);
+                          const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => 
+                            w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price))
+                          );
+                          
+                          return (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
+                              className={`h-8 w-8 transition-colors ${
+                                hasTriggeredWave 
+                                  ? "text-rose-400 bg-rose-500/10 animate-pulse" 
+                                  : hasActiveWaves 
+                                    ? "text-amber-400 bg-amber-500/10" 
+                                    : "text-muted-foreground bg-muted/50 hover:text-amber-400 hover:bg-amber-500/10"
+                              }`}
+                            >
+                              <Waves className="h-4 w-4" />
+                            </Button>
+                          );
+                        })()}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -627,6 +682,10 @@ export function PositionsTable({
       <AddAssetModal open={addAssetOpen} onOpenChange={setAddAssetOpen} />
       <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
       <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
+      <WaveTrackerModal open={waveModalOpen} onOpenChange={setWaveModalOpen} position={waveAsset} onSuccess={() => {
+        // Trigger a refresh of the page or let SWR handle it if needed
+        window.location.reload()
+      }} />
     </Card>
   )
 }
