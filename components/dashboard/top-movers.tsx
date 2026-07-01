@@ -63,7 +63,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
           </button>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-3 grid grid-cols-2 gap-4 flex-1 overflow-y-auto min-h-0 hide-scrollbar">
+      <CardContent className="p-4 pt-3 grid grid-cols-2 gap-4 overflow-y-auto hide-scrollbar max-h-[220px]">
         {/* Best */}
         <div className="space-y-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
