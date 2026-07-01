@@ -57,6 +57,40 @@ export default function Home() {
           <ZenDashboard positions={positions} marketState={marketState} />
         ) : (
           <div className="flex-1 flex flex-col">
+            
+            <div className="p-4 bg-rose-500/10 border-b border-rose-500/20 flex items-center justify-between">
+              <div className="text-rose-400 font-bold">
+                🛠️ Botón Mágico de Antigravity
+              </div>
+              <button 
+                className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(225,29,72,0.4)]"
+                onClick={async () => {
+                  const { toast } = await import("sonner")
+                  const liquidezPos = positions.find(p => p.tipo === "Liquidez")
+                  if (!liquidezPos) { toast.error("No tienes activo de Liquidez"); return; }
+                  try {
+                    const { createClient } = await import('@/lib/supabase/client')
+                    const supabase = createClient()
+                    const { data: { user } } = await supabase.auth.getUser()
+                    if(!user) return
+                    await supabase.from('transacciones').insert([{
+                      activo_id: liquidezPos.activo_id,
+                      tipo_operacion: "Venta",
+                      estado: "Completada",
+                      cantidad: 5007.20,
+                      precio_unitario: 1,
+                      comision: 0,
+                      fecha: new Date().toISOString().split("T")[0],
+                      notas: "[Auto-Cash:Magia] Ajuste de compras pendientes GRRR, ZETA, ASTS",
+                      user_id: user.id
+                    }])
+                    toast.success("¡Magia hecha! Efectivo ajustado en -5.007,20$. Recarga la página.")
+                  } catch (e) { toast.error("Error al hacer magia") }
+                }}
+              >
+                Ajustar Efectivo (-5.007,20$)
+              </button>
+            </div>
 
             {/* ── Portfolio Header ─────────────────────────── */}
             <div className="bg-background/95 border-b border-border/30">
