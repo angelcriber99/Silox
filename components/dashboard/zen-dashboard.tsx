@@ -141,22 +141,31 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
       {/* ── Meme Emojis ─────────────────────────────────────────────── */}
       {memeMode && (
         <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
-          {["🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸"].map((emoji, i) => (
-            <motion.div
-              key={i}
-              className="absolute text-5xl md:text-7xl opacity-50 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
-              initial={{ x: `${Math.random() * 100}vw`, y: `${Math.random() * 100}vh`, scale: 0 }}
-              animate={{ 
-                x: [`${Math.random() * 100}vw`, `${Math.random() * 100}vw`, `${Math.random() * 100}vw`],
-                y: [`${Math.random() * 100}vh`, `${Math.random() * 100}vh`, `${Math.random() * 100}vh`],
-                rotate: [0, 180, 360],
-                scale: [0.8, 1.5, 0.8]
-              }}
-              transition={{ duration: 10 + Math.random() * 10, repeat: Infinity, ease: "linear" }}
-            >
-              {emoji}
-            </motion.div>
-          ))}
+          {["🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸"].map((emoji, i) => {
+            const startX = `${Math.random() * 100}vw`
+            const midX = `${Math.random() * 100}vw`
+            const endX = `${Math.random() * 100}vw`
+            const startY = `${Math.random() * 100}vh`
+            const midY = `${Math.random() * 100}vh`
+            const endY = `${Math.random() * 100}vh`
+            
+            return (
+              <motion.div
+                key={i}
+                className="absolute text-5xl md:text-7xl opacity-50 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                initial={{ x: startX, y: startY, scale: 0 }}
+                animate={{ 
+                  x: [startX, midX, endX, midX, startX],
+                  y: [startY, midY, endY, midY, startY],
+                  rotate: [0, 90, 180, 270, 360],
+                  scale: [0.8, 1.5, 0.8, 1.5, 0.8]
+                }}
+                transition={{ duration: 20 + Math.random() * 20, repeat: Infinity, ease: "linear" }}
+              >
+                {emoji}
+              </motion.div>
+            )
+          })}
         </div>
       )}
 
