@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
-import type { PortfolioTotals, EnrichedPosition } from "@/lib/types"
+import type { PortfolioTotals, EnrichedPosition, Transaccion } from "@/lib/types"
 import { useState, useMemo } from "react"
 import { PerformanceModal } from "./performance-modal"
 import Link from "next/link"
@@ -21,6 +21,7 @@ interface PortfolioSummaryProps {
   totals: PortfolioTotals
   positions?: EnrichedPosition[]
   transactions?: any[]
+  pendingTxs?: Transaccion[]
   loading?: boolean
 }
 
@@ -32,6 +33,7 @@ export function PortfolioSummary({
   totals,
   positions = [],
   transactions = [],
+  pendingTxs = [],
   loading = false,
 }: PortfolioSummaryProps) {
   const { hideBalances } = usePreferences()
@@ -45,6 +47,15 @@ export function PortfolioSummary({
 
   const liquidezPos = positions.find(p => p.tipo === "Liquidez")
   const liquidezAmount = liquidezPos?.valor_actual || 0
+
+  const pendingCashEur = useMemo(() => {
+    if (!pendingTxs) return 0
+    return pendingTxs.reduce((sum, tx) => {
+      if (tx.tipo_operacion !== 'Compra') return sum
+      const fx = tx.activo?.moneda === 'USD' ? 1.07 : 1
+      return sum + ((tx.cantidad * tx.precio_unitario) / fx)
+    }, 0)
+  }, [pendingTxs])
 
   const historicalAssets = useMemo(() => {
     if (!positions.length) return []
@@ -160,19 +171,26 @@ export function PortfolioSummary({
               Rendimiento
             </button>
             {liquidezAmount > 0 && (
-              <button
-                onClick={() => {
-                  if (liquidezPos) {
-                    setCashAssetId(liquidezPos.activo_id)
-                    setWithdrawModalOpen(true)
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/60 hover:bg-card text-foreground border border-border/40 transition-all text-[13px] font-medium backdrop-blur-md shadow-sm"
-              >
-                <Wallet className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Liquidez:</span>
-                <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
-              </button>
+              <div className="flex flex-col items-center md:items-end gap-1">
+                <button
+                  onClick={() => {
+                    if (liquidezPos) {
+                      setCashAssetId(liquidezPos.activo_id)
+                      setWithdrawModalOpen(true)
+                    }
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/60 hover:bg-card text-foreground border border-border/40 transition-all text-[13px] font-medium backdrop-blur-md shadow-sm w-full md:w-auto"
+                >
+                  <Wallet className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Liquidez:</span>
+                  <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
+                </button>
+                {pendingCashEur > 0 && !hideBalances && (
+                  <span className="text-[10px] font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                    -{formatCurrency(pendingCashEur)} en uso
+                  </span>
+                )}
+              </div>
             )}
             <button
               onClick={() => useNotes.getState().setIsOpen(true)}

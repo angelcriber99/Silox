@@ -65,6 +65,7 @@ export default function Home() {
                 positions={positions}
                 transactions={allTransactions}
                 loading={isLoading}
+                pendingTxs={pendingTxs}
               />
             </div>
 
@@ -76,14 +77,14 @@ export default function Home() {
 
                 {/* Allocation / Performance chart */}
                 <div className="min-w-0">
-                  <AllocationChart positions={positions} pendingTxs={pendingTxs} marketState={marketState} />
+                  <AllocationChart positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 </div>
 
                 {/* Right column: Top Movers + Events */}
                 <div className="flex flex-col gap-5">
-                  <TopMovers positions={positions} marketState={marketState} />
+                  <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                   <UpcomingEvents
-                    positions={positions}
+                    positions={positions.filter(p => p.tipo !== 'Liquidez')}
                     onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
                     onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
                   />
@@ -95,7 +96,7 @@ export default function Home() {
 
               {/* Row 2: Positions Table */}
               <PositionsTable
-                positions={positions}
+                positions={positions.filter(p => p.tipo !== 'Liquidez')}
                 loading={isLoading}
                 onAddTransaction={openTransactionModal}
                 onEditAsset={openEditAssetModal}
