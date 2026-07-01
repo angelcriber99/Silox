@@ -39,9 +39,9 @@ function MetricPill({
   hide?: boolean
 }) {
   return (
-    <div className="flex-shrink-0 flex flex-col gap-0.5 bg-card/50 border border-border/40 rounded-2xl px-4 py-3 min-w-[110px]">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">{label}</span>
-      <span className={`text-[13px] font-bold font-tabular ${valueColor || "text-foreground"}`}>
+    <div className="flex-shrink-0 flex flex-col justify-center min-w-[90px] pr-4">
+      <span className="text-[10px] font-medium text-muted-foreground/50 mb-0.5">{label}</span>
+      <span className={`text-[13px] font-semibold font-tabular ${valueColor || "text-foreground"}`}>
         {hide ? "••••" : value}
       </span>
     </div>
@@ -261,23 +261,19 @@ export function MobileDashboard({
 
             {totals.totalCost > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Total PnL pill */}
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-                  {isPositive
-                    ? <TrendingUp className="w-3 h-3" />
-                    : <TrendingDown className="w-3 h-3" />}
-                  <span className="text-[13px] font-bold font-tabular">
+                {/* Minimalist PnL display */}
+                <div className={`flex items-center gap-1.5 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                  <span className="text-[14px] font-medium font-tabular">
                     {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
                   </span>
-                  <span className="text-[11px] font-semibold font-tabular opacity-80">
+                  <span className="text-[12px] opacity-80">
                     ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
                   </span>
                 </div>
-
-                {/* 24h badge */}
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full bg-card/60 border border-border/30 text-[11px] font-semibold font-tabular ${daily24Positive ? "text-emerald-400" : "text-rose-400"}`}>
-                  <span className="text-muted-foreground/50 font-normal text-[10px]">Hoy</span>
-                  <span>{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
+                <span className="text-muted-foreground/30 text-[10px] mx-1">•</span>
+                <div className={`flex items-center gap-1 ${daily24Positive ? "text-emerald-400" : "text-rose-400"}`}>
+                  <span className="text-muted-foreground/50 text-[11px]">Hoy</span>
+                  <span className="text-[13px] font-medium font-tabular">{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
                 </div>
               </div>
             )}
@@ -403,13 +399,19 @@ export function MobileDashboard({
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
+                  className={`whitespace-nowrap px-1 py-2 text-[14px] transition-colors relative ${
                     filterType === type
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-muted/30 text-muted-foreground/70 border border-border/30"
+                      ? "text-foreground font-semibold"
+                      : "text-muted-foreground/50 font-medium"
                   }`}
                 >
                   {type === "All" ? "Todos" : type === "Fondo Indexado" ? "Fondos" : type === "Fondo Monetario" ? "Monetario" : type}
+                  {filterType === type && (
+                    <motion.div
+                      layoutId="activeFilter"
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-foreground rounded-full"
+                    />
+                  )}
                 </button>
               ))}
             </div>
@@ -436,9 +438,9 @@ export function MobileDashboard({
           // Grouped by type
           <div className="divide-y divide-border/20">
             {Array.from(grouped.entries()).map(([type, items]) => (
-              <div key={type}>
+              <div key={type} className="mb-4">
                 <SectionHeader label={type === "Fondo Indexado" ? "Fondos Indexados" : type} count={items.length} total={totalPortfolioValue} />
-                <div className="divide-y divide-border/10">
+                <div className="divide-y divide-white/5">
                   {items.map(p => (
                     <MobileAssetCard key={p.activo_id} position={p} totalPortfolioValue={totalPortfolioValue} />
                   ))}

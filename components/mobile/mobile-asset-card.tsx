@@ -93,43 +93,37 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
       <div className="px-4 py-3.5">
         <div className="flex items-start gap-3">
 
-          {/* Avatar */}
-          <div className={`h-10 w-10 rounded-[12px] ${cfg.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+          {/* Simple Circular Avatar */}
+          <div className="h-10 w-10 rounded-full bg-muted/20 border border-border/40 flex items-center justify-center flex-shrink-0 mt-0.5">
             <span className={`text-[12px] font-bold ${cfg.text}`}>{displayTicker.slice(0, 2)}</span>
           </div>
 
           {/* Middle */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[14px] font-bold text-foreground tracking-tight truncate">
-                {displayTicker}
-              </span>
-              <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${cfg.bg} ${cfg.text}`}>
-                {cfg.label}
-              </span>
-            </div>
+          <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
+            <span className="text-[15px] font-semibold text-foreground tracking-tight truncate leading-tight">
+              {displayTicker}
+            </span>
             <p className="text-[11px] text-muted-foreground/60 truncate leading-none">
               {displayName}
             </p>
           </div>
 
           {/* Right: Value + Daily Change */}
-          <div className="flex flex-col items-end flex-shrink-0 justify-center">
+          <div className="flex flex-col items-end flex-shrink-0 justify-center py-1">
             {/* Current value */}
-            <span className="text-[15px] font-bold font-tabular text-foreground">
+            <span className="text-[15px] font-semibold font-tabular text-foreground leading-tight">
               {hideBalances ? "••••" : (p.valor_actual !== null ? formatCurrency(p.valor_actual) : "—")}
             </span>
 
-            {/* Daily Change (Amount and Percent) */}
-            <div className={`flex items-center gap-1 mt-0.5 ${trendColor}`}>
-              <TrendIcon className="w-3.5 h-3.5" />
-              <span className="text-[12px] font-semibold font-tabular">
+            {/* Daily Change */}
+            <div className={`flex items-center mt-0.5 ${trendColor}`}>
+              <span className="text-[12px] font-medium font-tabular">
                 {hideBalances ? "•••" : (
                   <>
-                    {p.change_amount_24h !== undefined && p.change_amount_24h !== null
-                      ? `${p.change_amount_24h >= 0 ? '+' : ''}${formatCurrency(p.change_amount_24h)}`
+                    {p.change_amount_24h !== undefined && p.change_amount_24h !== null && p.change_amount_24h !== 0
+                      ? `${p.change_amount_24h > 0 ? '+' : ''}${formatCurrency(p.change_amount_24h)}`
                       : ""}
-                    <span className="ml-1 opacity-70">({formatPercent(change24h)})</span>
+                    <span className="ml-1 opacity-80">{formatPercent(change24h)}</span>
                   </>
                 )}
               </span>
