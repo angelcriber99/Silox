@@ -105,7 +105,23 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
     if (!position) return
     setLoading(true)
     try {
-      const notasJson = JSON.stringify(notesData)
+      let finalNotesData = { ...notesData }
+      
+      // Auto-add wave if user typed something but forgot to click '+'
+      if (newWavePrice) {
+        const price = parseFloat(newWavePrice.replace(",", "."))
+        if (!isNaN(price) && price > 0) {
+          const newWave: WaveData = {
+            id: crypto.randomUUID(),
+            price,
+            type: newWaveType,
+            active: true
+          }
+          finalNotesData.waves = [...finalNotesData.waves, newWave].sort((a, b) => b.price - a.price)
+        }
+      }
+
+      const notasJson = JSON.stringify(finalNotesData)
       await updateActivo(position.activo_id, { notas: notasJson })
       toast.success("Olas y notas guardadas correctamente")
       if (onSuccess) onSuccess()
