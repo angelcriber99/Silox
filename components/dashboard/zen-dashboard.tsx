@@ -65,6 +65,25 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const [time, setTime] = useState(new Date())
   const [memeMode, setMemeMode] = useState(false)
 
+  const memeConfigs = useMemo(() => {
+    return [
+      "🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸",
+      "https://media.tenor.com/7-Gk2U840iAAAAAj/stonks-up.gif",
+      "https://media.tenor.com/bL6B0xQ5sC0AAAAj/doge-dogecoin.gif",
+      "https://media.tenor.com/g_1H8J14yC8AAAAj/nyan-cat.gif",
+      "https://media.tenor.com/5l3iZfXW9aQAAAAj/cat-jam.gif"
+    ].map(emoji => ({
+      emoji,
+      startX: `${Math.random() * 100}vw`,
+      midX: `${Math.random() * 100}vw`,
+      endX: `${Math.random() * 100}vw`,
+      startY: `${Math.random() * 100}vh`,
+      midY: `${Math.random() * 100}vh`,
+      endY: `${Math.random() * 100}vh`,
+      duration: 20 + Math.random() * 20
+    }))
+  }, [])
+
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(timer)
@@ -141,41 +160,26 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
       {/* ── Meme Emojis ─────────────────────────────────────────────── */}
       {memeMode && (
         <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
-          {[
-            "🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸",
-            "https://media.tenor.com/7-Gk2U840iAAAAAj/stonks-up.gif",
-            "https://media.tenor.com/bL6B0xQ5sC0AAAAj/doge-dogecoin.gif",
-            "https://media.tenor.com/g_1H8J14yC8AAAAj/nyan-cat.gif",
-            "https://media.tenor.com/5l3iZfXW9aQAAAAj/cat-jam.gif"
-          ].map((emoji, i) => {
-            const startX = `${Math.random() * 100}vw`
-            const midX = `${Math.random() * 100}vw`
-            const endX = `${Math.random() * 100}vw`
-            const startY = `${Math.random() * 100}vh`
-            const midY = `${Math.random() * 100}vh`
-            const endY = `${Math.random() * 100}vh`
-            
-            return (
+          {memeConfigs.map((config, i) => (
               <motion.div
                 key={i}
                 className="absolute opacity-60 drop-shadow-[0_0_20px_rgba(255,255,255,0.7)] flex items-center justify-center"
-                initial={{ x: startX, y: startY, scale: 0 }}
+                initial={{ x: config.startX, y: config.startY, scale: 0 }}
                 animate={{ 
-                  x: [startX, midX, endX, midX, startX],
-                  y: [startY, midY, endY, midY, startY],
-                  rotate: emoji.startsWith("http") ? 0 : [0, 90, 180, 270, 360],
-                  scale: emoji.startsWith("http") ? [0.8, 1.2, 0.8, 1.2, 0.8] : [0.8, 1.5, 0.8, 1.5, 0.8]
+                  x: [config.startX, config.midX, config.endX, config.midX, config.startX],
+                  y: [config.startY, config.midY, config.endY, config.midY, config.startY],
+                  rotate: config.emoji.startsWith("http") ? 0 : [0, 90, 180, 270, 360],
+                  scale: config.emoji.startsWith("http") ? [0.8, 1.2, 0.8, 1.2, 0.8] : [0.8, 1.5, 0.8, 1.5, 0.8]
                 }}
-                transition={{ duration: 20 + Math.random() * 20, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: config.duration, repeat: Infinity, ease: "linear" }}
               >
-                {emoji.startsWith("http") ? (
-                  <img src={emoji} className="w-32 h-32 md:w-48 md:h-48 object-contain" alt="meme" />
+                {config.emoji.startsWith("http") ? (
+                  <img src={config.emoji} className="w-32 h-32 md:w-48 md:h-48 object-contain" alt="meme" />
                 ) : (
-                  <span className="text-5xl md:text-7xl">{emoji}</span>
+                  <span className="text-5xl md:text-7xl">{config.emoji}</span>
                 )}
               </motion.div>
-            )
-          })}
+          ))}
         </div>
       )}
 
