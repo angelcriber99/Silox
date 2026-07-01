@@ -33,10 +33,10 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
   })
   
   // Best must be positive
-  const best = sorted.filter(p => sortBy === "percent" ? p.change_percent_24h! > 0 : p.change_amount_24h! > 0).slice(0, 3)
+  const best = sorted.filter(p => sortBy === "percent" ? p.change_percent_24h! > 0 : p.change_amount_24h! > 0)
   
   // Worst must be negative
-  const worst = sorted.slice().reverse().filter(p => sortBy === "percent" ? p.change_percent_24h! < 0 : p.change_amount_24h! < 0).slice(0, 3)
+  const worst = sorted.slice().reverse().filter(p => sortBy === "percent" ? p.change_percent_24h! < 0 : p.change_amount_24h! < 0)
 
   const getDisplayName = (p: EnrichedPosition) => {
     if (p.nombre?.toUpperCase().includes("MSCI")) return "MSCI"
@@ -46,8 +46,8 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
 
   return (
     <Card className="bg-card/40 border-border/40 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
-      <CardHeader className="p-4 pb-2 border-b border-border/20 flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{t('top_movers')}</CardTitle>
+      <CardHeader className="p-4 pb-2 border-b border-border/20 flex flex-row items-center justify-between space-y-0 shrink-0">
+        <CardTitle className="text-sm font-medium text-muted-foreground">🔥 Resumen Diario</CardTitle>
         <div className="flex bg-muted/50 rounded-md p-0.5">
           <button 
             onClick={() => setSortBy("amount")}
@@ -63,7 +63,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
           </button>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-3 grid grid-cols-2 gap-4">
+      <CardContent className="p-4 pt-3 grid grid-cols-2 gap-4 flex-1 overflow-y-auto min-h-0 hide-scrollbar">
         {/* Best */}
         <div className="space-y-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">

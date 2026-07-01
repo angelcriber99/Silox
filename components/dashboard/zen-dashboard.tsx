@@ -141,7 +141,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
       {/* ── Meme Emojis ─────────────────────────────────────────────── */}
       {memeMode && (
         <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
-          {["🚀", "💎🙌", "🦍", "📈", "🍗", "🤡", "💸", "🔥", "🚀", "🦍", "📈", "💸"].map((emoji, i) => (
+          {["🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸"].map((emoji, i) => (
             <motion.div
               key={i}
               className="absolute text-5xl md:text-7xl opacity-50 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
@@ -171,9 +171,9 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
               ? "bg-gradient-to-r from-amber-500/30 to-rose-500/30 text-white border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.4)]" 
               : "bg-card/40 hover:bg-card/70 text-muted-foreground/50 hover:text-foreground"
           }`}
-          title="Activar Modo Stonks"
+          title="Modo Locura"
         >
-          <span className="text-xl leading-none block">🚀</span>
+          <span className="text-xl leading-none block">🦄</span>
         </motion.button>
 
         <motion.button
