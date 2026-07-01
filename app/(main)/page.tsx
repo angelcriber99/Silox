@@ -76,7 +76,7 @@ export default function Home() {
 
                 {/* Allocation / Performance chart */}
                 <div className="min-w-0">
-                  <AllocationChart positions={positions} marketState={marketState} />
+                  <AllocationChart positions={positions} pendingTxs={pendingTxs} marketState={marketState} />
                 </div>
 
                 {/* Right column: Top Movers + Events */}

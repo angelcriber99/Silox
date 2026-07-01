@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts"
-import type { EnrichedPosition } from '@/lib/types'
+import type { EnrichedPosition, Transaccion } from '@/lib/types'
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
 import { usePreferences } from "@/lib/stores/use-preferences"
@@ -14,6 +14,7 @@ import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
+  pendingTxs?: Transaccion[]
   marketState?: string
 }
 
@@ -44,7 +45,7 @@ interface ChartDatum {
   pnlAmount24h: number
 }
 
-export function AllocationChart({ positions, marketState = 'CLOSED' }: AllocationChartProps) {
+export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' }: AllocationChartProps) {
   const { hideBalances, zenMode, setZenMode } = usePreferences()
   const [viewMode, setViewMode] = useState<ViewMode>("composition")
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
@@ -53,6 +54,15 @@ export function AllocationChart({ positions, marketState = 'CLOSED' }: Allocatio
   const [cashAssetId, setCashAssetId] = useState<string>("")
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const t = useTranslations('Dashboard')
+
+  const pendingCashEur = useMemo(() => {
+    if (!pendingTxs) return 0
+    return pendingTxs.reduce((sum, tx) => {
+      if (tx.tipo_operacion !== 'Compra') return sum
+      const fx = tx.activo?.moneda === 'USD' ? 1.07 : 1
+      return sum + ((tx.cantidad * tx.precio_unitario) / fx)
+    }, 0)
+  }, [pendingTxs])
 
   const translateType = (type: string) => {
     const map: Record<string, string> = {
@@ -370,7 +380,12 @@ export function AllocationChart({ positions, marketState = 'CLOSED' }: Allocatio
                       <p className="text-base font-bold font-tabular text-foreground">
                         {hideBalances ? "****" : formatCurrency(d.value)}
                       </p>
-                      <p className="text-xs font-medium font-tabular text-muted-foreground">
+                      {d.originalName === 'Liquidez' && pendingCashEur > 0 && !hideBalances && (
+                        <p className="text-[10px] font-medium font-tabular text-amber-400 mt-0.5">
+                          -{formatCurrency(pendingCashEur)} en uso
+                        </p>
+                      )}
+                      <p className="text-xs font-medium font-tabular text-muted-foreground mt-0.5">
                         {d.percent.toFixed(1)}%
                       </p>
                     </div>

@@ -11,14 +11,20 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Trash2, Loader2 } from "lucide-react"
+import { Clock, Trash2, Loader2, MoreHorizontal, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Transaccion } from "@/lib/types"
 import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { deleteTransaccion } from "@/lib/api/transactions"
+import { deleteTransaccion, updateTransaccion } from "@/lib/api/transactions"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface PendingOrdersProps {
   transactions: Transaccion[]
@@ -39,11 +45,30 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
       await deleteTransaccion(id)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["pending-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["posiciones"] })
+        queryClient.invalidateQueries({ queryKey: ["posiciones"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-transactions"] })
       ])
-      toast.success("Operación cancelada y eliminada correctamente")
+      toast.success("Operación rechazada y eliminada")
     } catch (error) {
       toast.error("Error al cancelar la operación")
+      console.error(error)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleComplete = async (id: string) => {
+    try {
+      setDeletingId(id) // use same loading state indicator
+      await updateTransaccion(id, { estado: "Completada" })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["pending-transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["posiciones"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-transactions"] })
+      ])
+      toast.success("Operación completada correctamente")
+    } catch (error) {
+      toast.error("Error al completar la operación")
       console.error(error)
     } finally {
       setDeletingId(null)
@@ -98,19 +123,29 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
                     {hideBalances ? "****" : formatCurrency(tx.cantidad * tx.precio_unitario, tx.activo?.moneda || 'USD')}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-                      onClick={() => handleDelete(tx.id)}
-                      disabled={deletingId === tx.id}
-                    >
-                      {deletingId === tx.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                    {deletingId === tx.id ? (
+                      <div className="p-2 flex justify-center">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[160px]">
+                          <DropdownMenuItem onClick={() => handleComplete(tx.id)} className="cursor-pointer">
+                            <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" />
+                            <span>Completar</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(tx.id)} className="text-rose-500 cursor-pointer">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Rechazar</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
