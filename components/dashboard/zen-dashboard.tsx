@@ -63,6 +63,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const { setZenMode } = usePreferences()
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const [time, setTime] = useState(new Date())
+  const [memeMode, setMemeMode] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000)
@@ -106,40 +107,85 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
         <div className="absolute inset-0 bg-background/85 z-10" />
         <motion.div
           className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[120px]"
-          style={{ background: isPositive
-            ? "radial-gradient(circle, rgba(52,211,153,0.15) 0%, transparent 70%)"
-            : "radial-gradient(circle, rgba(251,113,133,0.15) 0%, transparent 70%)"
+          style={{ background: memeMode 
+            ? "radial-gradient(circle, rgba(255,215,0,0.4) 0%, transparent 70%)"
+            : isPositive
+              ? "radial-gradient(circle, rgba(52,211,153,0.15) 0%, transparent 70%)"
+              : "radial-gradient(circle, rgba(251,113,133,0.15) 0%, transparent 70%)"
           }}
-          animate={{ x: [0, 80, 0], y: [0, 40, 0], scale: [1, 1.15, 1] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          animate={{ x: [0, 80, 0], y: [0, 40, 0], scale: [1, 1.15, 1], rotate: memeMode ? [0, 360] : 0 }}
+          transition={{ duration: memeMode ? 5 : 25, repeat: Infinity, ease: "linear" }}
         />
         <motion.div
           className="absolute bottom-[-15%] right-[-10%] w-[45vw] h-[45vw] rounded-full blur-[120px]"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)" }}
-          animate={{ x: [0, -60, 0], y: [0, -40, 0], scale: [1, 1.3, 1] }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          style={{ background: memeMode
+            ? "radial-gradient(circle, rgba(255,105,180,0.4) 0%, transparent 70%)"
+            : "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)" 
+          }}
+          animate={{ x: [0, -60, 0], y: [0, -40, 0], scale: [1, 1.3, 1], rotate: memeMode ? [360, 0] : 0 }}
+          transition={{ duration: memeMode ? 7 : 30, repeat: Infinity, ease: "linear" }}
         />
         <motion.div
           className="absolute top-[35%] left-[45%] w-[30vw] h-[30vw] rounded-full blur-[100px]"
-          style={{ background: isPositive
-            ? "radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 70%)"
-            : "radial-gradient(circle, rgba(251,113,133,0.08) 0%, transparent 70%)"
+          style={{ background: memeMode
+            ? "radial-gradient(circle, rgba(0,255,255,0.4) 0%, transparent 70%)"
+            : isPositive
+              ? "radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 70%)"
+              : "radial-gradient(circle, rgba(251,113,133,0.08) 0%, transparent 70%)"
           }}
-          animate={{ x: [0, -40, 30, 0], y: [0, 60, -30, 0], scale: [1, 1.1, 0.95, 1] }}
-          transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+          animate={{ x: [0, -40, 30, 0], y: [0, 60, -30, 0], scale: [1, 1.1, 0.95, 1], rotate: memeMode ? [0, -360] : 0 }}
+          transition={{ duration: memeMode ? 4 : 35, repeat: Infinity, ease: "linear" }}
         />
       </div>
 
-      {/* ── Exit button ─────────────────────────────────────────────── */}
-      <motion.button
-        onClick={() => setZenMode(false)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        className="fixed top-5 right-5 p-3 rounded-2xl bg-card/40 hover:bg-card/70 border border-border/30 backdrop-blur-xl transition-all text-muted-foreground/50 hover:text-foreground z-50"
-        title="Salir del Modo Zen"
-      >
-        <Minimize className="w-5 h-5" />
-      </motion.button>
+      {/* ── Meme Emojis ─────────────────────────────────────────────── */}
+      {memeMode && (
+        <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
+          {["🚀", "💎🙌", "🦍", "📈", "🍗", "🤡", "💸", "🔥", "🚀", "🦍", "📈", "💸"].map((emoji, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-5xl md:text-7xl opacity-50 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+              initial={{ x: `${Math.random() * 100}vw`, y: `${Math.random() * 100}vh`, scale: 0 }}
+              animate={{ 
+                x: [`${Math.random() * 100}vw`, `${Math.random() * 100}vw`, `${Math.random() * 100}vw`],
+                y: [`${Math.random() * 100}vh`, `${Math.random() * 100}vh`, `${Math.random() * 100}vh`],
+                rotate: [0, 180, 360],
+                scale: [0.8, 1.5, 0.8]
+              }}
+              transition={{ duration: 10 + Math.random() * 10, repeat: Infinity, ease: "linear" }}
+            >
+              {emoji}
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Mode buttons ─────────────────────────────────────────────── */}
+      <div className="fixed top-5 right-5 flex items-center gap-3 z-50">
+        <motion.button
+          onClick={() => setMemeMode(!memeMode)}
+          whileHover={{ scale: 1.1, rotate: memeMode ? -10 : 10 }}
+          whileTap={{ scale: 0.9 }}
+          className={`p-3 rounded-2xl border border-border/30 backdrop-blur-xl transition-all shadow-lg ${
+            memeMode 
+              ? "bg-gradient-to-r from-amber-500/30 to-rose-500/30 text-white border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.4)]" 
+              : "bg-card/40 hover:bg-card/70 text-muted-foreground/50 hover:text-foreground"
+          }`}
+          title="Activar Modo Stonks"
+        >
+          <span className="text-xl leading-none block">🚀</span>
+        </motion.button>
+
+        <motion.button
+          onClick={() => setZenMode(false)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="p-3 rounded-2xl bg-card/40 hover:bg-card/70 border border-border/30 backdrop-blur-xl transition-all text-muted-foreground/50 hover:text-foreground"
+          title="Salir del Modo Zen"
+        >
+          <Minimize className="w-5 h-5" />
+        </motion.button>
+      </div>
 
       {/* ── Main content ────────────────────────────────────────────── */}
       <div className="relative z-20 flex flex-col w-full max-w-5xl items-center px-6">
@@ -177,9 +223,9 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           className="text-center mb-3"
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
-            Valor del Portfolio
+            {memeMode ? "🚀 TO THE MOON PORTFOLIO 🚀" : "Valor del Portfolio"}
           </p>
-          <h1 className={`text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold font-tabular tracking-tighter leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <h1 className={`text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold font-tabular tracking-tighter leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'} ${memeMode ? 'drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]' : ''}`}>
             <ZenLiveValue value={totals.totalValue} formatter={formatCurrency} glow={true} />
           </h1>
         </motion.div>
