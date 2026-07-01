@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { RefreshCw, Eye, EyeOff, PieChart as PieChartIcon, BarChart3, Wallet } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
+import { CategoryDrilldownModal } from "@/components/dashboard/category-drilldown-modal"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -52,6 +53,9 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
   const [isFlipped, setIsFlipped] = useState(false)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [cashAssetId, setCashAssetId] = useState<string>("")
+  const [drilldownModalOpen, setDrilldownModalOpen] = useState(false)
+  const [drilldownCategoryName, setDrilldownCategoryName] = useState("")
+  const [drilldownOriginalName, setDrilldownOriginalName] = useState("")
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const t = useTranslations('Dashboard')
 
@@ -298,6 +302,11 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.color} 
+                      onClick={() => {
+                        setDrilldownCategoryName(entry.name)
+                        setDrilldownOriginalName(entry.originalName)
+                        setDrilldownModalOpen(true)
+                      }}
                       className="hover:opacity-80 transition-opacity duration-300 cursor-pointer outline-none"
                     />
                   ))}
@@ -348,7 +357,15 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
             {/* Legend */}
             <div className="space-y-4 w-full sm:w-[320px] max-w-sm">
               {chartData.data.map((d) => (
-                <div key={d.name} className="flex items-center gap-4 group">
+                <div 
+                  key={d.name} 
+                  className="flex items-center gap-4 group cursor-pointer hover:bg-muted/30 p-2 -mx-2 rounded-lg transition-colors"
+                  onClick={() => {
+                    setDrilldownCategoryName(d.name)
+                    setDrilldownOriginalName(d.originalName)
+                    setDrilldownModalOpen(true)
+                  }}
+                >
                   <div
                     className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
                     style={{ backgroundColor: d.color }}
@@ -444,6 +461,16 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
       open={withdrawModalOpen} 
       onOpenChange={setWithdrawModalOpen} 
       cashAssetId={cashAssetId} 
+    />
+    
+    <CategoryDrilldownModal
+      open={drilldownModalOpen}
+      onOpenChange={setDrilldownModalOpen}
+      categoryName={drilldownCategoryName}
+      originalCategoryName={drilldownOriginalName}
+      positions={positions}
+      groupBy={groupBy}
+      hideBalances={hideBalances}
     />
   </div>
   )
