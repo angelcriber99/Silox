@@ -101,12 +101,9 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
       }
     }
 
-    if (groupBy === "tipo" && !groups.has("Liquidez")) {
-      groups.set("Liquidez", { value: 0, pnl24h: 0, valorAyer: 0 })
-    }
-
     const total = Array.from(groups.values()).reduce((a, b) => a + b.value, 0)
     const data: ChartDatum[] = Array.from(groups.entries())
+      .filter(([name, groupData]) => groupData.value > 0)
       .map(([name, groupData]) => ({
         name: groupBy === "tipo" ? translateType(name) : name,
         originalName: name,
@@ -116,12 +113,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
         pnlPercent24h: groupData.valorAyer > 0 ? (groupData.pnl24h / groupData.valorAyer) * 100 : 0,
         pnlAmount24h: groupData.pnl24h
       }))
-      .sort((a, b) => {
-        // Siempre poner liquidez al final si su valor es 0
-        if (a.originalName === "Liquidez" && a.value === 0) return 1
-        if (b.originalName === "Liquidez" && b.value === 0) return -1
-        return b.value - a.value
-      })
+      .sort((a, b) => b.value - a.value)
 
     return { data, total }
   }, [positions, groupBy, t])

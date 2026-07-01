@@ -349,19 +349,19 @@ export default function MovimientosPage() {
                         </div>
                      </div>
 
-                     <div className="flex items-center gap-2 flex-shrink-0">
-                       <div className="flex flex-col items-end">
-                          <span className={`text-[15px] font-bold font-tabular leading-tight ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
-                            {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
-                          </span>
-                          <span className="text-xs font-medium text-muted-foreground/80 font-tabular mt-0.5">
-                            {hideBalances ? "****" : `${formatUnits(tx.cantidad)} a ${formatCurrency(tx.precio_unitario, tx.activo?.moneda || "EUR")}`}
-                          </span>
-                       </div>
-                       
+                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                        <div className="flex flex-col items-end min-w-0">
+                           <span className={`text-[14px] font-bold font-tabular leading-tight truncate max-w-[100px] xs:max-w-[130px] ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
+                             {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
+                           </span>
+                           <span className="text-[10px] font-medium text-muted-foreground/80 font-tabular mt-0.5 truncate max-w-[100px] xs:max-w-[130px]">
+                             {hideBalances ? "****" : `${formatUnits(tx.cantidad)} × ${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`}
+                           </span>
+                        </div>
+                        
                         <DropdownMenu>
-                          <DropdownMenuTrigger className="p-1.5 -mr-1.5 hover:bg-muted rounded-md focus:outline-none flex items-center justify-center">
-                            <MoreHorizontal className="h-5 w-5 text-muted-foreground/60" />
+                          <DropdownMenuTrigger className="p-1 hover:bg-muted rounded-md focus:outline-none flex items-center justify-center">
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground/60" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
                             <DropdownMenuItem 

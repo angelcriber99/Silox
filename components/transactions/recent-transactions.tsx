@@ -100,7 +100,7 @@ export function RecentTransactions() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground/80 mt-0.5">
+                    <p className="text-xs text-muted-foreground/80 mt-0.5 truncate">
                       {formatUnits(tx.cantidad)} uds. × {formatCurrency(tx.precio_unitario, tx.activo?.moneda || "EUR")}
                     </p>
                   </div>
