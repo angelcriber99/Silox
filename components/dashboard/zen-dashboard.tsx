@@ -68,10 +68,10 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const memeConfigs = useMemo(() => {
     return [
       "🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸",
-      "https://media.tenor.com/7-Gk2U840iAAAAAj/stonks-up.gif",
-      "https://media.tenor.com/bL6B0xQ5sC0AAAAj/doge-dogecoin.gif",
-      "https://media.tenor.com/g_1H8J14yC8AAAAj/nyan-cat.gif",
-      "https://media.tenor.com/5l3iZfXW9aQAAAAj/cat-jam.gif"
+      "https://media.giphy.com/media/YnkMcHgNIMW4Yfmjxr/giphy.gif",
+      "https://media.giphy.com/media/oNFP9kltPi7fp8TUAV/giphy.gif",
+      "https://media.giphy.com/media/sIIhZliB2McAo/giphy.gif",
+      "https://media.giphy.com/media/GeimqsH0TLDt4tScGw/giphy.gif"
     ].map(emoji => ({
       emoji,
       startX: `${Math.random() * 100}vw`,
