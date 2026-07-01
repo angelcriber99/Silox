@@ -19,7 +19,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 interface ZenDashboardProps {
   positions: EnrichedPosition[]
-  marketState?: "OPEN" | "CLOSED"
+  marketState?: string
 }
 
 function ZenLiveValue({
@@ -117,6 +117,8 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
         return pnlB - pnlA
       })
   }, [positions])
+
+  const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
   return (
     <div className="flex flex-col w-full h-full min-h-[90vh] justify-center items-center animate-in fade-in duration-1000 relative overflow-hidden">
@@ -229,12 +231,12 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           </div>
           {marketState && (
             <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
-              marketState === "OPEN" 
+              isMarketOpen 
                 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
                 : "bg-zinc-500/10 border-zinc-500/20 text-zinc-400"
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${marketState === "OPEN" ? "bg-emerald-400 animate-pulse" : "bg-zinc-400"}`} />
-              {marketState === "OPEN" ? "Mercado Abierto" : "Mercado Cerrado"}
+              <span className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "bg-emerald-400 animate-pulse" : "bg-zinc-400"}`} />
+              {marketState === "REGULAR" ? "Mercado Abierto" : marketState === "PRE" ? "Pre-Market" : marketState === "POST" ? "After-Hours" : "Mercado Cerrado"}
             </div>
           )}
         </motion.div>
