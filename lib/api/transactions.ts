@@ -83,6 +83,7 @@ export async function updateTransaccion(id: string, updates: {
   comision?: number
   fecha?: string
   notas?: string
+  estado?: string
 }): Promise<Transaccion> {
   const { data, error } = await createClient()
     .from('transacciones')
