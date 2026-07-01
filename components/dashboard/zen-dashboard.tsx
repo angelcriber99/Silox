@@ -68,10 +68,10 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const memeConfigs = useMemo(() => {
     return [
       "🚀", "🦄", "🎉", "💎🙌", "🦍", "🍾", "📈", "🌈", "🍗", "🤡", "✨", "💸", "🔥", "🚀", "🦍", "🦄", "🍾", "📈", "💸",
-      "https://media.giphy.com/media/YnkMcHgNIMW4Yfmjxr/giphy.gif",
-      "https://media.giphy.com/media/oNFP9kltPi7fp8TUAV/giphy.gif",
-      "https://media.giphy.com/media/sIIhZliB2McAo/giphy.gif",
-      "https://media.giphy.com/media/GeimqsH0TLDt4tScGw/giphy.gif"
+      "/memes/stonks.gif",
+      "/memes/doge.gif",
+      "/memes/nyan.gif",
+      "/memes/catjam.gif"
     ].map(emoji => ({
       emoji,
       startX: `${Math.random() * 100}vw`,
@@ -168,12 +168,12 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                 animate={{ 
                   x: [config.startX, config.midX, config.endX, config.midX, config.startX],
                   y: [config.startY, config.midY, config.endY, config.midY, config.startY],
-                  rotate: config.emoji.startsWith("http") ? 0 : [0, 90, 180, 270, 360],
-                  scale: config.emoji.startsWith("http") ? [0.8, 1.2, 0.8, 1.2, 0.8] : [0.8, 1.5, 0.8, 1.5, 0.8]
+                  rotate: config.emoji.includes("/") ? 0 : [0, 90, 180, 270, 360],
+                  scale: config.emoji.includes("/") ? [0.8, 1.2, 0.8, 1.2, 0.8] : [0.8, 1.5, 0.8, 1.5, 0.8]
                 }}
                 transition={{ duration: config.duration, repeat: Infinity, ease: "linear" }}
               >
-                {config.emoji.startsWith("http") ? (
+                {config.emoji.includes("/") ? (
                   <img src={config.emoji} className="w-32 h-32 md:w-48 md:h-48 object-contain" alt="meme" />
                 ) : (
                   <span className="text-5xl md:text-7xl">{config.emoji}</span>
