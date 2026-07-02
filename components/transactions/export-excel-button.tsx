@@ -89,11 +89,15 @@ const exportToExcel = async (
   wsSummary.views = [{ showGridLines: false }] // Clean look
   
   wsSummary.addRow([])
-  wsSummary.addRow(['', '📊 REPORTE DE PORTFOLIO - SILOX'])
-  const titleRow = wsSummary.getRow(2)
+  const titleRow = wsSummary.addRow(['', '📊 REPORTE DE PORTFOLIO - SILOX'])
   titleRow.font = { size: 18, bold: true, color: { argb: colors.summaryHeader } }
-  wsSummary.addRow(['', `Año seleccionado: ${year}`]).font = { italic: true, color: { argb: 'FF64748B' } }
-  wsSummary.addRow([])
+  titleRow.height = 30
+  
+  const subtitleRow = wsSummary.addRow(['', `Año seleccionado: ${year}`])
+  subtitleRow.font = { italic: true, color: { argb: 'FF64748B' } }
+  subtitleRow.height = 20
+  
+  wsSummary.addRow([]).height = 15
 
   const addMetric = (label: string, value: any, format: string, color?: string) => {
     const row = wsSummary.addRow(['', label, value])
@@ -118,8 +122,10 @@ const exportToExcel = async (
   addMetric('Total Posiciones Abiertas', positions.filter(p => p.unidades > 0).length, '0')
   addMetric('Total Transacciones', filteredTxs.length, '0')
   
-  wsSummary.addRow([])
-  wsSummary.addRow(['', '💡 Explora las pestañas inferiores para ver el desglose completo con tablas dinámicas y filtros integrados.']).font = { italic: true, color: { argb: 'FF86868B' } }
+  wsSummary.addRow([]).height = 15
+  const tipRow = wsSummary.addRow(['', '💡 Explora las pestañas inferiores para ver el desglose completo con tablas dinámicas y filtros integrados.'])
+  tipRow.font = { italic: true, color: { argb: 'FF86868B' } }
+  tipRow.height = 25
 
   // --- SHEET 1: POSICIONES ABIERTAS ---
   const wsPortfolio = workbook.addWorksheet('Posiciones Abiertas')
