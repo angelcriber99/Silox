@@ -14,7 +14,7 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import { playSound } from "@/lib/utils/sounds"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
-import { useSnapshots } from "@/lib/hooks/use-portfolio"
+import { usePortfolio, useHistory } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion, useAnimation } from "framer-motion"
 import { useTranslations } from "next-intl"
@@ -73,7 +73,7 @@ export function MobileDashboard({
   const [filterType, setFilterType] = useState<string>("All")
   const t = useTranslations("Dashboard")
 
-  const { data: snapshots } = useSnapshots()
+  const { data: snapshots } = useHistory()
 
   const isPositive      = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
@@ -106,7 +106,7 @@ export function MobileDashboard({
   // Portfolio sparkline
   const portfolioSparkline = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return []
-    const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     const last7 = sorted.slice(-7)
     if (last7.length < 2) return []
     const start = last7[0].total_value

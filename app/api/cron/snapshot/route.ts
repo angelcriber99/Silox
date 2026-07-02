@@ -75,7 +75,8 @@ export async function GET(request: Request) {
       
       const priceMap: Record<string, any> = {}
       if (Array.isArray(quotes)) {
-        quotes.forEach((q) => { priceMap[q.symbol] = q })
+        // @ts-ignore
+        quotes.forEach((q: any) => { priceMap[q.symbol] = q })
       } else if (quotes) {
         priceMap[(quotes as any).symbol] = quotes
       }
@@ -83,6 +84,7 @@ export async function GET(request: Request) {
       let eurUsdRate = 1
       try {
         const fx = await yahooFinance.quote('EURUSD=X')
+        // @ts-ignore
         eurUsdRate = fx.regularMarketPrice ?? 1
       } catch (e) {
         console.error("Failed to fetch EURUSD in cron")

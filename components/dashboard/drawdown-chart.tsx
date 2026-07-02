@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { useSnapshots } from "@/lib/hooks/use-portfolio"
+import { useHistory } from "@/lib/hooks/use-portfolio"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { formatPercent } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
@@ -9,29 +9,25 @@ import { es } from "date-fns/locale"
 import { Activity } from "lucide-react"
 
 export function DrawdownChart() {
-  const { data: snapshots, isLoading } = useSnapshots()
+  const { data: snapshots, isLoading } = useHistory()
 
   const chartData = useMemo(() => {
     if (!snapshots || snapshots.length < 2) return []
 
-    const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    const dataPoints = []
-    let maxSoFar = 0
+    const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    let peak = -Infinity
 
-    for (const snap of sorted) {
-      if (snap.total_value > maxSoFar) {
-        maxSoFar = snap.total_value
-      }
+    return sorted.map((snap) => {
+      const current = snap.total_value
+      if (current > peak) peak = current
       
-      const drawdown = maxSoFar > 0 ? ((snap.total_value - maxSoFar) / maxSoFar) * 100 : 0
-
-      dataPoints.push({
-        date: snap.date,
-        drawdown: drawdown
-      })
-    }
-
-    return dataPoints
+      const drawdown = peak > 0 ? ((current - peak) / peak) * 100 : 0
+      
+      return {
+        timestamp: snap.timestamp,
+        drawdown: drawdown < 0 ? drawdown : 0
+      }
+    })
   }, [snapshots])
 
   if (isLoading) {
@@ -86,11 +82,11 @@ export function DrawdownChart() {
             </linearGradient>
           </defs>
           <XAxis 
-            dataKey="date" 
+            dataKey="timestamp" 
             axisLine={false} 
             tickLine={false} 
-            tickFormatter={(date) => format(parseISO(date), "MMM yy", { locale: es })}
-            tick={{ fill: '#71717a', fontSize: 12 }}
+            tickFormatter={(date) => format(parseISO(date), "d MMM", { locale: es })}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
             dy={10}
             minTickGap={30}
           />

@@ -224,7 +224,7 @@ export function computePortfolioTotals(
 }
 
 export async function savePortfolioHistory(totalValue: number, totalInvested: number): Promise<void> {
-  const supabase = createClient()
+  const supabase = createClient() as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
@@ -255,7 +255,7 @@ export async function savePortfolioHistory(totalValue: number, totalInvested: nu
 }
 
 export async function fetchHistory(): Promise<{ timestamp: string, total_value: number, total_invested: number }[]> {
-  const supabase = createClient()
+  const supabase = createClient() as any
   const { data, error } = await supabase
     .from('portfolio_history')
     .select('timestamp, total_value, total_invested')
