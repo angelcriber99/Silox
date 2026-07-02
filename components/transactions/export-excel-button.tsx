@@ -19,7 +19,8 @@ import { calculateFIFO } from "@/lib/utils/fifo-calculator"
 const exportToExcel = async (
   transactions: Transaccion[], 
   positions: EnrichedPosition[], 
-  year: number | 'Todos'
+  year: number | 'Todos',
+  theme: 'excel' | 'numbers' = 'excel'
 ) => {
   const ExcelJS = (await import('exceljs')).default
   const { saveAs } = (await import('file-saver')).default
@@ -27,6 +28,28 @@ const exportToExcel = async (
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Silox'
   workbook.created = new Date()
+
+  // Theme Colors
+  const colors = {
+    fiscalHeader: theme === 'numbers' ? 'FFFF2D55' : 'FF4F46E5', // Apple Pink vs Indigo
+    portfolioHeader: theme === 'numbers' ? 'FF007AFF' : 'FF1E293B', // Apple Blue vs Slate 800
+    txHeader: theme === 'numbers' ? 'FFAF52DE' : 'FF334155', // Apple Purple vs Slate 700
+    divHeader: theme === 'numbers' ? 'FF34C759' : 'FF059669', // Apple Green vs Emerald 600
+    evolHeader: theme === 'numbers' ? 'FFFF9500' : 'FF0F172A', // Apple Orange vs Slate 900
+    altRow: theme === 'numbers' ? 'FFF5F5F7' : 'FFF8FAFC', // Apple Gray vs Slate 50
+    posText: theme === 'numbers' ? 'FF34C759' : 'FF10B981', // Apple Green vs Emerald 500
+    negText: theme === 'numbers' ? 'FFFF3B30' : 'FFEF4444', // Apple Red vs Red 500
+    headerHeight: theme === 'numbers' ? 28 : 20
+  }
+
+  const applyHeaderStyle = (row: any, bgColor: string) => {
+    row.height = colors.headerHeight
+    row.eachCell((cell: any) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } }
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: theme === 'numbers' ? 12 : 11 }
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }
+    })
+  }
 
   // Filter transactions
   const filteredTxs = transactions.filter(tx => {
@@ -49,11 +72,7 @@ const exportToExcel = async (
     { header: 'Detalles FIFO', key: 'detalles', width: 50 },
   ]
 
-  wsFiscal.getRow(1).eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } } // Indigo 600
-    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
-    cell.alignment = { horizontal: 'center' }
-  })
+  applyHeaderStyle(wsFiscal.getRow(1), colors.fiscalHeader)
 
   // Calculate FIFO for the selected year
   const taxEvents = calculateFIFO(transactions)
@@ -83,7 +102,7 @@ const exportToExcel = async (
     })
 
     if (idx % 2 !== 0) {
-      row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+      row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
     }
 
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
@@ -93,7 +112,7 @@ const exportToExcel = async (
     })
 
     row.getCell('ganancia').font = { 
-      color: { argb: ev.gananciaPatrimonial >= 0 ? 'FF10B981' : 'FFEF4444' }, 
+      color: { argb: ev.gananciaPatrimonial >= 0 ? colors.posText : colors.negText }, 
       bold: true 
     }
   })
@@ -107,7 +126,7 @@ const exportToExcel = async (
     r.font = { bold: true }
     r.getCell('ganancia').numFmt = '#,##0.00" €"'
   })
-  netRow.getCell('ganancia').font = { color: { argb: (totalGains - totalLosses) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+  netRow.getCell('ganancia').font = { color: { argb: (totalGains - totalLosses) >= 0 ? colors.posText : colors.negText }, bold: true }
 
   // --- SHEET 2: POSICIONES ABIERTAS ---
   const wsPortfolio = workbook.addWorksheet('Posiciones Abiertas')
@@ -124,11 +143,7 @@ const exportToExcel = async (
     { header: 'P&L (%)', key: 'pnl_pct', width: 15 },
   ]
 
-  wsPortfolio.getRow(1).eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
-    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
-    cell.alignment = { horizontal: 'center' }
-  })
+  applyHeaderStyle(wsPortfolio.getRow(1), colors.portfolioHeader)
 
   let totalValor = 0, totalInvertido = 0, totalPnl = 0
   positions.forEach((p, idx) => {
@@ -140,7 +155,7 @@ const exportToExcel = async (
       pnl_eur: p.pnl || 0, pnl_pct: (p.pnl_percent || 0) / 100
     })
 
-    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
 
     row.getCell('unidades').numFmt = '#,##0.00000000'
     row.getCell('precio_medio').numFmt = p.original_currency === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
@@ -148,9 +163,9 @@ const exportToExcel = async (
     row.getCell('valor').numFmt = '#,##0.00" €"'
     row.getCell('invertido').numFmt = '#,##0.00" €"'
     row.getCell('pnl_eur').numFmt = '#,##0.00" €"'
-    row.getCell('pnl_eur').font = { color: { argb: (p.pnl || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+    row.getCell('pnl_eur').font = { color: { argb: (p.pnl || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
     row.getCell('pnl_pct').numFmt = '0.00%'
-    row.getCell('pnl_pct').font = { color: { argb: (p.pnl_percent || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+    row.getCell('pnl_pct').font = { color: { argb: (p.pnl_percent || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
 
     totalValor += p.valor_actual || 0; totalInvertido += p.coste_total_eur; totalPnl += p.pnl || 0
   })
@@ -165,8 +180,8 @@ const exportToExcel = async (
   totalRow.getCell('invertido').numFmt = '#,##0.00" €"'
   totalRow.getCell('pnl_eur').numFmt = '#,##0.00" €"'
   totalRow.getCell('pnl_pct').numFmt = '0.00%'
-  totalRow.getCell('pnl_eur').font = { color: { argb: totalPnl >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
-  totalRow.getCell('pnl_pct').font = { color: { argb: totalPnl >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+  totalRow.getCell('pnl_eur').font = { color: { argb: totalPnl >= 0 ? colors.posText : colors.negText }, bold: true }
+  totalRow.getCell('pnl_pct').font = { color: { argb: totalPnl >= 0 ? colors.posText : colors.negText }, bold: true }
 
   // --- SHEET 3: TRANSACCIONES ---
   const wsTx = workbook.addWorksheet('Historial Completo')
@@ -181,11 +196,7 @@ const exportToExcel = async (
     { header: 'Total Efectivo', key: 'total', width: 20 },
   ]
 
-  wsTx.getRow(1).eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } }
-    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
-    cell.alignment = { horizontal: 'center' }
-  })
+  applyHeaderStyle(wsTx.getRow(1), colors.txHeader)
 
   const txsExcludingDivs = filteredTxs.filter(tx => tx.tipo_operacion !== 'Dividendo')
   
@@ -203,14 +214,14 @@ const exportToExcel = async (
       comision: tx.comision, total: total
     })
 
-    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
 
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
     row.getCell('cantidad').numFmt = '#,##0.00000000'
     row.getCell('precio').numFmt = '#,##0.00'
     row.getCell('comision').numFmt = '#,##0.00'
     row.getCell('total').numFmt = '#,##0.00'
-    row.getCell('tipo').font = { color: { argb: isCompra ? 'FF3B82F6' : 'FF8B5CF6' }, bold: true }
+    row.getCell('tipo').font = { color: { argb: isCompra ? (theme === 'numbers' ? 'FF007AFF' : 'FF3B82F6') : (theme === 'numbers' ? 'FFAF52DE' : 'FF8B5CF6') }, bold: true }
   })
 
   wsTx.addRow({})
@@ -235,11 +246,7 @@ const exportToExcel = async (
     { header: 'Importe Neto', key: 'neto', width: 20 },
   ]
 
-  wsDivs.getRow(1).eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } } // Emerald 600
-    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
-    cell.alignment = { horizontal: 'center' }
-  })
+  applyHeaderStyle(wsDivs.getRow(1), colors.divHeader)
 
   const divs = filteredTxs.filter(tx => tx.tipo_operacion === 'Dividendo')
   
@@ -259,13 +266,13 @@ const exportToExcel = async (
       bruto, comision: com, ret_origen: ro, ret_destino: rd, neto
     })
 
-    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
 
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
     ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach(key => {
       row.getCell(key).numFmt = '#,##0.00" €"'
     })
-    row.getCell('neto').font = { color: { argb: 'FF10B981' }, bold: true }
+    row.getCell('neto').font = { color: { argb: colors.posText }, bold: true }
   })
 
   wsDivs.addRow({})
@@ -289,11 +296,7 @@ const exportToExcel = async (
     { header: 'Flujo Neto (Aportación)', key: 'flujo', width: 25 },
   ]
 
-  wsEvol.getRow(1).eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }
-    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
-    cell.alignment = { horizontal: 'center' }
-  })
+  applyHeaderStyle(wsEvol.getRow(1), colors.evolHeader)
 
   const monthlyData: Record<string, any> = {}
   
@@ -326,24 +329,25 @@ const exportToExcel = async (
   
   sortedMonths.forEach((data: any, idx: number) => {
     const row = wsEvol.addRow(data)
-    if (idx % 2 !== 0) row.eachCell((cell: any) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+    if (idx % 2 !== 0) row.eachCell((cell: any) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
     
     ;['comprado', 'vendido', 'dividendos', 'comisiones', 'flujo'].forEach(key => {
       row.getCell(key).numFmt = '#,##0.00" €"'
     })
     
-    row.getCell('flujo').font = { color: { argb: data.flujo >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+    row.getCell('flujo').font = { color: { argb: data.flujo >= 0 ? colors.posText : colors.negText }, bold: true }
   })
 
   // Chart instructions
   wsEvol.addRow({})
   wsEvol.addRow({ mes: '💡 TIP:' })
-  wsEvol.addRow({ mes: 'Selecciona la tabla superior y dale a "Insertar > Gráfico de Columnas" para ver tu progresión histórica en 1 segundo.' })
-  wsEvol.getCell('A'+(wsEvol.rowCount)).font = { italic: true, color: { argb: 'FF64748B' } }
+  wsEvol.addRow({ mes: 'Selecciona la tabla superior y dale a "Insertar > Gráfica" en Apple Numbers para ver tu progresión histórica en 1 segundo.' })
+  wsEvol.getCell('A'+(wsEvol.rowCount)).font = { italic: true, color: { argb: 'FF86868B' } }
 
   const buffer = await workbook.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  saveAs(blob, `Silox_Reporte_${year}.xlsx`)
+  const filename = theme === 'numbers' ? `Silox_Numbers_${year}.xlsx` : `Silox_Excel_${year}.xlsx`
+  saveAs(blob, filename)
 }
 
 interface Props {
@@ -361,14 +365,14 @@ export function ExportExcelButton({ transactions, positions }: Props) {
     return Array.from(y).sort((a, b) => b - a)
   }, [transactions])
 
-  const handleExport = async (year: number | 'Todos') => {
+  const handleExport = async (year: number | 'Todos', theme: 'excel' | 'numbers') => {
     setIsExporting(true)
     try {
-      await exportToExcel(transactions, positions, year)
-      toast.success(`Excel generado correctamente (${year})`)
+      await exportToExcel(transactions, positions, year, theme)
+      toast.success(`${theme === 'numbers' ? 'Apple Numbers' : 'Excel'} generado correctamente (${year})`)
     } catch (error) {
       console.error(error)
-      toast.error('Error al generar el Excel')
+      toast.error(`Error al generar archivo para ${theme === 'numbers' ? 'Numbers' : 'Excel'}`)
     } finally {
       setIsExporting(false)
     }
@@ -379,21 +383,35 @@ export function ExportExcelButton({ transactions, positions }: Props) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="gap-2 border-border" disabled={isExporting}>
           {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-emerald-500" />}
-          Exportar a Excel
+          Exportar Reporte
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>Selecciona un año</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => handleExport('Todos')} className="cursor-pointer">
-          <Download className="mr-2 h-4 w-4 text-muted-foreground" />
-          Todos los años
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="text-xs uppercase text-muted-foreground">Exportar a Excel</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => handleExport('Todos', 'excel')} className="cursor-pointer">
+          <Download className="mr-2 h-4 w-4 text-emerald-500" />
+          Excel - Todos los años
         </DropdownMenuItem>
-        {years.length > 0 && <DropdownMenuSeparator />}
         {years.map(y => (
-          <DropdownMenuItem key={y} onClick={() => handleExport(y)} className="cursor-pointer">
-            <Download className="mr-2 h-4 w-4 text-muted-foreground" />
-            Año {y}
+          <DropdownMenuItem key={`excel-${y}`} onClick={() => handleExport(y, 'excel')} className="cursor-pointer">
+            <Download className="mr-2 h-4 w-4 text-emerald-500" />
+            Excel - Año {y}
+          </DropdownMenuItem>
+        ))}
+        
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuLabel className="text-xs uppercase text-muted-foreground flex items-center gap-1">
+          🍏 Exportar a Apple Numbers
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => handleExport('Todos', 'numbers')} className="cursor-pointer">
+          <Download className="mr-2 h-4 w-4 text-blue-500" />
+          Numbers - Todos los años
+        </DropdownMenuItem>
+        {years.map(y => (
+          <DropdownMenuItem key={`numbers-${y}`} onClick={() => handleExport(y, 'numbers')} className="cursor-pointer">
+            <Download className="mr-2 h-4 w-4 text-blue-500" />
+            Numbers - Año {y}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
