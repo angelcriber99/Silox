@@ -383,10 +383,22 @@ export function PositionsTable({
                     ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
                     : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
 
+                  const assetNotes = parseAssetNotes(p.notas);
+                  const currentPrice = p.precio_actual_nativo !== null ? p.precio_actual_nativo : (p.precio_actual || 0);
+                  const hasActiveWaves = assetNotes.waves.some(w => w.active);
+                  const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => 
+                    w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price))
+                  );
+
                   return (
                     <TableRow
                       key={p.activo_id}
-                      className="border-border/30 hover:bg-muted/30 transition-colors duration-200 group"
+                      className={`border-border/30 transition-all duration-500 group relative ${
+                        hasTriggeredWave
+                          ? "bg-[linear-gradient(90deg,rgba(244,63,94,0.15)_0%,transparent_50%)] hover:bg-[linear-gradient(90deg,rgba(244,63,94,0.25)_0%,transparent_50%)]"
+                          : "hover:bg-muted/30"
+                      }`}
+                      style={hasTriggeredWave ? { boxShadow: "inset 4px 0 0 0 rgb(244 63 94)" } : undefined}
                     >
                       <TableCell className={`font-medium text-foreground font-tabular ${cellPadding}`}>
                         <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
@@ -467,13 +479,6 @@ export function PositionsTable({
                       <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
                         <div className="flex items-center justify-end gap-1 pr-6 transition-opacity duration-200">
                           {(() => {
-                            const assetNotes = parseAssetNotes(p.notas);
-                            const currentPrice = p.precio_actual_nativo !== null ? p.precio_actual_nativo : (p.precio_actual || 0);
-                            const hasActiveWaves = assetNotes.waves.some(w => w.active);
-                            const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => 
-                              w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price))
-                            );
-                            
                             const showWavesPermanently = hasActiveWaves || hasTriggeredWave;
                             
                             return (
