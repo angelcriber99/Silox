@@ -187,9 +187,13 @@ async function _fetchMarketPrices(
         marketState
       }
       
-      if (marketState === 'REGULAR' || marketState === 'PRE') {
+      if (marketState === 'REGULAR') {
         hasOpenMarket = true
         globalMarketState = 'REGULAR'
+      } else if (marketState === 'PRE' && globalMarketState !== 'REGULAR') {
+        globalMarketState = 'PRE'
+      } else if (marketState === 'POST' && globalMarketState === 'CLOSED') {
+        globalMarketState = 'POST'
       }
     } else if (ticker) {
       prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null }
