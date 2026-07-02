@@ -25,17 +25,20 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
   const lastValue = chartData[chartData.length - 1].value
   const isOverallPositive = lastValue >= firstValue
   const lineColor = isOverallPositive ? "#10b981" : "#f43f5e"
-  const lineColorFaint = isOverallPositive ? "#10b981" : "#f43f5e"
 
-  // The invested amount from the last data point to use as reference line
   const lastInvested = chartData[chartData.length - 1]?.totalInvested
+
+  const firstDate = parseISO(chartData[0].timestamp)
+  const lastDate = parseISO(chartData[chartData.length - 1].timestamp)
+  const spanMs = lastDate.getTime() - firstDate.getTime()
+  const isOneDay = spanMs <= 24 * 60 * 60 * 1000
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload as ChartDataPoint
       const isPositive = data.totalPnl >= 0
       const dateObj = parseISO(label)
-      const formattedDate = format(dateObj, "d MMM yyyy", { locale: es })
+      const formattedDate = format(dateObj, "d MMM yyyy, HH:mm", { locale: es })
       
       return (
         <div className="bg-card/95 border border-border/60 p-4 rounded-xl shadow-2xl backdrop-blur-md min-w-[180px]">
@@ -53,14 +56,9 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">PnL Diario</p>
-            {data.isFirstDay ? (
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">PnL Instante</p>
+            {data.isFirstPoint ? (
               <p className="font-bold text-sm font-tabular text-muted-foreground leading-none">—</p>
-            ) : data.isFilled ? (
-               <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
-                  <p className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground leading-none">Cerrado</p>
-               </div>
             ) : (
               <p className={`font-bold text-sm font-tabular leading-none ${data.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {hideBalances ? "****" : `${data.pnl >= 0 ? '+' : ''}${formatCurrency(data.pnl)}`}
@@ -85,10 +83,10 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
           <XAxis 
-            dataKey="date" 
+            dataKey="timestamp" 
             axisLine={false} 
             tickLine={false} 
-            tickFormatter={(date) => format(parseISO(date), "d MMM", { locale: es })}
+            tickFormatter={(date) => format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
             dy={10}
             minTickGap={40}

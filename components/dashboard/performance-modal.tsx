@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DailyPnlChart } from "./daily-pnl-chart"
 import { PortfolioHistoryChart } from "./portfolio-history-chart"
 import { BarChart2, Activity } from "lucide-react"
-import { useSnapshots } from "@/lib/hooks/use-portfolio"
-import { format, parseISO, addDays, differenceInDays, subDays, subMonths, subYears, isAfter, isSameDay } from "date-fns"
+import { useHistory } from "@/lib/hooks/use-portfolio"
+import { format, parseISO, subDays, subMonths, subYears, isAfter } from "date-fns"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
@@ -19,90 +19,68 @@ interface PerformanceModalProps {
   currentTotalCost?: number
 }
 
-export type TimeRange = "1W" | "1M" | "1Y" | "ALL"
+export type TimeRange = "1D" | "1W" | "1M" | "1Y" | "ALL"
 
 export interface ChartDataPoint {
-  date: string
+  timestamp: string
   value: number
   totalInvested: number
   pnl: number
   totalPnl: number
-  isFirstDay: boolean
-  isFilled: boolean
+  isFirstPoint: boolean
 }
 
 export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTotalValue, currentTotalCost }: PerformanceModalProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M")
-  const { data: snapshots, isLoading } = useSnapshots()
+  const { data: snapshots, isLoading } = useHistory()
   const { hideBalances } = usePreferences()
 
   const processedData = useMemo(() => {
     if (!snapshots || snapshots.length === 0) {
       if (currentTotalValue !== undefined && currentPnl24h !== undefined) {
-        const todayStr = format(new Date(), 'yyyy-MM-dd')
+        const todayStr = new Date().toISOString()
         return [{
-          date: todayStr,
+          timestamp: todayStr,
           value: currentTotalValue,
-          totalInvested: currentTotalValue - currentPnl24h, // approximate
+          totalInvested: currentTotalValue - currentPnl24h,
           pnl: currentPnl24h,
           totalPnl: currentPnl24h,
-          isFirstDay: true,
-          isFilled: false
+          isFirstPoint: true,
         }]
       }
       return []
     }
 
-    const sorted = [...snapshots].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    const firstDate = parseISO(sorted[0].date)
-    const today = new Date()
-    const daysDiff = differenceInDays(today, firstDate)
+    const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    
+    // Add current real-time point at the end
+    if (currentTotalValue !== undefined && currentTotalCost !== undefined) {
+       sorted.push({
+         timestamp: new Date().toISOString(),
+         total_value: currentTotalValue,
+         total_invested: currentTotalCost
+       })
+    }
     
     const dataPoints: ChartDataPoint[] = []
-    let lastKnown = sorted[0]
     
-    for (let i = 0; i <= daysDiff; i++) {
-      const currentDate = addDays(firstDate, i)
-      const dateStr = format(currentDate, 'yyyy-MM-dd')
-      
-      const isToday = isSameDay(currentDate, today)
-      let snap = sorted.find(s => s.date === dateStr)
-      let isFilled = false
-
-      if (isToday && currentTotalValue !== undefined) {
-         // Override today with real-time data
-         snap = {
-           date: dateStr,
-           total_value: currentTotalValue,
-           total_invested: currentTotalCost !== undefined ? currentTotalCost : lastKnown.total_invested
-         }
-      } else if (!snap) {
-        snap = { ...lastKnown, date: dateStr }
-        isFilled = true
-      } else {
-        lastKnown = snap
-      }
-
+    for (let i = 0; i < sorted.length; i++) {
+      const snap = sorted[i]
       const pnlToday = snap.total_value - snap.total_invested
       let pnl = 0
       
-      if (dataPoints.length > 0) {
-        const yesterday = dataPoints[dataPoints.length - 1]
-        if (isFilled) {
-          pnl = 0 // Flat weekend
-        } else {
-          pnl = pnlToday - yesterday.totalPnl
-        }
+      if (i > 0) {
+        const prev = dataPoints[i - 1]
+        pnl = pnlToday - prev.totalPnl
       }
 
       dataPoints.push({
-        date: snap.date,
+        timestamp: snap.timestamp,
         value: snap.total_value,
         totalInvested: snap.total_invested,
         pnl: pnl,
         totalPnl: pnlToday,
-        isFirstDay: dataPoints.length === 0,
-        isFilled
+        isFirstPoint: i === 0,
       })
     }
     
@@ -113,14 +91,14 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
     if (processedData.length === 0) return []
     if (timeRange === "ALL") return processedData
     
-    const today = new Date()
-    let startDate = today
-    if (timeRange === "1W") startDate = subDays(today, 7)
-    if (timeRange === "1M") startDate = subMonths(today, 1)
-    if (timeRange === "1Y") startDate = subYears(today, 1)
+    const now = new Date()
+    let startDate = now
+    if (timeRange === "1D") startDate = subDays(now, 1)
+    if (timeRange === "1W") startDate = subDays(now, 7)
+    if (timeRange === "1M") startDate = subMonths(now, 1)
+    if (timeRange === "1Y") startDate = subYears(now, 1)
 
-    // Find the first point that is >= startDate, but keep at least 2 points if possible for area chart to render
-    const filtered = processedData.filter(d => isAfter(parseISO(d.date), startDate) || isSameDay(parseISO(d.date), startDate))
+    const filtered = processedData.filter(d => isAfter(parseISO(d.timestamp), startDate))
     
     if (filtered.length < 2 && processedData.length >= 2) {
       return processedData.slice(-2)
@@ -173,7 +151,7 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
               
               {/* Time Range Selector */}
               <div className="flex bg-muted/50 p-1 rounded-lg border border-border/50 self-start sm:self-auto">
-                {(["1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
+                {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
                   <button
                     key={tr}
                     onClick={() => setTimeRange(tr)}

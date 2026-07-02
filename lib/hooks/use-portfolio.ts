@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useMemo, useEffect, useRef } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
 import { fetchPosiciones, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
-import { saveDailySnapshotAction } from '@/lib/actions/assets'
+import { savePortfolioHistory } from '@/lib/api/assets'
 import { usePrices } from "./use-prices"
 import { createClient } from '@/lib/supabase/client'
 import { fetchPendingTransactions } from '@/lib/api/transactions'
@@ -92,11 +92,11 @@ export function usePortfolio() {
 
   const snapshotSaved = useRef(false)
 
-  // Save daily snapshot automatically
+  // Save portfolio history automatically
   useEffect(() => {
     if (!positionsLoading && !pricesLoading && totals.totalValue > 0 && !snapshotSaved.current) {
       snapshotSaved.current = true
-      saveDailySnapshotAction(totals.totalValue, totals.totalCost).catch(console.error)
+      savePortfolioHistory(totals.totalValue, totals.totalCost).catch(console.error)
     }
   }, [totals.totalValue, totals.totalCost, positionsLoading, pricesLoading])
 
@@ -140,10 +140,10 @@ export function usePortfolio() {
   }
 }
 
-export function useSnapshots() {
+export function useHistory() {
   return useQuery({
-    queryKey: ["portfolio-snapshots"],
-    queryFn: () => import('@/lib/api/assets').then(m => m.fetchSnapshots()),
+    queryKey: ["portfolio-history"],
+    queryFn: () => import('@/lib/api/assets').then(m => m.fetchHistory()),
     staleTime: 5 * 60 * 1000,
   })
 }

@@ -223,39 +223,46 @@ export function computePortfolioTotals(
   }
 }
 
-export async function saveDailySnapshot(totalValue: number, totalInvested: number): Promise<void> {
+export async function savePortfolioHistory(totalValue: number, totalInvested: number): Promise<void> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  // Only save if we have actual value
   if (totalValue <= 0 && totalInvested <= 0) return
 
-  const today = new Date().toISOString().split('T')[0]
+  // Throttle: Check if we saved a point in the last 15 minutes
+  const fifteenMinsAgo = new Date(Date.now() - 15 * 60000).toISOString()
+  
+  const { data: recent } = await supabase
+    .from('portfolio_history')
+    .select('id')
+    .eq('user_id', user.id)
+    .gte('timestamp', fifteenMinsAgo)
+    .limit(1)
 
-  // Upsert the snapshot for today
+  if (recent && recent.length > 0) {
+    // Already saved recently, skip
+    return
+  }
+
   await supabase
-    .from('portfolio_snapshots')
-    .upsert({
+    .from('portfolio_history')
+    .insert({
       user_id: user.id,
-      date: today,
       total_value: totalValue,
       total_invested: totalInvested,
-      updated_at: new Date().toISOString()
-    }, {
-      onConflict: 'user_id, date'
     })
 }
 
-export async function fetchSnapshots(): Promise<{ date: string, total_value: number, total_invested: number }[]> {
+export async function fetchHistory(): Promise<{ timestamp: string, total_value: number, total_invested: number }[]> {
   const supabase = createClient()
   const { data, error } = await supabase
-    .from('portfolio_snapshots')
-    .select('date, total_value, total_invested')
-    .order('date', { ascending: true })
+    .from('portfolio_history')
+    .select('timestamp, total_value, total_invested')
+    .order('timestamp', { ascending: true })
 
   if (error) {
-    console.error("Error fetching snapshots:", error)
+    console.error("Error fetching history:", error)
     return []
   }
 
