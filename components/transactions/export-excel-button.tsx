@@ -27,10 +27,13 @@ const exportToExcel = async (
 
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Silox'
+  workbook.lastModifiedBy = 'Silox'
   workbook.created = new Date()
+  workbook.modified = new Date()
 
   // Theme Colors
   const colors = {
+    summaryHeader: theme === 'numbers' ? 'FF1D1D1F' : 'FF0F172A',
     fiscalHeader: theme === 'numbers' ? 'FFFF2D55' : 'FF4F46E5', // Apple Pink vs Indigo
     portfolioHeader: theme === 'numbers' ? 'FF007AFF' : 'FF1E293B', // Apple Blue vs Slate 800
     txHeader: theme === 'numbers' ? 'FFAF52DE' : 'FF334155', // Apple Purple vs Slate 700
@@ -39,16 +42,27 @@ const exportToExcel = async (
     altRow: theme === 'numbers' ? 'FFF5F5F7' : 'FFF8FAFC', // Apple Gray vs Slate 50
     posText: theme === 'numbers' ? 'FF34C759' : 'FF10B981', // Apple Green vs Emerald 500
     negText: theme === 'numbers' ? 'FFFF3B30' : 'FFEF4444', // Apple Red vs Red 500
-    headerHeight: theme === 'numbers' ? 28 : 20
+    headerHeight: theme === 'numbers' ? 32 : 24
   }
 
-  const applyHeaderStyle = (row: any, bgColor: string) => {
+  const applyHeaderStyle = (ws: any, bgColor: string, columnCount: number) => {
+    const row = ws.getRow(1)
     row.height = colors.headerHeight
     row.eachCell((cell: any) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } }
       cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: theme === 'numbers' ? 12 : 11 }
       cell.alignment = { horizontal: 'center', vertical: 'middle' }
+      cell.border = {
+        bottom: { style: 'medium', color: { argb: 'FFFFFFFF' } }
+      }
     })
+    // Freeze the top row
+    ws.views = [{ state: 'frozen', ySplit: 1, activeCell: 'A2' }]
+    // Add Auto-filters for the header row
+    ws.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: columnCount }
+    }
   }
 
   // Filter transactions
@@ -57,37 +71,189 @@ const exportToExcel = async (
     return new Date(tx.fecha).getFullYear() === year
   }).sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
 
-  // --- SHEET 1: RESUMEN FISCAL (FIFO) ---
+  // Calculate high-level stats
+  const totalValor = positions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
+  const totalInvertido = positions.reduce((acc, p) => acc + (p.coste_total_eur || 0), 0)
+  const totalPnl = totalValor - totalInvertido
+  const totalPnlPct = totalInvertido > 0 ? totalPnl / totalInvertido : 0
+  const divs = filteredTxs.filter(tx => tx.tipo_operacion === 'Dividendo')
+  const totalDivsNeto = divs.reduce((acc, tx) => acc + (Number(tx.precio_unitario) - Number(tx.comision || 0) - Number(tx.retencion_origen || 0) - Number(tx.retencion_destino || 0)), 0)
+
+  // --- SHEET 0: RESUMEN EJECUTIVO ---
+  const wsSummary = workbook.addWorksheet('Resumen')
+  wsSummary.columns = [
+    { header: '', key: 'spacer', width: 5 },
+    { header: 'Métrica', key: 'metrica', width: 35 },
+    { header: 'Valor', key: 'valor', width: 25 },
+  ]
+  wsSummary.views = [{ showGridLines: false }] // Clean look
+  
+  wsSummary.addRow([])
+  wsSummary.addRow(['', '📊 REPORTE DE PORTFOLIO - SILOX'])
+  const titleRow = wsSummary.getRow(2)
+  titleRow.font = { size: 18, bold: true, color: { argb: colors.summaryHeader } }
+  wsSummary.addRow(['', `Año seleccionado: ${year}`]).font = { italic: true, color: { argb: 'FF64748B' } }
+  wsSummary.addRow([])
+
+  const addMetric = (label: string, value: any, format: string, color?: string) => {
+    const row = wsSummary.addRow(['', label, value])
+    row.height = 24
+    row.getCell('metrica').font = { bold: true, size: 12 }
+    row.getCell('metrica').alignment = { vertical: 'middle' }
+    row.getCell('valor').numFmt = format
+    row.getCell('valor').alignment = { horizontal: 'right', vertical: 'middle' }
+    row.getCell('valor').font = { size: 12, bold: true, color: { argb: color || 'FF1E293B' } }
+    row.getCell('metrica').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } }
+    row.getCell('valor').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } }
+    row.getCell('metrica').border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } }
+    row.getCell('valor').border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } }
+    return row
+  }
+
+  addMetric('Patrimonio Total', totalValor, '#,##0.00" €"')
+  addMetric('Capital Invertido', totalInvertido, '#,##0.00" €"')
+  addMetric('Ganancia Latente (P&L)', totalPnl, '#,##0.00" €"', totalPnl >= 0 ? colors.posText : colors.negText)
+  addMetric('Rentabilidad Latente (%)', totalPnlPct, '0.00%', totalPnlPct >= 0 ? colors.posText : colors.negText)
+  addMetric('Ingresos por Dividendos Netos', totalDivsNeto, '#,##0.00" €"', colors.posText)
+  addMetric('Total Posiciones Abiertas', positions.filter(p => p.unidades > 0).length, '0')
+  addMetric('Total Transacciones', filteredTxs.length, '0')
+  
+  wsSummary.addRow([])
+  wsSummary.addRow(['', '💡 Explora las pestañas inferiores para ver el desglose completo con tablas dinámicas y filtros integrados.']).font = { italic: true, color: { argb: 'FF86868B' } }
+
+  // --- SHEET 1: POSICIONES ABIERTAS ---
+  const wsPortfolio = workbook.addWorksheet('Posiciones Abiertas')
+  wsPortfolio.columns = [
+    { header: 'Símbolo', key: 'ticker', width: 15 },
+    { header: 'Nombre', key: 'nombre', width: 35 },
+    { header: 'Tipo', key: 'tipo', width: 18 },
+    { header: 'Unidades', key: 'unidades', width: 18 },
+    { header: 'Precio Compra', key: 'precio_medio', width: 20 },
+    { header: 'Precio Actual', key: 'precio_actual', width: 20 },
+    { header: 'Valor Total (€)', key: 'valor', width: 20 },
+    { header: 'Invertido (€)', key: 'invertido', width: 20 },
+    { header: 'P&L (€)', key: 'pnl_eur', width: 20 },
+    { header: 'P&L (%)', key: 'pnl_pct', width: 15 },
+  ]
+
+  applyHeaderStyle(wsPortfolio, colors.portfolioHeader, 10)
+
+  let portRow = 2
+  positions.forEach((p) => {
+    if (p.unidades <= 0) return
+    const row = wsPortfolio.addRow({
+      ticker: p.ticker, nombre: p.nombre || '', tipo: p.tipo,
+      unidades: p.unidades, precio_medio: p.precio_medio, precio_actual: p.precio_actual,
+      valor: p.valor_actual || 0, invertido: p.coste_total_eur,
+      pnl_eur: p.pnl || 0, pnl_pct: (p.pnl_percent || 0) / 100
+    })
+
+    if (portRow % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
+
+    row.getCell('unidades').numFmt = '#,##0.00000000'
+    row.getCell('precio_medio').numFmt = p.original_currency === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
+    row.getCell('precio_actual').numFmt = p.original_currency === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
+    row.getCell('valor').numFmt = '#,##0.00" €"'
+    row.getCell('invertido').numFmt = '#,##0.00" €"'
+    // Formulas instead of hardcoded values for Excel interactivity
+    row.getCell('pnl_eur').value = { formula: `G${portRow}-H${portRow}`, result: p.pnl || 0 }
+    row.getCell('pnl_eur').numFmt = '#,##0.00" €"'
+    row.getCell('pnl_eur').font = { color: { argb: (p.pnl || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
+    
+    // Protect against division by zero in formula
+    row.getCell('pnl_pct').value = { formula: `IF(H${portRow}>0, I${portRow}/H${portRow}, 0)`, result: (p.pnl_percent || 0) / 100 }
+    row.getCell('pnl_pct').numFmt = '0.00%'
+    row.getCell('pnl_pct').font = { color: { argb: (p.pnl_percent || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
+    
+    portRow++
+  })
+
+  wsPortfolio.addRow({})
+  portRow++
+  const totalPortRow = wsPortfolio.addRow({
+    ticker: 'TOTALES'
+  })
+  totalPortRow.font = { bold: true, size: 12 }
+  totalPortRow.getCell('valor').value = { formula: `SUBTOTAL(9, G2:G${portRow-2})` }
+  totalPortRow.getCell('invertido').value = { formula: `SUBTOTAL(9, H2:H${portRow-2})` }
+  totalPortRow.getCell('pnl_eur').value = { formula: `SUBTOTAL(9, I2:I${portRow-2})` }
+  totalPortRow.getCell('pnl_pct').value = { formula: `IF(H${portRow}>0, I${portRow}/H${portRow}, 0)` }
+
+  totalPortRow.getCell('valor').numFmt = '#,##0.00" €"'
+  totalPortRow.getCell('invertido').numFmt = '#,##0.00" €"'
+  totalPortRow.getCell('pnl_eur').numFmt = '#,##0.00" €"'
+  totalPortRow.getCell('pnl_pct').numFmt = '0.00%'
+
+
+  // --- SHEET 2: TRANSACCIONES ---
+  const wsTx = workbook.addWorksheet('Historial Completo')
+  wsTx.columns = [
+    { header: 'Fecha', key: 'fecha', width: 15 },
+    { header: 'Operación', key: 'tipo', width: 15 },
+    { header: 'Símbolo', key: 'ticker', width: 15 },
+    { header: 'Activo', key: 'nombre', width: 35 },
+    { header: 'Cantidad', key: 'cantidad', width: 18 },
+    { header: 'Precio Unitario', key: 'precio', width: 20 },
+    { header: 'Comisiones', key: 'comision', width: 15 },
+    { header: 'Total Efectivo', key: 'total', width: 20 },
+  ]
+
+  applyHeaderStyle(wsTx, colors.txHeader, 8)
+
+  const txsExcludingDivs = filteredTxs.filter(tx => tx.tipo_operacion !== 'Dividendo')
+  
+  let txRowIdx = 2
+  txsExcludingDivs.forEach((tx) => {
+    const isCompra = tx.tipo_operacion === 'Compra'
+    const total = (tx.cantidad * tx.precio_unitario) + tx.comision
+
+    const row = wsTx.addRow({
+      fecha: new Date(tx.fecha), tipo: tx.tipo_operacion, ticker: tx.activo?.ticker,
+      nombre: tx.activo?.nombre || '', cantidad: tx.cantidad, precio: tx.precio_unitario,
+      comision: tx.comision
+    })
+    
+    // Formula for Total Efectivo
+    row.getCell('total').value = { formula: `(E${txRowIdx} * F${txRowIdx}) + G${txRowIdx}`, result: total }
+
+    if (txRowIdx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
+
+    row.getCell('fecha').numFmt = 'dd/mm/yyyy'
+    row.getCell('cantidad').numFmt = '#,##0.00000000'
+    row.getCell('precio').numFmt = '#,##0.00'
+    row.getCell('comision').numFmt = '#,##0.00'
+    row.getCell('total').numFmt = '#,##0.00'
+    row.getCell('tipo').font = { color: { argb: isCompra ? (theme === 'numbers' ? 'FF007AFF' : 'FF3B82F6') : (theme === 'numbers' ? 'FFAF52DE' : 'FF8B5CF6') }, bold: true }
+    
+    txRowIdx++
+  })
+
+
+  // --- SHEET 3: RESUMEN FISCAL (FIFO) ---
   const wsFiscal = workbook.addWorksheet('Resumen Fiscal')
   wsFiscal.columns = [
     { header: 'Fecha Venta', key: 'fecha', width: 15 },
     { header: 'Símbolo', key: 'ticker', width: 15 },
-    { header: 'Nombre', key: 'nombre', width: 30 },
-    { header: 'Cantidad', key: 'cantidad', width: 15 },
+    { header: 'Nombre', key: 'nombre', width: 35 },
+    { header: 'Cantidad', key: 'cantidad', width: 18 },
     { header: 'Ingreso Venta', key: 'ingreso', width: 20 },
     { header: 'Coste Adquisición', key: 'coste', width: 20 },
     { header: 'Resultado P/G', key: 'ganancia', width: 20 },
     { header: 'Retención Origen', key: 'ret_origen', width: 20 },
     { header: 'Retención Destino', key: 'ret_destino', width: 20 },
-    { header: 'Detalles FIFO', key: 'detalles', width: 50 },
+    { header: 'Detalles FIFO', key: 'detalles', width: 60 },
   ]
 
-  applyHeaderStyle(wsFiscal.getRow(1), colors.fiscalHeader)
+  applyHeaderStyle(wsFiscal, colors.fiscalHeader, 10)
 
-  // Calculate FIFO for the selected year
   const taxEvents = calculateFIFO(transactions)
   const filteredEvents = taxEvents.filter(e => {
     if (year === 'Todos') return true
     return e.añoFiscal === year
   })
 
-  let totalGains = 0
-  let totalLosses = 0
-
-  filteredEvents.forEach((ev, idx) => {
-    if (ev.gananciaPatrimonial > 0) totalGains += ev.gananciaPatrimonial
-    else totalLosses += Math.abs(ev.gananciaPatrimonial)
-
+  let fisRow = 2
+  filteredEvents.forEach((ev) => {
     const row = wsFiscal.addRow({
       fecha: new Date(ev.fechaVenta),
       ticker: ev.ticker,
@@ -95,13 +261,15 @@ const exportToExcel = async (
       cantidad: ev.cantidadVendida,
       ingreso: ev.ingresoVenta,
       coste: ev.costeAdquisicion,
-      ganancia: ev.gananciaPatrimonial,
       ret_origen: ev.retencionOrigen,
       ret_destino: ev.retencionDestino,
       detalles: ev.detalles
     })
+    
+    // Formula for Resultado P/G
+    row.getCell('ganancia').value = { formula: `E${fisRow}-F${fisRow}`, result: ev.gananciaPatrimonial }
 
-    if (idx % 2 !== 0) {
+    if (fisRow % 2 !== 0) {
       row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
     }
 
@@ -115,130 +283,23 @@ const exportToExcel = async (
       color: { argb: ev.gananciaPatrimonial >= 0 ? colors.posText : colors.negText }, 
       bold: true 
     }
+    fisRow++
   })
 
   wsFiscal.addRow({})
-  const totalGainsRow = wsFiscal.addRow({ nombre: 'TOTAL GANANCIAS:', ganancia: totalGains })
-  const totalLossesRow = wsFiscal.addRow({ nombre: 'TOTAL PÉRDIDAS:', ganancia: -totalLosses })
-  const netRow = wsFiscal.addRow({ nombre: 'RENDIMIENTO NETO:', ganancia: totalGains - totalLosses })
+  fisRow++
+  const sumFisRow = wsFiscal.addRow({ nombre: 'TOTALES PÉRDIDAS Y GANANCIAS:' })
+  sumFisRow.font = { bold: true, size: 12 }
+  sumFisRow.getCell('ganancia').value = { formula: `SUBTOTAL(9, G2:G${fisRow-2})` }
+  sumFisRow.getCell('ganancia').numFmt = '#,##0.00" €"'
 
-  ;[totalGainsRow, totalLossesRow, netRow].forEach(r => {
-    r.font = { bold: true }
-    r.getCell('ganancia').numFmt = '#,##0.00" €"'
-  })
-  netRow.getCell('ganancia').font = { color: { argb: (totalGains - totalLosses) >= 0 ? colors.posText : colors.negText }, bold: true }
-
-  // --- SHEET 2: POSICIONES ABIERTAS ---
-  const wsPortfolio = workbook.addWorksheet('Posiciones Abiertas')
-  wsPortfolio.columns = [
-    { header: 'Símbolo', key: 'ticker', width: 15 },
-    { header: 'Nombre', key: 'nombre', width: 30 },
-    { header: 'Tipo', key: 'tipo', width: 15 },
-    { header: 'Unidades', key: 'unidades', width: 15 },
-    { header: 'Precio Compra', key: 'precio_medio', width: 20 },
-    { header: 'Precio Actual', key: 'precio_actual', width: 20 },
-    { header: 'Valor Total (€)', key: 'valor', width: 20 },
-    { header: 'Invertido (€)', key: 'invertido', width: 20 },
-    { header: 'P&L (€)', key: 'pnl_eur', width: 20 },
-    { header: 'P&L (%)', key: 'pnl_pct', width: 15 },
-  ]
-
-  applyHeaderStyle(wsPortfolio.getRow(1), colors.portfolioHeader)
-
-  let totalValor = 0, totalInvertido = 0, totalPnl = 0
-  positions.forEach((p, idx) => {
-    if (p.unidades <= 0) return
-    const row = wsPortfolio.addRow({
-      ticker: p.ticker, nombre: p.nombre || '', tipo: p.tipo,
-      unidades: p.unidades, precio_medio: p.precio_medio, precio_actual: p.precio_actual,
-      valor: p.valor_actual || 0, invertido: p.coste_total_eur,
-      pnl_eur: p.pnl || 0, pnl_pct: (p.pnl_percent || 0) / 100
-    })
-
-    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
-
-    row.getCell('unidades').numFmt = '#,##0.00000000'
-    row.getCell('precio_medio').numFmt = p.original_currency === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
-    row.getCell('precio_actual').numFmt = p.original_currency === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
-    row.getCell('valor').numFmt = '#,##0.00" €"'
-    row.getCell('invertido').numFmt = '#,##0.00" €"'
-    row.getCell('pnl_eur').numFmt = '#,##0.00" €"'
-    row.getCell('pnl_eur').font = { color: { argb: (p.pnl || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
-    row.getCell('pnl_pct').numFmt = '0.00%'
-    row.getCell('pnl_pct').font = { color: { argb: (p.pnl_percent || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
-
-    totalValor += p.valor_actual || 0; totalInvertido += p.coste_total_eur; totalPnl += p.pnl || 0
-  })
-
-  wsPortfolio.addRow({})
-  const totalRow = wsPortfolio.addRow({
-    ticker: 'TOTAL', valor: totalValor, invertido: totalInvertido,
-    pnl_eur: totalPnl, pnl_pct: totalInvertido > 0 ? (totalPnl / totalInvertido) : 0
-  })
-  totalRow.font = { bold: true }
-  totalRow.getCell('valor').numFmt = '#,##0.00" €"'
-  totalRow.getCell('invertido').numFmt = '#,##0.00" €"'
-  totalRow.getCell('pnl_eur').numFmt = '#,##0.00" €"'
-  totalRow.getCell('pnl_pct').numFmt = '0.00%'
-  totalRow.getCell('pnl_eur').font = { color: { argb: totalPnl >= 0 ? colors.posText : colors.negText }, bold: true }
-  totalRow.getCell('pnl_pct').font = { color: { argb: totalPnl >= 0 ? colors.posText : colors.negText }, bold: true }
-
-  // --- SHEET 3: TRANSACCIONES ---
-  const wsTx = workbook.addWorksheet('Historial Completo')
-  wsTx.columns = [
-    { header: 'Fecha', key: 'fecha', width: 15 },
-    { header: 'Operación', key: 'tipo', width: 15 },
-    { header: 'Símbolo', key: 'ticker', width: 15 },
-    { header: 'Activo', key: 'nombre', width: 30 },
-    { header: 'Cantidad', key: 'cantidad', width: 15 },
-    { header: 'Precio Unitario', key: 'precio', width: 20 },
-    { header: 'Comisiones', key: 'comision', width: 15 },
-    { header: 'Total Efectivo', key: 'total', width: 20 },
-  ]
-
-  applyHeaderStyle(wsTx.getRow(1), colors.txHeader)
-
-  const txsExcludingDivs = filteredTxs.filter(tx => tx.tipo_operacion !== 'Dividendo')
-  
-  let sumCompras = 0, sumVentas = 0, sumComisiones = 0
-  txsExcludingDivs.forEach((tx, idx) => {
-    const isCompra = tx.tipo_operacion === 'Compra'
-    const total = (tx.cantidad * tx.precio_unitario) + tx.comision
-
-    if (isCompra) sumCompras += total; else sumVentas += total
-    sumComisiones += tx.comision
-
-    const row = wsTx.addRow({
-      fecha: new Date(tx.fecha), tipo: tx.tipo_operacion, ticker: tx.activo?.ticker,
-      nombre: tx.activo?.nombre || '', cantidad: tx.cantidad, precio: tx.precio_unitario,
-      comision: tx.comision, total: total
-    })
-
-    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
-
-    row.getCell('fecha').numFmt = 'dd/mm/yyyy'
-    row.getCell('cantidad').numFmt = '#,##0.00000000'
-    row.getCell('precio').numFmt = '#,##0.00'
-    row.getCell('comision').numFmt = '#,##0.00'
-    row.getCell('total').numFmt = '#,##0.00'
-    row.getCell('tipo').font = { color: { argb: isCompra ? (theme === 'numbers' ? 'FF007AFF' : 'FF3B82F6') : (theme === 'numbers' ? 'FFAF52DE' : 'FF8B5CF6') }, bold: true }
-  })
-
-  wsTx.addRow({})
-  ;[wsTx.addRow({ nombre: 'TOTAL COMPRADO:', total: sumCompras }),
-    wsTx.addRow({ nombre: 'TOTAL VENDIDO:', total: sumVentas }),
-    wsTx.addRow({ nombre: 'TOTAL COMISIONES:', comision: sumComisiones })].forEach(r => {
-      r.font = { bold: true }
-      r.getCell('total').numFmt = '#,##0.00" €"'
-      r.getCell('comision').numFmt = '#,##0.00" €"'
-  })
 
   // --- SHEET 4: DIVIDENDOS ---
   const wsDivs = workbook.addWorksheet('Dividendos')
   wsDivs.columns = [
     { header: 'Fecha', key: 'fecha', width: 15 },
     { header: 'Símbolo', key: 'ticker', width: 15 },
-    { header: 'Nombre', key: 'nombre', width: 30 },
+    { header: 'Nombre', key: 'nombre', width: 35 },
     { header: 'Importe Bruto', key: 'bruto', width: 20 },
     { header: 'Comisiones', key: 'comision', width: 15 },
     { header: 'Retención Origen', key: 'ret_origen', width: 20 },
@@ -246,42 +307,43 @@ const exportToExcel = async (
     { header: 'Importe Neto', key: 'neto', width: 20 },
   ]
 
-  applyHeaderStyle(wsDivs.getRow(1), colors.divHeader)
+  applyHeaderStyle(wsDivs, colors.divHeader, 8)
 
-  const divs = filteredTxs.filter(tx => tx.tipo_operacion === 'Dividendo')
-  
-  let dBruto = 0, dComision = 0, dRot = 0, dRdt = 0, dNeto = 0
-  divs.forEach((tx, idx) => {
+  let divRowIdx = 2
+  divs.forEach((tx) => {
     const isLegacy = Number(tx.cantidad) === 0.000001
     const bruto = isLegacy ? Number(tx.precio_unitario) : Number(tx.precio_unitario)
     const com = Number(tx.comision || 0)
     const ro = Number(tx.retencion_origen || 0)
     const rd = Number(tx.retencion_destino || 0)
-    const neto = bruto - com - ro - rd
-
-    dBruto += bruto; dComision += com; dRot += ro; dRdt += rd; dNeto += neto
 
     const row = wsDivs.addRow({
       fecha: new Date(tx.fecha), ticker: tx.activo?.ticker, nombre: tx.activo?.nombre || '',
-      bruto, comision: com, ret_origen: ro, ret_destino: rd, neto
+      bruto, comision: com, ret_origen: ro, ret_destino: rd
     })
+    
+    // Formula for Neto
+    row.getCell('neto').value = { formula: `D${divRowIdx}-E${divRowIdx}-F${divRowIdx}-G${divRowIdx}`, result: bruto - com - ro - rd }
 
-    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
+    if (divRowIdx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
 
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
     ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach(key => {
       row.getCell(key).numFmt = '#,##0.00" €"'
     })
     row.getCell('neto').font = { color: { argb: colors.posText }, bold: true }
+    divRowIdx++
   })
 
   wsDivs.addRow({})
-  const divTotalsRow = wsDivs.addRow({
-    nombre: 'TOTALES:', bruto: dBruto, comision: dComision, ret_origen: dRot, ret_destino: dRdt, neto: dNeto
-  })
-  divTotalsRow.font = { bold: true }
-  ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach(key => {
-    divTotalsRow.getCell(key).numFmt = '#,##0.00" €"'
+  divRowIdx++
+  const sumDivRow = wsDivs.addRow({ nombre: 'TOTALES DIVIDENDOS:' })
+  sumDivRow.font = { bold: true, size: 12 }
+  ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach((key, colIdx) => {
+    const colLetters = ['D', 'E', 'F', 'G', 'H']
+    const letter = colLetters[colIdx]
+    sumDivRow.getCell(key).value = { formula: `SUBTOTAL(9, ${letter}2:${letter}${divRowIdx-2})` }
+    sumDivRow.getCell(key).numFmt = '#,##0.00" €"'
   })
 
   
@@ -296,7 +358,7 @@ const exportToExcel = async (
     { header: 'Flujo Neto (Aportación)', key: 'flujo', width: 25 },
   ]
 
-  applyHeaderStyle(wsEvol.getRow(1), colors.evolHeader)
+  applyHeaderStyle(wsEvol, colors.evolHeader, 6)
 
   const monthlyData: Record<string, any> = {}
   
@@ -327,21 +389,27 @@ const exportToExcel = async (
 
   const sortedMonths = Object.values(monthlyData).sort((a: any, b: any) => a.mes.localeCompare(b.mes))
   
-  sortedMonths.forEach((data: any, idx: number) => {
+  let evolRowIdx = 2
+  sortedMonths.forEach((data: any) => {
     const row = wsEvol.addRow(data)
-    if (idx % 2 !== 0) row.eachCell((cell: any) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
+    
+    // Formula for Flujo Neto: Vendido + Dividendos - Comprado - Comisiones
+    row.getCell('flujo').value = { formula: `C${evolRowIdx}+D${evolRowIdx}-B${evolRowIdx}-E${evolRowIdx}`, result: data.flujo }
+
+    if (evolRowIdx % 2 !== 0) row.eachCell((cell: any) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
     
     ;['comprado', 'vendido', 'dividendos', 'comisiones', 'flujo'].forEach(key => {
       row.getCell(key).numFmt = '#,##0.00" €"'
     })
     
     row.getCell('flujo').font = { color: { argb: data.flujo >= 0 ? colors.posText : colors.negText }, bold: true }
+    evolRowIdx++
   })
 
   // Chart instructions
   wsEvol.addRow({})
   wsEvol.addRow({ mes: '💡 TIP:' })
-  wsEvol.addRow({ mes: 'Selecciona la tabla superior y dale a "Insertar > Gráfica" en Apple Numbers para ver tu progresión histórica en 1 segundo.' })
+  wsEvol.addRow({ mes: 'Puedes filtrar y ordenar en las cabeceras de cada columna.' })
   wsEvol.getCell('A'+(wsEvol.rowCount)).font = { italic: true, color: { argb: 'FF86868B' } }
 
   const buffer = await workbook.xlsx.writeBuffer()
