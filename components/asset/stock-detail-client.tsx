@@ -70,12 +70,12 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
           </div>
           <div className="text-left md:text-right">
             <p className="text-5xl md:text-6xl font-bold text-foreground font-tabular drop-shadow-md">
-              {position.precio_actual !== null ? formatCurrency(position.precio_actual, position.moneda) : "—"}
+              {position.precio_actual !== null ? formatCurrency(position.precio_actual_nativo ?? position.precio_actual, position.original_currency || position.moneda) : "—"}
             </p>
             <div className="flex items-center md:justify-end gap-2 mt-2">
               {position.change_percent_24h !== null && position.change_amount_24h !== null && (
                 <p className={`text-lg font-bold font-tabular flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                  {isPositive ? "+" : ""}{formatCurrency(position.change_amount_24h, position.moneda)} 
+                  {isPositive ? "+" : ""}{formatCurrency(position.change_amount_24h_nativo ?? position.change_amount_24h, position.original_currency || position.moneda)} 
                   <span className="ml-1 opacity-80">({isPositive ? "+" : ""}{position.change_percent_24h.toFixed(2)}%)</span>
                   <span className="text-muted-foreground text-sm ml-2 font-medium">Hoy</span>
                 </p>
@@ -120,7 +120,7 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
 
         {/* ═══════════ ESTADÍSTICAS EXTENDIDAS DE ACCIÓN ═══════════ */}
         <div className="mb-10 animate-fade-in stagger-3">
-          <StockExtendedStats ticker={position.ticker} moneda={position.moneda} precioActual={position.precio_actual} />
+          <StockExtendedStats ticker={position.ticker} moneda={position.moneda} precioActual={position.precio_actual_nativo ?? position.precio_actual} />
         </div>
 
         {/* ═══════════ HISTORIAL DE TRANSACCIONES Y ALERTAS ═══════════ */}

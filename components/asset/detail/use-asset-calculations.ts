@@ -66,7 +66,8 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
 
     if (position.precio_actual !== null && accUnits > 0) {
       const inv = Math.max(0, Math.round(accCost * 100) / 100)
-      const val = Math.max(0, Math.round(accUnits * position.precio_actual * 100) / 100)
+      const currentNativePrice = position.precio_actual_nativo ?? position.precio_actual
+      const val = Math.max(0, Math.round(accUnits * currentNativePrice * 100) / 100)
       points.push({
         date: "Hoy",
         invested: inv,
@@ -132,7 +133,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
     const gananciaIntereses = (position.valor_actual ?? 0) - position.coste_total + totalDividendos
 
     const precioMedio = position.precio_medio
-    const precioActual = position.precio_actual ?? precioMedio
+    const precioActual = position.precio_actual_nativo ?? position.precio_actual ?? precioMedio
     const precioPorcentaje = precioMedio > 0 ? ((precioActual - precioMedio) / precioMedio) * 100 : 0
 
     const firstTxDate = compras.length > 0
@@ -203,7 +204,8 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
         accumulated -= total
       }
 
-      const pnlPerUnit = position.precio_actual !== null ? position.precio_actual - price : null
+      const currentNativePrice = position.precio_actual_nativo ?? position.precio_actual
+      const pnlPerUnit = currentNativePrice !== null ? currentNativePrice - price : null
       const pnlTotal = pnlPerUnit !== null ? pnlPerUnit * qty : null
       const pnlPct = price > 0 && pnlPerUnit !== null ? (pnlPerUnit / price) * 100 : null
 
