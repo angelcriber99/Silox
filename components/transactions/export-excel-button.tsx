@@ -89,7 +89,7 @@ const exportToExcel = async (
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
     row.getCell('cantidad').numFmt = '#,##0.00000000'
     ;['ingreso', 'coste', 'ganancia', 'ret_origen', 'ret_destino'].forEach(key => {
-      row.getCell(key).numFmt = '€#,##0.00'
+      row.getCell(key).numFmt = '#,##0.00" €"'
     })
 
     row.getCell('ganancia').font = { 
@@ -105,7 +105,7 @@ const exportToExcel = async (
 
   ;[totalGainsRow, totalLossesRow, netRow].forEach(r => {
     r.font = { bold: true }
-    r.getCell('ganancia').numFmt = '€#,##0.00'
+    r.getCell('ganancia').numFmt = '#,##0.00" €"'
   })
   netRow.getCell('ganancia').font = { color: { argb: (totalGains - totalLosses) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
 
@@ -143,11 +143,11 @@ const exportToExcel = async (
     if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
 
     row.getCell('unidades').numFmt = '#,##0.00000000'
-    row.getCell('precio_medio').numFmt = p.original_currency === 'EUR' ? '€#,##0.00' : '$#,##0.00'
-    row.getCell('precio_actual').numFmt = p.original_currency === 'EUR' ? '€#,##0.00' : '$#,##0.00'
-    row.getCell('valor').numFmt = '€#,##0.00'
-    row.getCell('invertido').numFmt = '€#,##0.00'
-    row.getCell('pnl_eur').numFmt = '€#,##0.00'
+    row.getCell('precio_medio').numFmt = p.original_currency === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
+    row.getCell('precio_actual').numFmt = p.original_currency === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
+    row.getCell('valor').numFmt = '#,##0.00" €"'
+    row.getCell('invertido').numFmt = '#,##0.00" €"'
+    row.getCell('pnl_eur').numFmt = '#,##0.00" €"'
     row.getCell('pnl_eur').font = { color: { argb: (p.pnl || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
     row.getCell('pnl_pct').numFmt = '0.00%'
     row.getCell('pnl_pct').font = { color: { argb: (p.pnl_percent || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
@@ -161,9 +161,9 @@ const exportToExcel = async (
     pnl_eur: totalPnl, pnl_pct: totalInvertido > 0 ? (totalPnl / totalInvertido) : 0
   })
   totalRow.font = { bold: true }
-  totalRow.getCell('valor').numFmt = '€#,##0.00'
-  totalRow.getCell('invertido').numFmt = '€#,##0.00'
-  totalRow.getCell('pnl_eur').numFmt = '€#,##0.00'
+  totalRow.getCell('valor').numFmt = '#,##0.00" €"'
+  totalRow.getCell('invertido').numFmt = '#,##0.00" €"'
+  totalRow.getCell('pnl_eur').numFmt = '#,##0.00" €"'
   totalRow.getCell('pnl_pct').numFmt = '0.00%'
   totalRow.getCell('pnl_eur').font = { color: { argb: totalPnl >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
   totalRow.getCell('pnl_pct').font = { color: { argb: totalPnl >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
@@ -218,8 +218,8 @@ const exportToExcel = async (
     wsTx.addRow({ nombre: 'TOTAL VENDIDO:', total: sumVentas }),
     wsTx.addRow({ nombre: 'TOTAL COMISIONES:', comision: sumComisiones })].forEach(r => {
       r.font = { bold: true }
-      r.getCell('total').numFmt = '€#,##0.00'
-      r.getCell('comision').numFmt = '€#,##0.00'
+      r.getCell('total').numFmt = '#,##0.00" €"'
+      r.getCell('comision').numFmt = '#,##0.00" €"'
   })
 
   // --- SHEET 4: DIVIDENDOS ---
@@ -263,7 +263,7 @@ const exportToExcel = async (
 
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
     ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach(key => {
-      row.getCell(key).numFmt = '€#,##0.00'
+      row.getCell(key).numFmt = '#,##0.00" €"'
     })
     row.getCell('neto').font = { color: { argb: 'FF10B981' }, bold: true }
   })
@@ -274,8 +274,72 @@ const exportToExcel = async (
   })
   divTotalsRow.font = { bold: true }
   ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach(key => {
-    divTotalsRow.getCell(key).numFmt = '€#,##0.00'
+    divTotalsRow.getCell(key).numFmt = '#,##0.00" €"'
   })
+
+  
+  // --- SHEET 5: EVOLUCIÓN MENSUAL ---
+  const wsEvol = workbook.addWorksheet('Evolución Mensual')
+  wsEvol.columns = [
+    { header: 'Mes', key: 'mes', width: 20 },
+    { header: 'Total Comprado', key: 'comprado', width: 20 },
+    { header: 'Total Vendido', key: 'vendido', width: 20 },
+    { header: 'Dividendos', key: 'dividendos', width: 20 },
+    { header: 'Comisiones', key: 'comisiones', width: 20 },
+    { header: 'Flujo Neto (Aportación)', key: 'flujo', width: 25 },
+  ]
+
+  wsEvol.getRow(1).eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }
+    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
+    cell.alignment = { horizontal: 'center' }
+  })
+
+  const monthlyData: Record<string, any> = {}
+  
+  filteredTxs.forEach(tx => {
+    const d = new Date(tx.fecha)
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = { mes: monthKey, comprado: 0, vendido: 0, dividendos: 0, comisiones: 0, flujo: 0 }
+    }
+    
+    const isLegacy = Number(tx.cantidad) === 0.000001
+    const total = isLegacy ? Number(tx.precio_unitario) : (tx.cantidad * tx.precio_unitario)
+    
+    if (tx.tipo_operacion === 'Compra') {
+      monthlyData[monthKey].comprado += total
+      monthlyData[monthKey].flujo -= total
+    } else if (tx.tipo_operacion === 'Venta') {
+      monthlyData[monthKey].vendido += total
+      monthlyData[monthKey].flujo += total
+    } else if (tx.tipo_operacion === 'Dividendo') {
+      monthlyData[monthKey].dividendos += total
+      monthlyData[monthKey].flujo += total
+    }
+    monthlyData[monthKey].comisiones += tx.comision
+    monthlyData[monthKey].flujo -= tx.comision
+  })
+
+  const sortedMonths = Object.values(monthlyData).sort((a: any, b: any) => a.mes.localeCompare(b.mes))
+  
+  sortedMonths.forEach((data: any, idx: number) => {
+    const row = wsEvol.addRow(data)
+    if (idx % 2 !== 0) row.eachCell((cell: any) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+    
+    ;['comprado', 'vendido', 'dividendos', 'comisiones', 'flujo'].forEach(key => {
+      row.getCell(key).numFmt = '#,##0.00" €"'
+    })
+    
+    row.getCell('flujo').font = { color: { argb: data.flujo >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+  })
+
+  // Chart instructions
+  wsEvol.addRow({})
+  wsEvol.addRow({ mes: '💡 TIP:' })
+  wsEvol.addRow({ mes: 'Selecciona la tabla superior y dale a "Insertar > Gráfico de Columnas" para ver tu progresión histórica en 1 segundo.' })
+  wsEvol.getCell('A'+(wsEvol.rowCount)).font = { italic: true, color: { argb: 'FF64748B' } }
 
   const buffer = await workbook.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
