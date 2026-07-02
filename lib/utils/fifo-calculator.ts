@@ -13,6 +13,7 @@ export interface TaxEvent {
   retencionDestino?: number
   retencionOrigen?: number
   detalles: string // Explicación de qué lotes se vendieron
+  tipoActivo: string
 }
 
 interface BuyLot {
@@ -93,7 +94,8 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           gananciaPatrimonial,
           retencionDestino: tx.retencion_destino || 0,
           retencionOrigen: tx.retencion_origen || 0,
-          detalles: `Corresponde a: ${soldLotsDetails.join(" y ")}.`
+          detalles: `Corresponde a: ${soldLotsDetails.join(" y ")}.`,
+          tipoActivo: tx.activo?.tipo || "Desconocido"
         })
       }
     }

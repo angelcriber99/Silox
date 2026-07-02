@@ -46,15 +46,22 @@ export default function DeclararPage() {
     return taxEvents.filter(e => e.añoFiscal === selectedYear)
   }, [taxEvents, selectedYear])
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    let gains = 0
-    let losses = 0
-    let saleValue = 0
-    let purchaseValue = 0
-    let retOrigen = 0
-    let retDestino = 0
-    yearEvents.forEach(e => {
+  // Split yearEvents by type
+  const stockEvents = useMemo(() => {
+    return yearEvents.filter(e => e.tipoActivo !== 'Fondo Indexado' && e.tipoActivo !== 'Fondo Monetario' && e.tipoActivo !== 'Crypto')
+  }, [yearEvents])
+
+  const fundEvents = useMemo(() => {
+    return yearEvents.filter(e => e.tipoActivo === 'Fondo Indexado' || e.tipoActivo === 'Fondo Monetario')
+  }, [yearEvents])
+
+  const cryptoEvents = useMemo(() => {
+    return yearEvents.filter(e => e.tipoActivo === 'Crypto')
+  }, [yearEvents])
+
+  const getTotalsForEvents = (events: typeof yearEvents) => {
+    let gains = 0, losses = 0, saleValue = 0, purchaseValue = 0, retOrigen = 0, retDestino = 0
+    events.forEach(e => {
       if (e.gananciaPatrimonial > 0) gains += e.gananciaPatrimonial
       else losses += Math.abs(e.gananciaPatrimonial)
       saleValue += e.ingresoVenta || 0
@@ -63,7 +70,13 @@ export default function DeclararPage() {
       retDestino += e.retencionDestino || 0
     })
     return { gains, losses, net: gains - losses, saleValue, purchaseValue, retOrigen, retDestino }
-  }, [yearEvents])
+  }
+
+  // Calculate totals
+  const totals = useMemo(() => getTotalsForEvents(yearEvents), [yearEvents])
+  const stockTotals = useMemo(() => getTotalsForEvents(stockEvents), [stockEvents])
+  const fundTotals = useMemo(() => getTotalsForEvents(fundEvents), [fundEvents])
+  const cryptoTotals = useMemo(() => getTotalsForEvents(cryptoEvents), [cryptoEvents])
 
   // Get dividends for selected year
   const yearDividends = useMemo(() => {
@@ -435,9 +448,17 @@ export default function DeclararPage() {
                   <p className="text-sm text-muted-foreground mb-4 flex-1">
                     Tus intereses de la <strong>Cuenta Flexible de Revolut</strong> van aquí. MyInvestor lo mete en el borrador automático.
                   </p>
-                  <div className="bg-orange-950/50 rounded-lg p-3 text-sm text-orange-200 font-medium">
-                    <em>Introduce los datos usando tus informes PDF de los bancos.</em>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="bg-orange-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-orange-400 font-bold mb-1">CASILLAS 312-313 (VENTA)</div>
+                      <div className="text-sm font-bold font-tabular text-orange-100">{formatCurrency(fundTotals.saleValue)}</div>
+                    </div>
+                    <div className="bg-orange-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-orange-400 font-bold mb-1">CASILLAS 314-315 (COMPRA)</div>
+                      <div className="text-sm font-bold font-tabular text-orange-100">{formatCurrency(fundTotals.purchaseValue)}</div>
+                    </div>
                   </div>
+                  <div className="text-[10px] text-muted-foreground">Comprueba esto con tu PDF fiscal para asegurar que cuadra, y añade manualmente los intereses diarios de la C. Flexible.</div>
                 </div>
 
                 {/* Acciones */}
@@ -450,17 +471,17 @@ export default function DeclararPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-emerald-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-emerald-400 font-bold mb-1">CASILLA 0327 (VENTA)</div>
-                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(totals.saleValue)}</div>
+                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(stockTotals.saleValue)}</div>
                     </div>
                     <div className="bg-emerald-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-emerald-400 font-bold mb-1">CASILLA 0328 (COMPRA)</div>
-                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(totals.purchaseValue)}</div>
+                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(stockTotals.purchaseValue)}</div>
                     </div>
                   </div>
-                  {(totals.retDestino > 0 || totals.retOrigen > 0) && (
+                  {(stockTotals.retDestino > 0 || stockTotals.retOrigen > 0) && (
                     <div className="bg-rose-950/50 rounded-lg p-3 border border-rose-900/50 mt-2">
                       <div className="text-[10px] text-rose-400 font-bold mb-1">RETENCIONES PAGADAS EN VENTAS</div>
-                      <div className="text-sm font-bold font-tabular text-rose-100">{formatCurrency(totals.retDestino + totals.retOrigen)}</div>
+                      <div className="text-sm font-bold font-tabular text-rose-100">{formatCurrency(stockTotals.retDestino + stockTotals.retOrigen)}</div>
                       <div className="text-[10px] text-muted-foreground mt-1">Impuestos ya pagados al Estado. ¡No olvides deducirlos!</div>
                     </div>
                   )}
@@ -473,9 +494,17 @@ export default function DeclararPage() {
                   <p className="text-sm text-muted-foreground mb-4 flex-1">
                     Ventas de cripto a euros o permutas (cambio entre criptos). Si recibes recompensas de staking, van a la Casilla 0033.
                   </p>
-                  <div className="bg-yellow-950/50 rounded-lg p-3 text-sm text-yellow-200">
-                    Declaración obligatoria de cada permuta o venta en Revolut.
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="bg-yellow-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-yellow-400 font-bold mb-1">CASILLA 1802 (VENTA)</div>
+                      <div className="text-sm font-bold font-tabular text-yellow-100">{formatCurrency(cryptoTotals.saleValue)}</div>
+                    </div>
+                    <div className="bg-yellow-950/50 rounded-lg p-3">
+                      <div className="text-[10px] text-yellow-400 font-bold mb-1">CASILLA 1803 (COMPRA)</div>
+                      <div className="text-sm font-bold font-tabular text-yellow-100">{formatCurrency(cryptoTotals.purchaseValue)}</div>
+                    </div>
                   </div>
+                  <div className="text-[10px] text-muted-foreground">Declaración obligatoria de cada permuta o venta en Revolut.</div>
                 </div>
 
                 {/* Modelos */}
