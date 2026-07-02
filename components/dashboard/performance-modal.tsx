@@ -62,19 +62,30 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
        })
     }
     
-    const dataPoints: ChartDataPoint[] = []
+    // Aggregate by day to prevent chart duplication (unless viewing 1D)
+    let aggregatedSnaps = sorted
+    if (timeRange !== "1D") {
+      const byDate = new Map<string, typeof sorted[0]>()
+      sorted.forEach(snap => {
+        const dateStr = format(parseISO(snap.timestamp), 'yyyy-MM-dd')
+        byDate.set(dateStr, snap) // Keeps the latest snap for each day
+      })
+      aggregatedSnaps = Array.from(byDate.values())
+    }
+
+    const allDataPoints: ChartDataPoint[] = []
     
-    for (let i = 0; i < sorted.length; i++) {
-      const snap = sorted[i]
+    for (let i = 0; i < aggregatedSnaps.length; i++) {
+      const snap = aggregatedSnaps[i]
       const pnlToday = snap.total_value - snap.total_invested
       let pnl = 0
       
       if (i > 0) {
-        const prev = dataPoints[i - 1]
+        const prev = allDataPoints[i - 1]
         pnl = pnlToday - prev.totalPnl
       }
 
-      dataPoints.push({
+      allDataPoints.push({
         timestamp: snap.timestamp,
         value: snap.total_value,
         totalInvested: snap.total_invested,
@@ -84,8 +95,8 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
       })
     }
     
-    return dataPoints
-  }, [snapshots, currentTotalValue, currentPnl24h, currentTotalCost])
+    return allDataPoints
+  }, [snapshots, currentTotalValue, currentPnl24h, currentTotalCost, timeRange])
 
   const filteredData = useMemo(() => {
     if (processedData.length === 0) return []
