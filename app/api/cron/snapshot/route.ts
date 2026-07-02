@@ -95,6 +95,20 @@ export async function GET(request: Request) {
       const totals = computePortfolioTotals(enriched)
 
       if (totals.totalValue > 0) {
+        // Get the last snapshot to prevent saving identical data (0 PnL instante)
+        const { data: lastSnapshot } = await supabaseAdmin
+          .from('portfolio_history')
+          .select('total_value')
+          .eq('user_id', user.id)
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .single()
+
+        // If the value is exactly the same (less than 1 cent difference), skip it
+        if (lastSnapshot && Math.abs(lastSnapshot.total_value - totals.totalValue) < 0.01) {
+          continue
+        }
+
         const { error: insertError } = await supabaseAdmin
           .from('portfolio_history')
           .insert({
