@@ -393,12 +393,12 @@ export function PositionsTable({
                   return (
                     <TableRow
                       key={p.activo_id}
-                      className={`border-border/30 transition-all duration-500 group relative ${
+                      className={`transition-all duration-500 group relative ${
                         hasTriggeredWave
-                          ? "bg-[linear-gradient(90deg,rgba(244,63,94,0.15)_0%,transparent_50%)] hover:bg-[linear-gradient(90deg,rgba(244,63,94,0.25)_0%,transparent_50%)]"
-                          : "hover:bg-muted/30"
+                          ? "bg-rose-500/20 hover:bg-rose-500/30 border-y-2 border-y-rose-500 z-10"
+                          : "border-b border-border/30 hover:bg-muted/30"
                       }`}
-                      style={hasTriggeredWave ? { boxShadow: "inset 4px 0 0 0 rgb(244 63 94)" } : undefined}
+                      style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(244 63 94), 0 0 20px rgba(244, 63, 94, 0.2)" } : undefined}
                     >
                       <TableCell className={`font-medium text-foreground font-tabular ${cellPadding}`}>
                         <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
