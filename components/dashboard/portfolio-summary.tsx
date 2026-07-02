@@ -16,6 +16,7 @@ import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useTranslations } from "next-intl"
 import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 import { useNotes } from "@/lib/stores/use-notes"
+import Marquee from "react-fast-marquee"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -285,26 +286,25 @@ export function PortfolioSummary({
 
       {/* ── Historical per-asset strip (scrollable) ─────────────────── */}
       {!hideBalances && historicalAssets.length > 1 && (
-        <div className="px-6 py-3 border-t border-border/20 flex items-center gap-2 overflow-x-auto hide-scrollbar">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/30 flex-shrink-0 mr-1">
-            Ganancia total por activo
-          </span>
-          {historicalAssets.map(asset => (
-            <Link
-              key={asset.id}
-              href={`/activo/${asset.id}`}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-105 ${
-                asset.historicalPnl >= 0
-                  ? "bg-emerald-500/5 border-emerald-500/15 hover:bg-emerald-500/10"
-                  : "bg-rose-500/5 border-rose-500/15 hover:bg-rose-500/10"
-              }`}
-            >
-              <span className="text-[11px] font-bold text-foreground/80">{asset.ticker}</span>
-              <span className={`text-[11px] font-bold font-tabular ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {asset.historicalPnl >= 0 ? "+" : ""}{formatCurrency(asset.historicalPnl)}
-              </span>
-            </Link>
-          ))}
+        <div className="py-3 border-t border-border/20 overflow-hidden">
+          <Marquee speed={30} gradient={false} pauseOnHover={true}>
+            {historicalAssets.map(asset => (
+              <Link
+                key={asset.id}
+                href={`/activo/${asset.id}`}
+                className={`mx-1 flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-105 ${
+                  asset.historicalPnl >= 0
+                    ? "bg-emerald-500/5 border-emerald-500/15 hover:bg-emerald-500/10"
+                    : "bg-rose-500/5 border-rose-500/15 hover:bg-rose-500/10"
+                }`}
+              >
+                <span className="text-[11px] font-bold text-foreground/80">{asset.ticker}</span>
+                <span className={`text-[11px] font-bold font-tabular ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {asset.historicalPnl >= 0 ? "+" : ""}{formatCurrency(asset.historicalPnl)}
+                </span>
+              </Link>
+            ))}
+          </Marquee>
         </div>
       )}
 
