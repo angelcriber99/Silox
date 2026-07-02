@@ -158,8 +158,7 @@ export async function GET() {
 
     // 5. Insert en la nueva base de datos
     if (snapshotsToInsert.length > 0) {
-      // @ts-ignore
-      const { error: upsertError } = await supabase
+      const { error: upsertError } = await (supabase as any)
         .from('portfolio_history')
         .insert(snapshotsToInsert)
 
