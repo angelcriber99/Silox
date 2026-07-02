@@ -196,40 +196,58 @@ const exportToExcel = async (
   wsTx.columns = [
     { header: 'Fecha', key: 'fecha', width: 15 },
     { header: 'Operación', key: 'tipo', width: 15 },
+    { header: 'Moneda', key: 'moneda', width: 10 },
     { header: 'Símbolo', key: 'ticker', width: 15 },
     { header: 'Activo', key: 'nombre', width: 35 },
     { header: 'Cantidad', key: 'cantidad', width: 18 },
     { header: 'Precio Unitario', key: 'precio', width: 20 },
     { header: 'Comisiones', key: 'comision', width: 15 },
     { header: 'Total Efectivo', key: 'total', width: 20 },
+    { header: 'Estado', key: 'estado', width: 15 },
   ]
 
-  applyHeaderStyle(wsTx, colors.txHeader, 8)
+  applyHeaderStyle(wsTx, colors.txHeader, 10)
 
   const txsExcludingDivs = filteredTxs.filter(tx => tx.tipo_operacion !== 'Dividendo')
   
   let txRowIdx = 2
   txsExcludingDivs.forEach((tx) => {
     const isCompra = tx.tipo_operacion === 'Compra'
-    const total = (tx.cantidad * tx.precio_unitario) + tx.comision
+    
+    const moneda = tx.activo?.moneda || 'EUR'
+    const currencyFmt = moneda === 'EUR' ? '#,##0.00" €"' : '#,##0.00" $"'
+
+    const sign = isCompra ? -1 : 1
+    const total = sign * ((tx.cantidad * tx.precio_unitario) + (isCompra ? tx.comision : -tx.comision))
+    const formulaStr = isCompra 
+      ? `-((F${txRowIdx} * G${txRowIdx}) + H${txRowIdx})` 
+      : `(F${txRowIdx} * G${txRowIdx}) - H${txRowIdx}`
 
     const row = wsTx.addRow({
-      fecha: new Date(tx.fecha), tipo: tx.tipo_operacion, ticker: tx.activo?.ticker,
-      nombre: tx.activo?.nombre || '', cantidad: tx.cantidad, precio: tx.precio_unitario,
-      comision: tx.comision
+      fecha: new Date(tx.fecha), 
+      tipo: tx.tipo_operacion, 
+      moneda: moneda,
+      ticker: tx.activo?.ticker,
+      nombre: tx.activo?.nombre || '', 
+      cantidad: tx.cantidad, 
+      precio: tx.precio_unitario,
+      comision: tx.comision,
+      estado: tx.estado || 'Completada'
     })
     
     // Formula for Total Efectivo
-    row.getCell('total').value = { formula: `(E${txRowIdx} * F${txRowIdx}) + G${txRowIdx}`, result: total }
+    row.getCell('total').value = { formula: formulaStr, result: total }
 
     if (txRowIdx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
 
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
     row.getCell('cantidad').numFmt = '#,##0.00000000'
-    row.getCell('precio').numFmt = '#,##0.00'
-    row.getCell('comision').numFmt = '#,##0.00'
-    row.getCell('total').numFmt = '#,##0.00'
+    row.getCell('precio').numFmt = currencyFmt
+    row.getCell('comision').numFmt = currencyFmt
+    row.getCell('total').numFmt = currencyFmt
+    
     row.getCell('tipo').font = { color: { argb: isCompra ? (theme === 'numbers' ? 'FF007AFF' : 'FF3B82F6') : (theme === 'numbers' ? 'FFAF52DE' : 'FF8B5CF6') }, bold: true }
+    row.getCell('total').font = { color: { argb: total >= 0 ? colors.posText : colors.negText }, bold: true }
     
     txRowIdx++
   })
