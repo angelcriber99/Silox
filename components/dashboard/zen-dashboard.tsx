@@ -105,19 +105,6 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
     return p.ticker.split(".")[0]
   }
 
-  // Sort positions: top total earners (val - cost)
-  const topEarners = useMemo(() => {
-    return [...positions]
-      .filter(p => p.unidades > 0 && (p.valor_actual ?? p.coste_total) > 0 && p.tipo !== 'Liquidez' && p.tipo !== 'Fondo Monetario' && p.ticker !== 'CASH')
-      .sort((a, b) => {
-        const valA = a.valor_actual ?? a.coste_total
-        const valB = b.valor_actual ?? b.coste_total
-        const pnlA = valA - a.coste_total
-        const pnlB = valB - b.coste_total
-        return pnlB - pnlA
-      })
-  }, [positions])
-
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
   return (
@@ -289,7 +276,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6"
+          className="w-full max-w-xl mx-auto"
         >
           {/* Daily Movers Feed */}
           <motion.div 
@@ -372,95 +359,6 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                       </div>
                       <span className={`text-[12px] font-medium font-tabular w-[80px] text-right ${isPosPositive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
                         {pnl24h >= 0 ? "+" : ""}{formatCurrency(pnl24h)}
-                      </span>
-                    </div>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </motion.div>
-
-          {/* Top Earners Feed */}
-          <motion.div 
-            className={`backdrop-blur-xl rounded-2xl border overflow-hidden flex flex-col h-[400px] ${memeMode ? 'bg-card/30' : 'bg-card/15 border-border/20'}`}
-            animate={memeMode ? { 
-              boxShadow: [
-                "0 0 20px 0px rgba(0,0,255,0.5)",
-                "0 0 20px 0px rgba(75,0,130,0.5)",
-                "0 0 20px 0px rgba(238,130,238,0.5)",
-                "0 0 20px 0px rgba(255,0,0,0.5)",
-                "0 0 20px 0px rgba(255,165,0,0.5)",
-                "0 0 20px 0px rgba(255,255,0,0.5)",
-                "0 0 20px 0px rgba(0,128,0,0.5)",
-                "0 0 20px 0px rgba(0,0,255,0.5)"
-              ],
-              borderColor: [
-                "rgba(0,0,255,1)", "rgba(75,0,130,1)", "rgba(238,130,238,1)", 
-                "rgba(255,0,0,1)", "rgba(255,165,0,1)", "rgba(255,255,0,1)", 
-                "rgba(0,128,0,1)", "rgba(0,0,255,1)"
-              ]
-            } : { boxShadow: "none", borderColor: "rgba(255,255,255,0.1)" }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          >
-            {/* Feed header */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-border/15 shrink-0">
-              <div className="flex items-center gap-2 text-muted-foreground/40">
-                <span className="w-2 h-2 rounded-full bg-blue-400" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em]">Top Ganancias</span>
-              </div>
-              <span className="text-[10px] font-semibold text-muted-foreground/30 uppercase tracking-widest">
-                Total Histórico
-              </span>
-            </div>
-
-            {/* Position rows */}
-            <div className="flex-1 overflow-y-auto hide-scrollbar">
-              {topEarners.map((p, i) => {
-                const val = p.valor_actual ?? p.coste_total
-                const pnlTotal = val - p.coste_total
-                const percentTotal = p.coste_total > 0 ? (pnlTotal / p.coste_total) * 100 : 0
-                const isPosPositive = pnlTotal >= 0
-
-                const TrendIcon = pnlTotal > 0 ? TrendingUp : pnlTotal < 0 ? TrendingDown : Minus
-
-                return (
-                  <motion.div
-                    key={p.activo_id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 + i * 0.05 }}
-                    className="flex items-center justify-between px-6 py-4 border-b border-border/10 last:border-0 hover:bg-card/20 transition-colors"
-                  >
-                    {/* Left: color bar + ticker */}
-                    <div className="flex items-center gap-3 w-[150px]">
-                      <div
-                        className="w-1 h-8 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: TYPE_COLORS[p.tipo] ?? "#71717a" }}
-                      />
-                      <div>
-                        <p className="text-[15px] font-bold tracking-tight text-foreground truncate max-w-[120px]">
-                          {getDisplayTicker(p)}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
-                          {p.tipo}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Right: change */}
-                    <div className="flex items-center gap-3 justify-end flex-1">
-                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border backdrop-blur-sm ${
-                        isPosPositive
-                          ? "bg-emerald-500/5 border-emerald-500/15 text-emerald-400"
-                          : "bg-rose-500/5 border-rose-500/15 text-rose-400"
-                      }`}>
-                        <TrendIcon className="w-3.5 h-3.5" />
-                        <span className="text-[13px] font-bold font-tabular">
-                          {formatPercent(percentTotal)}
-                        </span>
-                      </div>
-                      <span className={`text-[12px] font-medium font-tabular w-[80px] text-right ${isPosPositive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
-                        {pnlTotal >= 0 ? "+" : ""}{formatCurrency(pnlTotal)}
                       </span>
                     </div>
                   </motion.div>
