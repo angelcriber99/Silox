@@ -24,8 +24,13 @@ interface BuyLot {
 export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
   const events: TaxEvent[] = []
   
-  // Agrupar transacciones por activo
+  // Agrupar transacciones por activo (excluyendo Efectivo/CASH)
   const txByAsset = transactions.reduce((acc, tx) => {
+    // Skip cash/efectivo completely from capital gains calculations
+    if (tx.activo?.tipo === 'Efectivo' || tx.activo?.ticker === 'EFECTIVO' || tx.activo?.ticker === 'CASH') {
+      return acc
+    }
+    
     const id = tx.activo_id
     if (!acc[id]) acc[id] = []
     acc[id].push(tx)

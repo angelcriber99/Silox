@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import type { Transaccion, EnrichedPosition } from "@/lib/types"
+import { calculateFIFO } from "@/lib/utils/fifo-calculator"
 
 // Lazy import to avoid loading exceljs unnecessarily on first render
 const exportToExcel = async (
@@ -27,10 +28,89 @@ const exportToExcel = async (
   workbook.creator = 'Silox'
   workbook.created = new Date()
 
-  // --- SHEET 1: ESTADO DE LA CARTERA ---
-  const wsPortfolio = workbook.addWorksheet('Resumen de Cartera')
-  
-  // Columns
+  // Filter transactions
+  const filteredTxs = transactions.filter(tx => {
+    if (year === 'Todos') return true
+    return new Date(tx.fecha).getFullYear() === year
+  }).sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+
+  // --- SHEET 1: RESUMEN FISCAL (FIFO) ---
+  const wsFiscal = workbook.addWorksheet('Resumen Fiscal')
+  wsFiscal.columns = [
+    { header: 'Fecha Venta', key: 'fecha', width: 15 },
+    { header: 'Símbolo', key: 'ticker', width: 15 },
+    { header: 'Nombre', key: 'nombre', width: 30 },
+    { header: 'Cantidad', key: 'cantidad', width: 15 },
+    { header: 'Ingreso Venta', key: 'ingreso', width: 20 },
+    { header: 'Coste Adquisición', key: 'coste', width: 20 },
+    { header: 'Resultado P/G', key: 'ganancia', width: 20 },
+    { header: 'Retención Origen', key: 'ret_origen', width: 20 },
+    { header: 'Retención Destino', key: 'ret_destino', width: 20 },
+    { header: 'Detalles FIFO', key: 'detalles', width: 50 },
+  ]
+
+  wsFiscal.getRow(1).eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } } // Indigo 600
+    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
+    cell.alignment = { horizontal: 'center' }
+  })
+
+  // Calculate FIFO for the selected year
+  const taxEvents = calculateFIFO(transactions)
+  const filteredEvents = taxEvents.filter(e => {
+    if (year === 'Todos') return true
+    return e.añoFiscal === year
+  })
+
+  let totalGains = 0
+  let totalLosses = 0
+
+  filteredEvents.forEach((ev, idx) => {
+    if (ev.gananciaPatrimonial > 0) totalGains += ev.gananciaPatrimonial
+    else totalLosses += Math.abs(ev.gananciaPatrimonial)
+
+    const row = wsFiscal.addRow({
+      fecha: new Date(ev.fechaVenta),
+      ticker: ev.ticker,
+      nombre: ev.nombre,
+      cantidad: ev.cantidadVendida,
+      ingreso: ev.ingresoVenta,
+      coste: ev.costeAdquisicion,
+      ganancia: ev.gananciaPatrimonial,
+      ret_origen: ev.retencionOrigen,
+      ret_destino: ev.retencionDestino,
+      detalles: ev.detalles
+    })
+
+    if (idx % 2 !== 0) {
+      row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+    }
+
+    row.getCell('fecha').numFmt = 'dd/mm/yyyy'
+    row.getCell('cantidad').numFmt = '#,##0.00000000'
+    ;['ingreso', 'coste', 'ganancia', 'ret_origen', 'ret_destino'].forEach(key => {
+      row.getCell(key).numFmt = '€#,##0.00'
+    })
+
+    row.getCell('ganancia').font = { 
+      color: { argb: ev.gananciaPatrimonial >= 0 ? 'FF10B981' : 'FFEF4444' }, 
+      bold: true 
+    }
+  })
+
+  wsFiscal.addRow({})
+  const totalGainsRow = wsFiscal.addRow({ nombre: 'TOTAL GANANCIAS:', ganancia: totalGains })
+  const totalLossesRow = wsFiscal.addRow({ nombre: 'TOTAL PÉRDIDAS:', ganancia: -totalLosses })
+  const netRow = wsFiscal.addRow({ nombre: 'RENDIMIENTO NETO:', ganancia: totalGains - totalLosses })
+
+  ;[totalGainsRow, totalLossesRow, netRow].forEach(r => {
+    r.font = { bold: true }
+    r.getCell('ganancia').numFmt = '€#,##0.00'
+  })
+  netRow.getCell('ganancia').font = { color: { argb: (totalGains - totalLosses) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+
+  // --- SHEET 2: POSICIONES ABIERTAS ---
+  const wsPortfolio = workbook.addWorksheet('Posiciones Abiertas')
   wsPortfolio.columns = [
     { header: 'Símbolo', key: 'ticker', width: 15 },
     { header: 'Nombre', key: 'nombre', width: 30 },
@@ -38,75 +118,47 @@ const exportToExcel = async (
     { header: 'Unidades', key: 'unidades', width: 15 },
     { header: 'Precio Compra', key: 'precio_medio', width: 20 },
     { header: 'Precio Actual', key: 'precio_actual', width: 20 },
-    { header: 'Valor Total', key: 'valor', width: 20 },
-    { header: 'Invertido', key: 'invertido', width: 20 },
+    { header: 'Valor Total (€)', key: 'valor', width: 20 },
+    { header: 'Invertido (€)', key: 'invertido', width: 20 },
     { header: 'P&L (€)', key: 'pnl_eur', width: 20 },
     { header: 'P&L (%)', key: 'pnl_pct', width: 15 },
   ]
 
-  // Header styles
   wsPortfolio.getRow(1).eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF1E293B' } // Slate 800
-    }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
     cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
     cell.alignment = { horizontal: 'center' }
   })
 
-  // Add Data
-  let totalValor = 0
-  let totalInvertido = 0
-  let totalPnl = 0
-
-  positions.forEach(p => {
+  let totalValor = 0, totalInvertido = 0, totalPnl = 0
+  positions.forEach((p, idx) => {
     if (p.unidades <= 0) return
-
-    const isCrypto = p.tipo === 'Crypto'
-    const currencyFormatter = p.original_currency === 'EUR' ? '€#,##0.00' : '$#,##0.00'
-
     const row = wsPortfolio.addRow({
-      ticker: p.ticker,
-      nombre: p.nombre || '',
-      tipo: p.tipo,
-      unidades: p.unidades,
-      precio_medio: p.precio_medio,
-      precio_actual: p.precio_actual,
-      valor: p.valor_actual || 0,
-      invertido: p.coste_total_eur,
-      pnl_eur: p.pnl || 0,
-      pnl_pct: (p.pnl_percent || 0) / 100 // Excel formats % by multiplying by 100
+      ticker: p.ticker, nombre: p.nombre || '', tipo: p.tipo,
+      unidades: p.unidades, precio_medio: p.precio_medio, precio_actual: p.precio_actual,
+      valor: p.valor_actual || 0, invertido: p.coste_total_eur,
+      pnl_eur: p.pnl || 0, pnl_pct: (p.pnl_percent || 0) / 100
     })
 
-    // Formatting numbers
-    row.getCell('unidades').numFmt = isCrypto ? '#,##0.00000000' : '#,##0.00'
-    row.getCell('precio_medio').numFmt = currencyFormatter
-    row.getCell('precio_actual').numFmt = currencyFormatter
+    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+
+    row.getCell('unidades').numFmt = '#,##0.00000000'
+    row.getCell('precio_medio').numFmt = p.original_currency === 'EUR' ? '€#,##0.00' : '$#,##0.00'
+    row.getCell('precio_actual').numFmt = p.original_currency === 'EUR' ? '€#,##0.00' : '$#,##0.00'
     row.getCell('valor').numFmt = '€#,##0.00'
     row.getCell('invertido').numFmt = '€#,##0.00'
-    
-    // PNL Formatting
-    const pnlCell = row.getCell('pnl_eur')
-    pnlCell.numFmt = '€#,##0.00'
-    pnlCell.font = { color: { argb: (p.pnl || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true } // Emerald or Red
+    row.getCell('pnl_eur').numFmt = '€#,##0.00'
+    row.getCell('pnl_eur').font = { color: { argb: (p.pnl || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
+    row.getCell('pnl_pct').numFmt = '0.00%'
+    row.getCell('pnl_pct').font = { color: { argb: (p.pnl_percent || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
 
-    const pctCell = row.getCell('pnl_pct')
-    pctCell.numFmt = '0.00%'
-    pctCell.font = { color: { argb: (p.pnl_percent || 0) >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
-
-    totalValor += p.valor_actual || 0
-    totalInvertido += p.coste_total_eur
-    totalPnl += p.pnl || 0
+    totalValor += p.valor_actual || 0; totalInvertido += p.coste_total_eur; totalPnl += p.pnl || 0
   })
 
-  // Add Totals Row
+  wsPortfolio.addRow({})
   const totalRow = wsPortfolio.addRow({
-    ticker: 'TOTAL',
-    valor: totalValor,
-    invertido: totalInvertido,
-    pnl_eur: totalPnl,
-    pnl_pct: totalInvertido > 0 ? (totalPnl / totalInvertido) : 0
+    ticker: 'TOTAL', valor: totalValor, invertido: totalInvertido,
+    pnl_eur: totalPnl, pnl_pct: totalInvertido > 0 ? (totalPnl / totalInvertido) : 0
   })
   totalRow.font = { bold: true }
   totalRow.getCell('valor').numFmt = '€#,##0.00'
@@ -116,9 +168,8 @@ const exportToExcel = async (
   totalRow.getCell('pnl_eur').font = { color: { argb: totalPnl >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
   totalRow.getCell('pnl_pct').font = { color: { argb: totalPnl >= 0 ? 'FF10B981' : 'FFEF4444' }, bold: true }
 
-  // --- SHEET 2: MOVIMIENTOS ---
-  const wsTx = workbook.addWorksheet(`Movimientos ${year}`)
-
+  // --- SHEET 3: TRANSACCIONES ---
+  const wsTx = workbook.addWorksheet('Historial Completo')
   wsTx.columns = [
     { header: 'Fecha', key: 'fecha', width: 15 },
     { header: 'Operación', key: 'tipo', width: 15 },
@@ -131,69 +182,99 @@ const exportToExcel = async (
   ]
 
   wsTx.getRow(1).eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } }
     cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
     cell.alignment = { horizontal: 'center' }
   })
 
-  // Filter transactions
-  const filteredTxs = transactions.filter(tx => {
-    if (year === 'Todos') return true
-    return new Date(tx.fecha).getFullYear() === year
-  }).sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-
-  let sumCompras = 0
-  let sumVentas = 0
-  let sumComisiones = 0
-
-  filteredTxs.forEach((tx, idx) => {
+  const txsExcludingDivs = filteredTxs.filter(tx => tx.tipo_operacion !== 'Dividendo')
+  
+  let sumCompras = 0, sumVentas = 0, sumComisiones = 0
+  txsExcludingDivs.forEach((tx, idx) => {
     const isCompra = tx.tipo_operacion === 'Compra'
     const total = (tx.cantidad * tx.precio_unitario) + tx.comision
 
-    if (isCompra) {
-      sumCompras += total
-    } else {
-      sumVentas += total
-    }
+    if (isCompra) sumCompras += total; else sumVentas += total
     sumComisiones += tx.comision
 
     const row = wsTx.addRow({
-      fecha: new Date(tx.fecha),
-      tipo: tx.tipo_operacion,
-      ticker: tx.activo?.ticker,
-      nombre: tx.activo?.nombre || '',
-      cantidad: tx.cantidad,
-      precio: tx.precio_unitario,
-      comision: tx.comision,
-      total: total
+      fecha: new Date(tx.fecha), tipo: tx.tipo_operacion, ticker: tx.activo?.ticker,
+      nombre: tx.activo?.nombre || '', cantidad: tx.cantidad, precio: tx.precio_unitario,
+      comision: tx.comision, total: total
     })
 
-    // Stripe rows
-    if (idx % 2 !== 0) {
-      row.eachCell(cell => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } // Slate 50
-      })
-    }
+    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
 
     row.getCell('fecha').numFmt = 'dd/mm/yyyy'
     row.getCell('cantidad').numFmt = '#,##0.00000000'
-    row.getCell('precio').numFmt = '#,##0.00' // Leaving generic, can be USD or EUR
+    row.getCell('precio').numFmt = '#,##0.00'
     row.getCell('comision').numFmt = '#,##0.00'
     row.getCell('total').numFmt = '#,##0.00'
-    
-    row.getCell('tipo').font = { color: { argb: isCompra ? 'FF3B82F6' : 'FF8B5CF6' }, bold: true } // Blue vs Purple
+    row.getCell('tipo').font = { color: { argb: isCompra ? 'FF3B82F6' : 'FF8B5CF6' }, bold: true }
   })
 
-  // Totals Row
-  wsTx.addRow({}) // Empty row
-  const sumRow1 = wsTx.addRow({ nombre: 'TOTAL COMPRADO:', total: sumCompras })
-  const sumRow2 = wsTx.addRow({ nombre: 'TOTAL VENDIDO:', total: sumVentas })
-  const sumRow3 = wsTx.addRow({ nombre: 'TOTAL COMISIONES:', comision: sumComisiones })
+  wsTx.addRow({})
+  ;[wsTx.addRow({ nombre: 'TOTAL COMPRADO:', total: sumCompras }),
+    wsTx.addRow({ nombre: 'TOTAL VENDIDO:', total: sumVentas }),
+    wsTx.addRow({ nombre: 'TOTAL COMISIONES:', comision: sumComisiones })].forEach(r => {
+      r.font = { bold: true }
+      r.getCell('total').numFmt = '€#,##0.00'
+      r.getCell('comision').numFmt = '€#,##0.00'
+  })
+
+  // --- SHEET 4: DIVIDENDOS ---
+  const wsDivs = workbook.addWorksheet('Dividendos')
+  wsDivs.columns = [
+    { header: 'Fecha', key: 'fecha', width: 15 },
+    { header: 'Símbolo', key: 'ticker', width: 15 },
+    { header: 'Nombre', key: 'nombre', width: 30 },
+    { header: 'Importe Bruto', key: 'bruto', width: 20 },
+    { header: 'Comisiones', key: 'comision', width: 15 },
+    { header: 'Retención Origen', key: 'ret_origen', width: 20 },
+    { header: 'Retención Destino', key: 'ret_destino', width: 20 },
+    { header: 'Importe Neto', key: 'neto', width: 20 },
+  ]
+
+  wsDivs.getRow(1).eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF059669' } } // Emerald 600
+    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
+    cell.alignment = { horizontal: 'center' }
+  })
+
+  const divs = filteredTxs.filter(tx => tx.tipo_operacion === 'Dividendo')
   
-  ;[sumRow1, sumRow2, sumRow3].forEach(r => {
-    r.font = { bold: true }
-    r.getCell('total').numFmt = '€#,##0.00'
-    r.getCell('comision').numFmt = '€#,##0.00'
+  let dBruto = 0, dComision = 0, dRot = 0, dRdt = 0, dNeto = 0
+  divs.forEach((tx, idx) => {
+    const isLegacy = Number(tx.cantidad) === 0.000001
+    const bruto = isLegacy ? Number(tx.precio_unitario) : Number(tx.precio_unitario)
+    const com = Number(tx.comision || 0)
+    const ro = Number(tx.retencion_origen || 0)
+    const rd = Number(tx.retencion_destino || 0)
+    const neto = bruto - com - ro - rd
+
+    dBruto += bruto; dComision += com; dRot += ro; dRdt += rd; dNeto += neto
+
+    const row = wsDivs.addRow({
+      fecha: new Date(tx.fecha), ticker: tx.activo?.ticker, nombre: tx.activo?.nombre || '',
+      bruto, comision: com, ret_origen: ro, ret_destino: rd, neto
+    })
+
+    if (idx % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } })
+
+    row.getCell('fecha').numFmt = 'dd/mm/yyyy'
+    ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach(key => {
+      row.getCell(key).numFmt = '€#,##0.00'
+    })
+    row.getCell('neto').font = { color: { argb: 'FF10B981' }, bold: true }
+  })
+
+  wsDivs.addRow({})
+  const divTotalsRow = wsDivs.addRow({
+    nombre: 'TOTALES:', bruto: dBruto, comision: dComision, ret_origen: dRot, ret_destino: dRdt, neto: dNeto
+  })
+  divTotalsRow.font = { bold: true }
+  ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach(key => {
+    divTotalsRow.getCell(key).numFmt = '€#,##0.00'
   })
 
   const buffer = await workbook.xlsx.writeBuffer()
@@ -248,7 +329,7 @@ export function ExportExcelButton({ transactions, positions }: Props) {
         {years.map(y => (
           <DropdownMenuItem key={y} onClick={() => handleExport(y)} className="cursor-pointer">
             <Download className="mr-2 h-4 w-4 text-muted-foreground" />
-            {y}
+            Año {y}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

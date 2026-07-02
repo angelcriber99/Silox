@@ -13,7 +13,9 @@ import Link from "next/link"
 export default function DeclararPage() {
   const { data: allTransactions, isLoading } = useAllTransactions()
 
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
+  const currentYear = new Date().getFullYear()
+  const defaultYear = currentYear === 2026 ? 2025 : currentYear
+  const [selectedYear, setSelectedYear] = useState<number>(defaultYear)
 
   // Calulate FIFO events
   const taxEvents = useMemo(() => {
