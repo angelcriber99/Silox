@@ -279,54 +279,58 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
           </div>
         ) : (
           <div className="flex flex-row flex-wrap items-center justify-center lg:gap-16 gap-8 py-4 w-full">
-            <div className="h-[280px] w-[280px] flex-shrink-0 relative group">
-              <PieChart width={280} height={280}>
-                <Pie
-                  data={chartData.data}
-                  innerRadius={90}
-                  outerRadius={120}
-                  paddingAngle={4}
-                  dataKey="value"
-                  stroke="none"
-                  cornerRadius={8}
-                >
-                  {chartData.data.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.color} 
-                      onClick={() => {
-                        setDrilldownCategoryName(entry.name)
-                        setDrilldownOriginalName(entry.originalName)
-                        setDrilldownModalOpen(true)
+            <div className="relative w-[280px] aspect-square flex-shrink-0 group">
+              <div className="absolute inset-0 z-10">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData.data}
+                      innerRadius={90}
+                      outerRadius={120}
+                      paddingAngle={4}
+                      dataKey="value"
+                      stroke="none"
+                      cornerRadius={8}
+                    >
+                      {chartData.data.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color} 
+                          onClick={() => {
+                            setDrilldownCategoryName(entry.name)
+                            setDrilldownOriginalName(entry.originalName)
+                            setDrilldownModalOpen(true)
+                          }}
+                          className="hover:opacity-80 transition-opacity duration-300 cursor-pointer outline-none"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      cursor={{fill: 'transparent'}}
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null
+                        const d = payload[0].payload as ChartDatum
+                        return (
+                          <div className="rounded-xl bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl z-50 relative">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
+                              <p className="text-sm font-bold text-foreground uppercase tracking-wider">{d.name}</p>
+                            </div>
+                            <p className="text-2xl font-bold font-tabular text-foreground">
+                              {hideBalances ? "****" : formatCurrency(d.value)}
+                            </p>
+                            <p className="text-sm font-medium text-muted-foreground mt-1">
+                              Representa el {formatPercent(d.percent).replace("+", "")} de tu cartera
+                            </p>
+                          </div>
+                        )
                       }}
-                      className="hover:opacity-80 transition-opacity duration-300 cursor-pointer outline-none"
                     />
-                  ))}
-                </Pie>
-                <Tooltip
-                  cursor={{fill: 'transparent'}}
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null
-                    const d = payload[0].payload as ChartDatum
-                    return (
-                      <div className="rounded-xl bg-card/95 backdrop-blur-md border border-border p-4 shadow-2xl z-50 relative">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
-                          <p className="text-sm font-bold text-foreground uppercase tracking-wider">{d.name}</p>
-                        </div>
-                        <p className="text-2xl font-bold font-tabular text-foreground">
-                          {hideBalances ? "****" : formatCurrency(d.value)}
-                        </p>
-                        <p className="text-sm font-medium text-muted-foreground mt-1">
-                          Representa el {formatPercent(d.percent).replace("+", "")} de tu cartera
-                        </p>
-                      </div>
-                    )
-                  }}
-                />
-              </PieChart>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
               {/* Center label */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-500 group-hover:scale-110">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-500 group-hover:scale-110 z-0">
                 <div className="text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Total</p>
                   <p className="text-2xl font-bold font-tabular text-foreground drop-shadow-md">
