@@ -66,6 +66,28 @@ export interface MarketPricesResult {
   marketState: string
 }
 
+function getUSMarketState(): 'REGULAR' | 'PRE' | 'POST' | 'CLOSED' {
+  const now = new Date()
+  const options = { timeZone: 'America/New_York', hour12: false }
+  
+  const nyDateString = now.toLocaleString('en-US', options)
+  const nyDate = new Date(nyDateString)
+  
+  const day = nyDate.getDay() // 0 = Sunday, 1 = Monday...
+  if (day === 0 || day === 6) return 'CLOSED'
+
+  const hours = nyDate.getHours()
+  const minutes = nyDate.getMinutes()
+  
+  const time = hours * 100 + minutes // e.g. 9:30 AM -> 930
+  
+  if (time < 400) return 'CLOSED'
+  if (time >= 400 && time < 930) return 'PRE'
+  if (time >= 930 && time < 1600) return 'REGULAR'
+  if (time >= 1600 && time < 2000) return 'POST'
+  return 'CLOSED'
+}
+
 async function _fetchMarketPrices(
   tickers: string[],
   convertToEurFlag: boolean = false
@@ -102,18 +124,17 @@ async function _fetchMarketPrices(
       const originalCurrency = normalizeYahooCurrency(quote.currency)
       let rawPrice = quote.regularMarketPrice ?? null
       let changePercent24h = quote.regularMarketChangePercent ?? null
-      let marketState = quote.marketState ?? 'CLOSED'
-      let regularMarketTime = quote.regularMarketTime ?? null
+      let marketState = getUSMarketState() // Force US Market hours
 
-      if (quote.preMarketPrice && quote.regularMarketPreviousClose && quote.marketState === 'PRE') {
+      if (quote.preMarketPrice && quote.regularMarketPreviousClose && marketState === 'PRE') {
         rawPrice = quote.preMarketPrice
         changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
-      } else if (quote.postMarketPrice && quote.regularMarketPreviousClose && quote.marketState === 'POST') {
+      } else if (quote.postMarketPrice && quote.regularMarketPreviousClose && marketState === 'POST') {
         rawPrice = quote.postMarketPrice
         changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
       }
 
-      if (!marketState || marketState === 'CLOSED' || marketState === 'POST' || marketState === 'PRE') {
+      if (marketState === 'CLOSED') {
         changePercent24h = 0
       }
 
