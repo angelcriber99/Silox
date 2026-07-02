@@ -129,16 +129,16 @@ async function _fetchMarketPrices(
       const assetState = quote.marketState || usMarketState // Use native state for the asset logic
 
       if (assetState === 'PRE' || assetState === 'PREPRE') {
-        if (quote.preMarketPrice && quote.regularMarketPreviousClose) {
+        if (quote.preMarketPrice && quote.regularMarketPrice) {
           rawPrice = quote.preMarketPrice
-          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+          changePercent24h = ((rawPrice - quote.regularMarketPrice) / quote.regularMarketPrice) * 100
         } else {
           changePercent24h = 0
         }
       } else if (assetState === 'POST' || assetState === 'POSTPOST') {
-        if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
+        if (quote.postMarketPrice && quote.regularMarketPrice) {
           rawPrice = quote.postMarketPrice
-          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+          changePercent24h = ((rawPrice - quote.regularMarketPrice) / quote.regularMarketPrice) * 100
         }
       } else if (assetState === 'CLOSED') {
         changePercent24h = 0
