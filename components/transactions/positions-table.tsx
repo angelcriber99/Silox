@@ -395,10 +395,10 @@ export function PositionsTable({
                       key={p.activo_id}
                       className={`transition-all duration-500 group relative ${
                         hasTriggeredWave
-                          ? "bg-rose-500/20 hover:bg-rose-500/30 border-y-2 border-y-rose-500 z-10 animate-pulse"
+                          ? "bg-amber-500/20 hover:bg-amber-500/30 border-y-2 border-y-amber-500 z-10 animate-pulse"
                           : "border-b border-border/30 hover:bg-muted/30"
                       }`}
-                      style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(244 63 94), 0 0 20px rgba(244, 63, 94, 0.4)" } : undefined}
+                      style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(245 158 11), 0 0 20px rgba(245, 158, 11, 0.4)" } : undefined}
                     >
                       <TableCell className={`font-medium text-foreground font-tabular ${cellPadding}`}>
                         <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
@@ -492,7 +492,7 @@ export function PositionsTable({
                                     showWavesPermanently ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                   } ${
                                     hasTriggeredWave 
-                                      ? "text-rose-400 bg-rose-500/20" 
+                                      ? "text-amber-400 bg-amber-500/20" 
                                       : hasActiveWaves 
                                         ? "text-muted-foreground/80 bg-muted/40 hover:text-amber-400 hover:bg-amber-500/10" 
                                         : "text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10"
@@ -656,7 +656,7 @@ export function PositionsTable({
                               onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
                               className={`h-8 w-8 transition-colors ${
                                 hasTriggeredWave 
-                                  ? "text-rose-400 bg-rose-500/20" 
+                                  ? "text-amber-400 bg-amber-500/20" 
                                   : hasActiveWaves 
                                     ? "text-muted-foreground/80 bg-muted/40 hover:text-amber-400 hover:bg-amber-500/10" 
                                     : "text-muted-foreground bg-muted/50 hover:text-amber-400 hover:bg-amber-500/10"
