@@ -149,19 +149,19 @@ export async function GET() {
       if (total_invested > 0 || total_value > 0) {
         snapshotsToInsert.push({
           user_id: user.id,
-          date: targetDateStr,
+          timestamp: targetDateStr + 'T12:00:00Z',
           total_value: total_value,
-          total_invested: total_invested,
-          updated_at: new Date().toISOString()
+          total_invested: total_invested
         })
       }
     }
 
-    // 5. Upsert en la base de datos
+    // 5. Insert en la nueva base de datos
     if (snapshotsToInsert.length > 0) {
+      // @ts-ignore
       const { error: upsertError } = await supabase
-        .from('portfolio_snapshots')
-        .upsert(snapshotsToInsert, { onConflict: 'user_id,date' })
+        .from('portfolio_history')
+        .insert(snapshotsToInsert)
 
       if (upsertError) {
         return NextResponse.json({ error: upsertError.message }, { status: 500 })
