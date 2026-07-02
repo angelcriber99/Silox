@@ -124,17 +124,23 @@ async function _fetchMarketPrices(
       const originalCurrency = normalizeYahooCurrency(quote.currency)
       let rawPrice = quote.regularMarketPrice ?? null
       let changePercent24h = quote.regularMarketChangePercent ?? null
-      let marketState = getUSMarketState() // Force US Market hours
+      
+      const usMarketState = getUSMarketState() // Force US Market hours for global UI
+      const assetState = quote.marketState || usMarketState // Use native state for the asset logic
 
-      if (quote.preMarketPrice && quote.regularMarketPreviousClose && marketState === 'PRE') {
-        rawPrice = quote.preMarketPrice
-        changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
-      } else if (quote.postMarketPrice && quote.regularMarketPreviousClose && marketState === 'POST') {
-        rawPrice = quote.postMarketPrice
-        changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
-      }
-
-      if (marketState === 'CLOSED') {
+      if (assetState === 'PRE' || assetState === 'PREPRE') {
+        if (quote.preMarketPrice && quote.regularMarketPreviousClose) {
+          rawPrice = quote.preMarketPrice
+          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+        } else {
+          changePercent24h = 0
+        }
+      } else if (assetState === 'POST' || assetState === 'POSTPOST') {
+        if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
+          rawPrice = quote.postMarketPrice
+          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+        }
+      } else if (assetState === 'CLOSED') {
         changePercent24h = 0
       }
 
@@ -162,7 +168,7 @@ async function _fetchMarketPrices(
         changePercent24h,
         originalPrice: rawPrice,
         originalCurrency,
-        marketState
+        marketState: usMarketState
       }
     })
   )
