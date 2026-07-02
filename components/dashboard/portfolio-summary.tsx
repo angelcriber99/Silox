@@ -71,14 +71,18 @@ export function PortfolioSummary({
       }
     })
     return positions
-      .filter(p => p.unidades > 0)
-      .map(p => ({
-        id: p.activo_id,
-        ticker: p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
-          ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
-          : p.ticker.split(".")[0],
-        historicalPnl: (realizedByAsset[p.activo_id] || 0) + (p.pnl || 0),
-      }))
+      .map(p => {
+        const hPnl = (realizedByAsset[p.activo_id] || 0) + (p.pnl || 0)
+        return {
+          id: p.activo_id,
+          ticker: p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
+            ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
+            : p.ticker.split(".")[0],
+          historicalPnl: hPnl,
+          unidades: p.unidades
+        }
+      })
+      .filter(p => p.unidades > 0 || Math.abs(p.historicalPnl) > 0.01)
       .sort((a, b) => b.historicalPnl - a.historicalPnl)
   }, [positions, transactions])
 
