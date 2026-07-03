@@ -70,7 +70,6 @@ export function MobileDashboard({
   const { soundEffects, hideBalances, setHideBalances, compactView } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("All")
   const t = useTranslations("Dashboard")
 
@@ -121,15 +120,9 @@ export function MobileDashboard({
   // Sorted + filtered positions
   const sortedPositions = useMemo(() => {
     let result = [...positions].filter(p => p.unidades > 0)
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter(p =>
-        p.ticker.toLowerCase().includes(q) || (p.nombre && p.nombre.toLowerCase().includes(q))
-      )
-    }
     if (filterType !== "All") result = result.filter(p => p.tipo === filterType)
     return result.sort((a, b) => (b.valor_actual ?? 0) - (a.valor_actual ?? 0))
-  }, [positions, searchQuery, filterType])
+  }, [positions, filterType])
 
   const assetTypes = useMemo(() => {
     const types = new Set(positions.filter(p => p.unidades > 0).map(p => p.tipo))
@@ -138,7 +131,7 @@ export function MobileDashboard({
 
   // Group by type for sections
   const grouped = useMemo(() => {
-    if (filterType !== "All" || searchQuery) return null
+    if (filterType !== "All") return null
     const map = new Map<string, EnrichedPosition[]>()
     const typeOrder = ["Fondo Indexado", "ETF", "Fondo Monetario", "Acción", "Crypto", "Liquidez"]
     for (const t of typeOrder) {
@@ -153,7 +146,7 @@ export function MobileDashboard({
       }
     }
     return map
-  }, [sortedPositions, filterType, searchQuery])
+  }, [sortedPositions, filterType])
 
   const totalPortfolioValue = totals.totalValue
 
@@ -371,18 +364,6 @@ export function MobileDashboard({
       <div>
         {/* Sticky search + filters */}
         <div className="px-4 pb-3 sticky top-[136px] z-10 bg-background/90 backdrop-blur-xl">
-          <div className="flex items-center gap-2 bg-muted/30 border border-border/40 rounded-2xl px-3 py-2.5 mb-3">
-            <svg className="w-3.5 h-3.5 text-muted-foreground/50 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar activo..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground/40 focus:outline-none"
-            />
-          </div>
 
           {assetTypes.length > 2 && (
             <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
