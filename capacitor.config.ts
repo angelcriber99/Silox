@@ -15,6 +15,7 @@ const config: CapacitorConfig = {
   appId: 'com.angelcriber.silox',
   appName: 'Silox',
   webDir: 'public',
+  backgroundColor: '#000000',
   server: {
     url: serverUrl,
     cleartext: serverUrl.startsWith('http://'),
