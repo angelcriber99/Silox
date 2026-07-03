@@ -7,6 +7,7 @@ import { computePortfolioTotals } from "@/lib/api/assets"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { Minimize, TrendingUp, TrendingDown, Minus, Clock } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 const TYPE_COLORS: Record<string, string> = {
   ETF: "#3b82f6",
@@ -60,6 +61,7 @@ function ZenLiveValue({
 }
 
 export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
+  const t = useTranslations("Dashboard")
   const { setZenMode } = usePreferences()
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const [time, setTime] = useState(new Date())
@@ -217,13 +219,11 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
             </span>
           </div>
           {marketState && (
-            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
-              isMarketOpen 
-                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                : "bg-zinc-500/10 border-zinc-500/20 text-zinc-400"
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "bg-emerald-400 animate-pulse" : "bg-zinc-400"}`} />
-              {marketState === "REGULAR" ? "Mercado Abierto" : marketState === "PRE" ? "Pre-Market" : marketState === "POST" ? "After-Hours" : "Mercado Cerrado"}
+            <div className={`mt-3 flex items-center justify-center gap-1.5 ${isMarketOpen ? "text-emerald-500/80" : "text-muted-foreground/40"}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "bg-emerald-500/80 animate-pulse" : "bg-muted-foreground/30"}`} />
+              <span className="text-[10px] font-medium tracking-[0.2em] uppercase">
+                {marketState === "REGULAR" ? t("market_open") : marketState === "PRE" ? t("market_pre") : marketState === "POST" ? t("market_post") : t("market_closed")}
+              </span>
             </div>
           )}
         </motion.div>

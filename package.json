@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "ios:update": "npm run ios:sync && npm run ios:open",
+    "ios:install": "bash scripts/ios-install.sh",
+    "ios:dev": "CAPACITOR_SERVER_URL=http://localhost:3000 npm run ios:sync"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

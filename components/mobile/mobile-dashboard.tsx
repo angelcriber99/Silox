@@ -83,10 +83,10 @@ export function MobileDashboard({
 
   const getMarketLabel = () => {
     switch (marketState) {
-      case "REGULAR": return "Abierto"
-      case "PRE":     return "Pre-market"
-      case "POST":    return "After-hours"
-      default:        return "Cerrado"
+      case "REGULAR": return t("market_open")
+      case "PRE":     return t("market_pre")
+      case "POST":    return t("market_post")
+      default:        return t("market_closed")
     }
   }
 
@@ -377,7 +377,7 @@ export function MobileDashboard({
                       : "text-muted-foreground/50 font-medium"
                   }`}
                 >
-                  {type === "All" ? "Todos" : type === "Fondo Indexado" ? "Fondos" : type === "Fondo Monetario" ? "Monetario" : type}
+                  {type === "All" ? t("filter_all") : type === "Fondo Indexado" ? t("type_index_fund") : type === "Fondo Monetario" ? t("type_money_market") : type === "Acción" ? t("type_stock") : type === "Crypto" ? t("type_crypto") : type === "ETF" ? t("type_etf") : type}
                   {filterType === type && (
                     <motion.div
                       layoutId="activeFilter"
@@ -411,7 +411,7 @@ export function MobileDashboard({
           <div className="divide-y divide-border/20">
             {Array.from(grouped.entries()).map(([type, items]) => (
               <div key={type} className="mb-4">
-                <SectionHeader label={type === "Fondo Indexado" ? "Fondos Indexados" : type} count={items.length} total={totalPortfolioValue} />
+                <SectionHeader label={type === "Fondo Indexado" ? t("type_index_fund") : type === "Fondo Monetario" ? t("type_money_market") : type === "Acción" ? t("type_stock") : type === "Crypto" ? t("type_crypto") : type === "ETF" ? t("type_etf") : type} count={items.length} total={totalPortfolioValue} />
                 <div className="divide-y divide-white/5">
                   {items.map(p => (
                     <MobileAssetCard key={p.activo_id} position={p} totalPortfolioValue={totalPortfolioValue} />
