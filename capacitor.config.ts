@@ -7,6 +7,9 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://silox-chi.vercel.app',
     cleartext: true
+  },
+  ios: {
+    allowsBackForwardNavigationGestures: true
   }
 };
 
