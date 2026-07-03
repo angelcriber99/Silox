@@ -275,6 +275,78 @@ export interface Database {
             foreignKeyName: "alertas_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
+        ]
+      }
+      budget_settings: {
+        Row: {
+          id: string
+          user_id: string
+          monthly_allowance: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          monthly_allowance?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          monthly_allowance?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_settings_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      expenses: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          merchant: string
+          category: string
+          date: string
+          notes: string | null
+          is_automated: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          merchant: string
+          category: string
+          date?: string
+          notes?: string | null
+          is_automated?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          merchant?: string
+          category?: string
+          date?: string
+          notes?: string | null
+          is_automated?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
             referencedColumns: ["id"]
           }
         ]
