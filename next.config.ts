@@ -4,7 +4,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: any = {
-  /* config options here */
+  serverExternalPackages: ['pdf-parse'],
 };
 
 export default withNextIntl(nextConfig);

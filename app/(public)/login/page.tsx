@@ -6,6 +6,8 @@ import { Activity } from "lucide-react"
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const handleGoogleLogin = async () => {
     try {
@@ -21,6 +23,25 @@ export default function LoginPage() {
     } catch (error) {
       console.error('Error logging in:', error)
       alert('Error al iniciar sesión con Google.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setLoading(true)
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      if (error) throw error
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Error logging in:', error)
+      alert('Error al iniciar sesión. Revisa tus credenciales.')
     } finally {
       setLoading(false)
     }
@@ -56,6 +77,49 @@ export default function LoginPage() {
           )}
           <span>Continuar con Google</span>
         </button>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border"></span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">O inicia con tu correo</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleEmailLogin} className="space-y-4">
+          <div>
+            <label className="sr-only" htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              required
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+          <div>
+            <label className="sr-only" htmlFor="password">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              required
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !email || !password}
+            className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Iniciando..." : "Iniciar Sesión"}
+          </button>
+        </form>
 
         <p className="text-center text-xs text-muted-foreground/80 mt-6">
           Al iniciar sesión, aceptas que tus datos financieros se guarden de forma cifrada en la base de datos vinculados a tu ID único.

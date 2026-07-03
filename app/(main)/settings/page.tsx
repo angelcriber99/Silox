@@ -13,6 +13,16 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { RevolutSync } from "@/components/transactions/revolut-sync"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -43,6 +53,7 @@ export default function SettingsPage() {
     weeklyReport: false,
     dividendAlerts: true
   })
+
 
   useEffect(() => {
     setMounted(true)
@@ -216,6 +227,29 @@ export default function SettingsPage() {
                   <div className="space-y-3 pt-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Visualización</label>
                     
+                    {/* Language Selector */}
+                    <div className="flex items-center justify-between p-4 bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors rounded-2xl mb-3">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl bg-blue-500/10 text-blue-500`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm">Idioma de la aplicación</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Selecciona tu idioma preferido.</p>
+                        </div>
+                      </div>
+                      <select 
+                        value={language} 
+                        onChange={(e) => handleLanguageChange(e.target.value as Language)}
+                        className="bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                      >
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                      </select>
+                    </div>
+                    
                     <SettingRow 
                       icon={hideBalances ? EyeOff : Eye} title="Ocultar Saldos" desc="Oculta tus números totales para mantener la privacidad."
                       iconColor="text-blue-500"
@@ -365,8 +399,10 @@ export default function SettingsPage() {
                       <span className="text-xl font-bold text-white">R</span>
                     </div>
                     <h3 className="text-lg font-bold">Revolut</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Conecta para sincronizar tus acciones fraccionadas.</p>
-                    <button className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">Conectar</button>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa tu extracto PDF para sincronizar operaciones.</p>
+                    <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
+                      Subir Extracto (CSV)
+                    </RevolutSync>
                   </div>
 
                   {/* DeGiro */}
@@ -416,7 +452,6 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
-
           </motion.div>
         </AnimatePresence>
       </main>

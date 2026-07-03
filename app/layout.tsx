@@ -5,6 +5,7 @@ import { PreferencesProvider } from "@/components/providers/preferences-provider
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
+import { DevSafeguard } from "@/components/dev-safeguard";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import "./globals.css";
@@ -61,19 +62,20 @@ export default async function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <QueryProvider>
               <PreferencesProvider>
+                <DevSafeguard />
                 {children}
               </PreferencesProvider>
             </QueryProvider>
-          </NextIntlClientProvider>
+          </ThemeProvider>
           <Toaster
             theme="dark"
             position="bottom-right"
@@ -94,7 +96,7 @@ export default async function RootLayout({
             }}
           />
           <PwaRegister />
-        </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

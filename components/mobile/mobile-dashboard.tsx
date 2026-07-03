@@ -18,6 +18,7 @@ import { usePortfolio, useHistory } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion, useAnimation } from "framer-motion"
 import { useTranslations } from "next-intl"
+import { RevolutSync } from "@/components/transactions/revolut-sync"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
@@ -198,40 +199,37 @@ export function MobileDashboard({
     <div className="pb-28 flex flex-col min-h-screen bg-background">
 
       {/* ─── Sticky Header ───────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-2xl border-b border-white/5">
-        <div className="px-4 pt-safe-top pt-4 pb-3">
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-2xl border-b border-border/30 shadow-sm">
+        <div className="px-5 pt-safe-top pt-5 pb-4">
 
-          {/* Top row: brand + actions */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center border border-primary/20">
-                <Activity className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <span className="text-[14px] font-bold text-foreground tracking-tight">Silox</span>
-                <div className={`flex items-center gap-1 ${isMarketOpen ? "text-emerald-400" : "text-muted-foreground/50"}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground/30"}`} />
-                  <span className="text-[9px] font-semibold uppercase tracking-widest">{getMarketLabel()}</span>
-                </div>
+          {/* Top row: actions only (iOS style) */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col">
+              <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest">
+                Patrimonio
+              </span>
+              <div className={`flex items-center gap-1.5 mt-0.5 ${isMarketOpen ? "text-emerald-500" : "text-muted-foreground/60"}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{getMarketLabel()}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleRefresh}
-                className="h-8 w-8 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors"
+                className="h-9 w-9 rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors"
               >
                 <motion.div animate={refreshControls}>
-                  <RefreshCw className="w-3.5 h-3.5" />
+                  <RefreshCw className="w-4 h-4" />
                 </motion.div>
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
-                className="h-8 w-8 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors"
+                className="h-9 w-9 rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors"
               >
-                <Bell className="w-3.5 h-3.5" />
+                <Bell className="w-4 h-4" />
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.9 }}
@@ -240,40 +238,35 @@ export function MobileDashboard({
                   hapticFeedback.light()
                   setHideBalances(!hideBalances)
                 }}
-                className={`h-8 w-8 rounded-xl flex items-center justify-center transition-colors ${
-                  hideBalances ? "bg-primary/20 text-primary" : "bg-muted/30 text-muted-foreground"
+                className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+                  hideBalances ? "bg-primary/20 text-primary" : "bg-muted/40 text-muted-foreground"
                 }`}
               >
-                {hideBalances ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </motion.button>
             </div>
           </div>
 
-          {/* Main KPI block */}
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/40 mb-1.5 flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-primary animate-pulse" />
-              Valor del portfolio
-            </p>
-            <div className="text-[44px] font-bold tracking-tight text-foreground leading-none mb-3">
+          {/* Main KPI block (iOS Large Title style) */}
+          <div className="mt-2">
+            <h1 className="text-[52px] font-extrabold tracking-tighter text-foreground leading-[1.1] mb-2">
               <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
-            </div>
+            </h1>
 
             {totals.totalCost > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Minimalist PnL display */}
-                <div className={`flex items-center gap-1.5 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                  <span className="text-[14px] font-medium font-tabular">
+                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md ${isPositive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"}`}>
+                  <span className="text-[15px] font-bold font-tabular">
                     {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
                   </span>
-                  <span className="text-[12px] opacity-80">
+                  <span className="text-[13px] font-semibold opacity-90">
                     ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
                   </span>
                 </div>
-                <span className="text-muted-foreground/30 text-[10px] mx-1">•</span>
-                <div className={`flex items-center gap-1 ${daily24Positive ? "text-emerald-400" : "text-rose-400"}`}>
-                  <span className="text-muted-foreground/50 text-[11px]">Hoy</span>
-                  <span className="text-[13px] font-medium font-tabular">{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
+                <div className={`flex items-center gap-1.5 ml-2 ${daily24Positive ? "text-emerald-500" : "text-rose-500"}`}>
+                  <span className="text-muted-foreground/60 text-[12px] font-medium">Hoy</span>
+                  <span className="text-[14px] font-bold font-tabular">{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
                 </div>
               </div>
             )}
@@ -326,8 +319,16 @@ export function MobileDashboard({
         </div>
       )}
 
+      {/* ─── Main Actions ──────────────────────────────────────────────── */}
+      <div className="px-4 mt-4 mb-4">
+        <RevolutSync className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-foreground text-background font-bold text-[15px] shadow-lg shadow-foreground/20 active:scale-[0.98] transition-transform">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          Sincronizar Movimientos
+        </RevolutSync>
+      </div>
+
       {/* ─── Scrollable metrics pills ──────────────────────────────────── */}
-      <div className="px-4 mt-2 mb-4">
+      <div className="px-4 mb-4">
         <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
           <MetricPill
             label="Invertido"
