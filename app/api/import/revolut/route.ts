@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       } else {
         const { data: newActivo, error: createError } = await supabase
           .from('activos')
-          .insert({ user_id: user.id, ticker: tx.ticker, nombre: tx.ticker, tipo: 'Acción' })
+          .insert({ user_id: user.id, ticker: tx.ticker, nombre: tx.ticker, tipo: 'Acción', estrategia: 'Satellite', moneda: 'USD' })
           .select()
           .single();
           
