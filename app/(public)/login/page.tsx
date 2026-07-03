@@ -4,6 +4,9 @@ import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Activity } from "lucide-react"
 
+import { Capacitor } from '@capacitor/core'
+import { Browser } from '@capacitor/browser'
+
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -13,13 +16,30 @@ export default function LoginPage() {
     try {
       setLoading(true)
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${location.origin}/auth/callback`
+      
+      const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+      
+      if (isNative) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'com.angelcriber.silox://auth/callback',
+            skipBrowserRedirect: true,
+          }
+        })
+        if (error) throw error;
+        if (data?.url) {
+          await Browser.open({ url: data.url });
         }
-      })
-      if (error) throw error
+      } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${location.origin}/auth/callback`
+          }
+        })
+        if (error) throw error
+      }
     } catch (error) {
       console.error('Error logging in:', error)
       alert('Error al iniciar sesión con Google.')

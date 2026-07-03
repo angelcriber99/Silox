@@ -6,6 +6,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { DevSafeguard } from "@/components/dev-safeguard";
+import { CapacitorProvider } from "@/components/providers/capacitor-provider";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import "./globals.css";
@@ -71,8 +72,10 @@ export default async function RootLayout({
           >
             <QueryProvider>
               <PreferencesProvider>
-                <DevSafeguard />
-                {children}
+                <CapacitorProvider>
+                  <DevSafeguard />
+                  {children}
+                </CapacitorProvider>
               </PreferencesProvider>
             </QueryProvider>
           </ThemeProvider>
