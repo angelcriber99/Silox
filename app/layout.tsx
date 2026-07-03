@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { DevSafeguard } from "@/components/dev-safeguard";
 import { CapacitorProvider } from "@/components/providers/capacitor-provider";
-import { BiometricLocker } from "@/components/mobile/biometric-locker";
+import { SplashScreen } from "@/components/mobile/splash-screen";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import "./globals.css";
@@ -76,9 +76,9 @@ export default async function RootLayout({
               <PreferencesProvider>
                 <CapacitorProvider>
                   <DevSafeguard />
-                  <BiometricLocker>
+                  <SplashScreen>
                     {children}
-                  </BiometricLocker>
+                  </SplashScreen>
                 </CapacitorProvider>
               </PreferencesProvider>
             </QueryProvider>
