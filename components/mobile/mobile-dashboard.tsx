@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useRef } from "react"
 import {
-  Bell, Eye, EyeOff, RefreshCw, TrendingUp, TrendingDown,
-  ChevronRight, ArrowUpRight, Activity, Wallet, BarChart2
+  Bell, Eye, EyeOff, TrendingUp, TrendingDown,
+  ChevronRight, ArrowUpRight, Activity, Wallet, BarChart2,
+  FileUp
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
@@ -69,7 +70,6 @@ export function MobileDashboard({
   const { soundEffects, hideBalances, setHideBalances, compactView } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("All")
   const t = useTranslations("Dashboard")
@@ -79,7 +79,6 @@ export function MobileDashboard({
   const isPositive      = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
   const areaColor       = isPositive ? "#10b981" : "#f43f5e"
-  const refreshControls = useAnimation()
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
@@ -92,26 +91,27 @@ export function MobileDashboard({
     }
   }
 
-  const handleRefresh = async () => {
-    if (isRefreshing) return
-    hapticFeedback.medium()
-    setIsRefreshing(true)
-    refreshControls.start({ rotate: 360, transition: { repeat: Infinity, duration: 1, ease: "linear" } })
-    await new Promise(r => setTimeout(r, 1500))
-    setIsRefreshing(false)
-    refreshControls.stop()
-    refreshControls.set({ rotate: 0 })
-    hapticFeedback.success()
-  }
-
   // Portfolio sparkline
   const portfolioSparkline = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return []
+    
     const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-    const last7 = sorted.slice(-7)
-    if (last7.length < 2) return []
-    const start = last7[0].total_value
-    return last7.map((s, i) => ({
+    
+    // Group by day and take the last snapshot of each day
+    const dailySnapshots = new Map<string, typeof snapshots[0]>()
+    sorted.forEach(s => {
+      const day = new Date(s.timestamp).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
+      dailySnapshots.set(day, s)
+    })
+    
+    // Convert back to array, sort by time, and get last 7
+    const last7Days = Array.from(dailySnapshots.values())
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      .slice(-7)
+      
+    if (last7Days.length < 2) return []
+    const start = last7Days[0].total_value
+    return last7Days.map((s, i) => ({
       i,
       v: s.total_value,
       pnl: s.total_value - start
@@ -215,15 +215,11 @@ export function MobileDashboard({
             </div>
 
             <div className="flex items-center gap-2">
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={handleRefresh}
-                className="h-9 w-9 rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors"
-              >
-                <motion.div animate={refreshControls}>
-                  <RefreshCw className="w-4 h-4" />
-                </motion.div>
-              </motion.button>
+              <RevolutSync>
+                <div className="h-9 w-9 rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors">
+                  <FileUp className="w-4 h-4" />
+                </div>
+              </RevolutSync>
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
@@ -319,13 +315,7 @@ export function MobileDashboard({
         </div>
       )}
 
-      {/* ─── Main Actions ──────────────────────────────────────────────── */}
-      <div className="px-4 mt-4 mb-4">
-        <RevolutSync className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-foreground text-background font-bold text-[15px] shadow-lg shadow-foreground/20 active:scale-[0.98] transition-transform">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-          Sincronizar Movimientos
-        </RevolutSync>
-      </div>
+
 
       {/* ─── Scrollable metrics pills ──────────────────────────────────── */}
       <div className="px-4 mb-4">
