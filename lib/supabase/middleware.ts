@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isPublicRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/auth/callback') || request.nextUrl.pathname.startsWith('/api/cron')
+  const isPublicRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/auth/callback') || request.nextUrl.pathname.startsWith('/api/cron') || request.nextUrl.pathname.startsWith('/api/webhooks')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
 
   if (!user && !isPublicRoute) {
