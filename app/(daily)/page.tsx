@@ -61,7 +61,8 @@ export default function DailyHub() {
   
   useEffect(() => {
     setMounted(true)
-    setCurrentMonth(new Date().toISOString().slice(0, 7))
+    const d = new Date()
+    setCurrentMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }, [])
 
   const { data: expenses } = useExpenses(currentMonth) 
@@ -110,10 +111,12 @@ export default function DailyHub() {
     const d = new Date()
     for (let i = 5; i >= 0; i--) {
       const monthDate = new Date(d.getFullYear(), d.getMonth() - i, 1)
+      const year = monthDate.getFullYear()
+      const month = String(monthDate.getMonth() + 1).padStart(2, '0')
       result.push({
-        value: monthDate.toISOString().slice(0, 7),
+        value: `${year}-${month}`,
         label: monthDate.toLocaleDateString('es-ES', { month: 'long' }),
-        year: monthDate.getFullYear()
+        year: year
       })
     }
     return result
