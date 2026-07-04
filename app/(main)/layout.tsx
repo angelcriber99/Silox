@@ -10,7 +10,7 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-background">
+    <div className="flex flex-col md:flex-row min-h-full bg-background">
       {/* Desktop Sidebar (hidden on mobile) */}
       <ProSidebar />
       

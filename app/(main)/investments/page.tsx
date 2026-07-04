@@ -39,7 +39,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex flex-col">
+    <main className="min-h-full bg-background text-foreground flex flex-col">
 
       {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden">

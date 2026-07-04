@@ -34,7 +34,7 @@ export default function HistorialPage() {
   }, [allTransactions])
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex flex-col animate-fade-in">
+    <main className="min-h-full bg-background text-foreground flex flex-col animate-fade-in">
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 space-y-8">
         
         {/* Header Section */}

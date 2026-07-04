@@ -64,7 +64,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className="flex flex-col fixed inset-0 overflow-hidden bg-background text-foreground" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider
             attribute="class"
@@ -77,7 +77,9 @@ export default async function RootLayout({
                 <CapacitorProvider>
                   <DevSafeguard />
                   <SplashScreen>
-                    {children}
+                    <main className="flex-1 h-full w-full overflow-y-auto overscroll-y-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+                      {children}
+                    </main>
                   </SplashScreen>
                 </CapacitorProvider>
               </PreferencesProvider>

@@ -68,7 +68,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 selection:bg-purple-500/30">
+    <div className="min-h-full bg-background flex flex-col justify-center items-center p-4 selection:bg-purple-500/30">
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8 backdrop-blur-xl shadow-2xl animate-fade-in">
         <div className="flex flex-col items-center mb-8">
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-4">

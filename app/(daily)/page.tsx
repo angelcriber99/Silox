@@ -63,7 +63,7 @@ export default function DailyHub() {
   if (!mounted) return null 
 
   return (
-    <div className="pb-28 flex flex-col min-h-screen bg-background text-foreground">
+    <div className="pb-28 flex flex-col min-h-full bg-background text-foreground">
       
       {/* ─── Sticky Header (Like Investments) ─────────────────────────── */}
       <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-2xl border-b border-border/30 shadow-sm">

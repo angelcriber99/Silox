@@ -94,7 +94,7 @@ export default function MovimientosPage() {
   }, [transactions, searchQuery, typeFilter, dateFrom, dateTo])
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex flex-col">
+    <main className="min-h-full bg-background text-foreground flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 space-y-6">
         
         {/* Header Section */}
