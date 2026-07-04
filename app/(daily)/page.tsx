@@ -1,14 +1,16 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { useExpenses, useBudgetSettings } from "@/lib/hooks/use-expenses"
+import { useExpenses, useGlobalBalance } from "@/lib/hooks/use-expenses"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { motion } from "framer-motion"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { ArrowRight, Plus, Send, Receipt, SmartphoneNfc } from "lucide-react"
+import { ArrowRight, Plus, Receipt, SmartphoneNfc, ArrowRightLeft, Landmark } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ApplePaySetup } from "@/components/expenses/apple-pay-setup"
+import { AddIncomeModal } from "@/components/expenses/add-income-modal"
+import { TransferInvestmentsModal } from "@/components/expenses/transfer-investments-modal"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { formatCurrency } from "@/lib/utils/formatters"
@@ -51,10 +53,11 @@ const getMerchantColor = (name: string) => {
 }
 
 export default function DailyHub() {
-  const { data: budget } = useBudgetSettings()
   const [mounted, setMounted] = useState(false)
   const [currentMonth, setCurrentMonth] = useState("")
   const [isSetupOpen, setIsSetupOpen] = useState(false)
+  const [isIncomeOpen, setIsIncomeOpen] = useState(false)
+  const [isTransferOpen, setIsTransferOpen] = useState(false)
   
   useEffect(() => {
     setMounted(true)
@@ -62,13 +65,16 @@ export default function DailyHub() {
   }, [])
 
   const { data: expenses } = useExpenses(currentMonth) 
+  const { data: globalBalance } = useGlobalBalance()
   const { totals } = usePortfolio()
   const { hideBalances } = usePreferences()
 
-  const allowance = budget?.monthly_allowance || 500
-  // Sum of all expenses (positive numbers are expenses, negative are incomes)
-  const totalSpent = expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0
-  const remaining = allowance - totalSpent
+  // The global balance computed from all-time income and expenses
+  const remaining = globalBalance || 0
+
+  // Optional: calculating the total spent IN THIS MONTH just for info
+  const monthExpenses = expenses?.filter(e => e.amount > 0).reduce((acc, exp) => acc + exp.amount, 0) || 0
+  const monthIncome = expenses?.filter(e => e.amount < 0).reduce((acc, exp) => acc + Math.abs(exp.amount), 0) || 0
 
   // Safe Patrimonio (Total Value)
   const patrimonio = totals?.totalValue
@@ -154,21 +160,23 @@ export default function DailyHub() {
             <h1 className="text-[52px] font-extrabold tracking-tighter text-foreground leading-[1.1]">
               <AnimatedNumber value={remaining} format="currency" hide={hideBalances} />
             </h1>
-            <span className="text-muted-foreground/60 text-lg font-medium">disp.</span>
+            <span className="text-muted-foreground/60 text-lg font-medium">total</span>
           </div>
           
           <div className="mt-2 flex items-center gap-2">
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground">
               <span className="text-[14px] font-bold font-tabular">
-                {hideBalances ? "••••" : formatCurrency(totalSpent)}
+                {hideBalances ? "••••" : formatCurrency(monthExpenses)}
               </span>
               <span className="text-[12px] font-semibold opacity-70">
-                gastado
+                gastado este mes
               </span>
             </div>
-            <div className="text-muted-foreground/60 text-[12px] font-medium ml-1">
-              de {formatCurrency(allowance)}
-            </div>
+            {monthIncome > 0 && (
+              <div className="text-emerald-500/80 text-[12px] font-medium ml-1">
+                +{formatCurrency(monthIncome)} ingresos
+              </div>
+            )}
           </div>
           
         </div>
@@ -203,23 +211,25 @@ export default function DailyHub() {
         <div className="px-5 mb-8">
           <div className="grid grid-cols-4 gap-2 md:gap-4 max-w-md mx-auto md:max-w-none md:flex md:flex-wrap">
             <motion.button 
+              onClick={() => { hapticFeedback.light(); setIsIncomeOpen(true) }}
               whileTap={{ scale: 0.95 }}
               className="flex flex-col items-center gap-2"
             >
-              <div className="h-14 w-14 rounded-2xl bg-card border border-border/30 hover:border-border transition-colors flex items-center justify-center text-sky-500 shadow-sm">
-                <Send className="h-6 w-6" />
+              <div className="h-14 w-14 rounded-2xl bg-card border border-border/30 hover:border-border transition-colors flex items-center justify-center text-emerald-500 shadow-sm">
+                <Plus className="h-6 w-6" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground">Bizum</span>
+              <span className="text-[11px] font-medium text-muted-foreground">Sueldo</span>
             </motion.button>
             
             <motion.button 
+              onClick={() => { hapticFeedback.light(); setIsTransferOpen(true) }}
               whileTap={{ scale: 0.95 }}
               className="flex flex-col items-center gap-2"
             >
-              <div className="h-14 w-14 rounded-2xl bg-card border border-border/30 hover:border-border transition-colors flex items-center justify-center text-indigo-400 shadow-sm">
-                <Receipt className="h-6 w-6" />
+              <div className="h-14 w-14 rounded-2xl bg-card border border-border/30 hover:border-border transition-colors flex items-center justify-center text-blue-500 shadow-sm">
+                <ArrowRightLeft className="h-6 w-6" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground">Gasto</span>
+              <span className="text-[11px] font-medium text-muted-foreground">Invertir</span>
             </motion.button>
             
             <motion.button 
@@ -235,12 +245,12 @@ export default function DailyHub() {
             
             <motion.button 
               whileTap={{ scale: 0.95 }}
-              className="flex flex-col items-center gap-2"
+              className="flex flex-col items-center gap-2 opacity-50 cursor-not-allowed"
             >
-              <div className="h-14 w-14 rounded-2xl bg-card border border-border/30 hover:border-border transition-colors flex items-center justify-center text-muted-foreground shadow-sm">
-                <Plus className="h-6 w-6" />
+              <div className="h-14 w-14 rounded-2xl bg-card border border-border/30 transition-colors flex items-center justify-center text-muted-foreground shadow-sm">
+                <Receipt className="h-6 w-6" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground">Más</span>
+              <span className="text-[11px] font-medium text-muted-foreground">Manual</span>
             </motion.button>
           </div>
         </div>
@@ -330,6 +340,8 @@ export default function DailyHub() {
       </div>
 
       <ApplePaySetup isOpen={isSetupOpen} onClose={() => setIsSetupOpen(false)} />
+      <AddIncomeModal isOpen={isIncomeOpen} onClose={() => setIsIncomeOpen(false)} currentMonth={currentMonth} />
+      <TransferInvestmentsModal isOpen={isTransferOpen} onClose={() => setIsTransferOpen(false)} availableBalance={remaining} />
     </div>
   )
 }

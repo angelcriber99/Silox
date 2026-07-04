@@ -121,6 +121,104 @@ export function useAddExpense() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] })
+      queryClient.invalidateQueries({ queryKey: ["global-balance"] })
+    }
+  })
+}
+
+export function useGlobalBalance() {
+  const supabase = createClient()
+  return useQuery({
+    queryKey: ["global-balance"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("No user")
+      
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("amount")
+        .eq("user_id", user.id)
+        
+      if (error) throw error
+      
+      // Sum all expenses (positive) and incomes (negative)
+      const sum = data.reduce((acc, row) => acc + row.amount, 0)
+      
+      // Available balance is the inverse of the sum 
+      // (If incomes > expenses, sum is negative, so balance is positive)
+      return -sum
+    }
+  })
+}
+
+export function useTransferToInvestments() {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (amount: number) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("No user")
+      
+      // 1. Add expense
+      const { error: expError } = await supabase.from("expenses").insert({
+        user_id: user.id,
+        amount: amount, // Positive amount = expense
+        category: "Inversión",
+        merchant: "Traspaso a Inversiones",
+        date: new Date().toISOString(),
+        is_automated: true
+      } as any)
+      if (expError) throw expError
+
+      // 2. Get or create CASH asset
+      const { data: existingAsset, error: searchError } = await supabase
+        .from('activos')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('tipo', 'Liquidez')
+        .limit(1)
+        .single()
+
+      let assetId = existingAsset?.id
+
+      if (!assetId) {
+        const { data: newAsset, error: insertAssetError } = await supabase
+          .from('activos')
+          .insert([{
+            user_id: user.id,
+            ticker: 'CASH',
+            nombre: 'Efectivo',
+            tipo: 'Liquidez',
+            estrategia: 'Liquidez',
+            moneda: 'EUR'
+          }])
+          .select()
+          .single()
+          
+        if (insertAssetError) throw insertAssetError
+        assetId = newAsset.id
+      }
+
+      // 3. Insert transaction
+      const { error: txError } = await supabase
+        .from('transacciones')
+        .insert([{
+          user_id: user.id,
+          activo_id: assetId,
+          tipo_operacion: 'Compra',
+          cantidad: amount,
+          precio_unitario: 1,
+          fecha: new Date().toISOString(),
+          comision: 0
+        }])
+
+      if (txError) throw txError
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] })
+      queryClient.invalidateQueries({ queryKey: ["global-balance"] })
+      queryClient.invalidateQueries({ queryKey: ["positions"] })
     }
   })
 }
