@@ -5,13 +5,57 @@ import { useExpenses, useBudgetSettings } from "@/lib/hooks/use-expenses"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { motion } from "framer-motion"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { ArrowRight, CreditCard, Coffee, ShoppingBag, Car, Plus, Send, Receipt, SmartphoneNfc } from "lucide-react"
+import { ArrowLeft, Plus } from "lucide-react"
 import Link from "next/link"
-import { formatCurrency } from "@/lib/utils/formatters"
 import { useEffect, useState } from "react"
 import { ApplePaySetup } from "@/components/expenses/apple-pay-setup"
-import { AnimatedNumber } from "@/components/ui/animated-number"
 import { hapticFeedback } from "@/lib/utils/haptics"
+
+// Helper to format currency natively
+const formatNativeCurrency = (amount: number, forceSign: boolean = false) => {
+  const formatted = new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Math.abs(amount))
+  
+  if (amount === 0) return formatted
+  if (amount < 0) return `+${formatted}` // In our DB, negative expense = income
+  return `-${formatted}` // Positive expense = money spent
+}
+
+// Format the large balance with small decimals
+const FormatLargeBalance = ({ amount }: { amount: number }) => {
+  const parts = new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount).split(',')
+  
+  return (
+    <div className="flex items-baseline tracking-tighter">
+      <span className="text-4xl font-extrabold">{parts[0]}</span>
+      <span className="text-xl font-bold">,{parts[1]} €</span>
+    </div>
+  )
+}
+
+// Helper to get initials and colors
+const getMerchantInitials = (name: string) => {
+  return name.substring(0, 2).toUpperCase()
+}
+
+const getMerchantColor = (name: string) => {
+  const colors = [
+    'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+    'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return colors[Math.abs(hash) % colors.length]
+}
 
 export default function DailyHub() {
   const { data: budget } = useBudgetSettings()
@@ -24,238 +68,160 @@ export default function DailyHub() {
     setCurrentMonth(new Date().toISOString().slice(0, 7))
   }, [])
 
-  const queryClient = useQueryClient()
-  const { data: expenses, refetch } = useExpenses(currentMonth)
-  
-  useEffect(() => {
-    console.log("Expenses for", currentMonth, ":", expenses)
-  }, [expenses, currentMonth])
-  const { totals } = usePortfolio()
+  const { data: expenses } = useExpenses(currentMonth) 
   const { hideBalances } = usePreferences()
 
   const allowance = budget?.monthly_allowance || 500
+  // Sum of all expenses (positive numbers are expenses, negative are incomes)
   const totalSpent = expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0
   const remaining = allowance - totalSpent
-  const progress = Math.min((totalSpent / allowance) * 100, 100)
-
-  // Safe Patrimonio (Total Value)
-  const patrimonio = totals?.totalValue
-  const safePatrimonio = Number.isNaN(patrimonio) || patrimonio === undefined ? 0 : patrimonio
-
-  // SVG Ring Chart Logic
-  const radius = 90
-  const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference - (progress / 100) * circumference
-  const isOverBudget = progress > 100
-  const ringColor = isOverBudget ? 'text-rose-500' : progress > 80 ? 'text-amber-500' : 'text-emerald-500'
-
-  const getCategoryIcon = (cat: string) => {
-    switch (cat.toLowerCase()) {
-      case 'comida': return <Coffee className="h-4 w-4" />
-      case 'transporte': return <Car className="h-4 w-4" />
-      case 'compras': return <ShoppingBag className="h-4 w-4" />
-      case 'bizum': return <Send className="h-4 w-4" />
-      case 'apple pay': return <SmartphoneNfc className="h-4 w-4" />
-      default: return <CreditCard className="h-4 w-4" />
-    }
-  }
 
   if (!mounted) return null 
 
+  // Group expenses by date
+  const groupedExpenses: Record<string, typeof expenses> = {}
+  expenses?.forEach(exp => {
+    // Check if it's today or yesterday
+    const expDate = new Date(exp.date)
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    
+    let dateKey = ''
+    if (expDate.toDateString() === today.toDateString()) {
+      dateKey = 'Hoy'
+    } else if (expDate.toDateString() === yesterday.toDateString()) {
+      dateKey = 'Ayer'
+    } else {
+      dateKey = expDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
+    }
+    
+    if (!groupedExpenses[dateKey]) groupedExpenses[dateKey] = []
+    groupedExpenses[dateKey]!.push(exp)
+  })
+
+  // Months array for the horizontal selector
+  const months = ['Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio']
+
   return (
-    <div className="pb-28 flex flex-col min-h-full bg-background text-foreground">
+    <div className="min-h-full bg-black text-white pb-28">
       
-      {/* ─── Sticky Header (Like Investments) ─────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-2xl border-b border-border/30 shadow-sm">
-        <div className="px-5 pt-safe-top pt-5 pb-4 max-w-5xl mx-auto w-full">
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex flex-col">
-              <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest">
-                Gastos Mensuales
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5 text-muted-foreground/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">En Presupuesto</span>
-              </div>
-            </div>
+      {/* Header */}
+      <div className="px-5 pt-safe-top pt-6 pb-4">
+        <Link href="/investments">
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            className="h-10 w-10 rounded-full bg-zinc-900 flex items-center justify-center mb-6"
+          >
+            <ArrowLeft className="h-5 w-5 text-white" />
+          </motion.button>
+        </Link>
+        
+        <div className="mb-1">
+          {hideBalances ? (
+            <span className="text-4xl font-extrabold tracking-tighter">**** €</span>
+          ) : (
+            <FormatLargeBalance amount={remaining} />
+          )}
+        </div>
+        <p className="text-zinc-500 text-[15px] font-medium">Saldo actual</p>
+      </div>
 
-            <Link href="/investments">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 bg-muted/30 hover:bg-muted/50 border border-border/40 rounded-full pl-3 pr-2 py-1.5 transition-colors"
-              >
-                <div className="flex flex-col items-end">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">Patrimonio</span>
-                  <span className="text-xs font-bold text-foreground">
-                    {hideBalances ? "****" : formatCurrency(safePatrimonio, 'EUR')}
-                  </span>
-                </div>
-                <div className="h-6 w-6 rounded-full bg-background flex items-center justify-center">
-                  <ArrowRight className="h-3 w-3 text-foreground/70" />
-                </div>
-              </motion.button>
-            </Link>
-          </div>
-
-          <div className="mt-2 flex items-baseline gap-2">
-            <h1 className="text-[52px] font-extrabold tracking-tighter text-foreground leading-[1.1]">
-              <AnimatedNumber value={remaining} format="currency" hide={hideBalances} />
-            </h1>
-            <span className="text-muted-foreground/60 text-lg font-medium">disp.</span>
-          </div>
-          
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground">
-              <span className="text-[14px] font-bold font-tabular">
-                {hideBalances ? "••••" : formatCurrency(totalSpent)}
-              </span>
-              <span className="text-[12px] font-semibold opacity-70">
-                gastado
-              </span>
-            </div>
-            <div className="text-muted-foreground/60 text-[12px] font-medium ml-1">
-              de {formatCurrency(allowance)}
-            </div>
-          </div>
-          
+      {/* Month Selector */}
+      <div className="w-full overflow-x-auto hide-scrollbar mb-8 mt-2 border-b border-zinc-900 pb-4">
+        <div className="flex gap-6 px-5 min-w-max items-center">
+          {months.map((m, i) => (
+            <button 
+              key={m}
+              className={`text-[15px] font-medium transition-colors ${
+                m === 'Julio' 
+                  ? 'bg-zinc-800 text-white px-4 py-1.5 rounded-full' 
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {m}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="flex-1 max-w-5xl mx-auto w-full w-full">
-        <div className="grid grid-cols-1 md:grid-cols-12 md:gap-10 pt-6">
+      {/* Transactions List */}
+      <div className="px-4 space-y-8">
+        {Object.entries(groupedExpenses).map(([date, dayExpenses]) => {
+          const dayTotal = dayExpenses!.reduce((acc, exp) => acc + exp.amount, 0)
           
-          {/* ─── LEFT COLUMN: BUDGET VISUALS ─── */}
-          <div className="md:col-span-5 flex flex-col px-4">
-            
-            <div className="flex flex-col items-center justify-center py-6 mb-4">
-              <div className="relative w-[220px] h-[220px] md:w-[260px] md:h-[260px] flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90 absolute inset-0">
-                  <circle cx="50%" cy="50%" r="40%" className="stroke-muted/30" strokeWidth="16" fill="transparent" />
-                  <motion.circle
-                    initial={{ strokeDashoffset: circumference }}
-                    animate={{ strokeDashoffset }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    cx="50%"
-                    cy="50%"
-                    r="40%"
-                    className={`stroke-current ${ringColor}`}
-                    strokeWidth="16"
-                    fill="transparent"
-                    strokeDasharray={circumference}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                
-                <div className="flex flex-col items-center text-center z-10">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1">Presupuesto</span>
-                  <span className="text-4xl font-black tracking-tighter text-foreground">
-                    {Math.round(progress)}%
-                  </span>
-                  <span className="text-xs text-muted-foreground/60 mt-1 font-medium">
-                    Consumido
-                  </span>
-                </div>
+          return (
+            <div key={date}>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="text-white text-lg font-semibold">{date}</h3>
+                <span className="text-zinc-400 text-sm font-medium">
+                  {formatNativeCurrency(dayTotal)}
+                </span>
               </div>
-            </div>
-
-            {/* Quick Actions (iOS Settings style grid) */}
-            <div className="grid grid-cols-4 gap-2 md:gap-3 mb-8">
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                className="flex flex-col items-center gap-1.5"
-              >
-                <div className="h-14 w-14 rounded-2xl bg-muted/40 hover:bg-muted/60 transition-colors flex items-center justify-center text-sky-500">
-                  <Send className="h-6 w-6" />
-                </div>
-                <span className="text-[11px] font-medium text-muted-foreground">Bizum</span>
-              </motion.button>
               
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                className="flex flex-col items-center gap-1.5"
-              >
-                <div className="h-14 w-14 rounded-2xl bg-muted/40 hover:bg-muted/60 transition-colors flex items-center justify-center text-indigo-400">
-                  <Receipt className="h-6 w-6" />
-                </div>
-                <span className="text-[11px] font-medium text-muted-foreground">Gasto</span>
-              </motion.button>
-              
-              <motion.button 
-                onClick={() => { hapticFeedback.light(); setIsSetupOpen(true) }}
-                whileTap={{ scale: 0.95 }}
-                className="flex flex-col items-center gap-1.5"
-              >
-                <div className="h-14 w-14 rounded-2xl bg-muted/40 hover:bg-muted/60 transition-colors flex items-center justify-center text-foreground">
-                  <SmartphoneNfc className="h-6 w-6" />
-                </div>
-                <span className="text-[11px] font-medium text-muted-foreground">Apple Pay</span>
-              </motion.button>
-              
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                className="flex flex-col items-center gap-1.5"
-              >
-                <div className="h-14 w-14 rounded-2xl bg-muted/40 hover:bg-muted/60 transition-colors flex items-center justify-center text-muted-foreground">
-                  <Plus className="h-6 w-6" />
-                </div>
-                <span className="text-[11px] font-medium text-muted-foreground">Más</span>
-              </motion.button>
-            </div>
-          </div>
-
-          {/* ─── RIGHT COLUMN: TRANSACTIONS LIST ─── */}
-          <div className="md:col-span-7 flex flex-col pb-8">
-            <div className="flex items-center justify-between px-5 py-2 bg-muted/20 md:bg-transparent md:px-0">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Movimientos Recientes</span>
-              <span className="text-[10px] font-medium text-muted-foreground/40">{expenses?.length || 0} pagos</span>
-            </div>
-
-            <div className="divide-y divide-border/10 md:divide-border/20 md:border-t md:border-border/20">
-              {expenses?.length === 0 ? (
-                <div className="text-center py-16 px-8">
-                  <div className="h-12 w-12 rounded-2xl bg-muted/30 flex items-center justify-center mx-auto mb-3">
-                    <Receipt className="w-6 h-6 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-sm font-semibold text-muted-foreground/60">Sin gastos este mes</p>
-                  <p className="text-xs text-muted-foreground/40 mt-1">Configura Apple Pay para registrar pagos al instante.</p>
-                </div>
-              ) : (
-                expenses?.slice(0, 20).map((expense) => (
-                  <div 
-                    key={expense.id} 
-                    className="flex items-center justify-between px-5 py-3 hover:bg-muted/10 transition-colors md:px-2"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground">
-                        {getCategoryIcon(expense.category)}
-                      </div>
-                      <div>
-                        <p className="text-[15px] font-semibold text-foreground leading-tight">{expense.merchant}</p>
-                        <p className="text-[13px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                          {expense.category}
-                          {expense.is_automated && (
-                            <>
-                              <span className="w-1 h-1 rounded-full bg-emerald-500/50" />
-                              <span className="text-emerald-500/80 text-[11px] font-medium">Auto</span>
-                            </>
+              <div className="bg-[#121212] rounded-3xl overflow-hidden">
+                {dayExpenses!.map((exp, idx) => {
+                  const isIncome = exp.amount < 0
+                  
+                  return (
+                    <motion.div 
+                      key={exp.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`flex items-center justify-between p-4 ${
+                        idx !== dayExpenses!.length - 1 ? 'border-b border-zinc-900/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          {/* Main Icon */}
+                          <div className={`h-12 w-12 rounded-full flex items-center justify-center text-lg font-bold text-white shadow-inner ${getMerchantColor(exp.merchant)}`}>
+                            {getMerchantInitials(exp.merchant)}
+                          </div>
+                          
+                          {/* Automated Badge overlay */}
+                          {exp.is_automated && (
+                            <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-zinc-800 rounded-full flex items-center justify-center border-2 border-[#121212]">
+                              <Plus className="h-3 w-3 text-white" />
+                            </div>
                           )}
+                        </div>
+                        
+                        <div>
+                          <p className="text-white font-medium text-[16px]">{exp.merchant}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <p className="text-zinc-500 text-[13px]">
+                              {new Date(exp.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {exp.notes && (
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                <p className="text-zinc-500 text-[13px] truncate max-w-[120px]">{exp.notes}</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className={`text-[16px] font-medium tracking-tight ${isIncome ? 'text-emerald-500' : 'text-white'}`}>
+                          {formatNativeCurrency(exp.amount)}
                         </p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[15px] font-bold font-tabular text-foreground">-{formatCurrency(expense.amount)}</p>
-                      <p className="text-[12px] font-medium text-muted-foreground/50 mt-0.5 uppercase tracking-wider">
-                        {new Date(expense.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
+                    </motion.div>
+                  )
+                })}
+              </div>
             </div>
+          )
+        })}
+
+        {expenses?.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-zinc-500 font-medium">No hay movimientos este mes</p>
           </div>
-          
-        </div>
+        )}
       </div>
 
       <ApplePaySetup isOpen={isSetupOpen} onClose={() => setIsSetupOpen(false)} />
