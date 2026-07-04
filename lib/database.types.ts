@@ -275,6 +275,8 @@ export interface Database {
             foreignKeyName: "alertas_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
         ]
       }
       budget_settings: {
