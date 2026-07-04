@@ -112,7 +112,7 @@ export function useAddExpense() {
         .insert({
           ...expense,
           user_id: user.id,
-        })
+        } as any)
         .select()
         .single()
 
