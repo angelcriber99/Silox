@@ -1,5 +1,6 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { useExpenses, useBudgetSettings } from "@/lib/hooks/use-expenses"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { motion } from "framer-motion"
@@ -23,7 +24,12 @@ export default function DailyHub() {
     setCurrentMonth(new Date().toISOString().slice(0, 7))
   }, [])
 
-  const { data: expenses } = useExpenses(currentMonth) 
+  const queryClient = useQueryClient()
+  const { data: expenses, refetch } = useExpenses(currentMonth)
+  
+  useEffect(() => {
+    console.log("Expenses for", currentMonth, ":", expenses)
+  }, [expenses, currentMonth])
   const { totals } = usePortfolio()
   const { hideBalances } = usePreferences()
 
