@@ -13,7 +13,6 @@ import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
-import { PerformanceChart } from "@/components/dashboard/performance-chart"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
 import { usePortfolio, useHistory } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
@@ -262,15 +261,48 @@ export function MobileDashboard({
         </div>
       </div>
 
-      {/* ─── Performance Chart ────────────────────────────────────────────────── */}
-      <div className="px-1 mb-4">
-        <PerformanceChart 
-          history={snapshots ?? []}
-          sparkline={portfolioSparkline}
-          currentValue={totals.totalValue}
-          currentCost={totals.totalCost}
-        />
-      </div>
+      {/* ─── Sparkline (Last 7 Days) ────────────────────────────────────────────────── */}
+      {portfolioSparkline.length > 1 && (
+        <div className="h-28 w-full relative -mt-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={portfolioSparkline} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
+              <defs>
+                <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.5} />
+                  <stop offset="60%" stopColor={areaColor} stopOpacity={0.1} />
+                  <stop offset="100%" stopColor={areaColor} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <YAxis hide domain={["dataMin - 200", "dataMax + 200"]} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const d = payload[0].payload
+                  const isUp = d.pnl >= 0
+                  return (
+                    <div className="bg-card/95 backdrop-blur-xl border border-border/40 rounded-xl px-3 py-2 shadow-2xl">
+                      <p className="text-[13px] font-bold font-tabular text-foreground">{formatCurrency(d.v)}</p>
+                      <p className={`text-[11px] font-medium font-tabular ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
+                        {isUp ? "+" : ""}{formatCurrency(d.pnl)} vs inicio semana
+                      </p>
+                    </div>
+                  )
+                }}
+                cursor={{ stroke: areaColor, strokeWidth: 1, strokeDasharray: "3 3" }}
+              />
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke={areaColor}
+                strokeWidth={2}
+                fill="url(#mobileGrad)"
+                isAnimationActive={true}
+                animationDuration={800}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
 
 
