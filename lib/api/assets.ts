@@ -40,6 +40,8 @@ export async function insertActivo(activo: {
   tipo: string
   estrategia: string
   moneda: string
+  sector?: string
+  geografia?: string
 }): Promise<Activo> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -63,6 +65,8 @@ export async function updateActivo(id: string, updates: {
   tipo?: string
   estrategia?: string
   moneda?: string
+  sector?: string
+  geografia?: string
   notas?: string | null
 }): Promise<Activo> {
   const { data, error } = await createClient()

@@ -6,6 +6,8 @@ export interface Posicion {
   tipo: string
   estrategia: string
   moneda: string
+  sector: string
+  geografia: string
   unidades: number
   coste_total: number
   comisiones_total: number
@@ -61,6 +63,8 @@ export interface Activo {
   tipo: string
   estrategia: string
   moneda: string
+  sector: string
+  geografia: string
   notas: string | null
   created_at: string
   updated_at: string

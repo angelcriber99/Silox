@@ -32,6 +32,8 @@ const TIPOS = [
 
 const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
+const SECTORES = ["Desconocido", "Tecnología", "Salud", "Finanzas", "Consumo", "Energía", "Industrial", "Inmobiliario", "Materiales"] as const
+const GEOGRAFIAS = ["Desconocida", "Global", "EE.UU.", "Europa", "Emergentes", "Asia", "Japón"] as const
 
 const inputClass =
   "bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
@@ -47,6 +49,8 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   const [tipo, setTipo] = useState<string>("ETF")
   const [estrategia, setEstrategia] = useState<string>("Satellite")
   const [moneda, setMoneda] = useState<string>("EUR")
+  const [sector, setSector] = useState<string>("Desconocido")
+  const [geografia, setGeografia] = useState<string>("Desconocida")
 
   const [isSearching, setIsSearching] = useState(false)
 
@@ -129,6 +133,8 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
     setTipo("ETF")
     setEstrategia("Satellite")
     setMoneda("EUR")
+    setSector("Desconocido")
+    setGeografia("Desconocida")
     setCantidad("")
     setPrecioUnitario("")
     setComision("")
@@ -200,6 +206,8 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
           tipo,
           estrategia,
           moneda,
+          sector,
+          geografia,
         },
         transaccion: {
           tipo_operacion: "Compra",
@@ -377,6 +385,32 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
                   disabled={addInvestment.isPending}
                 >
                   {ESTRATEGIAS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-foreground/80 text-xs">Sector</Label>
+                <select
+                  value={sector}
+                  onChange={(e) => setSector(e.target.value)}
+                  className={selectClass}
+                  disabled={addInvestment.isPending}
+                >
+                  {SECTORES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-foreground/80 text-xs">Geografía</Label>
+                <select
+                  value={geografia}
+                  onChange={(e) => setGeografia(e.target.value)}
+                  className={selectClass}
+                  disabled={addInvestment.isPending}
+                >
+                  {GEOGRAFIAS.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
