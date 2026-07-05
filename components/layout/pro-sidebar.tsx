@@ -21,8 +21,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 
 const navItems = [
-  { key: "gastos",     label: "Ir a Gastos", href: "/",           icon: ChevronLeft },
-  { key: "dashboard",  label: "Dashboard",   href: "/investments", icon: LayoutDashboard },
+  { key: "dashboard",  label: "Dashboard",   href: "/",            icon: LayoutDashboard },
   { key: "portfolio",  label: "Historial",   href: "/movimientos", icon: History         },
   { key: "declarar",   label: "Declarar",    href: "/declarar",   icon: FileText        },
   { key: "settings",   label: "Ajustes",     href: "/settings",   icon: Settings        },
@@ -70,7 +69,7 @@ export function ProSidebar() {
 
       {/* Logo */}
       <div className={`h-16 flex items-center border-b border-white/5 flex-shrink-0 ${sidebarCollapsed ? "justify-center px-0" : "px-5"}`}>
-        <Link href="/investments" className="flex items-center gap-3 min-w-0">
+        <Link href="/" className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
             <Activity className="h-4 w-4 text-primary" />
           </div>

@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { DevSafeguard } from "@/components/dev-safeguard";
 import { CapacitorProvider } from "@/components/providers/capacitor-provider";
-import { SplashScreen } from "@/components/mobile/splash-screen";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import "./globals.css";
@@ -76,11 +75,9 @@ export default async function RootLayout({
               <PreferencesProvider>
                 <CapacitorProvider>
                   <DevSafeguard />
-                  <SplashScreen>
-                    <main className="flex-1 h-full w-full overflow-y-auto overscroll-y-none" style={{ WebkitOverflowScrolling: 'touch' }}>
-                      {children}
-                    </main>
-                  </SplashScreen>
+                  <main className="flex-1 h-full w-full overflow-y-auto overscroll-y-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {children}
+                  </main>
                 </CapacitorProvider>
               </PreferencesProvider>
             </QueryProvider>

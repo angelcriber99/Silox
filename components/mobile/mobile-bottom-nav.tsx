@@ -17,8 +17,8 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const { soundEffects } = usePreferences()
 
   const tabs = [
-    { name: "Gastos", href: "/", icon: History },
-    { name: "Inicio", href: "/investments", icon: LayoutDashboard },
+    { name: "Inicio", href: "/", icon: LayoutDashboard },
+    { name: "Movimientos", href: "/movimientos", icon: History },
     { name: "Añadir", href: "#", icon: Plus, isFab: true },
     { name: "Declarar", href: "/declarar", icon: FileText },
     { name: "Ajustes", href: "/settings", icon: Settings },
