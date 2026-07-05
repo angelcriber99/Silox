@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence, PanInfo } from "framer-motion"
-import { X, ArrowUpRight, ArrowDownRight, Loader2, Search, Plus } from "lucide-react"
+import { X, ArrowUpRight, ArrowDownRight, Loader2, Search, Plus, FileUp } from "lucide-react"
+import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { useAddTransaction, useAddInvestment } from "@/lib/hooks/use-transactions"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { toast } from "sonner"
@@ -23,7 +24,7 @@ export function MobileBottomSheet({
   onClose,
   positions,
 }: MobileBottomSheetProps) {
-  const [activeTab, setActiveTab] = useState<"operacion" | "nuevo">("operacion")
+  const [activeTab, setActiveTab] = useState<"operacion" | "nuevo" | "importar">("operacion")
   
   // Tab 1: Registrar Operación (existing)
   const [selectedAsset, setSelectedAsset] = useState<EnrichedPosition | null>(null)
@@ -262,9 +263,39 @@ export function MobileBottomSheet({
                     >
                       Buscar Nuevo
                     </button>
+                    <button 
+                      onClick={() => { setActiveTab("importar"); resetForm() }} 
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "importar" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
+                    >
+                      Importar
+                    </button>
                   </div>
                 )}
               </div>
+
+              {/* ========================================================= */}
+              {/* TAB: IMPORTAR */}
+              {/* ========================================================= */}
+              {activeTab === "importar" && (
+                <div className="px-5 pb-6 animate-fade-in space-y-6">
+                  <div className="bg-card border border-border p-5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
+                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 mb-2">
+                      <FileUp className="w-8 h-8" />
+                    </div>
+                    <h3 className="font-bold text-lg text-foreground">Importar Archivo</h3>
+                    <p className="text-sm text-muted-foreground">Sube un archivo PDF o CSV con tus transacciones de brokers como Revolut, DeGiro, etc.</p>
+                    
+                    <div className="pt-4 w-full">
+                      <RevolutSync className="w-full">
+                        <div className="w-full bg-primary text-primary-foreground font-bold rounded-xl py-4 flex items-center justify-center gap-2">
+                          <FileUp className="w-5 h-5" />
+                          Seleccionar Documento
+                        </div>
+                      </RevolutSync>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* ========================================================= */}
               {/* TAB 1: OPERACIÓN (Mis Activos) */}
