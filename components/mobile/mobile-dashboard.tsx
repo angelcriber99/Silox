@@ -188,7 +188,7 @@ export function MobileDashboard({
 
   // ── Main render ────────────────────────────────────────────────────────
   return (
-    <div className="pb-28 flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
 
       {/* ─── Sticky Header ───────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-background/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-[200%] border-b border-black/5 dark:border-white/5">
