@@ -41,9 +41,9 @@ function MetricPill({
   hide?: boolean
 }) {
   return (
-    <div className="flex-shrink-0 flex flex-col justify-center min-w-[100px] px-3 py-2 rounded-2xl bg-muted/30 dark:bg-zinc-900/50 backdrop-blur-md border border-black/5 dark:border-white/5">
-      <span className="text-[10px] font-semibold text-muted-foreground/60 mb-1 uppercase tracking-wider">{label}</span>
-      <span className={`text-[14px] font-bold font-tabular ${valueColor || "text-foreground"}`}>
+    <div className="flex-shrink-0 flex flex-col justify-center min-w-[90px] px-2 py-1">
+      <span className="text-[10px] font-semibold text-muted-foreground/40 mb-1 uppercase tracking-wider">{label}</span>
+      <span className={`text-[15px] font-bold font-tabular tracking-tight ${valueColor || "text-foreground"}`}>
         {hide ? "••••" : value}
       </span>
     </div>
@@ -196,16 +196,7 @@ export function MobileDashboard({
         <div className="px-5 pt-[max(env(safe-area-inset-top),20px)] pb-4">
 
           {/* Top row: actions only (iOS style) */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex flex-col">
-              <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest">
-                Patrimonio
-              </span>
-              <div className={`flex items-center gap-1.5 mt-0.5 ${isMarketOpen ? "text-emerald-500" : "text-muted-foreground/60"}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{getMarketLabel()}</span>
-              </div>
-            </div>
+          <div className="flex items-center justify-end mb-4">
 
             <div className="flex items-center gap-2">
               <RevolutSync>
@@ -238,24 +229,23 @@ export function MobileDashboard({
 
           {/* Main KPI block (iOS Large Title style) */}
           <div className="mt-2">
-            <h1 className="text-[52px] font-extrabold tracking-tighter text-foreground leading-[1.1] mb-2">
+            <h1 className="text-[56px] font-extrabold tracking-tighter text-foreground leading-[1] mb-3">
               <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
             </h1>
 
             {totals.totalCost > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Minimalist PnL display */}
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md ${isPositive ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"}`}>
-                  <span className="text-[15px] font-bold font-tabular">
+              <div className="flex flex-col gap-1.5">
+                <div className={`flex items-baseline gap-2 ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
+                  <span className="text-[18px] font-bold font-tabular tracking-tight">
                     {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
                   </span>
-                  <span className="text-[13px] font-semibold opacity-90">
+                  <span className="text-[14px] font-semibold opacity-80">
                     ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
                   </span>
                 </div>
-                <div className={`flex items-center gap-1.5 ml-2 ${daily24Positive ? "text-emerald-500" : "text-rose-500"}`}>
-                  <span className="text-muted-foreground/60 text-[12px] font-medium">Hoy</span>
-                  <span className="text-[14px] font-bold font-tabular">{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
+                <div className={`flex items-baseline gap-2 ${daily24Positive ? "text-emerald-500" : "text-rose-500"}`}>
+                  <span className="text-muted-foreground/40 text-[13px] font-medium">Hoy</span>
+                  <span className="text-[14px] font-bold font-tabular tracking-tight">{hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}</span>
                 </div>
               </div>
             )}
@@ -263,51 +253,7 @@ export function MobileDashboard({
         </div>
       </div>
 
-      {/* ─── Sparkline ────────────────────────────────────────────────── */}
-      {portfolioSparkline.length > 1 && (
-        <div className="h-28 w-full relative -mt-1">
-          {/* Gradient overlay top for seamless blend */}
-          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-background/40 to-transparent z-10 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-background/20 to-transparent z-10 pointer-events-none" />
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={portfolioSparkline} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
-              <defs>
-                <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.5} />
-                  <stop offset="60%" stopColor={areaColor} stopOpacity={0.1} />
-                  <stop offset="100%" stopColor={areaColor} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <YAxis hide domain={["dataMin - 200", "dataMax + 200"]} />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null
-                  const d = payload[0].payload
-                  const isUp = d.pnl >= 0
-                  return (
-                    <div className="bg-card/95 backdrop-blur-xl border border-border/40 rounded-xl px-3 py-2 shadow-2xl">
-                      <p className="text-[13px] font-bold font-tabular text-foreground">{formatCurrency(d.v)}</p>
-                      <p className={`text-[11px] font-medium font-tabular ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
-                        {isUp ? "+" : ""}{formatCurrency(d.pnl)} vs inicio semana
-                      </p>
-                    </div>
-                  )
-                }}
-                cursor={{ stroke: areaColor, strokeWidth: 1, strokeDasharray: "3 3" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="v"
-                stroke={areaColor}
-                strokeWidth={2}
-                fill="url(#mobileGrad)"
-                isAnimationActive={true}
-                animationDuration={800}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      {/* ─── Sparkline removed for minimalist look ─────────────────────── */}
 
 
 
@@ -363,7 +309,7 @@ export function MobileDashboard({
 
       {/* ─── Asset list ───────────────────────────────────────────────── */}
       <div>
-        <div className="px-4 pb-3 sticky top-[136px] z-10 bg-background/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-[200%] border-b border-black/5 dark:border-white/5 mb-3 pt-2">
+        <div className="px-4 pb-3 sticky top-[115px] z-10 bg-background/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-[200%] border-b border-black/5 dark:border-white/5 mb-3 pt-2">
 
           {assetTypes.length > 2 && (
             <div className="flex gap-2 overflow-x-auto hide-scrollbar">
