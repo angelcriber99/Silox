@@ -23,7 +23,7 @@ export function FireTracker() {
     const monthlyRate = annualReturn / 100 / 12
     let currentBalance = currentTotal
     let months = 0
-    const data = []
+    const data: { monthStr: string, balance: number, isTarget: boolean, monthsToReach?: number }[] = []
     
     const today = new Date()
 
