@@ -98,14 +98,32 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
             <span className={`text-[12px] font-bold ${cfg.text}`}>{displayTicker.slice(0, 2)}</span>
           </div>
 
-          {/* Middle */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
-            <span className="text-[15px] font-semibold text-foreground tracking-tight truncate leading-tight">
+          {/* Middle: Name and Sparkline */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center py-1 relative">
+            <span className="text-[15px] font-semibold text-foreground tracking-tight truncate leading-tight z-10">
               {displayTicker}
             </span>
-            <p className="text-[11px] text-muted-foreground/60 truncate leading-none">
+            <p className="text-[11px] text-muted-foreground/60 truncate leading-none z-10 mt-0.5">
               {displayName}
             </p>
+            
+            {/* Sparkline in the background/middle */}
+            {sparkData && (
+              <div className="absolute inset-0 top-1 bottom-1 left-0 right-4 z-0 opacity-40 pointer-events-none">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={sparkData}>
+                    <Line 
+                      type="monotone" 
+                      dataKey="v" 
+                      stroke={sparkColor} 
+                      strokeWidth={1.5} 
+                      dot={false}
+                      isAnimationActive={false} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           {/* Right: Value + Daily Change */}

@@ -41,9 +41,9 @@ function MetricPill({
   hide?: boolean
 }) {
   return (
-    <div className="flex-shrink-0 flex flex-col justify-center min-w-[90px] pr-4">
-      <span className="text-[10px] font-medium text-muted-foreground/50 mb-0.5">{label}</span>
-      <span className={`text-[13px] font-semibold font-tabular ${valueColor || "text-foreground"}`}>
+    <div className="flex-shrink-0 flex flex-col justify-center min-w-[100px] px-3 py-2 rounded-2xl bg-muted/30 dark:bg-zinc-900/50 backdrop-blur-md border border-black/5 dark:border-white/5">
+      <span className="text-[10px] font-semibold text-muted-foreground/60 mb-1 uppercase tracking-wider">{label}</span>
+      <span className={`text-[14px] font-bold font-tabular ${valueColor || "text-foreground"}`}>
         {hide ? "••••" : value}
       </span>
     </div>
@@ -192,8 +192,8 @@ export function MobileDashboard({
     <div className="pb-28 flex flex-col min-h-screen bg-background">
 
       {/* ─── Sticky Header ───────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-2xl border-b border-border/30 shadow-sm">
-        <div className="px-5 pt-safe-top pt-5 pb-4">
+      <div className="sticky top-0 z-20 bg-background/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-[200%] border-b border-black/5 dark:border-white/5">
+        <div className="px-5 pt-[max(env(safe-area-inset-top),20px)] pb-4">
 
           {/* Top row: actions only (iOS style) */}
           <div className="flex items-center justify-between mb-2">
@@ -273,7 +273,8 @@ export function MobileDashboard({
             <AreaChart data={portfolioSparkline} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
               <defs>
                 <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.3} />
+                  <stop offset="0%" stopColor={areaColor} stopOpacity={0.5} />
+                  <stop offset="60%" stopColor={areaColor} stopOpacity={0.1} />
                   <stop offset="100%" stopColor={areaColor} stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -362,26 +363,26 @@ export function MobileDashboard({
 
       {/* ─── Asset list ───────────────────────────────────────────────── */}
       <div>
-        {/* Sticky search + filters */}
-        <div className="px-4 pb-3 sticky top-[136px] z-10 bg-background/90 backdrop-blur-xl">
+        <div className="px-4 pb-3 sticky top-[136px] z-10 bg-background/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-[200%] border-b border-black/5 dark:border-white/5 mb-3 pt-2">
 
           {assetTypes.length > 2 && (
-            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar">
               {assetTypes.map(type => (
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`whitespace-nowrap px-1 py-2 text-[14px] transition-colors relative ${
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] transition-all relative z-10 ${
                     filterType === type
-                      ? "text-foreground font-semibold"
-                      : "text-muted-foreground/50 font-medium"
+                      ? "text-background dark:text-zinc-950 font-bold"
+                      : "text-muted-foreground/60 font-medium"
                   }`}
                 >
                   {type === "All" ? t("filter_all") : type === "Fondo Indexado" ? t("type_index_fund") : type === "Fondo Monetario" ? t("type_money_market") : type === "Acción" ? t("type_stock") : type === "Crypto" ? t("type_crypto") : type === "ETF" ? t("type_etf") : type}
                   {filterType === type && (
                     <motion.div
                       layoutId="activeFilter"
-                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-foreground rounded-full"
+                      className="absolute inset-0 bg-foreground rounded-full -z-10 shadow-sm"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
                 </button>
