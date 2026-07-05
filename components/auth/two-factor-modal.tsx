@@ -38,7 +38,7 @@ export function TwoFactorModal() {
     // Check if complete
     if (newCode.every(v => v !== "")) {
       // Mock validation (accepts "123456" for demo, or anything else to show success)
-      if (newCode.join("") === "123456" || true) {
+      if (newCode.join("") === "123456") {
         setSuccess(true)
         setTimeout(() => {
           setUnlocked(true)
@@ -133,12 +133,7 @@ export function TwoFactorModal() {
               <span>Conexión encriptada de extremo a extremo</span>
             </div>
 
-            <button 
-              onClick={() => setTwoFactor(false)}
-              className="text-[11px] text-muted-foreground/60 hover:text-foreground underline underline-offset-4 mt-2 relative z-10 transition-colors"
-            >
-              ¿Atrapado en la demo? Desactivar 2FA
-            </button>
+
           </motion.div>
         </motion.div>
       )}

@@ -355,8 +355,8 @@ const exportToExcel = async (
   let divRowIdx = 2
   let sumBruto = 0
   let sumComision = 0
-  let sumRetOrigen = 0
-  let sumRetDestino = 0
+  let sumDivRetOrigen = 0
+  let sumDivRetDestino = 0
   let sumNeto = 0
 
   divs.forEach((tx) => {
@@ -369,13 +369,20 @@ const exportToExcel = async (
 
     sumBruto += bruto
     sumComision += com
-    sumRetOrigen += ro
-    sumRetDestino += rd
+    sumDivRetOrigen += ro
+    sumDivRetDestino += rd
     sumNeto += neto
 
+    // Add row data
     const row = wsDivs.addRow({
-      fecha: new Date(tx.fecha), ticker: tx.activo?.ticker, nombre: tx.activo?.nombre || '',
-      bruto, comision: com, ret_origen: ro, ret_destino: rd
+      fecha: new Date(tx.fecha),
+      ticker: tx.activo?.ticker || '',
+      nombre: tx.activo?.nombre || '',
+      bruto: bruto,
+      comision: com,
+      ret_origen: ro,
+      ret_destino: rd,
+      neto: neto
     })
     
     // Formula for Neto
@@ -395,7 +402,7 @@ const exportToExcel = async (
   divRowIdx++
   const sumDivRow = wsDivs.addRow({ nombre: 'TOTALES DIVIDENDOS:' })
   sumDivRow.font = { bold: true, size: 12 }
-  const divSums = [sumBruto, sumComision, sumRetOrigen, sumRetDestino, sumNeto]
+  const divSums = [sumBruto, sumComision, sumDivRetOrigen, sumDivRetDestino, sumNeto]
   ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach((key, colIdx) => {
     const colLetters = ['D', 'E', 'F', 'G', 'H']
     const letter = colLetters[colIdx]

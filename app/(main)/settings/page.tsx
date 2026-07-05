@@ -284,11 +284,7 @@ export default function SettingsPage() {
                     iconColor="text-emerald-500"
                     action={<CustomSwitch checked={twoFactor} onChange={() => setTwoFactor(!twoFactor)} />} 
                   />
-                  <SettingRow 
-                    icon={Fingerprint} title="Bloqueo Biométrico" desc="Usa FaceID/TouchID en la app móvil para iniciar sesión."
-                    iconColor="text-blue-500"
-                    action={<CustomSwitch checked={biometrics} onChange={() => setBiometrics(!biometrics)} />} 
-                  />
+
                 </div>
 
                 <div className="pt-6">

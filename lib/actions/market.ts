@@ -221,6 +221,9 @@ export async function fetchMarketPrices(
   if (!tickers || tickers.length === 0) {
     throw new Error('No tickers provided')
   }
+  if (tickers.length > 50) {
+    throw new Error('Requested too many tickers. Maximum allowed is 50.')
+  }
 
   // Create a unique cache key based on the requested tickers
   const sortedTickers = [...tickers].sort()

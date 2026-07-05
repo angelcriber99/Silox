@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { Newspaper, ExternalLink, Loader2 } from "lucide-react"
+import { isValidExternalUrl } from "@/lib/utils"
+import { formatDistanceToNow } from "date-fns"
+import { es } from "date-fns/locale"
 
 interface AssetNewsProps {
   ticker: string
@@ -46,8 +49,8 @@ export function AssetNews({ ticker }: AssetNewsProps) {
     )
   }
 
-  // Filter out any news that don't have a valid link
-  const validNews = news.filter(n => n.link && n.title)
+  // Filter out any news that don't have a valid link or unsafe scheme
+  const validNews = news.filter(n => n.link && n.title && isValidExternalUrl(n.link))
 
   if (validNews.length === 0) return null
 

@@ -23,8 +23,11 @@ export async function GET(request: Request) {
     const url = new URL(request.url)
     const secretParam = url.searchParams.get('secret')
     
+    if (!process.env.CRON_SECRET) {
+      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
+    }
+
     if (
-      process.env.CRON_SECRET &&
       authHeader !== `Bearer ${process.env.CRON_SECRET}` &&
       secretParam !== process.env.CRON_SECRET
     ) {

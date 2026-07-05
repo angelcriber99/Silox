@@ -1,11 +1,11 @@
-﻿-- ============================================================
+-- ============================================================
 -- Silox — Parche Vista Posiciones (Ignorar Pendientes)
 -- Ejecutar en: Supabase Dashboard -> SQL Editor -> New query
 -- ============================================================
 
 BEGIN;
 
-CREATE OR REPLACE VIEW public.posiciones AS
+CREATE OR REPLACE VIEW public.posiciones WITH (security_invoker = true) AS
 SELECT 
   a.id AS activo_id,
   a.ticker,

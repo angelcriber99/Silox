@@ -7,7 +7,7 @@ BEGIN;
 
 -- Recrear la vista de posiciones para INCLUIR operaciones 'Pendiente'
 -- Así el Dashboard refleja el estado final de las operaciones en curso.
-CREATE OR REPLACE VIEW public.posiciones AS
+CREATE OR REPLACE VIEW public.posiciones WITH (security_invoker = true) AS
 SELECT 
   a.id AS activo_id,
   a.ticker,

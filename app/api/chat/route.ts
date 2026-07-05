@@ -7,8 +7,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
 const ChatSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'model']),
-    content: z.string()
-  })),
+    content: z.string().max(2000)
+  })).max(50),
   portfolioContext: z.any()
 })
 
@@ -32,6 +32,11 @@ export async function POST(request: Request) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
 
+    const contextStr = JSON.stringify(portfolioContext, null, 2)
+    if (contextStr.length > 50000) {
+      return NextResponse.json({ error: 'Portfolio context is too large' }, { status: 400 })
+    }
+
     // Build the system prompt
     const systemPrompt = `
 Eres Silox AI, un asesor financiero personal sumamente inteligente e integrado en el dashboard del usuario. 
@@ -40,7 +45,7 @@ Mantén un tono profesional, cercano (tuteando) y directo al grano.
 Si no sabes algo o no tienes información sobre un activo específico, admítelo.
 
 Aquí tienes el contexto de la cartera actual del usuario:
-${JSON.stringify(portfolioContext, null, 2)}
+${contextStr}
 `
 
     // Start a chat session

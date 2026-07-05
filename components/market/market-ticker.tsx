@@ -4,6 +4,7 @@ import Marquee from "react-fast-marquee"
 import { useQuery } from "@tanstack/react-query"
 import type { EnrichedPosition } from '@/lib/types'
 import { Newspaper } from "lucide-react"
+import { isValidExternalUrl } from "@/lib/utils"
 
 interface MarketTickerProps {
   positions?: EnrichedPosition[]
@@ -38,7 +39,7 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
       })
       if (!res.ok) throw new Error("Error loading news")
       const json = await res.json()
-      return json.noticias
+      return (json.noticias || []).filter((n: any) => isValidExternalUrl(n.link))
     },
     enabled: topItems.length > 0,
     staleTime: 300_000, // 5 mins

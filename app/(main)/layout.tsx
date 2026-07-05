@@ -1,6 +1,6 @@
 import { ProSidebar } from "@/components/layout/pro-sidebar"
 import { MobileShell } from "@/components/mobile/mobile-shell"
-import { FaceIdOverlay } from "@/components/mobile/face-id-overlay"
+
 import { TwoFactorModal } from "@/components/auth/two-factor-modal"
 import { NotesModal } from "@/components/dashboard/notes-modal"
 
@@ -23,7 +23,6 @@ export default function MainLayout({
       <MobileShell />
       
       {/* Security Overlays */}
-      <FaceIdOverlay />
       <TwoFactorModal />
       <NotesModal />
     </div>
