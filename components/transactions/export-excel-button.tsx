@@ -277,7 +277,19 @@ const exportToExcel = async (
   })
 
   let fisRow = 2
+  let sumIngreso = 0
+  let sumCoste = 0
+  let sumGanancia = 0
+  let sumRetOrigen = 0
+  let sumRetDestino = 0
+
   filteredEvents.forEach((ev) => {
+    sumIngreso += ev.ingresoVenta || 0
+    sumCoste += ev.costeAdquisicion || 0
+    sumGanancia += ev.gananciaPatrimonial || 0
+    sumRetOrigen += ev.retencionOrigen || 0
+    sumRetDestino += ev.retencionDestino || 0
+
     const row = wsFiscal.addRow({
       fecha: new Date(ev.fechaVenta),
       ticker: ev.ticker,
@@ -314,8 +326,15 @@ const exportToExcel = async (
   fisRow++
   const sumFisRow = wsFiscal.addRow({ nombre: 'TOTALES PÉRDIDAS Y GANANCIAS:' })
   sumFisRow.font = { bold: true, size: 12 }
-  sumFisRow.getCell('ganancia').value = { formula: `SUBTOTAL(9, G2:G${fisRow-2})` }
-  sumFisRow.getCell('ganancia').numFmt = '#,##0.00" €"'
+  sumFisRow.getCell('ingreso').value = { formula: `SUBTOTAL(9, E2:E${fisRow-2})`, result: sumIngreso }
+  sumFisRow.getCell('coste').value = { formula: `SUBTOTAL(9, F2:F${fisRow-2})`, result: sumCoste }
+  sumFisRow.getCell('ganancia').value = { formula: `SUBTOTAL(9, G2:G${fisRow-2})`, result: sumGanancia }
+  sumFisRow.getCell('ret_origen').value = { formula: `SUBTOTAL(9, H2:H${fisRow-2})`, result: sumRetOrigen }
+  sumFisRow.getCell('ret_destino').value = { formula: `SUBTOTAL(9, I2:I${fisRow-2})`, result: sumRetDestino }
+  
+  ;['ingreso', 'coste', 'ganancia', 'ret_origen', 'ret_destino'].forEach(key => {
+    sumFisRow.getCell(key).numFmt = '#,##0.00" €"'
+  })
 
 
   // --- SHEET 4: DIVIDENDOS ---
@@ -334,12 +353,25 @@ const exportToExcel = async (
   applyHeaderStyle(wsDivs, colors.divHeader, 8)
 
   let divRowIdx = 2
+  let sumBruto = 0
+  let sumComision = 0
+  let sumRetOrigen = 0
+  let sumRetDestino = 0
+  let sumNeto = 0
+
   divs.forEach((tx) => {
     const isLegacy = Number(tx.cantidad) === 0.000001
     const bruto = isLegacy ? Number(tx.precio_unitario) : Number(tx.precio_unitario)
     const com = Number(tx.comision || 0)
     const ro = Number(tx.retencion_origen || 0)
     const rd = Number(tx.retencion_destino || 0)
+    const neto = bruto - com - ro - rd
+
+    sumBruto += bruto
+    sumComision += com
+    sumRetOrigen += ro
+    sumRetDestino += rd
+    sumNeto += neto
 
     const row = wsDivs.addRow({
       fecha: new Date(tx.fecha), ticker: tx.activo?.ticker, nombre: tx.activo?.nombre || '',
@@ -363,10 +395,14 @@ const exportToExcel = async (
   divRowIdx++
   const sumDivRow = wsDivs.addRow({ nombre: 'TOTALES DIVIDENDOS:' })
   sumDivRow.font = { bold: true, size: 12 }
+  const divSums = [sumBruto, sumComision, sumRetOrigen, sumRetDestino, sumNeto]
   ;['bruto', 'comision', 'ret_origen', 'ret_destino', 'neto'].forEach((key, colIdx) => {
     const colLetters = ['D', 'E', 'F', 'G', 'H']
     const letter = colLetters[colIdx]
-    sumDivRow.getCell(key).value = { formula: `SUBTOTAL(9, ${letter}2:${letter}${divRowIdx-2})` }
+    sumDivRow.getCell(key).value = { 
+      formula: `SUBTOTAL(9, ${letter}2:${letter}${divRowIdx-2})`,
+      result: divSums[colIdx]
+    }
     sumDivRow.getCell(key).numFmt = '#,##0.00" €"'
   })
 
