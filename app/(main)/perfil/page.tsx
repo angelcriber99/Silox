@@ -6,14 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Monitor, Moon, Sun, LayoutList, LogOut, User, Sparkles, Volume2, Flower2, Palette, Check } from "lucide-react"
 import { usePreferences, AccentColor } from "@/lib/stores/use-preferences"
 import { createClient } from "@/lib/supabase/client"
-import { playSound } from "@/lib/utils/sounds"
 import confetti from "canvas-confetti"
 
 export default function PerfilPage() {
   const { theme, setTheme } = useTheme()
   const { 
-    hideBalances, compactView, accentColor, celebrationMode, zenMode, soundEffects,
-    setHideBalances, setCompactView, setAccentColor, setCelebrationMode, setZenMode, setSoundEffects
+    hideBalances, compactView, accentColor, celebrationMode, zenMode, amoled,
+    setHideBalances, setCompactView, setAccentColor, setCelebrationMode, setZenMode
   } = usePreferences()
   const [mounted, setMounted] = useState(false)
   const [email, setEmail] = useState<string | null>(null)
@@ -185,7 +184,6 @@ export default function PerfilPage() {
                     key={color}
                     onClick={() => {
                       setAccentColor(color)
-                      if (soundEffects) playSound('pop')
                     }}
                     className={`relative w-12 h-12 rounded-full transition-transform hover:scale-110 flex items-center justify-center
                       ${color === 'blue' ? 'bg-blue-500' : ''}
@@ -215,7 +213,6 @@ export default function PerfilPage() {
                   </p>
                   <button 
                     onClick={() => {
-                      if (soundEffects) playSound('celebration')
                       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'], zIndex: 9999 })
                     }}
                     className="text-xs text-primary hover:underline mt-1 inline-block"
@@ -226,7 +223,6 @@ export default function PerfilPage() {
                 <button
                   onClick={() => {
                     setCelebrationMode(!celebrationMode)
-                    if (soundEffects) playSound('click')
                   }}
                   className={`relative inline-flex shrink-0 h-6 w-11 items-center rounded-full transition-colors ${
                     celebrationMode ? "bg-primary" : "bg-muted"
@@ -252,7 +248,6 @@ export default function PerfilPage() {
                 <button
                   onClick={() => {
                     setZenMode(!zenMode)
-                    if (soundEffects) playSound('success')
                   }}
                   className={`relative inline-flex shrink-0 h-6 w-11 items-center rounded-full transition-colors ${
                     zenMode ? "bg-primary" : "bg-muted"
@@ -264,32 +259,7 @@ export default function PerfilPage() {
                 </button>
               </div>
 
-              {/* Sound Effects */}
-              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20">
-                <div className="space-y-1 mr-4">
-                  <p className="font-medium text-foreground flex items-center gap-2">
-                    <Volume2 className="w-4 h-4 text-primary" />
-                    Efectos de Sonido
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Microsignos acústicos al interactuar con la app.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    const next = !soundEffects
-                    setSoundEffects(next)
-                    if (next) playSound('pop')
-                  }}
-                  className={`relative inline-flex shrink-0 h-6 w-11 items-center rounded-full transition-colors ${
-                    soundEffects ? "bg-primary" : "bg-muted"
-                  }`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    soundEffects ? "translate-x-6" : "translate-x-1"
-                  }`} />
-                </button>
-              </div>
+
             </div>
 
           </CardContent>

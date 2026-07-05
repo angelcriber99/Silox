@@ -12,7 +12,6 @@ import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { playSound } from "@/lib/utils/sounds"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
 import { usePortfolio, useHistory } from "@/lib/hooks/use-portfolio"
@@ -67,7 +66,7 @@ export function MobileDashboard({
   isLoading,
   marketState = "CLOSED",
 }: MobileDashboardProps) {
-  const { soundEffects, hideBalances, setHideBalances, compactView } = usePreferences()
+  const { hideBalances, setHideBalances, compactView } = usePreferences()
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [filterType, setFilterType] = useState<string>("All")
@@ -223,7 +222,6 @@ export function MobileDashboard({
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => {
-                  if (soundEffects) playSound("click")
                   hapticFeedback.light()
                   setHideBalances(!hideBalances)
                 }}

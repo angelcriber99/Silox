@@ -3,8 +3,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, History, Plus, Settings, FileText } from "lucide-react"
-import { playSound } from "@/lib/utils/sounds"
-import { usePreferences } from "@/lib/stores/use-preferences"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { motion } from "framer-motion"
 
@@ -14,7 +12,6 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
-  const { soundEffects } = usePreferences()
 
   const tabs = [
     { name: "Inicio", href: "/", icon: LayoutDashboard },
@@ -25,7 +22,6 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   ]
 
   const handlePress = () => {
-    if (soundEffects) playSound('click')
     hapticFeedback.light()
   }
 

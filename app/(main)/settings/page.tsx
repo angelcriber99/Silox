@@ -37,7 +37,6 @@ export default function SettingsPage() {
     language, setLanguage,
     amoled, setAmoled,
     zenMode, setZenMode,
-    soundEffects, setSoundEffects,
     accentColor, setAccentColor,
     biometrics, setBiometrics,
     twoFactor, setTwoFactor,
@@ -256,12 +255,6 @@ export default function SettingsPage() {
                       action={<CustomSwitch checked={hideBalances} onChange={() => setHideBalances(!hideBalances)} />} 
                     />
                     
-                    <SettingRow 
-                      icon={Volume2} title="Efectos de Sonido" desc="Reproduce sonidos sutiles al realizar acciones."
-                      iconColor="text-purple-500"
-                      action={<CustomSwitch checked={soundEffects} onChange={() => setSoundEffects(!soundEffects)} />} 
-                    />
-
                     <div className="flex items-center justify-between p-4 bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors rounded-2xl mb-3">
                       <div className="pr-4">
                         <h3 className="text-[15px] font-semibold text-foreground/90">Densidad de las Tablas</h3>

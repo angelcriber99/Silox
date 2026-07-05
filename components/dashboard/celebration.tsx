@@ -4,11 +4,10 @@ import { useEffect, useState } from "react"
 import confetti from "canvas-confetti"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { playSound } from "@/lib/utils/sounds"
 
 export function Celebration() {
   const { totals } = usePortfolio()
-  const { celebrationMode, soundEffects } = usePreferences()
+  const { celebrationMode } = usePreferences()
   const [hasCelebrated, setHasCelebrated] = useState(false)
 
   useEffect(() => {
@@ -17,10 +16,6 @@ export function Celebration() {
     if (celebrationMode && !hasCelebrated && totals.totalPnlPercent24h >= 2) {
       setHasCelebrated(true)
       
-      if (soundEffects) {
-        playSound('celebration')
-      }
-
       const duration = 3000
       const end = Date.now() + duration
 
@@ -48,7 +43,7 @@ export function Celebration() {
       }
       frame()
     }
-  }, [totals.totalPnlPercent24h, celebrationMode, hasCelebrated, soundEffects])
+  }, [totals.totalPnlPercent24h, celebrationMode, hasCelebrated])
 
   return null
 }

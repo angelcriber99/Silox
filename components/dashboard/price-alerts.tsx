@@ -7,8 +7,8 @@ import { Bell, BellRing, Plus, Trash2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { formatCurrency } from "@/lib/utils/formatters"
-import { playSound } from "@/lib/utils/sounds"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { toast } from "sonner"
 
 interface PriceAlertsProps {
   open: boolean
@@ -19,7 +19,6 @@ interface PriceAlertsProps {
 export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsProps) {
   const { alerts, addAlert, removeAlert, markTriggered } = useAlerts()
   const { positions } = usePortfolio()
-  const { soundEffects } = usePreferences()
   const [ticker, setTicker] = useState(initialTicker || "")
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState<'above' | 'below'>('above')
@@ -66,11 +65,11 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
       }
     })
 
-    if (triggeredCount > 0 && soundEffects) {
-      playSound('celebration') // or a specific alert sound if available
+    if (triggeredCount > 0) {
+      toast.success(`${triggeredCount} alerta(s) de precio alcanzadas`)
     }
 
-  }, [positions, alerts, markTriggered, soundEffects])
+  }, [positions, alerts, markTriggered])
 
   const handleAdd = () => {
     if (!ticker || !targetPrice) return

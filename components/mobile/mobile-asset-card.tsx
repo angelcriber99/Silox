@@ -5,7 +5,6 @@ import Link from "next/link"
 import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { playSound } from "@/lib/utils/sounds"
 import { LineChart, Line, ResponsiveContainer } from "recharts"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 
@@ -27,7 +26,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   position: p,
   totalPortfolioValue,
 }: MobileAssetCardProps) {
-  const { soundEffects, hideBalances, compactView } = usePreferences()
+  const { hideBalances, compactView } = usePreferences()
 
   const pnlPercent   = p.pnl_percent ?? 0
   const isPositive   = pnlPercent >= 0
@@ -63,7 +62,6 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
     return (
       <Link
         href={`/activo/${p.activo_id}`}
-        onClick={() => { if (soundEffects) playSound("click") }}
         className="block active:bg-muted/20 transition-colors"
       >
         <div className="flex items-center gap-3 px-4 py-2.5">
@@ -87,7 +85,6 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   return (
     <Link
       href={`/activo/${p.activo_id}`}
-      onClick={() => { if (soundEffects) playSound("click") }}
       className="block active:bg-muted/20 transition-colors"
     >
       <div className="px-4 py-3.5">
