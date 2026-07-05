@@ -37,24 +37,49 @@ export function TaxChat({ context }: TaxChatProps) {
     e.preventDefault()
     if (!input.trim() || isLoading) return
 
-    const userMessage = input.trim()
+    const userMessage: Message = { role: "user", text: input.trim() }
     setInput("")
-    setMessages(prev => [...prev, { role: "user", text: userMessage }])
+    setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
     try {
+      // Convert tax chat messages format to the format expected by the API
+      const apiMessages = [...messages, userMessage].map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        content: m.text
+      }))
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, context }),
+        body: JSON.stringify({ 
+          messages: apiMessages, 
+          portfolioContext: context 
+        }),
       })
 
-      const data = await response.json()
+      if (!response.ok) {
+        throw new Error("Ocurrió un error al conectar con la IA.")
+      }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let assistantText = ""
       
-      if (response.ok) {
-        setMessages(prev => [...prev, { role: "bot", text: data.text }])
-      } else {
-        setMessages(prev => [...prev, { role: "bot", text: data.error || "Ocurrió un error." }])
+      setMessages(prev => [...prev, { role: "bot", text: "" }])
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          
+          assistantText += decoder.decode(value, { stream: true })
+          setMessages(prev => {
+            const newMessages = [...prev]
+            newMessages[newMessages.length - 1].text = assistantText
+            return newMessages
+          })
+        }
       }
     } catch (error) {
       setMessages(prev => [...prev, { role: "bot", text: "Error de conexión con el servidor." }])
