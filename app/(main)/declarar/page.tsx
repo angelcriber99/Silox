@@ -106,7 +106,7 @@ export default function DeclararPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pt-[max(env(safe-area-inset-top,0px),24px)] pb-10 space-y-8">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
         
         {/* Header Section */}
         <div className="flex flex-col gap-4">

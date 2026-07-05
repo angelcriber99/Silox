@@ -192,7 +192,7 @@ export function MobileDashboard({
 
       {/* ─── Sticky Header ───────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-background/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-[200%] border-b border-black/5 dark:border-white/5">
-        <div className="px-5 pt-[max(env(safe-area-inset-top,0px),20px)] pb-4">
+        <div className="px-5 pb-4" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
 
           {/* Top row: actions only (iOS style) */}
           <div className="flex items-center justify-between mb-2">
