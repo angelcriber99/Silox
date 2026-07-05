@@ -26,7 +26,7 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   }
 
   return (
-    <div className="md:hidden fixed bottom-5 left-4 right-4 z-50 pointer-events-none">
+    <div className="md:hidden fixed left-4 right-4 z-50 pointer-events-none" style={{ bottom: 'max(env(safe-area-inset-bottom), 20px)' }}>
       {/* iOS 17 Style Floating Island Tab Bar */}
       <div className="w-full bg-background/60 dark:bg-zinc-900/60 backdrop-blur-[40px] backdrop-saturate-[200%] border border-black/5 dark:border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.3)] rounded-[2rem] pointer-events-auto">
         <div className="flex items-center justify-between px-3 h-[64px] relative">

@@ -95,7 +95,7 @@ export default function MovimientosPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 space-y-6">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pt-[max(env(safe-area-inset-top),24px)] pb-10 space-y-6">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
