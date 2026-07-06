@@ -175,7 +175,7 @@ export function enrichPositions(
       precio_actual,
       precio_actual_nativo,
       original_currency,
-      tipo: p.ticker === 'CASH' ? 'Liquidez' : p.tipo,
+      tipo: p.ticker.startsWith('CASH') || p.nombre?.toLowerCase().includes('efectivo') ? 'Liquidez' : p.tipo,
       valor_actual: valor_actual_eur,
       valor_actual_nativo,
       coste_total_eur,
