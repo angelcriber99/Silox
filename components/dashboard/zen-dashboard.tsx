@@ -66,7 +66,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const [time, setTime] = useState(new Date())
   const [memeMode, setMemeMode] = useState(false)
-  const [sortMode, setSortMode] = useState<"gainers" | "losers" | "money">("gainers")
+  const [sortMode, setSortMode] = useState<"gainers" | "losers" | "money">("money")
 
   const memeConfigs = useMemo(() => {
     return [
@@ -330,6 +330,12 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
               </div>
               <div className="flex items-center gap-1 bg-background/50 rounded-lg p-1 border border-border/10">
                 <button 
+                  onClick={() => setSortMode('money')} 
+                  className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'money' ? 'bg-primary/20 text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
+                >
+                  Dinero
+                </button>
+                <button 
                   onClick={() => setSortMode('gainers')} 
                   className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'gainers' ? 'bg-emerald-500/20 text-emerald-400' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
                 >
@@ -340,12 +346,6 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                   className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'losers' ? 'bg-rose-500/20 text-rose-400' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
                 >
                   Pérdidas
-                </button>
-                <button 
-                  onClick={() => setSortMode('money')} 
-                  className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'money' ? 'bg-primary/20 text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
-                >
-                  Dinero
                 </button>
               </div>
             </div>
