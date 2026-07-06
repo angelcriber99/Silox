@@ -125,10 +125,13 @@ export function enrichPositions(
     const precio_medio_real = p.unidades > 0 ? p.coste_total / p.unidades : 0
 
     const isCashAsset = p.ticker === 'CASH'
-    const fallbackPrice = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez' || isCashAsset) ? 1.00 : precio_medio_real
+    const fxRate = p.moneda === 'EUR' ? 1 : (fxRates[p.moneda] || 1)
+    
+    const fallbackPriceNativo = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez' || isCashAsset) ? 1.00 : precio_medio_real
+    const fallbackPriceEur = fallbackPriceNativo / fxRate
 
-    const precio_actual = isCashAsset ? 1.00 : (priceData?.price ?? fallbackPrice)
-    const precio_actual_nativo = isCashAsset ? 1.00 : (priceData?.originalPrice ?? fallbackPrice)
+    const precio_actual = isCashAsset ? 1.00 : (priceData?.price ?? fallbackPriceEur)
+    const precio_actual_nativo = isCashAsset ? 1.00 : (priceData?.originalPrice ?? fallbackPriceNativo)
     const original_currency = priceData?.originalCurrency ?? p.moneda
     const change_percent_24h = priceData?.changePercent24h ?? null
     let sparkline = priceData?.sparkline ?? []
@@ -136,8 +139,6 @@ export function enrichPositions(
     if (sparkline.length < 2 && precio_actual !== null) {
       sparkline = Array(7).fill(precio_actual)
     }
-    
-    const fxRate = p.moneda === 'EUR' ? 1 : (fxRates[p.moneda] || 1)
     
     const coste_total_eur = p.coste_total / fxRate
     
