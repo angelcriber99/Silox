@@ -64,8 +64,8 @@ export default function MovimientosPage() {
       if (
         tx.notas?.includes("[Auto-Cash:") || 
         tx.notas?.includes("Auto-liquidez") ||
-        tx.activo?.ticker === 'CASH' ||
-        tx.activo?.nombre?.toLowerCase() === 'efectivo'
+        tx.activo?.ticker?.startsWith('CASH') ||
+        tx.activo?.nombre?.toLowerCase().includes('efectivo')
       ) {
         return false
       }

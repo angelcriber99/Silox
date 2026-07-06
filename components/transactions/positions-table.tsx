@@ -195,7 +195,11 @@ export function PositionsTable({
   }
 
   const filteredAndSorted = useMemo(() => {
-    let list = positions.filter(p => p.unidades > 0)
+    let list = positions.filter(p => 
+      p.unidades > 0 && 
+      !p.ticker.startsWith('CASH') && 
+      !p.nombre?.toLowerCase().includes('efectivo')
+    )
     if (searchQuery.trim() !== "") {
       const lowerQuery = searchQuery.toLowerCase()
       list = list.filter(p => 
