@@ -114,7 +114,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
         const percentB = b.change_percent_24h ?? 0
         const pnlB = valB > 0 ? valB - valB / (1 + percentB / 100) : 0
 
-        return pnlB - pnlA
+        return Math.abs(pnlB) - Math.abs(pnlA)
       })
     }
     
