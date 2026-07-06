@@ -29,11 +29,6 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "#18181b" }
   ],
   colorScheme: "dark light",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -66,6 +61,9 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+      </head>
       <body className="flex flex-col h-[100dvh] w-full overflow-hidden bg-background text-foreground" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider
