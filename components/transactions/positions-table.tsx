@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell } from "lucide-react"
+import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell, Wallet } from "lucide-react"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatUnits, formatPnl } from "@/lib/utils/formatters"
 import { Sparkline } from "@/components/asset/sparkline"
@@ -244,6 +244,12 @@ export function PositionsTable({
     </TableHead>
   )
 
+  const liquidezAmount = useMemo(() => {
+    return positions
+      .filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez')
+      .reduce((acc, p) => acc + (p.valor_actual ?? 0), 0)
+  }, [positions])
+
   return (
     <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden">
       <CardHeader className="p-4 md:p-6 pb-4">
@@ -251,6 +257,15 @@ export function PositionsTable({
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Layers className="h-4 w-4" />
             <span>{t('positions')}</span>
+            {liquidezAmount > 0 && (
+              <>
+                <span className="text-border/40 mx-1">|</span>
+                <span className="text-[13px] flex items-center gap-1.5 text-foreground/80 font-medium bg-card/50 border border-border/40 px-2.5 py-0.5 rounded-full shadow-sm">
+                  <Wallet className="h-3.5 w-3.5 text-emerald-500/70" />
+                  {hideBalances ? "••••" : formatCurrency(liquidezAmount)}
+                </span>
+              </>
+            )}
           </CardTitle>
 
           {/* Filters & Search */}
