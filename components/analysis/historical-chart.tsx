@@ -112,25 +112,26 @@ export function HistoricalChart() {
           <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
             <XAxis 
               dataKey="month" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
               dy={10}
               minTickGap={30}
             />
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
               tickFormatter={(val) => `€${(val/1000).toFixed(0)}k`}
               dx={-10}
+              domain={['dataMin - (dataMin * 0.05)', 'dataMax + (dataMax * 0.05)']}
             />
             <Tooltip 
               content={({ active, payload }) => {
@@ -150,7 +151,7 @@ export function HistoricalChart() {
             <Area 
               type="monotone" 
               dataKey="invested" 
-              stroke="hsl(var(--primary))" 
+              stroke="var(--primary)" 
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorInvested)" 
