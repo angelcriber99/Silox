@@ -183,39 +183,47 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
             <p className="text-muted-foreground">No hubo actividad en este año.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {assetBreakdown.map(asset => (
-              <div key={asset.ticker} className="bg-card/30 border border-border/50 p-4 rounded-xl flex flex-col gap-3 hover:bg-card/50 transition-colors">
-                <div className="flex justify-between items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {assetBreakdown.map(asset => {
+              const totalGain = asset.gananciaRealizada + asset.dividendos
+              const isPositive = totalGain >= 0
+              
+              return (
+                <div key={asset.ticker} className="bg-card/40 backdrop-blur-md border border-white/5 p-5 rounded-2xl flex flex-col justify-between h-full hover:bg-card/60 hover:border-white/10 transition-all shadow-sm group">
                   <div>
-                    <h4 className="font-bold text-foreground">{asset.ticker}</h4>
-                    <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={asset.nombre}>{asset.nombre}</p>
-                  </div>
-                  <span className="text-[10px] uppercase font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                    {asset.tipo}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm mt-2">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-muted-foreground uppercase">Comprado</span>
-                    <span className="font-tabular font-medium">{formatCurrency(asset.comprado)}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-muted-foreground uppercase">Vendido</span>
-                    <span className="font-tabular font-medium">{formatCurrency(asset.vendido)}</span>
-                  </div>
-                  {(asset.gananciaRealizada !== 0 || asset.dividendos > 0) && (
-                    <div className="col-span-2 flex justify-between items-center pt-2 border-t border-border/50 mt-1">
-                      <span className="text-[10px] text-muted-foreground uppercase">Beneficio Generado</span>
-                      <span className={`font-tabular font-bold ${asset.gananciaRealizada + asset.dividendos >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {asset.gananciaRealizada + asset.dividendos > 0 ? "+" : ""}{formatCurrency(asset.gananciaRealizada + asset.dividendos)}
-                      </span>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-lg font-extrabold text-foreground tracking-tight">{asset.ticker}</h4>
+                          <span className="text-[9px] uppercase font-bold tracking-wider bg-white/5 border border-white/10 text-muted-foreground px-2 py-0.5 rounded-full">
+                            {asset.tipo}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground/60 truncate max-w-[200px] mt-0.5" title={asset.nombre}>{asset.nombre}</p>
+                      </div>
                     </div>
-                  )}
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest">Comprado</span>
+                        <span className="font-tabular font-semibold text-[15px]">{formatCurrency(asset.comprado)}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest">Vendido</span>
+                        <span className="font-tabular font-semibold text-[15px]">{formatCurrency(asset.vendido)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-3 border-t border-white/5 mt-auto">
+                    <span className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-widest">Beneficio</span>
+                    <span className={`font-tabular font-bold text-[15px] ${totalGain > 0 ? 'text-emerald-400' : totalGain < 0 ? 'text-rose-400' : 'text-muted-foreground'}`}>
+                      {totalGain > 0 ? "+" : ""}{formatCurrency(totalGain)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
