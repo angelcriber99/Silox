@@ -66,7 +66,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const [time, setTime] = useState(new Date())
   const [memeMode, setMemeMode] = useState(false)
-  const [sortMode, setSortMode] = useState<"volatility" | "gainers" | "losers">("volatility")
+  const [sortMode, setSortMode] = useState<"gainers" | "losers" | "money">("gainers")
 
   const memeConfigs = useMemo(() => {
     return [
@@ -104,7 +104,22 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
     if (sortMode === "losers") {
       return valid.sort((a, b) => (a.change_percent_24h ?? 0) - (b.change_percent_24h ?? 0))
     }
-    return valid.sort((a, b) => Math.abs(b.change_percent_24h ?? 0) - Math.abs(a.change_percent_24h ?? 0))
+    if (sortMode === "money") {
+      return valid.sort((a, b) => {
+        const valA = a.valor_actual ?? a.coste_total
+        const percentA = a.change_percent_24h ?? 0
+        const pnlA = valA > 0 ? valA - valA / (1 + percentA / 100) : 0
+
+        const valB = b.valor_actual ?? b.coste_total
+        const percentB = b.change_percent_24h ?? 0
+        const pnlB = valB > 0 ? valB - valB / (1 + percentB / 100) : 0
+
+        return pnlB - pnlA
+      })
+    }
+    
+    // Default fallback
+    return valid.sort((a, b) => (b.change_percent_24h ?? 0) - (a.change_percent_24h ?? 0))
   }, [positions, sortMode])
 
   const getDisplayTicker = (p: EnrichedPosition) => {
@@ -327,10 +342,10 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                   Pérdidas
                 </button>
                 <button 
-                  onClick={() => setSortMode('volatility')} 
-                  className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'volatility' ? 'bg-primary/20 text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
+                  onClick={() => setSortMode('money')} 
+                  className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'money' ? 'bg-primary/20 text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
                 >
-                  Volatilidad
+                  Dinero
                 </button>
               </div>
             </div>
