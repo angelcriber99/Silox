@@ -70,19 +70,34 @@ export function MonthlyChart({ transactions, year }: MonthlyChartProps) {
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `€${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+          tickFormatter={(value) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value)}
+          width={80}
         />
         <Tooltip
-          cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
-          contentStyle={{
-            backgroundColor: 'var(--card)',
-            borderColor: 'var(--border)',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            color: 'var(--foreground)'
+          cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="bg-card/95 backdrop-blur-xl border border-white/10 p-4 rounded-xl shadow-2xl min-w-[200px]">
+                  <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-3 pb-2 border-b border-white/10">{label} {year}</p>
+                  <div className="space-y-3">
+                    {payload.map((entry: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                          <span className="text-sm font-medium text-foreground">{entry.name}</span>
+                        </div>
+                        <span className="text-sm font-bold font-tabular" style={{ color: entry.color }}>
+                          {formatCurrency(entry.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+            return null
           }}
-          formatter={(value: any) => [formatCurrency(Number(value) || 0), undefined]}
-          labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '4px' }}
         />
         <Legend 
           wrapperStyle={{ paddingTop: '20px' }}
@@ -90,13 +105,13 @@ export function MonthlyChart({ transactions, year }: MonthlyChartProps) {
         />
         <Bar 
           dataKey="Compras" 
-          fill="#3b82f6" 
+          fill="#10b981" 
           radius={[4, 4, 0, 0]} 
           maxBarSize={40}
         />
         <Bar 
           dataKey="Ventas" 
-          fill="#a855f7" 
+          fill="#f43f5e" 
           radius={[4, 4, 0, 0]} 
           maxBarSize={40}
         />
