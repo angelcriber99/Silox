@@ -90,14 +90,14 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
       <div className="px-4 py-3.5">
         <div className="flex items-start gap-3">
 
-          {/* Simple Circular Avatar */}
-          <div className="h-10 w-10 rounded-full bg-muted/20 border border-border/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className={`text-[12px] font-bold ${cfg.text}`}>{displayTicker.slice(0, 2)}</span>
+          {/* Premium Circular Avatar */}
+          <div className={`h-11 w-11 rounded-full ${cfg.bg} border border-white/5 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm`}>
+            <span className={`text-[13px] font-bold ${cfg.text}`}>{displayTicker.slice(0, 2)}</span>
           </div>
 
           {/* Middle */}
           <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
-            <span className="text-[15px] font-semibold text-foreground tracking-tight truncate leading-tight">
+            <span className="text-[16px] font-bold text-foreground tracking-tight truncate leading-tight">
               {displayTicker}
             </span>
             <p className="text-[11px] text-muted-foreground/60 truncate leading-none mt-0.5">
@@ -108,7 +108,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
           {/* Right: Value + Daily Change */}
           <div className="flex flex-col items-end flex-shrink-0 justify-center py-1">
             {/* Current value */}
-            <span className="text-[15px] font-semibold font-tabular text-foreground leading-tight">
+            <span className="text-[16px] font-bold font-tabular text-foreground leading-tight">
               {hideBalances ? "••••" : (p.valor_actual !== null ? formatCurrency(p.valor_actual) : "—")}
             </span>
 

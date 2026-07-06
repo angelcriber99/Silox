@@ -40,7 +40,7 @@ function MetricPill({
   hide?: boolean
 }) {
   return (
-    <div className="flex-shrink-0 flex flex-col justify-center min-w-[100px] px-3 py-2 rounded-2xl bg-muted/30 dark:bg-zinc-900/50 backdrop-blur-md border border-black/5 dark:border-white/5">
+    <div className="flex-shrink-0 flex flex-col justify-center min-w-[100px] px-3 py-2 rounded-2xl bg-card/60 backdrop-blur-xl border border-white/5 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.1)]">
       <span className="text-[10px] font-semibold text-muted-foreground/60 mb-1 uppercase tracking-wider">{label}</span>
       <span className={`text-[14px] font-bold font-tabular ${valueColor || "text-foreground"}`}>
         {hide ? "••••" : value}
@@ -52,7 +52,7 @@ function MetricPill({
 // ── Asset type section header ────────────────────────────────────────────
 function SectionHeader({ label, count, total }: { label: string; count: number; total: number }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-muted/20">
+    <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-muted/30 to-transparent border-y border-white/5">
       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">{label}</span>
       <span className="text-[10px] font-medium text-muted-foreground/40">{count} activos</span>
     </div>
@@ -191,7 +191,7 @@ export function MobileDashboard({
     <div className="flex flex-col min-h-full bg-background">
 
       {/* ─── Sticky Header ───────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-background/60 dark:bg-zinc-950/60 backdrop-blur-[40px] backdrop-saturate-[200%] border-b border-black/5 dark:border-white/5">
+      <div className="sticky top-0 z-20 bg-background/70 backdrop-blur-2xl backdrop-saturate-[200%] border-b border-white/5 shadow-sm">
         <div className="px-5 pb-4" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
 
           {/* Top row: actions only (iOS style) */}
@@ -208,14 +208,14 @@ export function MobileDashboard({
 
             <div className="flex items-center gap-2">
               <RevolutSync>
-                <div className="h-9 w-9 rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors">
+                <div className="h-9 w-9 rounded-full bg-card/80 border border-white/5 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors shadow-sm">
                   <FileUp className="w-4 h-4" />
                 </div>
               </RevolutSync>
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
-                className="h-9 w-9 rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors"
+                className="h-9 w-9 rounded-full bg-card/80 border border-white/5 flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors shadow-sm"
               >
                 <Bell className="w-4 h-4" />
               </motion.button>
@@ -226,8 +226,8 @@ export function MobileDashboard({
                   setHideBalances(!hideBalances)
                 }}
                 className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
-                  hideBalances ? "bg-primary/20 text-primary" : "bg-muted/40 text-muted-foreground"
-                }`}
+                  hideBalances ? "bg-primary/20 text-primary border-primary/20" : "bg-card/80 border-white/5 text-muted-foreground"
+                } border shadow-sm`}
               >
                 {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </motion.button>
@@ -263,7 +263,7 @@ export function MobileDashboard({
 
       {/* ─── Sparkline (Last 7 Days) ────────────────────────────────────────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className="h-28 w-full relative -mt-1">
+        <div className="h-[120px] w-full relative">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={portfolioSparkline} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
               <defs>
