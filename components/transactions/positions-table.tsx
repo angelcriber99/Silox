@@ -259,13 +259,11 @@ export function PositionsTable({
             <span>{t('positions')}</span>
           </CardTitle>
 
-          {liquidezAmount > 0 && (
-            <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
-              <Wallet className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Liquidez:</span>
-              <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
-            </div>
-          )}
+          <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
+            <Wallet className="w-4 h-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Liquidez:</span>
+            <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
+          </div>
 
           {/* Filters & Search */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
