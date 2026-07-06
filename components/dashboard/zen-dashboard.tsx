@@ -66,6 +66,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const [time, setTime] = useState(new Date())
   const [memeMode, setMemeMode] = useState(false)
+  const [sortMode, setSortMode] = useState<"volatility" | "gainers" | "losers">("volatility")
 
   const memeConfigs = useMemo(() => {
     return [
@@ -93,12 +94,18 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
 
   const isPositive = totals.totalPnl24h >= 0
 
-  // Sort positions: most volatile first, hide zero-movement
+  // Sort positions based on selected mode
   const activePositions = useMemo(() => {
-    return [...positions]
-      .filter(p => p.unidades > 0 && (p.valor_actual ?? 0) > 0 && p.tipo !== 'Liquidez' && p.ticker !== 'CASH')
-      .sort((a, b) => Math.abs(b.change_percent_24h ?? 0) - Math.abs(a.change_percent_24h ?? 0))
-  }, [positions])
+    const valid = [...positions].filter(p => p.unidades > 0 && (p.valor_actual ?? 0) > 0 && p.tipo !== 'Liquidez' && p.ticker !== 'CASH')
+    
+    if (sortMode === "gainers") {
+      return valid.sort((a, b) => (b.change_percent_24h ?? 0) - (a.change_percent_24h ?? 0))
+    }
+    if (sortMode === "losers") {
+      return valid.sort((a, b) => (a.change_percent_24h ?? 0) - (b.change_percent_24h ?? 0))
+    }
+    return valid.sort((a, b) => Math.abs(b.change_percent_24h ?? 0) - Math.abs(a.change_percent_24h ?? 0))
+  }, [positions, sortMode])
 
   const getDisplayTicker = (p: EnrichedPosition) => {
     if (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") {
@@ -304,11 +311,28 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
             <div className="flex items-center justify-between px-6 py-3 border-b border-border/15 shrink-0">
               <div className="flex items-center gap-2 text-muted-foreground/40">
                 <span className={`w-2 h-2 rounded-full ${isPositive ? "bg-emerald-400" : "bg-rose-400"} animate-pulse`} />
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em]">Movimientos 24h</span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em] hidden sm:inline-block">Movimientos 24h</span>
               </div>
-              <span className="text-[10px] font-semibold text-muted-foreground/30 uppercase tracking-widest">
-                Top Volatilidad
-              </span>
+              <div className="flex items-center gap-1 bg-background/50 rounded-lg p-1 border border-border/10">
+                <button 
+                  onClick={() => setSortMode('gainers')} 
+                  className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'gainers' ? 'bg-emerald-500/20 text-emerald-400' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
+                >
+                  Ganancias
+                </button>
+                <button 
+                  onClick={() => setSortMode('losers')} 
+                  className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'losers' ? 'bg-rose-500/20 text-rose-400' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
+                >
+                  Pérdidas
+                </button>
+                <button 
+                  onClick={() => setSortMode('volatility')} 
+                  className={`text-[10px] uppercase font-semibold tracking-wider px-2.5 py-1 rounded-md transition-colors ${sortMode === 'volatility' ? 'bg-primary/20 text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground/80'}`}
+                >
+                  Volatilidad
+                </button>
+              </div>
             </div>
 
             {/* Position rows */}
