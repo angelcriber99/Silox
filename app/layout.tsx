@@ -66,7 +66,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="flex flex-col fixed inset-0 overflow-hidden bg-background text-foreground" suppressHydrationWarning>
+      <body className="flex flex-col h-[100dvh] w-full overflow-hidden bg-background text-foreground" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider
             attribute="class"
