@@ -42,7 +42,7 @@ export function EditTransactionModal({
   onOpenChange,
 }: EditTransactionModalProps) {
   const [tipoOperacion, setTipoOperacion] = useState<
-    "Compra" | "Venta" | "Dividendo"
+    "Compra" | "Venta" | "Dividendo" | "Traspaso Salida" | "Traspaso Entrada"
   >("Compra")
   const [estado, setEstado] = useState<"Completada" | "Pendiente">("Completada")
   const [cantidad, setCantidad] = useState("")

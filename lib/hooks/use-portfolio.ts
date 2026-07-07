@@ -50,10 +50,10 @@ export function usePortfolio() {
       let newCoste = pos.coste_total
       
       for (const tx of posPending) {
-        if (tx.tipo_operacion === 'Compra') {
+        if (tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') {
           newUnidades -= tx.cantidad
           newCoste -= (tx.cantidad * tx.precio_unitario)
-        } else if (tx.tipo_operacion === 'Venta') {
+        } else if (tx.tipo_operacion === 'Venta' || tx.tipo_operacion === 'Traspaso Salida') {
           newUnidades += tx.cantidad
           newCoste += (tx.cantidad * tx.precio_unitario)
         }

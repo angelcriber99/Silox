@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
   AreaChart, Area, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -24,6 +25,8 @@ import { AssetNews } from "./detail/asset-news"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { MarketStats } from "./detail/market-stats"
+import { TraspasoModal } from "@/components/transactions/traspaso-modal"
+import { ArrowRightLeft } from "lucide-react"
 
 const AssetEvolutionChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetEvolutionChart), { ssr: false })
 const AssetCapitalDonut = dynamic(() => import('./detail/asset-charts').then(m => m.AssetCapitalDonut), { ssr: false })
@@ -51,6 +54,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
   const [years, setYears] = useState(15)
   const [expectedReturn, setExpectedReturn] = useState(8)
   const [alertsOpen, setAlertsOpen] = useState(false)
+  const [traspasoOpen, setTraspasoOpen] = useState(false)
   const {
     sparklineData,
     evolutionData,
@@ -98,11 +102,22 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm font-medium">Volver al Dashboard</span>
           </Link>
-          <div className="flex items-center gap-2.5 opacity-50">
-            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
-              <Activity className="h-3 w-3 text-foreground" />
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTraspasoOpen(true)}
+              className="hidden md:flex border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 transition-colors"
+            >
+              <ArrowRightLeft className="w-4 h-4 mr-2" />
+              Traspaso
+            </Button>
+            <div className="flex items-center gap-2.5 opacity-50">
+              <div className="h-6 w-6 rounded-md bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+                <Activity className="h-3 w-3 text-foreground" />
+              </div>
+              <span className="text-sm font-bold tracking-tight text-foreground">Silox</span>
             </div>
-            <span className="text-sm font-bold tracking-tight text-foreground">Silox</span>
           </div>
         </div>
       </header>
@@ -492,6 +507,12 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         </div>
       </main>
 
+      <TraspasoModal 
+        origen={position} 
+        open={traspasoOpen} 
+        onOpenChange={setTraspasoOpen} 
+      />
+      
       <PriceAlerts 
         open={alertsOpen} 
         onOpenChange={setAlertsOpen} 

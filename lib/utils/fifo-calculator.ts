@@ -45,14 +45,14 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
     let buyLots: BuyLot[] = []
 
     for (const tx of sorted) {
-      if (tx.tipo_operacion === "Compra") {
+      if (tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada") {
         const unitCostBasis = (tx.cantidad * tx.precio_unitario + tx.comision) / tx.cantidad
         buyLots.push({
           fecha: tx.fecha,
           qtyRemaining: tx.cantidad,
           unitCostBasis,
         })
-      } else if (tx.tipo_operacion === "Venta") {
+      } else if (tx.tipo_operacion === "Venta" || tx.tipo_operacion === "Traspaso Salida") {
         let remainingToSell = tx.cantidad
         let totalCostBasis = 0
         const soldLotsDetails: string[] = []
@@ -74,15 +74,16 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           }
         }
 
-        const ingresoVenta = (tx.cantidad * tx.precio_unitario) - tx.comision
-        const gananciaPatrimonial = ingresoVenta - totalCostBasis
+        if (tx.tipo_operacion !== "Traspaso Salida") {
+          const ingresoVenta = (tx.cantidad * tx.precio_unitario) - tx.comision
+          const gananciaPatrimonial = ingresoVenta - totalCostBasis
 
-        const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
-        const ticker = tx.activo 
-          ? (isFondo ? (tx.activo.nombre?.split(' ')[0].toUpperCase() || "") : tx.activo.ticker.split('.')[0])
-          : "—"
+          const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
+          const ticker = tx.activo 
+            ? (isFondo ? (tx.activo.nombre?.split(' ')[0].toUpperCase() || "") : tx.activo.ticker.split('.')[0])
+            : "—"
 
-        events.push({
+          events.push({
           activoId: tx.activo_id,
           ticker: ticker,
           nombre: tx.activo?.nombre || "Activo Desconocido",
@@ -97,6 +98,7 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           detalles: `Corresponde a: ${soldLotsDetails.join(" y ")}.`,
           tipoActivo: tx.activo?.tipo || "Desconocido"
         })
+        } // close if (tx.tipo_operacion !== "Traspaso Salida")
       }
     }
   }

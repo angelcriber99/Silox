@@ -32,7 +32,7 @@ interface AddTransactionModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-type TipoOperacion = "Compra" | "Venta" | "Dividendo"
+type TipoOperacion = "Compra" | "Venta" | "Dividendo" | "Traspaso Salida" | "Traspaso Entrada"
 
 const inputClass =
   "bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
@@ -43,7 +43,7 @@ export function AddTransactionModal({
   onOpenChange,
 }: AddTransactionModalProps) {
   const [tipoOperacion, setTipoOperacion] = useState<
-    "Compra" | "Venta" | "Dividendo"
+    "Compra" | "Venta" | "Dividendo" | "Traspaso Salida" | "Traspaso Entrada"
   >("Compra")
   const [estado, setEstado] = useState<"Completada" | "Pendiente">("Completada")
   const [cantidad, setCantidad] = useState("")

@@ -35,7 +35,7 @@ export interface EnrichedPosition extends Posicion {
 export interface Transaccion {
   id: string
   activo_id: string
-  tipo_operacion: 'Compra' | 'Venta' | 'Dividendo'
+  tipo_operacion: 'Compra' | 'Venta' | 'Dividendo' | 'Traspaso Salida' | 'Traspaso Entrada'
   cantidad: number
   precio_unitario: number
   comision: number
