@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
@@ -41,6 +42,15 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
   const isOneDay = spanMs <= 24 * 60 * 60 * 1000
 
   const CustomTooltip = ({ active, payload, label }: any) => {
+    useEffect(() => {
+      if (active && payload && payload.length) {
+        onHoverChange?.(payload[0].payload)
+      } else if (!active) {
+        onHoverChange?.(null)
+      }
+      return () => onHoverChange?.(null)
+    }, [active, payload, onHoverChange])
+
     if (hideTooltipContent) return null;
 
     if (active && payload && payload.length) {
@@ -88,14 +98,6 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
         <AreaChart 
           data={chartData} 
           margin={{ top: 25, right: 20, left: 20, bottom: 35 }}
-          onMouseMove={(e: any) => {
-            if (e.activePayload && e.activePayload.length) {
-              onHoverChange?.(e.activePayload[0].payload)
-            }
-          }}
-          onMouseLeave={() => {
-            onHoverChange?.(null)
-          }}
         >
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
