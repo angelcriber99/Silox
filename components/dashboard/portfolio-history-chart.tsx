@@ -92,7 +92,12 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
             minTickGap={40}
           />
           <YAxis 
-            hide 
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
+            width={55}
+            dx={-5}
             domain={[minVal - domainPadding, maxVal + domainPadding]} 
           />
           <Tooltip 
@@ -110,14 +115,14 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
             />
           )}
           <Area 
-            type="monotone" 
+            type="linear" 
             dataKey="value" 
             stroke={lineColor} 
             strokeWidth={2.5}
             fillOpacity={1} 
             fill="url(#colorValue)" 
-            activeDot={{ r: 5, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 2 }}
-            dot={false}
+            activeDot={{ r: 6, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 3 }}
+            dot={chartData.length <= 45 ? { r: 3, fill: "hsl(var(--background))", stroke: lineColor, strokeWidth: 2 } : false}
           />
         </AreaChart>
       </ResponsiveContainer>

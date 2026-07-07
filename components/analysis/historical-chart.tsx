@@ -128,9 +128,10 @@ export function HistoricalChart() {
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
-              tickFormatter={(val) => `€${(val/1000).toFixed(0)}k`}
-              dx={-10}
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }}
+              tickFormatter={(val) => `€${val >= 1000 ? (val/1000).toFixed(0) + 'k' : val}`}
+              dx={-5}
+              width={55}
               domain={['dataMin - (dataMin * 0.05)', 'dataMax + (dataMax * 0.05)']}
             />
             <Tooltip 
@@ -149,12 +150,14 @@ export function HistoricalChart() {
               }}
             />
             <Area 
-              type="monotone" 
+              type="linear" 
               dataKey="invested" 
               stroke="var(--primary)" 
-              strokeWidth={3}
+              strokeWidth={2.5}
               fillOpacity={1} 
               fill="url(#colorInvested)" 
+              activeDot={{ r: 6, fill: "var(--primary)", stroke: "hsl(var(--background))", strokeWidth: 3 }}
+              dot={data.length <= 45 ? { r: 3, fill: "hsl(var(--background))", stroke: "var(--primary)", strokeWidth: 2 } : false}
               animationDuration={1500}
             />
           </AreaChart>
