@@ -72,7 +72,7 @@ export function ProSidebar() {
     <motion.aside
       animate={{ width: sidebarCollapsed ? 68 : 236 }}
       transition={{ type: "spring", bounce: 0, duration: 0.28 }}
-      className="flex flex-col h-screen sticky top-0 left-0 hidden md:flex relative z-40 overflow-hidden"
+      className="flex flex-col h-screen sticky top-0 left-0 hidden md:flex relative z-40"
       style={{
         background: "var(--sidebar)",
         borderRight: "1px solid oklch(0.68 0.17 192 / 0.08)",
