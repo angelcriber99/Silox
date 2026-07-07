@@ -6,6 +6,7 @@ import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { ChevronRight } from "lucide-react"
+import { motion } from "framer-motion"
 
 interface MobileAssetCardProps {
   position: EnrichedPosition
@@ -96,8 +97,9 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
 
   return (
     <Link href={`/activo/${p.activo_id}`} className="block">
-      <div
-        className="px-4 py-3.5 transition-colors active:opacity-70 relative"
+      <motion.div
+        whileTap={{ scale: 0.96, opacity: 0.8 }}
+        className="px-4 py-3.5 transition-colors relative"
         style={{ borderBottom: "1px solid oklch(0.68 0.17 192 / 0.06)" }}
       >
         <div className="flex items-center gap-3.5">
@@ -200,7 +202,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
             style={{ color: "var(--muted-foreground)", opacity: 0.25 }}
           />
         </div>
-      </div>
+      </motion.div>
     </Link>
   )
 })

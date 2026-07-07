@@ -78,6 +78,7 @@ export function MobileDashboard({
   const [performanceOpen, setPerformanceOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [filterType, setFilterType] = useState<string>("All")
+  const [scrubData, setScrubData] = useState<{ i: number; v: number; pnl: number } | null>(null)
   const t = useTranslations("Dashboard")
 
   const { data: snapshots } = useHistory()
@@ -297,60 +298,76 @@ export function MobileDashboard({
             </div>
           </div>
 
-          {/* Main KPI — portfolio value */}
+          {/* Main KPI — portfolio value (Scrubbable) */}
           <div className="mb-1">
             <h1
-              className="font-extrabold tracking-tighter leading-none font-display-number"
+              className="font-extrabold tracking-tighter leading-none font-display-number transition-all duration-200"
               style={{ fontSize: "clamp(42px, 12vw, 54px)", color: "var(--foreground)" }}
             >
-              <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
+              <AnimatedNumber value={scrubData ? scrubData.v : totals.totalValue} format="currency" hide={hideBalances} />
             </h1>
           </div>
 
           {/* PnL badges */}
           {totals.totalCost > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Total PnL */}
-              <div
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
-                style={{
-                  background: isPositive
-                    ? "oklch(0.65 0.19 155 / 0.12)"
-                    : "oklch(0.62 0.20 20 / 0.12)",
-                  color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
-                }}
-              >
-                {isPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                <span className="text-[14px] font-bold font-tabular">
-                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
-                </span>
-                <span className="text-[12px] font-semibold opacity-80">
-                  ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
-                </span>
-              </div>
-
-              {/* 24h badge */}
-              <div
-                className="flex items-center gap-1 px-2 py-1 rounded-lg"
-                style={{
-                  background: daily24Positive
-                    ? "oklch(0.65 0.19 155 / 0.08)"
-                    : "oklch(0.62 0.20 20 / 0.08)",
-                  border: daily24Positive
-                    ? "1px solid oklch(0.65 0.19 155 / 0.20)"
-                    : "1px solid oklch(0.62 0.20 20 / 0.20)",
-                }}
-              >
-                <span
-                  className="text-[11px] font-semibold"
-                  style={{ color: "var(--muted-foreground)", opacity: 0.7 }}
+            <div className="flex items-center gap-2 flex-wrap min-h-[28px]">
+              {scrubData ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
+                  style={{
+                    background: scrubData.pnl >= 0 ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
+                    color: scrubData.pnl >= 0 ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
+                  }}
                 >
-                  Hoy
-                </span>
-                <span className="text-[13px] font-bold font-tabular">
-                  {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
-                </span>
-              </div>
+                  {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                  <span className="text-[14px] font-bold font-tabular">
+                    {hideBalances ? "••••" : `${scrubData.pnl >= 0 ? "+" : ""}${formatCurrency(scrubData.pnl)}`}
+                  </span>
+                  <span className="text-[12px] font-semibold opacity-80">vs 7d</span>
+                </motion.div>
+              ) : (
+                <>
+                  {/* Total PnL */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
+                    style={{
+                      background: isPositive ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
+                      color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
+                    }}
+                  >
+                    {isPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                    <span className="text-[14px] font-bold font-tabular">
+                      {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+                    </span>
+                    <span className="text-[12px] font-semibold opacity-80">
+                      ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
+                    </span>
+                  </motion.div>
+
+                  {/* 24h badge */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg"
+                    style={{
+                      background: daily24Positive ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
+                      border: `1px solid ${daily24Positive ? "oklch(0.65 0.19 155 / 0.20)" : "oklch(0.62 0.20 20 / 0.20)"}`,
+                    }}
+                  >
+                    <span
+                      className="text-[11px] font-semibold"
+                      style={{ color: "var(--muted-foreground)", opacity: 0.7 }}
+                    >Hoy</span>
+                    <span className="text-[13px] font-bold font-tabular">
+                      {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+                    </span>
+                  </motion.div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -358,192 +375,150 @@ export function MobileDashboard({
 
       {/* ─── Sparkline chart ─────────────────────────────────────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className="h-[100px] w-full relative -mt-1">
+        <div className="h-[120px] w-full relative -mt-4 mb-2">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={portfolioSparkline} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+            <AreaChart 
+              data={portfolioSparkline} 
+              margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
+              onMouseMove={(e: any) => {
+                if (e.activePayload && e.activePayload.length > 0) {
+                  const newScrub = e.activePayload[0].payload;
+                  setScrubData(prev => {
+                    if (prev?.i !== newScrub.i) hapticFeedback.light();
+                    return newScrub;
+                  });
+                }
+              }}
+              onMouseLeave={() => setScrubData(null)}
+              onTouchEnd={() => setScrubData(null)}
+            >
               <defs>
                 <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColorHex} stopOpacity={0.4} />
-                  <stop offset="70%" stopColor={areaColorHex} stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={areaColorHex} stopOpacity={0.5} />
+                  <stop offset="60%" stopColor={areaColorHex} stopOpacity={0.1} />
                   <stop offset="100%" stopColor={areaColorHex} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <YAxis hide domain={["dataMin - 300", "dataMax + 300"]} />
               <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null
-                  const d = payload[0].payload
-                  const isUp = d.pnl >= 0
-                  return (
-                    <div
-                      className="rounded-xl px-3 py-2 shadow-2xl"
-                      style={{
-                        background: "var(--card)",
-                        border: "1px solid var(--border)",
-                        backdropFilter: "blur(12px)",
-                      }}
-                    >
-                      <p className="text-[13px] font-bold font-tabular" style={{ color: "var(--foreground)" }}>
-                        {formatCurrency(d.v)}
-                      </p>
-                      <p
-                        className="text-[11px] font-medium font-tabular"
-                        style={{ color: isUp ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
-                      >
-                        {isUp ? "+" : ""}{formatCurrency(d.pnl)} vs inicio semana
-                      </p>
-                    </div>
-                  )
-                }}
-                cursor={{ stroke: areaColorHex, strokeWidth: 1, strokeDasharray: "3 3" }}
+                content={() => null} // We use the hero section to show data instead
+                cursor={{ stroke: areaColorHex, strokeWidth: 1.5, strokeDasharray: "4 4" }}
               />
               <Area
                 type="monotone"
                 dataKey="v"
                 stroke={areaColorHex}
-                strokeWidth={2}
+                strokeWidth={3}
                 fill="url(#mobileGrad)"
                 isAnimationActive
                 animationDuration={700}
+                activeDot={{ r: 5, fill: areaColorHex, stroke: "var(--background)", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* ─── Metrics ribbon ──────────────────────────────────────────────── */}
-      <div className="px-4 py-3">
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
-          {/* Invested */}
+      {/* ─── Bento Grid Metrics ────────────────────────────────────────────── */}
+      <div className="px-4 py-2 mb-2">
+        <div className="grid grid-cols-2 gap-3">
+          {/* Box 1: Invested */}
           <div
-            className="flex-shrink-0 flex flex-col justify-center min-w-[100px] px-3 py-2.5 rounded-2xl"
+            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
             style={{
-              background: "var(--card)",
-              border: "1px solid var(--border)",
+              background: "linear-gradient(145deg, oklch(0.975 0.004 200) 0%, oklch(0.95 0.01 200) 100%)",
+              border: "1px solid oklch(0.68 0.17 192 / 0.10)",
+              boxShadow: "0 8px 24px -8px oklch(0 0 0 / 0.05)",
             }}
           >
-            <span
-              className="text-[9px] font-bold uppercase tracking-widest mb-1"
-              style={{ color: "var(--muted-foreground)", opacity: 0.6 }}
-            >
-              Invertido
-            </span>
-            <span className="text-[13px] font-bold font-tabular" style={{ color: "var(--foreground)" }}>
-              {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
-            </span>
+            <div className="flex items-center justify-between mb-3">
+              <div
+                className="p-1.5 rounded-xl"
+                style={{ background: "oklch(0.68 0.17 192 / 0.08)", color: "var(--primary)" }}
+              >
+                <Wallet className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>
+                Invertido
+              </p>
+              <p className="text-[16px] font-extrabold font-tabular mt-0.5" style={{ color: "var(--foreground)" }}>
+                {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
+              </p>
+            </div>
           </div>
 
-          {/* Total PnL */}
+          {/* Box 2: Total PnL (Dynamic Color) */}
           <div
-            className="flex-shrink-0 flex flex-col justify-center min-w-[110px] px-3 py-2.5 rounded-2xl"
+            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
             style={{
-              background: isPositive ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
+              background: isPositive ? "linear-gradient(145deg, oklch(0.65 0.19 155 / 0.12), oklch(0.65 0.19 155 / 0.05))" : "linear-gradient(145deg, oklch(0.62 0.20 20 / 0.12), oklch(0.62 0.20 20 / 0.05))",
               border: `1px solid ${isPositive ? "oklch(0.65 0.19 155 / 0.20)" : "oklch(0.62 0.20 20 / 0.20)"}`,
+              boxShadow: isPositive ? "0 8px 24px -8px oklch(0.65 0.19 155 / 0.2)" : "0 8px 24px -8px oklch(0.62 0.20 20 / 0.2)",
             }}
           >
-            <span
-              className="text-[9px] font-bold uppercase tracking-widest mb-1"
-              style={{
-                color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
-                opacity: 0.8,
-              }}
-            >
-              Ganancia Total
-            </span>
-            <span
-              className="text-[13px] font-bold font-tabular"
-              style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
-            >
-              {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
-            </span>
-          </div>
-
-          {/* Today */}
-          <div
-            className="flex-shrink-0 flex flex-col justify-center min-w-[90px] px-3 py-2.5 rounded-2xl"
-            style={{
-              background: daily24Positive ? "oklch(0.65 0.19 155 / 0.06)" : "oklch(0.62 0.20 20 / 0.06)",
-              border: `1px solid ${daily24Positive ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)"}`,
-            }}
-          >
-            <span
-              className="text-[9px] font-bold uppercase tracking-widest mb-1"
-              style={{ color: "var(--muted-foreground)", opacity: 0.6 }}
-            >
-              Hoy
-            </span>
-            <span
-              className="text-[13px] font-bold font-tabular"
-              style={{ color: daily24Positive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
-            >
-              {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
-            </span>
-          </div>
-
-          {/* Best performer */}
-          {bestPerformer && isMarketOpen && (
-            <div
-              className="flex-shrink-0 flex flex-col justify-center min-w-[90px] px-3 py-2.5 rounded-2xl"
-              style={{
-                background: "oklch(0.65 0.19 155 / 0.06)",
-                border: "1px solid oklch(0.65 0.19 155 / 0.15)",
-              }}
-            >
-              <span
-                className="text-[9px] font-bold uppercase tracking-widest mb-1 truncate"
-                style={{ color: "oklch(0.65 0.19 155)", opacity: 0.8 }}
+            <div className="flex items-center justify-between mb-3">
+              <div
+                className="p-1.5 rounded-xl"
+                style={{
+                  background: isPositive ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)",
+                  color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)"
+                }}
               >
-                ↑ {bestPerformer.ticker.split(".")[0]}
-              </span>
-              <span className="text-[13px] font-bold font-tabular" style={{ color: "oklch(0.65 0.19 155)" }}>
-                {formatPercent(bestPerformer.change_percent_24h ?? 0)}
-              </span>
+                {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              </div>
             </div>
-          )}
-
-          {/* Worst performer */}
-          {worstPerformer && isMarketOpen && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)", opacity: 0.8 }}>
+                Ganancia
+              </p>
+              <p className="text-[16px] font-extrabold font-tabular mt-0.5" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
+                {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+              </p>
+            </div>
+          </div>
+          
+          {/* Box 3: 24h & Best Performer */}
+          <div className="col-span-2 grid grid-cols-2 gap-3">
             <div
-              className="flex-shrink-0 flex flex-col justify-center min-w-[90px] px-3 py-2.5 rounded-2xl"
+              className="flex items-center justify-between p-3 rounded-2xl"
               style={{
-                background: "oklch(0.62 0.20 20 / 0.06)",
-                border: "1px solid oklch(0.62 0.20 20 / 0.15)",
+                background: daily24Positive ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
+                border: `1px solid ${daily24Positive ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)"}`,
               }}
             >
-              <span
-                className="text-[9px] font-bold uppercase tracking-widest mb-1 truncate"
-                style={{ color: "oklch(0.62 0.20 20)", opacity: 0.8 }}
-              >
-                ↓ {worstPerformer.ticker.split(".")[0]}
-              </span>
-              <span className="text-[13px] font-bold font-tabular" style={{ color: "oklch(0.62 0.20 20)" }}>
-                {formatPercent(worstPerformer.change_percent_24h ?? 0)}
-              </span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hoy</p>
+                <p className="text-[14px] font-bold font-tabular mt-0.5" style={{ color: daily24Positive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
+                  {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[12px] font-bold font-tabular" style={{ color: daily24Positive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)", opacity: 0.9 }}>
+                  {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+                </p>
+              </div>
             </div>
-          )}
 
-          {/* Performance button */}
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={() => { hapticFeedback.light(); setPerformanceOpen(true) }}
-            className="flex-shrink-0 flex flex-col justify-center px-3 py-2.5 rounded-2xl min-w-[90px] transition-colors"
-            style={{
-              background: "oklch(0.68 0.17 192 / 0.10)",
-              border: "1px solid oklch(0.68 0.17 192 / 0.25)",
-            }}
-            aria-label="Ver análisis de rendimiento"
-          >
-            <span
-              className="text-[9px] font-bold uppercase tracking-widest mb-1"
-              style={{ color: "var(--primary)", opacity: 0.8 }}
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={() => { hapticFeedback.light(); setPerformanceOpen(true) }}
+              className="flex items-center justify-between p-3 rounded-2xl"
+              style={{
+                background: "oklch(0.68 0.17 192 / 0.12)",
+                border: "1px solid oklch(0.68 0.17 192 / 0.20)",
+              }}
             >
-              Análisis
-            </span>
-            <div className="flex items-center gap-1" style={{ color: "var(--primary)" }}>
-              <BarChart2 className="w-3.5 h-3.5" />
-              <span className="text-[13px] font-bold">Ver</span>
-            </div>
-          </motion.button>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--primary)", opacity: 0.8 }}>Análisis</p>
+                <p className="text-[14px] font-bold mt-0.5" style={{ color: "var(--primary)" }}>Ver detalle</p>
+              </div>
+              <div className="p-1.5 rounded-full" style={{ background: "var(--primary)", color: "white" }}>
+                <BarChart2 className="w-3.5 h-3.5" />
+              </div>
+            </motion.button>
+          </div>
         </div>
       </div>
 
