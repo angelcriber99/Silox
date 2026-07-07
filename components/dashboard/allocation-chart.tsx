@@ -544,8 +544,8 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
     if (oldestData && isAfter(parseISO(oldestData.timestamp), startDate)) {
       const fakePoint: ChartDataPoint = {
         timestamp: startDate.toISOString(),
-        value: oldestData.totalInvested,
-        totalInvested: oldestData.totalInvested,
+        value: oldestData.totalInvested || 0,
+        totalInvested: oldestData.totalInvested || 0,
         pnl: 0,
         totalPnl: 0,
         isFirstPoint: true
@@ -580,7 +580,7 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
   const displayPoint = hoveredPoint || (filteredData.length > 0 ? filteredData[filteredData.length - 1] : null)
   
   const hoverPnl = hoveredPoint 
-    ? (timeRange === 'ALL' ? hoveredPoint.totalPnl : hoveredPoint.totalPnl - filteredData[0].totalPnl)
+    ? (timeRange === 'ALL' ? hoveredPoint.totalPnl : hoveredPoint.totalPnl - (filteredData[0]?.totalPnl || 0))
     : periodSummary.pnl
     
   const startValue = timeRange === 'ALL' 

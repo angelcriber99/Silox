@@ -89,10 +89,15 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     const step = Math.max(1, Math.floor(chartData.length / 12));
     if (index % step !== 0 && index !== chartData.length - 1) return null;
 
-    // El PnL relativo al inicio del periodo seleccionado
-    const relativePnl = dataPoint.totalPnl - firstPoint.totalPnl;
-    const isPositive = relativePnl >= 0;
-    const pnlStr = hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(relativePnl)}`;
+    // Para 1D, el neto diario es el acumulado desde el inicio del día (relativePnl)
+    // Para 1W, 1M, 1Y, TODO, cada punto es un día, por lo que el neto diario es dataPoint.pnl
+    const pnlValue = isOneDay ? (dataPoint.totalPnl - firstPoint.totalPnl) : dataPoint.pnl;
+    
+    // Safety check just in case
+    if (pnlValue === undefined || isNaN(pnlValue)) return null;
+
+    const isPositive = pnlValue >= 0;
+    const pnlStr = hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(pnlValue)}`;
     
     return (
       <text 
@@ -134,22 +139,28 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             dataKey="timestamp" 
             axisLine={false} 
             tickLine={false} 
-            tickFormatter={(date) => format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
+            tickFormatter={(date) => {
+              try {
+                if (!date) return "";
+                return format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es });
+              } catch (e) {
+                return "";
+              }
+            }}
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontWeight: 500 }}
             dy={12}
             minTickGap={30}
           />
-          {!hideYAxis && (
-            <YAxis 
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
-              width={55}
-              dx={-5}
-              domain={[minVal - domainPadding, maxVal + domainPadding]} 
-            />
-          )}
+          <YAxis 
+            hide={hideYAxis !== false}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
+            width={55}
+            dx={-5}
+            domain={[minVal - domainPadding, maxVal + domainPadding]} 
+          />
           <Tooltip 
             content={<CustomTooltip />} 
             cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: hideTooltipContent ? '0' : '4 4', strokeOpacity: 0.5 }} 
