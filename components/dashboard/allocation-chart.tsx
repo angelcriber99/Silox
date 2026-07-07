@@ -8,10 +8,14 @@ import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters
 import { computePortfolioTotals } from "@/lib/api/assets"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { motion, AnimatePresence } from "framer-motion"
-import { RefreshCw, Eye, EyeOff, PieChart as PieChartIcon, BarChart3, Wallet } from "lucide-react"
+import { RefreshCw, Eye, EyeOff, PieChart as PieChartIcon, BarChart3, Wallet, Activity } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 import { CategoryDrilldownModal } from "@/components/dashboard/category-drilldown-modal"
+import { useHistory } from "@/lib/hooks/use-portfolio"
+import { PortfolioHistoryChart } from "./portfolio-history-chart"
+import { format, parseISO, subDays, subMonths, subYears, isAfter } from "date-fns"
+import type { TimeRange, ChartDataPoint } from "./performance-modal"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -150,11 +154,13 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                 >
                   <Eye className="w-4 h-4" />
                 </button>
-                {zenMode && (
-                  <button onClick={() => setIsFlipped(true)} className="ml-2 p-1 hover:bg-muted rounded-full transition-colors" title="Dar la vuelta">
-                    <RefreshCw className="w-4 h-4 text-primary" />
-                  </button>
-                )}
+                <button
+                  onClick={() => setIsFlipped(true)}
+                  className="ml-2 p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded-full transition-colors"
+                  title="Ver rendimiento"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                </button>
               </CardTitle>
               <div className="flex items-center gap-2">
                 <div className="flex gap-1 rounded-lg bg-muted p-0.5">
@@ -412,45 +418,29 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
     </Card>
 
     {/* Back Face */}
-    {zenMode && (
-      <Card 
-        className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
-        style={{ 
-          backfaceVisibility: "hidden", 
-          WebkitBackfaceVisibility: "hidden",
-          transform: "rotateY(180deg)" 
-        }}
-      >
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              Resumen de Activos
-              <button onClick={() => setIsFlipped(false)} className="ml-2 p-1 hover:bg-muted rounded-full transition-colors" title="Volver a distribución">
-                <RefreshCw className="w-4 h-4 text-primary" />
-              </button>
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto pt-0">
-          <div className="space-y-4 pt-2">
-            {positions.map(p => (
-              <div key={p.activo_id} className="flex justify-between items-center border-b border-border/50 pb-2 last:border-0">
-                <div>
-                  <p className="font-medium text-foreground">{p.ticker}</p>
-                  <p className="text-xs text-muted-foreground">{p.nombre}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-foreground">{hideBalances ? "****" : formatCurrency(p.valor_actual || 0)}</p>
-                  <p className={`text-xs ${p.pnl && p.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {p.pnl && p.pnl > 0 ? "+" : ""}{formatCurrency(p.pnl || 0)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )}
+    <Card 
+      className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
+      style={{ 
+        backfaceVisibility: "hidden", 
+        WebkitBackfaceVisibility: "hidden",
+        transform: "rotateY(180deg)" 
+      }}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            Análisis de Rendimiento
+          </CardTitle>
+          <button onClick={() => setIsFlipped(false)} className="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground" title="Volver a distribución">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-hidden pt-0 flex flex-col">
+         <PerformanceBackFace currentTotalValue={totals.totalValue} currentPnl24h={totals.totalPnl24h} currentTotalCost={totals.totalCost} hideBalances={hideBalances} />
+      </CardContent>
+    </Card>
+
     </motion.div>
 
     <WithdrawCashModal 
@@ -469,6 +459,141 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
       hideBalances={hideBalances}
     />
   </div>
+  )
+}
+
+function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCost, hideBalances }: { currentTotalValue: number, currentPnl24h: number, currentTotalCost: number, hideBalances: boolean }) {
+  const [timeRange, setTimeRange] = useState<TimeRange>("1M")
+  const { data: snapshots, isLoading } = useHistory()
+
+  const processedData = useMemo(() => {
+    if (!snapshots || snapshots.length === 0) {
+      if (currentTotalValue !== undefined && currentPnl24h !== undefined) {
+        const todayStr = new Date().toISOString()
+        return [{
+          timestamp: todayStr,
+          value: currentTotalValue,
+          totalInvested: currentTotalValue - currentPnl24h,
+          pnl: currentPnl24h,
+          totalPnl: currentPnl24h,
+          isFirstPoint: true,
+        }]
+      }
+      return []
+    }
+
+    const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    
+    // Add current real-time point at the end
+    if (currentTotalValue !== undefined && currentTotalCost !== undefined) {
+       sorted.push({
+         timestamp: new Date().toISOString(),
+         total_value: currentTotalValue,
+         total_invested: currentTotalCost
+       })
+    }
+    
+    let aggregatedSnaps = sorted
+    if (timeRange !== "1D") {
+      const byDate = new Map<string, typeof sorted[0]>()
+      sorted.forEach(snap => {
+        const dateStr = format(parseISO(snap.timestamp), 'yyyy-MM-dd')
+        byDate.set(dateStr, snap)
+      })
+      aggregatedSnaps = Array.from(byDate.values())
+    }
+
+    const allDataPoints: ChartDataPoint[] = []
+    
+    for (let i = 0; i < aggregatedSnaps.length; i++) {
+      const snap = aggregatedSnaps[i]
+      const pnlToday = snap.total_value - snap.total_invested
+      let pnl = 0
+      
+      if (i > 0) {
+        const prev = allDataPoints[i - 1]
+        pnl = pnlToday - prev.totalPnl
+      }
+
+      allDataPoints.push({
+        timestamp: snap.timestamp,
+        value: snap.total_value,
+        totalInvested: snap.total_invested,
+        pnl: pnl,
+        totalPnl: pnlToday,
+        isFirstPoint: i === 0,
+      })
+    }
+    
+    return allDataPoints
+  }, [snapshots, currentTotalValue, currentPnl24h, currentTotalCost, timeRange])
+
+  const filteredData = useMemo(() => {
+    if (processedData.length === 0) return []
+    if (timeRange === "ALL") return processedData
+    
+    const now = new Date()
+    let startDate = now
+    if (timeRange === "1D") startDate = subDays(now, 1)
+    if (timeRange === "1W") startDate = subDays(now, 7)
+    if (timeRange === "1M") startDate = subMonths(now, 1)
+    if (timeRange === "1Y") startDate = subYears(now, 1)
+
+    const filtered = processedData.filter(d => isAfter(parseISO(d.timestamp), startDate))
+    
+    if (filtered.length < 2 && processedData.length >= 2) {
+      return processedData.slice(-2)
+    }
+    
+    return filtered
+  }, [processedData, timeRange])
+
+  const periodSummary = useMemo(() => {
+    if (filteredData.length === 0) return { pnl: 0, pnlPercent: 0, endValue: 0 }
+    
+    const first = filteredData[0]
+    const last = filteredData[filteredData.length - 1]
+    
+    const periodPnl = timeRange === 'ALL' 
+      ? last.totalPnl 
+      : last.totalPnl - first.totalPnl + first.pnl
+    
+    return { pnl: periodPnl }
+  }, [filteredData, timeRange])
+
+  if (isLoading) {
+    return <div className="flex-1 flex items-center justify-center"><Activity className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+  }
+
+  return (
+    <div className="flex flex-col h-full mt-2">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex bg-muted/50 p-1 rounded-lg border border-border/50">
+          {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
+            <button
+              key={tr}
+              onClick={() => setTimeRange(tr)}
+              className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${
+                timeRange === tr 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              }`}
+            >
+              {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
+            </button>
+          ))}
+        </div>
+        <div className="text-right flex items-baseline gap-2">
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest hidden sm:block">En periodo</p>
+          <p className={`text-sm font-bold font-tabular ${periodSummary.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {periodSummary.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(periodSummary.pnl)}
+          </p>
+        </div>
+      </div>
+      <div className="flex-1 min-h-[200px]">
+        <PortfolioHistoryChart chartData={filteredData} />
+      </div>
+    </div>
   )
 }
 
