@@ -7,7 +7,7 @@ import { DailyPnlChart } from "./daily-pnl-chart"
 import { PortfolioHistoryChart } from "./portfolio-history-chart"
 import { BarChart2, Activity } from "lucide-react"
 import { useHistory } from "@/lib/hooks/use-portfolio"
-import { format, parseISO, subDays, subMonths, subYears, isAfter } from "date-fns"
+import { format, parseISO, subDays, subMonths, subYears, isAfter, startOfDay } from "date-fns"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
@@ -104,7 +104,7 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
     
     const now = new Date()
     let startDate = now
-    if (timeRange === "1D") startDate = subDays(now, 1)
+    if (timeRange === "1D") startDate = startOfDay(now)
     if (timeRange === "1W") startDate = subDays(now, 7)
     if (timeRange === "1M") startDate = subMonths(now, 1)
     if (timeRange === "1Y") startDate = subYears(now, 1)
@@ -140,11 +140,9 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
     
     const periodPnl = timeRange === 'ALL' 
       ? last.totalPnl 
-      : last.totalPnl - first.totalPnl + first.pnl
-    
-    const startValue = timeRange === 'ALL' 
-      ? last.totalInvested 
-      : first.value - first.pnl
+      : last.totalPnl - first.totalPnl
+      
+    const startValue = timeRange === 'ALL' ? first.totalInvested : first.value
       
     const pnlPercent = timeRange === 'ALL'
       ? (last.totalInvested > 0 ? (last.totalPnl / last.totalInvested) * 100 : 0)

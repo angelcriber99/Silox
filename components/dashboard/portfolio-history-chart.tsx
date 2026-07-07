@@ -80,30 +80,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     return null
   }
 
-  const renderCustomLabel = (props: any) => {
-    const { x, y, index } = props;
-    const dataPoint = chartData[index];
-    
-    // Solo mostrar etiquetas si hay pocos datos (ej. 1W o 1M) para no solapar,
-    // y no mostrarlo en el primer punto porque no tiene PnL respecto al día anterior.
-    if (!dataPoint || dataPoint.isFirstPoint || chartData.length > 35) return null;
 
-    const isPositive = dataPoint.pnl >= 0;
-    const pnlStr = hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(dataPoint.pnl)}`;
-    
-    return (
-      <text 
-        x={x} 
-        y={y - 12} 
-        fill={isPositive ? '#10b981' : '#f43f5e'} 
-        fontSize={10} 
-        textAnchor="middle" 
-        fontWeight={700}
-      >
-        {pnlStr}
-      </text>
-    );
-  }
 
   return (
     <div className="w-full h-[320px]">
@@ -172,7 +149,6 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             fill="url(#colorValue)" 
             activeDot={{ r: 6, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 3 }}
             dot={chartData.length <= 45 ? { r: 3, fill: "hsl(var(--background))", stroke: lineColor, strokeWidth: 2 } : false}
-            label={renderCustomLabel}
           />
         </AreaChart>
       </ResponsiveContainer>

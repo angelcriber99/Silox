@@ -14,7 +14,7 @@ import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal
 import { CategoryDrilldownModal } from "@/components/dashboard/category-drilldown-modal"
 import { useHistory } from "@/lib/hooks/use-portfolio"
 import { PortfolioHistoryChart } from "./portfolio-history-chart"
-import { format, parseISO, subDays, subMonths, subYears, isAfter } from "date-fns"
+import { format, parseISO, subDays, subMonths, subYears, isAfter, startOfDay } from "date-fns"
 import type { TimeRange, ChartDataPoint } from "./performance-modal"
 
 interface AllocationChartProps {
@@ -531,7 +531,7 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
     
     const now = new Date()
     let startDate = now
-    if (timeRange === "1D") startDate = subDays(now, 1)
+    if (timeRange === "1D") startDate = startOfDay(now)
     if (timeRange === "1W") startDate = subDays(now, 7)
     if (timeRange === "1M") startDate = subMonths(now, 1)
     if (timeRange === "1Y") startDate = subYears(now, 1)
@@ -566,8 +566,8 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
     
     const periodPnl = timeRange === 'ALL' 
       ? last.totalPnl 
-      : last.totalPnl - first.totalPnl + first.pnl
-    
+      : last.totalPnl - first.totalPnl
+      
     return { pnl: periodPnl }
   }, [filteredData, timeRange])
 
@@ -578,12 +578,12 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
   const displayPoint = hoveredPoint || (filteredData.length > 0 ? filteredData[filteredData.length - 1] : null)
   
   const hoverPnl = hoveredPoint 
-    ? (timeRange === 'ALL' ? hoveredPoint.totalPnl : hoveredPoint.totalPnl - filteredData[0].totalPnl + filteredData[0].pnl)
+    ? (timeRange === 'ALL' ? hoveredPoint.totalPnl : hoveredPoint.totalPnl - filteredData[0].totalPnl)
     : periodSummary.pnl
     
   const startValue = timeRange === 'ALL' 
     ? (displayPoint?.totalInvested || 1)
-    : (filteredData[0]?.value - filteredData[0]?.pnl || 1)
+    : (filteredData[0]?.value || 1)
     
   const hoverPercent = hoverPnl / startValue * 100
 
