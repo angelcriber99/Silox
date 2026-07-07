@@ -35,7 +35,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
               return (
                 <div className="bg-card border border-border p-3 rounded-lg shadow-xl">
                   <p className="text-foreground text-sm font-bold">{d.name}</p>
-                  <p className="text-foreground/80 text-sm font-tabular">{formatCurrency(d.value)}</p>
+                  <p className="text-foreground/80 text-sm font-tabular">{formatCurrency(d.value, position.moneda)}</p>
                 </div>
               )
             }} />
@@ -43,7 +43,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground/80 uppercase font-medium">Total</p>
-              <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(position.valor_actual ?? 0)}</p>
+              <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(position.valor_actual_nativo ?? 0, position.moneda)}</p>
             </div>
           </div>
         </div>
@@ -53,7 +53,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
               <div className="w-3 h-3 rounded-full bg-blue-500" />
               <span className="text-muted-foreground text-sm">Tu Dinero</span>
             </div>
-            <span className="text-foreground font-bold font-tabular text-sm">{formatCurrency(position.coste_total)}</span>
+            <span className="text-foreground font-bold font-tabular text-sm">{formatCurrency(position.coste_total, position.moneda)}</span>
           </div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
               <span className="text-muted-foreground text-sm">Intereses</span>
             </div>
             <span className="text-emerald-400 font-bold font-tabular text-sm">
-              +{formatCurrency(Math.max(0, stats.gananciaIntereses))}
+              +{formatCurrency(Math.max(0, stats.gananciaIntereses), position.moneda)}
             </span>
           </div>
           {position.comisiones_total > 0 && (

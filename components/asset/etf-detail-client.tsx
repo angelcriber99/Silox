@@ -155,7 +155,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Beneficio</span>
             <p className={`text-2xl font-bold font-tabular mt-1 ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, 'EUR')}
+              {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
             </p>
             <p className={`text-sm font-bold font-tabular ${stats.precioPorcentaje >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}%

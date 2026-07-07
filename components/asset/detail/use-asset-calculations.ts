@@ -130,7 +130,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
     const totalCompras = compras.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0), 0)
     const totalVentas = ventas.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0), 0)
     const totalDividendos = dividendos.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0) - (Number(t.comision) || 0), 0)
-    const gananciaIntereses = (position.valor_actual ?? 0) - position.coste_total + totalDividendos
+    const gananciaIntereses = (position.valor_actual_nativo ?? 0) - position.coste_total + totalDividendos
 
     const precioMedio = position.precio_medio
     const precioActual = position.precio_actual_nativo ?? position.precio_actual ?? precioMedio
@@ -182,7 +182,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
 
   const capitalDonut = useMemo(() => {
     const invested = position.coste_total
-    const interest = Math.max(0, (position.valor_actual ?? 0) - invested)
+    const interest = Math.max(0, (position.valor_actual_nativo ?? 0) - invested)
     return [
       { name: "Tu Dinero", value: Math.round(invested), color: "#3b82f6" },
       { name: "Intereses", value: Math.round(interest), color: "#10b981" },

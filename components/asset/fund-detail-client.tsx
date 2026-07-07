@@ -191,7 +191,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <span className="text-xs font-medium uppercase tracking-wider">Ganado por Mercado</span>
             </div>
             <p className={`text-2xl font-bold font-tabular ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, 'EUR')}
+              {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
             </p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
