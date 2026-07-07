@@ -7,7 +7,14 @@ import { es } from "date-fns/locale"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import type { ChartDataPoint } from "./performance-modal"
 
-export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint[] }) {
+interface PortfolioHistoryChartProps {
+  chartData: ChartDataPoint[]
+  onHoverChange?: (point: ChartDataPoint | null) => void
+  hideTooltipContent?: boolean
+  hideAxes?: boolean
+}
+
+export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipContent, hideAxes }: PortfolioHistoryChartProps) {
   const { hideBalances } = usePreferences()
 
   if (!chartData || chartData.length === 0) {
@@ -34,6 +41,8 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
   const isOneDay = spanMs <= 24 * 60 * 60 * 1000
 
   const CustomTooltip = ({ active, payload, label }: any) => {
+    if (hideTooltipContent) return null;
+
     if (active && payload && payload.length) {
       const data = payload[0].payload as ChartDataPoint
       const isPositive = data.totalPnl >= 0
@@ -99,7 +108,18 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
   return (
     <div className="w-full h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 10, right: 4, left: 4, bottom: 0 }}>
+        <AreaChart 
+          data={chartData} 
+          margin={{ top: 10, right: 4, left: 4, bottom: 0 }}
+          onMouseMove={(e: any) => {
+            if (e.activePayload && e.activePayload.length) {
+              onHoverChange?.(e.activePayload[0].payload)
+            }
+          }}
+          onMouseLeave={() => {
+            onHoverChange?.(null)
+          }}
+        >
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={lineColor} stopOpacity={0.25}/>
@@ -107,27 +127,31 @@ export function PortfolioHistoryChart({ chartData }: { chartData: ChartDataPoint
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-          <XAxis 
-            dataKey="timestamp" 
-            axisLine={false} 
-            tickLine={false} 
-            tickFormatter={(date) => format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-            dy={10}
-            minTickGap={40}
-          />
-          <YAxis 
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
-            width={55}
-            dx={-5}
-            domain={[minVal - domainPadding, maxVal + domainPadding]} 
-          />
+          {!hideAxes && (
+            <XAxis 
+              dataKey="timestamp" 
+              axisLine={false} 
+              tickLine={false} 
+              tickFormatter={(date) => format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              dy={10}
+              minTickGap={40}
+            />
+          )}
+          {!hideAxes && (
+            <YAxis 
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
+              width={55}
+              dx={-5}
+              domain={[minVal - domainPadding, maxVal + domainPadding]} 
+            />
+          )}
           <Tooltip 
             content={<CustomTooltip />} 
-            cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: '4 4', strokeOpacity: 0.5 }} 
+            cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: hideTooltipContent ? '0' : '4 4', strokeOpacity: 0.5 }} 
           />
           {/* Invested reference line */}
           {lastInvested && lastInvested > 0 && (

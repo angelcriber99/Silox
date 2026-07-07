@@ -426,18 +426,14 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
         transform: "rotateY(180deg)" 
       }}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            Análisis de Rendimiento
-          </CardTitle>
-          <button onClick={() => setIsFlipped(false)} className="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground" title="Volver a distribución">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden pt-0 flex flex-col">
-         <PerformanceBackFace currentTotalValue={totals.totalValue} currentPnl24h={totals.totalPnl24h} currentTotalCost={totals.totalCost} hideBalances={hideBalances} />
+      <CardContent className="flex-1 overflow-hidden p-4 flex flex-col">
+         <PerformanceBackFace 
+           currentTotalValue={totals.totalValue} 
+           currentPnl24h={totals.totalPnl24h} 
+           currentTotalCost={totals.totalCost} 
+           hideBalances={hideBalances} 
+           onFlipBack={() => setIsFlipped(false)}
+         />
       </CardContent>
     </Card>
 
@@ -462,8 +458,9 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
   )
 }
 
-function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCost, hideBalances }: { currentTotalValue: number, currentPnl24h: number, currentTotalCost: number, hideBalances: boolean }) {
+function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCost, hideBalances, onFlipBack }: { currentTotalValue: number, currentPnl24h: number, currentTotalCost: number, hideBalances: boolean, onFlipBack: () => void }) {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M")
+  const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null)
   const { data: snapshots, isLoading } = useHistory()
 
   const processedData = useMemo(() => {
@@ -565,33 +562,86 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
     return <div className="flex-1 flex items-center justify-center"><Activity className="w-6 h-6 animate-spin text-muted-foreground" /></div>
   }
 
+  const displayPoint = hoveredPoint || (filteredData.length > 0 ? filteredData[filteredData.length - 1] : null)
+  
+  const hoverPnl = hoveredPoint 
+    ? (timeRange === 'ALL' ? hoveredPoint.totalPnl : hoveredPoint.totalPnl - filteredData[0].totalPnl + filteredData[0].pnl)
+    : periodSummary.pnl
+    
+  const startValue = timeRange === 'ALL' 
+    ? (displayPoint?.totalInvested || 1)
+    : (filteredData[0]?.value - filteredData[0]?.pnl || 1)
+    
+  const hoverPercent = hoverPnl / startValue * 100
+
   return (
-    <div className="flex flex-col h-full mt-2">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex bg-muted/50 p-1 rounded-lg border border-border/50">
-          {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
-            <button
-              key={tr}
-              onClick={() => setTimeRange(tr)}
-              className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${
-                timeRange === tr 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              }`}
-            >
-              {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
-            </button>
-          ))}
-        </div>
-        <div className="text-right flex items-baseline gap-2">
-          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest hidden sm:block">En periodo</p>
-          <p className={`text-sm font-bold font-tabular ${periodSummary.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {periodSummary.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(periodSummary.pnl)}
+    <div className="flex flex-col h-full relative group">
+      {/* Header Overlay */}
+      <div className="flex justify-between items-start z-10 w-full mb-4">
+        
+        {/* Top Left: Numbers */}
+        <div className="flex flex-col flex-1">
+          <p className="text-2xl sm:text-3xl font-bold font-tabular text-foreground leading-none">
+            {hideBalances ? "****" : formatCurrency(displayPoint?.value || 0)}
           </p>
+          <div className={`flex items-center gap-1.5 mt-2 font-semibold text-xs sm:text-sm ${hoverPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span>{hoverPnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(hoverPnl)}</span>
+            <span className="flex items-center gap-0.5 opacity-90">
+              {hoverPnl >= 0 ? '▲' : '▼'} {Math.abs(hoverPercent).toFixed(2)}%
+            </span>
+          </div>
+        </div>
+
+        {/* Top Right: Filters & Flip back */}
+        <div className="flex items-center gap-2">
+          <div className="flex bg-card/60 backdrop-blur-md p-1 rounded-lg border border-border/50 shadow-sm hidden sm:flex">
+            {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
+              <button
+                key={tr}
+                onClick={() => setTimeRange(tr)}
+                className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded-md transition-all ${
+                  timeRange === tr 
+                    ? "bg-foreground/10 text-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                }`}
+              >
+                {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
+              </button>
+            ))}
+          </div>
+          <button onClick={onFlipBack} className="p-2 bg-card/60 border border-border/50 backdrop-blur-md hover:bg-muted rounded-xl transition-colors text-muted-foreground hover:text-foreground shadow-sm" title="Volver a distribución">
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </div>
-      <div className="flex-1 min-h-[200px]">
-        <PortfolioHistoryChart chartData={filteredData} />
+
+      <div className="flex bg-card/60 backdrop-blur-md p-1 rounded-lg border border-border/50 shadow-sm sm:hidden mb-4 overflow-x-auto">
+        {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
+          <button
+            key={tr}
+            onClick={() => setTimeRange(tr)}
+            className={`flex-shrink-0 px-2 py-1 text-[10px] font-semibold rounded-md transition-all ${
+              timeRange === tr 
+                ? "bg-foreground/10 text-foreground" 
+                : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+            }`}
+          >
+            {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
+          </button>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <div className="flex-1 min-h-[200px] w-full -mx-4 sm:-mx-6 px-4 sm:px-6 relative">
+        {/* Expand the container horizontally to hide margins but keep lines inside */}
+        <div className="absolute inset-0">
+          <PortfolioHistoryChart 
+             chartData={filteredData} 
+             onHoverChange={setHoveredPoint}
+             hideTooltipContent={true}
+             hideAxes={true}
+          />
+        </div>
       </div>
     </div>
   )
