@@ -1,6 +1,6 @@
 "use client"
 
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell, ReferenceLine, CartesianGrid } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell, ReferenceLine, CartesianGrid, LabelList } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
@@ -59,6 +59,20 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'} />
             ))}
+            {chartData.length < 30 && (
+              <LabelList 
+                dataKey="timestamp" 
+                position="top" 
+                formatter={(val: any) => {
+                  try {
+                    return format(parseISO(val), "d MMM", { locale: es })
+                  } catch(e) { return "" }
+                }}
+                fill="hsl(var(--muted-foreground))" 
+                fontSize={10}
+                fontWeight={500}
+              />
+            )}
           </Bar>
         </BarChart>
       </ResponsiveContainer>

@@ -100,16 +100,28 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     const pnlStr = hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(pnlValue)}`;
     
     return (
-      <text 
-        x={x} 
-        y={y - 12} 
-        fill={isPositive ? '#10b981' : '#f43f5e'} 
-        fontSize={10} 
-        textAnchor="middle" 
-        fontWeight={700}
-      >
-        {pnlStr}
-      </text>
+      <g>
+        <text 
+          x={x} 
+          y={y - 18} 
+          fill={isPositive ? '#10b981' : '#f43f5e'} 
+          fontSize={11} 
+          textAnchor="middle" 
+          fontWeight={700}
+        >
+          {pnlStr}
+        </text>
+        <text 
+          x={x} 
+          y={y - 7} 
+          fill="hsl(var(--muted-foreground))" 
+          fontSize={9} 
+          textAnchor="middle" 
+          fontWeight={500}
+        >
+          {format(parseISO(dataPoint.timestamp), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
+        </text>
+      </g>
     );
   }
 
