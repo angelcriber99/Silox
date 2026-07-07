@@ -77,7 +77,7 @@ export default function Home() {
 
                 {/* Allocation / Performance chart */}
                 <div className="min-w-0">
-                  <AllocationChart positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
+                  <AllocationChart positions={positions} marketState={marketState} />
                 </div>
 
                 {/* Right column: Top Movers + Events */}

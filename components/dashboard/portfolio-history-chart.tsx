@@ -25,7 +25,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
   const minVal = Math.min(...values)
   const maxVal = Math.max(...values)
   const range = maxVal - minVal || 1000
-  const domainPadding = range * 0.15
+  const domainPadding = Math.max(range * 0.1, maxVal * 0.05)
 
   // Determine overall performance to choose color
   const firstValue = chartData[0].value
@@ -85,9 +85,9 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     const dataPoint = chartData[index];
     const firstPoint = chartData[0];
     
-    // Solo mostrar etiquetas si hay pocos datos (ej. 1W o 1M) para no solapar,
-    // y no mostrarlo en el primer punto porque no tiene PnL respecto al inicio.
-    if (!dataPoint || index === 0 || chartData.length > 35 || !firstPoint) return null;
+    // Mostrar de forma más espaciada si hay muchos puntos
+    const step = Math.max(1, Math.floor(chartData.length / 12));
+    if (index % step !== 0 && index !== chartData.length - 1) return null;
 
     // El PnL relativo al inicio del periodo seleccionado
     const relativePnl = dataPoint.totalPnl - firstPoint.totalPnl;
@@ -113,7 +113,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart 
           data={chartData} 
-          margin={{ top: 10, right: 4, left: 4, bottom: 0 }}
+          margin={{ top: 25, right: 20, left: 20, bottom: 25 }}
           onMouseMove={(e: any) => {
             if (e.activePayload && e.activePayload.length) {
               onHoverChange?.(e.activePayload[0].payload)
@@ -135,9 +135,9 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             axisLine={false} 
             tickLine={false} 
             tickFormatter={(date) => format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-            dy={10}
-            minTickGap={40}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontWeight: 500 }}
+            dy={12}
+            minTickGap={30}
           />
           {!hideYAxis && (
             <YAxis 
