@@ -18,6 +18,8 @@ import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
+import Marquee from "react-fast-marquee"
+import Link from "next/link"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
@@ -164,6 +166,13 @@ export function MobileDashboard({
     const c = positions.filter(p => typeof p.change_percent_24h === "number" && p.unidades > 0 && p.change_percent_24h! < 0)
     if (!c.length) return null
     return c.reduce((a, b) => (a.change_percent_24h! < b.change_percent_24h! ? a : b))
+  }, [positions])
+
+  // Movers calculation for real-time impact
+  const movers = useMemo(() => {
+    return [...positions]
+      .filter(p => p.change_amount_24h && Math.abs(p.change_amount_24h) > 0.01)
+      .sort((a, b) => (b.change_amount_24h || 0) - (a.change_amount_24h || 0))
   }, [positions])
 
   // ── Loading skeleton ───────────────────────────────────────────────────
@@ -501,6 +510,48 @@ export function MobileDashboard({
           </div>
         </div>
       </div>
+
+      {/* ─── Live Market Movers (Top Gainers/Losers) ────────────────────── */}
+      {movers.length > 0 && (
+        <div className="py-4 mt-2 mb-4 border-y border-border/10 bg-black/20">
+          <div className="flex items-center px-4 mb-3 gap-2">
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+              Impacto Hoy en Tiempo Real
+            </p>
+          </div>
+          
+          <div className="w-full [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+            <Marquee speed={40} gradient={false} pauseOnHover>
+              {movers.map(p => {
+                const isGain = (p.change_amount_24h || 0) >= 0;
+                return (
+                  <Link key={p.activo_id} href={`/activo/${p.activo_id}`}>
+                    <div 
+                      className="flex items-center gap-2 px-3 py-2 mx-1.5 rounded-[14px] transition-colors border"
+                      style={{
+                        background: isGain ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
+                        borderColor: isGain ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)",
+                      }}
+                    >
+                      <span className="text-[12px] font-extrabold" style={{ color: "var(--foreground)" }}>{p.ticker}</span>
+                      <span 
+                        className="text-[12px] font-bold font-tabular flex items-center"
+                        style={{ color: isGain ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+                      >
+                        {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
+                      </span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </Marquee>
+          </div>
+        </div>
+      )}
 
       {/* ─── Asset filter pills ──────────────────────────────────────────── */}
       {assetTypes.length > 2 && (
