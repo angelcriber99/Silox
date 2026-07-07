@@ -83,7 +83,8 @@ export default function DeclararPage() {
     if (!allTransactions) return []
     return allTransactions.filter(tx => 
       tx.tipo_operacion === 'Dividendo' && 
-      new Date(tx.fecha).getFullYear() === selectedYear
+      new Date(tx.fecha).getFullYear() === selectedYear &&
+      tx.activo?.tipo !== 'Fondo Monetario'
     ).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
   }, [allTransactions, selectedYear])
 
