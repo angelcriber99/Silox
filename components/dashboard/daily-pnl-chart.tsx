@@ -68,9 +68,9 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
                     return format(parseISO(val), "d MMM", { locale: es })
                   } catch(e) { return "" }
                 }}
-                fill="hsl(var(--muted-foreground))" 
+                fill="#a1a1aa" 
                 fontSize={10}
-                fontWeight={500}
+                fontWeight={600}
               />
             )}
           </Bar>

@@ -111,7 +111,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
       <g>
         <text 
           x={x} 
-          y={y - 18} 
+          y={y - 20} 
           fill={isPositive ? '#10b981' : '#f43f5e'} 
           fontSize={11} 
           textAnchor="middle" 
@@ -121,11 +121,11 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
         </text>
         <text 
           x={x} 
-          y={y - 7} 
-          fill="hsl(var(--muted-foreground))" 
-          fontSize={9} 
+          y={y - 8} 
+          fill="#a1a1aa" 
+          fontSize={10} 
           textAnchor="middle" 
-          fontWeight={500}
+          fontWeight={600}
         >
           {(() => {
             try {
