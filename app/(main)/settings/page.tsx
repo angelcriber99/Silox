@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 import { 
   Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell, 
   Volume2, Shield, Download, CreditCard, Link as LinkIcon, 
-  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check
+  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
@@ -78,29 +78,54 @@ export default function SettingsPage() {
     toast.success("Preferencia actualizada")
   }
 
-  const tabs: { id: Tab, label: string, icon: any, color: string }[] = [
-    { id: 'appearance', label: 'Apariencia y Visualización', icon: Palette, color: 'text-blue-500 bg-blue-500/10' },
-    { id: 'security', label: 'Seguridad y Privacidad', icon: Shield, color: 'text-emerald-500 bg-emerald-500/10' },
-    { id: 'notifications', label: 'Notificaciones', icon: Bell, color: 'text-rose-500 bg-rose-500/10' },
-    { id: 'integrations', label: 'Brókers Conectados', icon: LinkIcon, color: 'text-violet-500 bg-violet-500/10' },
-    { id: 'data', label: 'Datos y Exportación', icon: Download, color: 'text-amber-500 bg-amber-500/10' },
+  const tabs: { id: Tab, label: string, icon: any, color: string, accent: string }[] = [
+    { id: 'appearance', label: 'Apariencia', icon: Palette, color: 'oklch(0.68 0.17 192)', accent: 'oklch(0.68 0.17 192 / 0.12)' },
+    { id: 'security', label: 'Seguridad', icon: Shield, color: 'oklch(0.65 0.19 155)', accent: 'oklch(0.65 0.19 155 / 0.12)' },
+    { id: 'notifications', label: 'Notificaciones', icon: Bell, color: 'oklch(0.62 0.20 20)', accent: 'oklch(0.62 0.20 20 / 0.12)' },
+    { id: 'integrations', label: 'Integraciones', icon: LinkIcon, color: 'oklch(0.65 0.17 270)', accent: 'oklch(0.65 0.17 270 / 0.12)' },
+    { id: 'data', label: 'Datos', icon: Download, color: 'oklch(0.72 0.15 55)', accent: 'oklch(0.72 0.15 55 / 0.12)' },
   ]
 
   const CustomSwitch = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
-    <button onClick={onChange} className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${checked ? 'bg-primary' : 'bg-muted-foreground/20'}`}>
-      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+    <button
+      onClick={onChange}
+      className="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      style={{
+        background: checked
+          ? "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))"
+          : "var(--muted-foreground)",
+        opacity: checked ? 1 : 0.3,
+      }}
+    >
+      <span
+        className="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300"
+        style={{ transform: checked ? "translateX(22px)" : "translateX(2px)" }}
+      />
     </button>
   )
 
-  const SettingRow = ({ icon: Icon, title, desc, action, iconColor = "text-foreground" }: any) => (
-    <div className="flex items-center justify-between p-4 bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors group rounded-2xl mb-3">
+  const SettingRow = ({ icon: Icon, title, desc, action, iconColor }: any) => (
+    <div
+      className="flex items-center justify-between p-4 rounded-2xl mb-2.5 transition-colors group"
+      style={{
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+      }}
+    >
       <div className="flex gap-4 items-center">
-        <div className={`p-2.5 rounded-xl bg-background/50 border border-border/50 shadow-sm ${iconColor}`}>
-          <Icon className="w-5 h-5" />
+        <div
+          className="p-2.5 rounded-xl flex-shrink-0"
+          style={{
+            background: "oklch(0.68 0.17 192 / 0.10)",
+            border: "1px solid oklch(0.68 0.17 192 / 0.18)",
+            color: iconColor || "var(--primary)",
+          }}
+        >
+          <Icon className="w-4.5 h-4.5" />
         </div>
         <div className="pr-4">
-          <h3 className="text-[15px] font-semibold text-foreground/90">{title}</h3>
-          <p className="text-[13px] text-muted-foreground/80 mt-0.5 leading-snug">{desc}</p>
+          <h3 className="text-[14px] font-semibold" style={{ color: "var(--foreground)" }}>{title}</h3>
+          <p className="text-[12px] mt-0.5 leading-snug" style={{ color: "var(--muted-foreground)" }}>{desc}</p>
         </div>
       </div>
       <div className="shrink-0">{action}</div>
@@ -108,43 +133,71 @@ export default function SettingsPage() {
   )
 
   return (
-    <div className="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
+    <div
+      className="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-6 md:gap-8 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0 animate-fade-in"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}
+    >
       
-      {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside className="w-full md:w-[280px] shrink-0 flex flex-col">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">Tu centro de preferencias personales</p>
+      {/* ── Sidebar ───────────────────────────────────────── */}
+      <aside className="w-full md:w-[240px] shrink-0 flex flex-col">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1.5">
+            <div
+              className="h-9 w-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
+            >
+              <Settings className="h-4.5 w-4.5" style={{ color: "var(--primary)" }} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+              {t('title')}
+            </h1>
+          </div>
+          <p className="text-sm pl-12" style={{ color: "var(--muted-foreground)" }}>Preferencias personales</p>
         </div>
         
-        <nav className="flex md:flex-col gap-2 overflow-x-auto pb-4 md:pb-0 hide-scrollbar snap-x w-full">
+        <nav className="flex md:flex-col gap-1.5 overflow-x-auto pb-4 md:pb-0 hide-scrollbar snap-x w-full">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`shrink-0 snap-start flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-200 border ${
-                activeTab === tab.id 
-                  ? 'bg-card/80 border-border/60 shadow-sm' 
-                  : 'border-transparent hover:bg-muted/50 hover:border-border/30'
-              }`}
+              className="shrink-0 snap-start flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200"
+              style={{
+                background: activeTab === tab.id ? "var(--card)" : "transparent",
+                border: activeTab === tab.id ? "1px solid var(--border)" : "1px solid transparent",
+                boxShadow: activeTab === tab.id ? "0 1px 4px oklch(0 0 0 / 0.10)" : "none",
+              }}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-lg ${tab.color}`}>
+                <div
+                  className="p-1.5 rounded-lg"
+                  style={{
+                    background: activeTab === tab.id ? tab.accent : "transparent",
+                    color: activeTab === tab.id ? tab.color : "var(--muted-foreground)",
+                  }}
+                >
                   <tab.icon className="w-4 h-4" />
                 </div>
-                <span className={`text-[14px] font-semibold ${activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'}`}>
+                <span
+                  className="text-[13px] font-semibold whitespace-nowrap"
+                  style={{ color: activeTab === tab.id ? "var(--foreground)" : "var(--muted-foreground)" }}
+                >
                   {tab.label}
                 </span>
               </div>
-              {activeTab === tab.id && <ChevronRight className="w-4 h-4 text-muted-foreground hidden md:block" />}
+              {activeTab === tab.id && <ChevronRight className="w-3.5 h-3.5 hidden md:block" style={{ color: "var(--muted-foreground)" }} />}
             </button>
           ))}
         </nav>
 
-        <div className="hidden md:block pt-8 mt-auto">
+        <div className="hidden md:block pt-6 mt-auto">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 transition-all font-bold border border-rose-500/20"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+            style={{
+              background: "oklch(0.62 0.20 20 / 0.08)",
+              border: "1px solid oklch(0.62 0.20 20 / 0.20)",
+              color: "oklch(0.62 0.20 20)",
+            }}
           >
             <LogOut className="w-4 h-4" />
             Cerrar Sesión

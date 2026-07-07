@@ -95,74 +95,113 @@ export default function MovimientosPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 space-y-6" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
         
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-              <History className="h-8 w-8 text-blue-500" />
-              Libro de Movimientos
-            </h1>
-            <p className="text-muted-foreground">
-              Historial completo de operaciones. Utiliza este registro para tu contabilidad.
+        {/* ── Page Header ────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-3">
+              <div
+                className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
+              >
+                <History className="h-5 w-5" style={{ color: "var(--primary)" }} />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+                Movimientos
+              </h1>
+            </div>
+            <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
+              Historial completo de operaciones y contabilidad personal.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2.5">
             <ExportExcelButton 
               transactions={transactions || []} 
               positions={positions || []} 
             />
             <Link 
               href="/declarar" 
-              className="flex items-center gap-2 bg-muted hover:bg-zinc-700 text-foreground px-4 py-2.5 rounded-lg font-medium transition-colors border border-border whitespace-nowrap"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+              style={{
+                background: "oklch(0.68 0.17 192 / 0.10)",
+                border: "1px solid oklch(0.68 0.17 192 / 0.25)",
+                color: "var(--primary)",
+              }}
             >
-              <Scale className="h-4 w-4 text-blue-400" />
-              Asistente de Declaración
+              <Scale className="h-4 w-4" />
+              Declarar
             </Link>
           </div>
         </div>
 
-        {/* Filters Section */}
-        <div className="flex flex-col gap-3 bg-card/40 border border-border p-3 md:p-4 rounded-xl backdrop-blur-sm">
+        {/* ── Filters ──────────────────────────────────────────────── */}
+        <div
+          className="flex flex-col gap-3 p-4 rounded-2xl"
+          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+        >
+          {/* Search */}
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
+            <Search
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4"
+              style={{ color: "var(--muted-foreground)", opacity: 0.6 }}
+            />
             <Input 
               placeholder="Buscar por activo o ticker..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-background border-border text-foreground w-full h-10"
+              className="pl-10 w-full h-10"
+              style={{
+                background: "var(--background)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+              }}
             />
           </div>
+
+          {/* Filter chips */}
           <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar w-full">
-            <select 
-              className="flex-shrink-0 appearance-none bg-background border border-border text-sm text-foreground/80 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as any)}
+            {(["Todos", "Compra", "Venta", "Dividendo"] as const).map(opt => (
+              <button
+                key={opt}
+                onClick={() => setTypeFilter(opt)}
+                className="flex-shrink-0 px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all"
+                style={{
+                  background: typeFilter === opt ? "oklch(0.68 0.17 192 / 0.12)" : "var(--muted)",
+                  border: typeFilter === opt ? "1px solid oklch(0.68 0.17 192 / 0.30)" : "1px solid transparent",
+                  color: typeFilter === opt ? "var(--primary)" : "var(--muted-foreground)",
+                }}
+              >
+                {opt === "Todos" ? "Todas" : opt === "Compra" ? "Compras" : opt === "Venta" ? "Ventas" : "Dividendos"}
+              </button>
+            ))}
+
+            <div
+              className="flex items-center gap-2 flex-shrink-0 rounded-xl px-3 py-1.5"
+              style={{ background: "var(--muted)", border: "1px solid transparent" }}
             >
-              <option value="Todos">Todas las operaciones</option>
-              <option value="Compra">Solo Compras</option>
-              <option value="Venta">Solo Ventas</option>
-              <option value="Dividendo">Solo Dividendos</option>
-            </select>
-            
-            <div className="flex items-center gap-2 flex-shrink-0 bg-background border border-border rounded-lg px-3 py-2">
-              <span className="text-xs text-muted-foreground/80">Desde</span>
+              <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Desde</span>
               <input 
                 type="date" 
                 value={dateFrom} 
                 onChange={(e) => setDateFrom(e.target.value)} 
-                className="bg-transparent text-sm text-foreground/80 outline-none w-auto [color-scheme:dark]"
+                className="bg-transparent text-sm outline-none w-auto [color-scheme:dark]"
+                style={{ color: "var(--foreground)" }}
               />
             </div>
             
-            <div className="flex items-center gap-2 flex-shrink-0 bg-background border border-border rounded-lg px-3 py-2">
-              <span className="text-xs text-muted-foreground/80">Hasta</span>
+            <div
+              className="flex items-center gap-2 flex-shrink-0 rounded-xl px-3 py-1.5"
+              style={{ background: "var(--muted)", border: "1px solid transparent" }}
+            >
+              <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hasta</span>
               <input 
                 type="date" 
                 value={dateTo} 
                 onChange={(e) => setDateTo(e.target.value)} 
-                className="bg-transparent text-sm text-foreground/80 outline-none w-auto [color-scheme:dark]"
+                className="bg-transparent text-sm outline-none w-auto [color-scheme:dark]"
+                style={{ color: "var(--foreground)" }}
               />
             </div>
           </div>
