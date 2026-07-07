@@ -538,6 +538,19 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
 
     const filtered = processedData.filter(d => isAfter(parseISO(d.timestamp), startDate))
     
+    const oldestData = processedData[0]
+    if (oldestData && isAfter(parseISO(oldestData.timestamp), startDate)) {
+      const fakePoint: ChartDataPoint = {
+        timestamp: startDate.toISOString(),
+        value: oldestData.totalInvested,
+        totalInvested: oldestData.totalInvested,
+        pnl: 0,
+        totalPnl: 0,
+        isFirstPoint: true
+      }
+      return [fakePoint, ...filtered]
+    }
+    
     if (filtered.length < 2 && processedData.length >= 2) {
       return processedData.slice(-2)
     }
