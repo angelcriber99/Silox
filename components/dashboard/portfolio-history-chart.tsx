@@ -85,9 +85,17 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     const dataPoint = chartData[index];
     const firstPoint = chartData[0];
     
+    if (!dataPoint || !dataPoint.timestamp) return null;
+
     // Mostrar de forma más espaciada si hay muchos puntos
-    const step = Math.max(1, Math.floor(chartData.length / 12));
-    if (index % step !== 0 && index !== chartData.length - 1) return null;
+    const step = Math.max(1, Math.floor(chartData.length / 8));
+    const isLast = index === chartData.length - 1;
+    const isStep = index % step === 0;
+    
+    // Si no es el último y no toca por step, no mostramos
+    if (!isLast && !isStep) return null;
+    // Si toca por step, pero está muy cerca del último punto, lo ocultamos para que no se solape
+    if (isStep && !isLast && (chartData.length - 1 - index) < Math.max(1, step * 0.7)) return null;
 
     // Para 1D, el neto diario es el acumulado desde el inicio del día (relativePnl)
     // Para 1W, 1M, 1Y, TODO, cada punto es un día, por lo que el neto diario es dataPoint.pnl
@@ -119,7 +127,13 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
           textAnchor="middle" 
           fontWeight={500}
         >
-          {format(parseISO(dataPoint.timestamp), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
+          {(() => {
+            try {
+              return format(parseISO(dataPoint.timestamp), isOneDay ? "HH:mm" : "d MMM", { locale: es })
+            } catch(e) {
+              return ""
+            }
+          })()}
         </text>
       </g>
     );
