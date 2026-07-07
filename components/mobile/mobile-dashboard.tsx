@@ -13,7 +13,6 @@ import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
-import { PerformanceModal } from "@/components/dashboard/performance-modal"
 import { usePortfolio, useHistory } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion } from "framer-motion"
@@ -75,7 +74,6 @@ export function MobileDashboard({
   marketState = "CLOSED",
 }: MobileDashboardProps) {
   const { hideBalances, setHideBalances } = usePreferences()
-  const [performanceOpen, setPerformanceOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [filterType, setFilterType] = useState<string>("All")
   const [scrubData, setScrubData] = useState<{ i: number; v: number; pnl: number } | null>(null)
@@ -479,8 +477,8 @@ export function MobileDashboard({
             </div>
           </div>
           
-          {/* Box 3: 24h & Best Performer */}
-          <div className="col-span-2 grid grid-cols-2 gap-3">
+          {/* Box 3: 24h */}
+          <div className="col-span-2">
             <div
               className="flex items-center justify-between p-3 rounded-2xl"
               style={{
@@ -500,24 +498,6 @@ export function MobileDashboard({
                 </p>
               </div>
             </div>
-
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              onClick={() => { hapticFeedback.light(); setPerformanceOpen(true) }}
-              className="flex items-center justify-between p-3 rounded-2xl"
-              style={{
-                background: "oklch(0.68 0.17 192 / 0.12)",
-                border: "1px solid oklch(0.68 0.17 192 / 0.20)",
-              }}
-            >
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--primary)", opacity: 0.8 }}>Análisis</p>
-                <p className="text-[14px] font-bold mt-0.5" style={{ color: "var(--primary)" }}>Ver detalle</p>
-              </div>
-              <div className="p-1.5 rounded-full" style={{ background: "var(--primary)", color: "white" }}>
-                <BarChart2 className="w-3.5 h-3.5" />
-              </div>
-            </motion.button>
           </div>
         </div>
       </div>
@@ -654,13 +634,6 @@ export function MobileDashboard({
       </div>
 
       {/* ─── Modals ──────────────────────────────────────────────────────── */}
-      <PerformanceModal
-        open={performanceOpen}
-        onOpenChange={setPerformanceOpen}
-        currentPnl24h={totals.totalPnl24h}
-        currentTotalValue={totals.totalValue}
-        currentTotalCost={totals.totalCost}
-      />
       <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
     </div>
   )

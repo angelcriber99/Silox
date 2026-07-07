@@ -10,7 +10,6 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
 import type { PortfolioTotals, EnrichedPosition, Transaccion } from "@/lib/types"
 import { useState, useMemo } from "react"
-import { PerformanceModal } from "./performance-modal"
 import Link from "next/link"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useTranslations } from "next-intl"
@@ -38,7 +37,6 @@ export function PortfolioSummary({
   loading = false,
 }: PortfolioSummaryProps) {
   const { hideBalances } = usePreferences()
-  const [performanceOpen, setPerformanceOpen] = useState(false)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [cashAssetId, setCashAssetId] = useState<string | null>(null)
   const t = useTranslations("Dashboard")
@@ -175,13 +173,6 @@ export function PortfolioSummary({
 
           {/* Right: Quick actions */}
           <div className="flex flex-row md:absolute md:top-8 md:right-6 md:flex-col gap-3 mt-4 md:mt-0 z-20">
-            <button
-              onClick={() => setPerformanceOpen(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"
-            >
-              <BarChart2 className="w-4 h-4" />
-              Rendimiento
-            </button>
             {liquidezAmount > 0 && (
               <div className="flex flex-col items-center md:items-end gap-1">
                 <button
@@ -337,14 +328,6 @@ export function PortfolioSummary({
           </Marquee>
         </div>
       )}
-
-      <PerformanceModal
-        open={performanceOpen}
-        onOpenChange={setPerformanceOpen}
-        currentPnl24h={totals.totalPnl24h}
-        currentTotalValue={totals.totalValue}
-        currentTotalCost={totals.totalCost}
-      />
       <WithdrawCashModal
         open={withdrawModalOpen}
         onOpenChange={setWithdrawModalOpen}
