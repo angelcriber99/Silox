@@ -274,7 +274,9 @@ export function PortfolioSummary({
             <>
               <Link href={`/activo/${topDailyAsset.activo_id}`} className="group w-fit">
                 <p className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                  {topDailyAsset.ticker}
+                  {topDailyAsset.tipo === "Fondo Indexado" || topDailyAsset.tipo === "Fondo Monetario" 
+                    ? topDailyAsset.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
+                    : topDailyAsset.ticker.split(".")[0]}
                 </p>
               </Link>
               <p className={`text-xs font-semibold font-tabular ${(topDailyAsset.change_amount_24h || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
@@ -303,7 +305,11 @@ export function PortfolioSummary({
                       : "bg-rose-500/5 border-rose-500/15 hover:bg-rose-500/10"
                   }`}
                 >
-                  <span className="text-[11px] font-bold text-foreground/80">{p.ticker}</span>
+                  <span className="text-[11px] font-bold text-foreground/80">
+                    {p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" 
+                      ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
+                      : p.ticker.split(".")[0]}
+                  </span>
                   <span className={`text-[11px] font-bold font-tabular flex items-center ${isGain ? "text-emerald-400" : "text-rose-400"}`}>
                     {isGain ? "+" : ""}{formatCurrency(p.change_amount_24h || 0)}
                   </span>
