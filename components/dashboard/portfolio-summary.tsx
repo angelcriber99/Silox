@@ -57,6 +57,11 @@ export function PortfolioSummary({
     }, 0)
   }, [pendingTxs])
 
+  const topDailyAsset = useMemo(() => {
+    if (!positions.length) return null
+    return [...positions].sort((a, b) => (b.change_amount_24h ?? -Infinity) - (a.change_amount_24h ?? -Infinity))[0]
+  }, [positions])
+
   const historicalAssets = useMemo(() => {
     if (!positions.length) return []
     const fifoEvents = calculateFIFO(transactions || [])
@@ -280,27 +285,27 @@ export function PortfolioSummary({
           </p>
         </div>
 
-        {/* Historical best */}
+        {/* Top Activo Hoy */}
         <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Mejor activo</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Top Activo Hoy</span>
             <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">
-              <Activity className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-amber-400" />
             </div>
           </div>
-          {historicalAssets.length > 0 ? (
+          {topDailyAsset ? (
             <>
-              <Link href={`/activo/${historicalAssets[0].id}`} className="group w-fit">
+              <Link href={`/activo/${topDailyAsset.activo_id}`} className="group w-fit">
                 <p className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                  {historicalAssets[0].ticker}
+                  {topDailyAsset.ticker}
                 </p>
               </Link>
-              <p className={`text-xs font-semibold font-tabular ${historicalAssets[0].historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {hideBalances ? "••••" : formatPnl(historicalAssets[0].historicalPnl)} histórico
+              <p className={`text-xs font-semibold font-tabular ${(topDailyAsset.change_amount_24h || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                {hideBalances ? "••••" : formatPnl(topDailyAsset.change_amount_24h || 0)} hoy
               </p>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground/40 mt-1">Sin datos</p>
+            <p className="text-sm text-muted-foreground mt-2">Sin datos de hoy</p>
           )}
         </div>
       </div>

@@ -88,7 +88,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     if (!dataPoint || !dataPoint.timestamp) return null;
 
     // Mostrar de forma más espaciada si hay muchos puntos
-    const step = Math.max(1, Math.floor(chartData.length / 8));
+    const step = chartData.length <= 35 ? 1 : Math.max(1, Math.floor(chartData.length / 8));
     const isLast = index === chartData.length - 1;
     const isStep = index % step === 0;
     
