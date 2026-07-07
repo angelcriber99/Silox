@@ -80,65 +80,8 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     return null
   }
 
-  const renderCustomLabel = (props: any) => {
-    const { x, y, index } = props;
-    const dataPoint = chartData[index];
-    const firstPoint = chartData[0];
-    
-    if (!dataPoint || !dataPoint.timestamp) return null;
-
-    // Mostrar de forma más espaciada si hay muchos puntos
-    const step = chartData.length <= 35 ? 1 : Math.max(1, Math.floor(chartData.length / 8));
-    const isLast = index === chartData.length - 1;
-    const isStep = index % step === 0;
-    
-    // Si no es el último y no toca por step, no mostramos
-    if (!isLast && !isStep) return null;
-    // Si toca por step, pero está muy cerca del último punto, lo ocultamos para que no se solape
-    if (isStep && !isLast && (chartData.length - 1 - index) < Math.max(1, step * 0.7)) return null;
-
-    // Para 1D, el neto diario es el acumulado desde el inicio del día (relativePnl)
-    // Para 1W, 1M, 1Y, TODO, cada punto es un día, por lo que el neto diario es dataPoint.pnl
-    const pnlValue = isOneDay ? (dataPoint.totalPnl - firstPoint.totalPnl) : dataPoint.pnl;
-    
-    // Safety check just in case
-    if (pnlValue === undefined || isNaN(pnlValue)) return null;
-
-    const isPositive = pnlValue >= 0;
-    const pnlStr = hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(pnlValue)}`;
-    
-    return (
-      <g>
-        <text 
-          x={x} 
-          y={y - 20} 
-          fill={isPositive ? '#10b981' : '#f43f5e'} 
-          fontSize={11} 
-          textAnchor="middle" 
-          fontWeight={700}
-        >
-          {pnlStr}
-        </text>
-        <text 
-          x={x} 
-          y={y - 8} 
-          fill="#a1a1aa" 
-          fontSize={10} 
-          textAnchor="middle" 
-          fontWeight={600}
-        >
-          {(() => {
-            try {
-              return format(parseISO(dataPoint.timestamp), isOneDay ? "HH:mm" : "d MMM", { locale: es })
-            } catch(e) {
-              return ""
-            }
-          })()}
-        </text>
-      </g>
-    );
-  }
-
+  // The floating labels were removed to achieve a cleaner, more professional look.
+  // The X-axis already handles date labels, and the interactive tooltip provides exact values.
   return (
     <div className="w-full h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -156,11 +99,15 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
         >
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={lineColor} stopOpacity={0.25}/>
+              <stop offset="5%" stopColor={lineColor} stopOpacity={0.35}/>
               <stop offset="95%" stopColor={lineColor} stopOpacity={0}/>
             </linearGradient>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
           <XAxis 
             dataKey="timestamp" 
             axisLine={false} 
@@ -202,16 +149,16 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             />
           )}
           <Area 
-            type="linear" 
+            type="monotone" 
             dataKey="value" 
             stroke={lineColor} 
-            strokeWidth={2.5}
+            strokeWidth={3}
             fillOpacity={1} 
             fill="url(#colorValue)" 
-            activeDot={{ r: 6, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 3 }}
-            dot={chartData.length <= 45 ? { r: 3, fill: "hsl(var(--background))", stroke: lineColor, strokeWidth: 2 } : false}
-            label={renderCustomLabel}
+            activeDot={{ r: 5, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 3 }}
+            dot={false}
             isAnimationActive={false}
+            filter="url(#glow)"
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -59,20 +59,6 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'} />
             ))}
-            {chartData.length < 30 && (
-              <LabelList 
-                dataKey="timestamp" 
-                position="top" 
-                formatter={(val: any) => {
-                  try {
-                    return format(parseISO(val), "d MMM", { locale: es })
-                  } catch(e) { return "" }
-                }}
-                fill="#a1a1aa" 
-                fontSize={10}
-                fontWeight={600}
-              />
-            )}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
