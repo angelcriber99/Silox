@@ -239,7 +239,10 @@ export function PositionsTable({
     >
       <span className="inline-flex items-center gap-1">
         {label}
-        <ArrowUpDown className={`h-3 w-3 ${sortKey === sortKeyName ? "text-blue-400" : "opacity-40"}`} />
+        <ArrowUpDown
+          className="h-3 w-3"
+          style={{ color: sortKey === sortKeyName ? "var(--primary)" : undefined, opacity: sortKey === sortKeyName ? 1 : 0.4 }}
+        />
       </span>
     </TableHead>
   )
@@ -331,7 +334,10 @@ export function PositionsTable({
             <Button
               size="sm"
               onClick={() => setAddAssetOpen(true)}
-              className="bg-blue-600 hover:bg-blue-500 text-white transition-colors duration-200"
+              className="transition-colors duration-200 text-white"
+              style={{
+                background: "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))",
+              }}
             >
               <Plus className="mr-2 h-3.5 w-3.5" />
               {t('add_asset')}

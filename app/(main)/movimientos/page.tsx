@@ -224,7 +224,7 @@ export default function MovimientosPage() {
                   <th className="px-4 py-4 font-medium text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/60">
+              <tbody className="divide-y divide-border/40">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i}>

@@ -35,7 +35,7 @@ export default function HistorialPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col animate-fade-in">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 space-y-8">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 mb-20 md:mb-0 space-y-8">
         
         {/* Header Section */}
         <div className="flex flex-col gap-4">
@@ -48,21 +48,31 @@ export default function HistorialPage() {
           </Link>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-xl border border-violet-500/20">
-                  <Activity className="h-6 w-6 text-violet-400" />
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "oklch(0.65 0.17 270 / 0.12)", border: "1px solid oklch(0.65 0.17 270 / 0.20)" }}
+                >
+                  <Activity className="h-5 w-5" style={{ color: "oklch(0.65 0.17 270)" }} />
                 </div>
-                Year in Review
-              </h1>
-              <p className="text-muted-foreground">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+                  Year in Review
+                </h1>
+              </div>
+              <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
                 Resumen anual de tu actividad inversora, compras, ventas y rentabilidad.
               </p>
             </div>
             
             <div className="relative">
               <select 
-                className="appearance-none bg-muted border border-border text-foreground font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-violet-500/50 cursor-pointer transition-shadow"
+                className="appearance-none font-semibold rounded-xl pl-4 pr-8 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 cursor-pointer transition-all text-sm"
+                style={{
+                  background: "oklch(0.65 0.17 270 / 0.10)",
+                  border: "1px solid oklch(0.65 0.17 270 / 0.25)",
+                  color: "oklch(0.65 0.17 270)",
+                }}
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
               >
@@ -70,8 +80,8 @@ export default function HistorialPage() {
                   <option key={year} value={year}>Año {year}</option>
                 ))}
               </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                ▼
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs">
+                ▾
               </div>
             </div>
           </div>

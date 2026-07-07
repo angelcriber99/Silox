@@ -93,8 +93,7 @@ export default function SettingsPage() {
       style={{
         background: checked
           ? "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))"
-          : "var(--muted-foreground)",
-        opacity: checked ? 1 : 0.3,
+          : "oklch(0.28 0.01 235)",
       }}
     >
       <span

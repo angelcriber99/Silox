@@ -107,7 +107,7 @@ export default function DeclararPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 mb-20 md:mb-0 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
         
         {/* Header Section */}
         <div className="flex flex-col gap-4">
@@ -120,20 +120,32 @@ export default function DeclararPage() {
           </Link>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-                <Scale className="h-8 w-8 text-blue-500" />
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-3">
+              <div
+                className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
+              >
+                <Scale className="h-5 w-5" style={{ color: "var(--primary)" }} />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
                 Asistente de Declaración
               </h1>
-              <p className="text-muted-foreground">
-                Cálculo automatizado de ganancias y pérdidas patrimoniales (Método FIFO).
-              </p>
             </div>
+            <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
+              Cálculo automatizado de ganancias y pérdidas patrimoniales (Método FIFO).
+            </p>
+          </div>
             <div className="flex items-center gap-3">
               <TaxPdfExport targetId="tax-report-content" filename={`Silox_Informe_Fiscal_${selectedYear}.pdf`} />
               <div className="relative">
                 <select 
-                  className="appearance-none bg-muted border border-border text-foreground font-medium rounded-lg pl-4 pr-10 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+                  className="appearance-none font-semibold rounded-xl pl-4 pr-8 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 cursor-pointer transition-all text-sm"
+                  style={{
+                    background: "oklch(0.68 0.17 192 / 0.10)",
+                    border: "1px solid oklch(0.68 0.17 192 / 0.25)",
+                    color: "var(--primary)",
+                  }}
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
                 >
@@ -141,8 +153,8 @@ export default function DeclararPage() {
                     <option key={year} value={year}>Año {year}</option>
                   ))}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                  ▼
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs">
+                  ▾
                 </div>
               </div>
             </div>
@@ -187,15 +199,24 @@ export default function DeclararPage() {
                 </p>
               </div>
 
-              <div className="bg-blue-900/10 border border-blue-800/40 rounded-xl p-6 backdrop-blur-sm">
-                <div className="flex items-center gap-2 text-blue-400 mb-2 font-medium">
+              <div
+                className="rounded-2xl p-6"
+                style={{
+                  background: "oklch(0.68 0.17 192 / 0.08)",
+                  border: "1px solid oklch(0.68 0.17 192 / 0.20)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2 font-medium" style={{ color: "var(--primary)" }}>
                   <Scale className="h-5 w-5" />
                   Rendimiento Neto
                 </div>
-                <div className={`text-3xl font-bold font-tabular ${totals.net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                <div
+                  className="text-3xl font-bold font-tabular"
+                  style={{ color: totals.net >= 0 ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+                >
                   {totals.net >= 0 ? "+" : ""}{formatCurrency(totals.net)}
                 </div>
-                <p className="text-sm text-blue-400/80 mt-2 font-medium">
+                <p className="text-sm mt-2 font-medium" style={{ color: "var(--primary)", opacity: 0.7 }}>
                   {totals.net >= 0 ? "Ganancia sujeta a tributación." : "Pérdida a compensar."}
                 </p>
               </div>

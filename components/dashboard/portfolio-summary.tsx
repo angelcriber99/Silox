@@ -130,7 +130,10 @@ export function PortfolioSummary({
             
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 w-fit">
               {/* Total PnL */}
-              <div className={`flex items-center justify-center gap-1.5 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+              <div
+                className="flex items-center justify-center gap-1.5"
+                style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+              >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="text-[16px] font-bold font-tabular">
                   {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
@@ -143,7 +146,10 @@ export function PortfolioSummary({
               <span className="w-px h-4 bg-border/60" />
 
               {/* 24h */}
-              <div className={`flex items-center gap-1 text-[13px] font-medium ${daily24Positive ? "text-emerald-400/90" : "text-rose-400/90"}`}>
+              <div
+                className="flex items-center gap-1 text-[13px] font-medium"
+                style={{ color: daily24Positive ? "oklch(0.65 0.19 155 / 0.9)" : "oklch(0.62 0.20 20 / 0.9)" }}
+              >
                 <span className="text-muted-foreground font-normal">Hoy</span>
                 <span className="font-semibold font-tabular">
                   {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
@@ -229,14 +235,25 @@ export function PortfolioSummary({
         </div>
 
         {/* P&L */}
-        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
+        <div
+          className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Ganancia Total</span>
-            <div className={`p-1.5 rounded-lg ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            <div
+              className="p-1.5 rounded-lg"
+              style={{
+                background: isPositive ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
+                color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
+              }}
+            >
               {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
             </div>
           </div>
-          <p className={`text-xl md:text-2xl font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+          <p
+            className="text-xl md:text-2xl font-bold font-tabular"
+            style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+          >
             <AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />
           </p>
           <p className="text-xs text-muted-foreground/60">
@@ -248,14 +265,26 @@ export function PortfolioSummary({
         <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Rentabilidad</span>
-            <div className={`p-1.5 rounded-lg ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            <div
+              className="p-1.5 rounded-lg"
+              style={{
+                background: isPositive ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
+                color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
+              }}
+            >
               <Target className="w-4 h-4" />
             </div>
           </div>
-          <p className={`text-xl md:text-2xl font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+          <p
+            className="text-xl md:text-2xl font-bold font-tabular"
+            style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+          >
             <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
           </p>
-          <p className={`text-xs ${daily24Positive ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+          <p
+            className="text-xs"
+            style={{ color: daily24Positive ? "oklch(0.65 0.19 155 / 0.8)" : "oklch(0.62 0.20 20 / 0.8)" }}
+          >
             Hoy: {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
           </p>
         </div>
