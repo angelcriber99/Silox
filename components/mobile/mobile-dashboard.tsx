@@ -536,6 +536,7 @@ export function MobileDashboard({
                         background: isGain ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
                         borderColor: isGain ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)",
                       }}
+                    >
                       <span className="text-[12px] font-extrabold" style={{ color: "var(--foreground)" }}>
                         {p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" 
                           ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
