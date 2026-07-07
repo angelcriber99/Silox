@@ -211,6 +211,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             activeDot={{ r: 6, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 3 }}
             dot={chartData.length <= 45 ? { r: 3, fill: "hsl(var(--background))", stroke: lineColor, strokeWidth: 2 } : false}
             label={renderCustomLabel}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>

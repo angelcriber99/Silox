@@ -55,7 +55,7 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
           <YAxis hide />
           <ReferenceLine y={0} stroke="#27272a" />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
-          <Bar dataKey="pnl" radius={[4, 4, 4, 4]}>
+          <Bar dataKey="pnl" radius={[4, 4, 4, 4]} isAnimationActive={false}>
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'} />
             ))}
