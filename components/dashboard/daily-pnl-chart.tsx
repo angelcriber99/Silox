@@ -41,15 +41,15 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
   return (
     <div className="w-full h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+        <BarChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
           <XAxis 
             dataKey="timestamp" 
             axisLine={false} 
             tickLine={false} 
             tickFormatter={(date) => format(parseISO(date), "d MMM")}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-            dy={10}
+            tick={{ fill: '#a1a1aa', fontSize: 11 }}
+            tickMargin={10}
             minTickGap={30}
           />
           <YAxis hide />

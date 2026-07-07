@@ -87,7 +87,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart 
           data={chartData} 
-          margin={{ top: 25, right: 20, left: 20, bottom: 25 }}
+          margin={{ top: 25, right: 20, left: 20, bottom: 35 }}
           onMouseMove={(e: any) => {
             if (e.activePayload && e.activePayload.length) {
               onHoverChange?.(e.activePayload[0].payload)
@@ -120,8 +120,8 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
                 return "";
               }
             }}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontWeight: 500 }}
-            dy={12}
+            tick={{ fill: '#a1a1aa', fontSize: 12, fontWeight: 500 }}
+            tickMargin={15}
             minTickGap={30}
           />
           <YAxis 

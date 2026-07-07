@@ -8,6 +8,7 @@ import { PortfolioHistoryChart } from "./portfolio-history-chart"
 import { BarChart2, Activity } from "lucide-react"
 import { useHistory } from "@/lib/hooks/use-portfolio"
 import { format, parseISO, subDays, subMonths, subYears, isAfter, startOfDay } from "date-fns"
+import { es } from "date-fns/locale"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
@@ -32,6 +33,7 @@ export interface ChartDataPoint {
 
 export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTotalValue, currentTotalCost }: PerformanceModalProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M")
+  const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null)
   const { data: snapshots, isLoading } = useHistory()
   const { hideBalances } = usePreferences()
 
@@ -132,28 +134,34 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
   }, [processedData, timeRange])
 
   // Calculate period summary
-  const periodSummary = useMemo(() => {
-    if (filteredData.length === 0) return { pnl: 0, pnlPercent: 0, endValue: 0 }
+  const displayData = useMemo(() => {
+    if (filteredData.length === 0) return { endValue: 0, pnl: 0, pnlPercent: 0, dateLabel: "En este periodo" }
     
     const first = filteredData[0]
-    const last = filteredData[filteredData.length - 1]
+    const target = hoveredPoint || filteredData[filteredData.length - 1]
     
-    const periodPnl = timeRange === 'ALL' 
-      ? last.totalPnl 
-      : last.totalPnl - first.totalPnl
+    const pnl = timeRange === 'ALL' 
+      ? target.totalPnl 
+      : target.totalPnl - first.totalPnl
       
     const startValue = timeRange === 'ALL' ? first.totalInvested : first.value
       
-    const pnlPercent = timeRange === 'ALL'
-      ? (last.totalInvested > 0 ? (last.totalPnl / last.totalInvested) * 100 : 0)
-      : (startValue > 0 ? (periodPnl / startValue) * 100 : 0)
+    const pnlPercent = startValue > 0 ? (pnl / startValue) * 100 : 0
+    
+    let dateLabel = "En este periodo"
+    if (hoveredPoint) {
+      dateLabel = format(parseISO(hoveredPoint.timestamp), "d MMM yyyy, HH:mm", { locale: es })
+    } else if (timeRange === "1D") {
+      dateLabel = "Hoy"
+    }
     
     return {
-      pnl: periodPnl,
+      endValue: target.value,
+      pnl,
       pnlPercent,
-      endValue: last.value
+      dateLabel
     }
-  }, [filteredData, timeRange])
+  }, [filteredData, timeRange, hoveredPoint])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -196,17 +204,17 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Patrimonio</p>
                 <p className="text-3xl font-bold font-tabular text-foreground">
-                  {hideBalances ? "****" : formatCurrency(periodSummary.endValue)}
+                  {hideBalances ? "****" : formatCurrency(displayData.endValue)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">En este periodo</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">{displayData.dateLabel}</p>
                 <div className="flex items-baseline gap-2">
-                  <p className={`text-xl font-bold font-tabular ${periodSummary.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {periodSummary.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(periodSummary.pnl)}
+                  <p className={`text-xl font-bold font-tabular ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {displayData.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayData.pnl)}
                   </p>
-                  <p className={`text-sm font-medium ${periodSummary.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    ({periodSummary.pnlPercent >= 0 ? '+' : ''}{formatPercent(periodSummary.pnlPercent).replace('+', '')})
+                  <p className={`text-sm font-medium ${displayData.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    ({displayData.pnlPercent >= 0 ? '+' : ''}{formatPercent(displayData.pnlPercent).replace('+', '')})
                   </p>
                 </div>
               </div>
@@ -235,7 +243,7 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
                 </TabsList>
               </div>
               <TabsContent value="patrimonio" className="mt-0">
-                <PortfolioHistoryChart chartData={filteredData} />
+                <PortfolioHistoryChart chartData={filteredData} onHoverChange={setHoveredPoint} />
               </TabsContent>
               <TabsContent value="pnl" className="mt-0">
                 <DailyPnlChart chartData={filteredData} />
