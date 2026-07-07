@@ -62,34 +62,11 @@ export function PortfolioSummary({
     return [...positions].sort((a, b) => (b.change_amount_24h ?? -Infinity) - (a.change_amount_24h ?? -Infinity))[0]
   }, [positions])
 
-  const historicalAssets = useMemo(() => {
-    if (!positions.length) return []
-    const fifoEvents = calculateFIFO(transactions || [])
-    const realizedByAsset: Record<string, number> = {}
-    fifoEvents.forEach(e => {
-      realizedByAsset[e.activoId] = (realizedByAsset[e.activoId] || 0) + e.gananciaPatrimonial
-    })
-    transactions.forEach(tx => {
-      if (tx.tipo_operacion === "Dividendo") {
-        const netDiv = (Number(tx.cantidad) || 0) * (Number(tx.precio_unitario) || 0) - (Number(tx.comision) || 0)
-        realizedByAsset[tx.activo_id] = (realizedByAsset[tx.activo_id] || 0) + netDiv
-      }
-    })
-    return positions
-      .map(p => {
-        const hPnl = (realizedByAsset[p.activo_id] || 0) + (p.pnl || 0)
-        return {
-          id: p.activo_id,
-          ticker: p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
-            ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
-            : p.ticker.split(".")[0],
-          historicalPnl: hPnl,
-          unidades: p.unidades
-        }
-      })
-      .filter(p => p.unidades > 0 || Math.abs(p.historicalPnl) > 0.01)
-      .sort((a, b) => b.historicalPnl - a.historicalPnl)
-  }, [positions, transactions])
+  const movers = useMemo(() => {
+    return [...positions]
+      .filter(p => p.change_amount_24h && Math.abs(p.change_amount_24h) > 0.01)
+      .sort((a, b) => (b.change_amount_24h || 0) - (a.change_amount_24h || 0))
+  }, [positions])
 
   if (loading) {
     return (
@@ -310,26 +287,29 @@ export function PortfolioSummary({
         </div>
       </div>
 
-      {/* ── Historical per-asset strip (scrollable) ─────────────────── */}
-      {!hideBalances && historicalAssets.length > 1 && (
-        <div className="py-3 border-t border-border/20 overflow-hidden">
-          <Marquee speed={30} gradient={false} pauseOnHover={true}>
-            {historicalAssets.map(asset => (
-              <Link
-                key={asset.id}
-                href={`/activo/${asset.id}`}
-                className={`mx-1 flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-105 ${
-                  asset.historicalPnl >= 0
-                    ? "bg-emerald-500/5 border-emerald-500/15 hover:bg-emerald-500/10"
-                    : "bg-rose-500/5 border-rose-500/15 hover:bg-rose-500/10"
-                }`}
-              >
-                <span className="text-[11px] font-bold text-foreground/80">{asset.ticker}</span>
-                <span className={`text-[11px] font-bold font-tabular ${asset.historicalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  {asset.historicalPnl >= 0 ? "+" : ""}{formatCurrency(asset.historicalPnl)}
-                </span>
-              </Link>
-            ))}
+      {/* ── Live Market Movers (scrollable) ─────────────────── */}
+      {!hideBalances && movers.length > 0 && (
+        <div className="py-2.5 border-t border-border/10 overflow-hidden bg-background/30 [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+          <Marquee speed={35} gradient={false} pauseOnHover={true}>
+            {movers.map(p => {
+              const isGain = (p.change_amount_24h || 0) >= 0;
+              return (
+                <Link
+                  key={p.activo_id}
+                  href={`/activo/${p.activo_id}`}
+                  className={`mx-1.5 flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] border transition-all hover:scale-105 ${
+                    isGain
+                      ? "bg-emerald-500/5 border-emerald-500/15 hover:bg-emerald-500/10"
+                      : "bg-rose-500/5 border-rose-500/15 hover:bg-rose-500/10"
+                  }`}
+                >
+                  <span className="text-[11px] font-bold text-foreground/80">{p.ticker}</span>
+                  <span className={`text-[11px] font-bold font-tabular flex items-center ${isGain ? "text-emerald-400" : "text-rose-400"}`}>
+                    {isGain ? "+" : ""}{formatCurrency(p.change_amount_24h || 0)}
+                  </span>
+                </Link>
+              )
+            })}
           </Marquee>
         </div>
       )}
