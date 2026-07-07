@@ -11,10 +11,10 @@ interface PortfolioHistoryChartProps {
   chartData: ChartDataPoint[]
   onHoverChange?: (point: ChartDataPoint | null) => void
   hideTooltipContent?: boolean
-  hideAxes?: boolean
+  hideYAxis?: boolean
 }
 
-export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipContent, hideAxes }: PortfolioHistoryChartProps) {
+export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipContent, hideYAxis }: PortfolioHistoryChartProps) {
   const { hideBalances } = usePreferences()
 
   if (!chartData || chartData.length === 0) {
@@ -80,7 +80,33 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     return null
   }
 
+  const renderCustomLabel = (props: any) => {
+    const { x, y, index } = props;
+    const dataPoint = chartData[index];
+    const firstPoint = chartData[0];
+    
+    // Solo mostrar etiquetas si hay pocos datos (ej. 1W o 1M) para no solapar,
+    // y no mostrarlo en el primer punto porque no tiene PnL respecto al inicio.
+    if (!dataPoint || index === 0 || chartData.length > 35 || !firstPoint) return null;
 
+    // El PnL relativo al inicio del periodo seleccionado
+    const relativePnl = dataPoint.totalPnl - firstPoint.totalPnl;
+    const isPositive = relativePnl >= 0;
+    const pnlStr = hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(relativePnl)}`;
+    
+    return (
+      <text 
+        x={x} 
+        y={y - 12} 
+        fill={isPositive ? '#10b981' : '#f43f5e'} 
+        fontSize={10} 
+        textAnchor="middle" 
+        fontWeight={700}
+      >
+        {pnlStr}
+      </text>
+    );
+  }
 
   return (
     <div className="w-full h-[320px]">
@@ -104,18 +130,16 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-          {!hideAxes && (
-            <XAxis 
-              dataKey="timestamp" 
-              axisLine={false} 
-              tickLine={false} 
-              tickFormatter={(date) => format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-              dy={10}
-              minTickGap={40}
-            />
-          )}
-          {!hideAxes && (
+          <XAxis 
+            dataKey="timestamp" 
+            axisLine={false} 
+            tickLine={false} 
+            tickFormatter={(date) => format(parseISO(date), isOneDay ? "HH:mm" : "d MMM", { locale: es })}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+            dy={10}
+            minTickGap={40}
+          />
+          {!hideYAxis && (
             <YAxis 
               axisLine={false}
               tickLine={false}
@@ -149,6 +173,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             fill="url(#colorValue)" 
             activeDot={{ r: 6, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 3 }}
             dot={chartData.length <= 45 ? { r: 3, fill: "hsl(var(--background))", stroke: lineColor, strokeWidth: 2 } : false}
+            label={renderCustomLabel}
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -652,7 +652,7 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
              chartData={filteredData} 
              onHoverChange={setHoveredPoint}
              hideTooltipContent={true}
-             hideAxes={true}
+             hideYAxis={true}
           />
         </div>
       </div>
