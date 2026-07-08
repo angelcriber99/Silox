@@ -599,11 +599,20 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
           <p className="text-2xl sm:text-3xl font-bold font-tabular text-foreground leading-none">
             {hideBalances ? "****" : formatCurrency(displayPoint?.value || 0)}
           </p>
-          <div className={`flex items-center gap-1.5 mt-2 font-semibold text-xs sm:text-sm ${hoverPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            <span>{hoverPnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(hoverPnl)}</span>
-            <span className="flex items-center gap-0.5 opacity-90">
-              {hoverPnl >= 0 ? '▲' : '▼'} {Math.abs(hoverPercent).toFixed(2)}%
-            </span>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <div className={`flex items-center gap-1.5 font-semibold text-xs sm:text-sm ${hoverPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <span>{hoverPnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(hoverPnl)}</span>
+              <span className="flex items-center gap-0.5 opacity-90">
+                {hoverPnl >= 0 ? '▲' : '▼'} {Math.abs(hoverPercent).toFixed(2)}%
+              </span>
+            </div>
+            
+            {timeRange !== '1D' && (
+              <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${currentPnl24h >= 0 ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-500 dark:text-rose-400'}`}>
+                <span className="opacity-70">Hoy:</span>
+                <span>{currentPnl24h >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(currentPnl24h)}</span>
+              </div>
+            )}
           </div>
         </div>
 
