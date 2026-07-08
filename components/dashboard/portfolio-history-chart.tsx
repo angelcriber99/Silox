@@ -25,8 +25,9 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
   const values = chartData.map(d => d.value)
   const minVal = Math.min(...values)
   const maxVal = Math.max(...values)
-  const range = maxVal - minVal || 1000
-  const domainPadding = Math.max(range * 0.1, maxVal * 0.05)
+  const range = maxVal - minVal || maxVal * 0.05 || 1000
+  const yMin = minVal - range * 0.02
+  const yMax = maxVal + range * 0.15
 
   // Determine overall performance to choose color
   const firstValue = chartData[0].value
@@ -97,19 +98,20 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart 
           data={chartData} 
-          margin={{ top: 25, right: 20, left: 20, bottom: 35 }}
+          margin={{ top: 15, right: 0, left: 0, bottom: 0 }}
         >
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={lineColor} stopOpacity={0.35}/>
-              <stop offset="95%" stopColor={lineColor} stopOpacity={0}/>
+              <stop offset="0%" stopColor={lineColor} stopOpacity={0.4}/>
+              <stop offset="50%" stopColor={lineColor} stopOpacity={0.1}/>
+              <stop offset="100%" stopColor={lineColor} stopOpacity={0}/>
             </linearGradient>
             <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="4" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
+          <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" opacity={0.5} />
           <XAxis 
             dataKey="timestamp" 
             axisLine={false} 
@@ -122,19 +124,21 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
                 return "";
               }
             }}
-            tick={{ fill: '#a1a1aa', fontSize: 12, fontWeight: 500 }}
-            tickMargin={15}
+            tick={{ fill: 'var(--muted-foreground)', fontSize: 11, fontWeight: 500 }}
+            dy={-15}
             minTickGap={30}
           />
           <YAxis 
             hide={hideYAxis}
+            orientation="right"
+            mirror={true}
             axisLine={false}
             tickLine={false}
             tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
             tick={{ fill: 'var(--muted-foreground)', fontSize: 11, fontWeight: 500 }}
-            width={55}
-            dx={-5}
-            domain={[minVal - domainPadding, maxVal + domainPadding]} 
+            dx={-10}
+            dy={-10}
+            domain={[yMin, yMax]} 
           />
           <Tooltip 
             content={<CustomTooltip />} 
