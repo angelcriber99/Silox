@@ -109,7 +109,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
           <XAxis 
             dataKey="timestamp" 
             axisLine={false} 
@@ -131,7 +131,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             axisLine={false}
             tickLine={false}
             tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
+            tick={{ fill: 'var(--muted-foreground)', fontSize: 11, fontWeight: 500 }}
             width={55}
             dx={-5}
             domain={[minVal - domainPadding, maxVal + domainPadding]} 
@@ -144,7 +144,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
           {lastInvested && lastInvested > 0 && (
             <ReferenceLine 
               y={lastInvested} 
-              stroke="hsl(var(--muted-foreground))" 
+              stroke="var(--muted-foreground)" 
               strokeDasharray="4 4" 
               strokeOpacity={0.3}
               strokeWidth={1}
@@ -157,7 +157,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             strokeWidth={3}
             fillOpacity={1} 
             fill="url(#colorValue)" 
-            activeDot={{ r: 5, fill: lineColor, stroke: "hsl(var(--background))", strokeWidth: 3 }}
+            activeDot={{ r: 5, fill: lineColor, stroke: "var(--background)", strokeWidth: 3 }}
             dot={false}
             isAnimationActive={false}
             filter="url(#glow)"

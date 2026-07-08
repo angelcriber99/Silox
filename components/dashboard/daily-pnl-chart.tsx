@@ -42,7 +42,7 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
     <div className="w-full h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
           <XAxis 
             dataKey="timestamp" 
             axisLine={false} 
