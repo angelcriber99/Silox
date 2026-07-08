@@ -57,8 +57,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
     return (
       <Link href={`/activo/${p.activo_id}`} className="block">
         <div
-          className="flex items-center gap-3 px-4 py-2.5 transition-colors active:opacity-70"
-          style={{ borderBottom: "1px solid oklch(0.195 0.018 235 / 0.4)" }}
+          className="flex items-center gap-3 px-4 py-2.5 transition-colors active:opacity-70 border-b border-border/10"
         >
           {/* Avatar dot */}
           <div
@@ -84,8 +83,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
               {hideBalances ? "••••" : formatCurrency(p.valor_actual ?? 0)}
             </span>
             <span
-              className="text-[10px] font-semibold font-tabular"
-              style={{ color: is24hPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+              className={`text-[10px] font-semibold font-tabular ${is24hPositive ? "text-emerald-500" : "text-rose-500"}`}
             >
               {hideBalances ? "•••" : formatPercent(change24h)}
             </span>
@@ -99,8 +97,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
     <Link href={`/activo/${p.activo_id}`} className="block">
       <motion.div
         whileTap={{ scale: 0.96, opacity: 0.8 }}
-        className="px-4 py-3.5 transition-colors relative"
-        style={{ borderBottom: "1px solid oklch(0.68 0.17 192 / 0.06)" }}
+        className="px-4 py-3.5 transition-colors relative border-b border-border/10"
       >
         <div className="flex items-center gap-3.5">
           {/* Asset avatar — colored by type */}
@@ -145,7 +142,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${weight}%`,
-                    background: `linear-gradient(90deg, ${cfg.color}, color-mix(in oklch, ${cfg.color} 70%, oklch(0.65 0.19 155)))`,
+                    background: `linear-gradient(90deg, ${cfg.color}, color-mix(in oklch, ${cfg.color} 70%, #10b981))`,
                   }}
                 />
               </div>
@@ -172,18 +169,14 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
             </span>
 
             <div
-              className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
-              style={{
-                background: is24hPositive
-                  ? "oklch(0.65 0.19 155 / 0.10)"
-                  : "oklch(0.62 0.20 20 / 0.10)",
-              }}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-lg ${
+                is24hPositive ? "bg-emerald-500/10" : "bg-rose-500/10"
+              }`}
             >
               <span
-                className="text-[11px] font-bold font-tabular"
-                style={{
-                  color: is24hPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
-                }}
+                className={`text-[11px] font-bold font-tabular ${
+                  is24hPositive ? "text-emerald-500" : "text-rose-500"
+                }`}
               >
                 {hideBalances ? "•••" : (
                   <>

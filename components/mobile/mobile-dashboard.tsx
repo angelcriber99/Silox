@@ -42,11 +42,7 @@ const TYPE_COLORS: Record<string, string> = {
 function SectionHeader({ label, count }: { label: string; count: number }) {
   return (
     <div
-      className="flex items-center justify-between px-4 py-2"
-      style={{
-        borderTop: "1px solid oklch(0.68 0.17 192 / 0.08)",
-        borderBottom: "1px solid oklch(0.68 0.17 192 / 0.08)",
-      }}
+      className="flex items-center justify-between px-4 py-2 border-y border-border/10"
     >
       <span
         className="text-[10px] font-bold uppercase tracking-[0.18em]"
@@ -85,10 +81,8 @@ export function MobileDashboard({
 
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
-  const areaColor = isPositive
-    ? "oklch(0.65 0.19 155)"
-    : "oklch(0.62 0.20 20)"
-  const areaColorHex = isPositive ? "#22c55e" : "#ef4444"
+  const areaColor = isPositive ? "#10b981" : "#f43f5e"
+  const areaColorHex = areaColor
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
@@ -207,12 +201,10 @@ export function MobileDashboard({
 
       {/* ─── Sticky header ─────────────────────────────────────────────── */}
       <div
-        className="sticky top-0 z-20"
+        className="sticky top-0 z-20 bg-background/90 border-b border-border/20"
         style={{
-          background: "oklch(0.095 0.012 235 / 0.88)",
           backdropFilter: "blur(28px) saturate(200%)",
           WebkitBackdropFilter: "blur(28px) saturate(200%)",
-          borderBottom: "1px solid oklch(0.68 0.17 192 / 0.10)",
         }}
       >
         {/* Subtle gradient mesh */}
@@ -220,8 +212,8 @@ export function MobileDashboard({
           className="absolute inset-0 pointer-events-none"
           style={{
             background: isPositive
-              ? "radial-gradient(ellipse 100% 100% at 80% 0%, oklch(0.65 0.19 155 / 0.06) 0%, transparent 60%)"
-              : "radial-gradient(ellipse 100% 100% at 80% 0%, oklch(0.62 0.20 20 / 0.05) 0%, transparent 60%)",
+              ? "radial-gradient(ellipse 100% 100% at 80% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 60%)"
+              : "radial-gradient(ellipse 100% 100% at 80% 0%, rgba(244, 63, 94, 0.08) 0%, transparent 60%)",
           }}
         />
 
@@ -240,8 +232,7 @@ export function MobileDashboard({
               </span>
               {/* Market status */}
               <div
-                className="flex items-center gap-1.5 mt-0.5"
-                style={{ color: isMarketOpen ? "oklch(0.65 0.19 155)" : "oklch(0.50 0.01 230)" }}
+                className={`flex items-center gap-1.5 mt-0.5 ${isMarketOpen ? "text-emerald-500" : "text-muted-foreground"}`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "animate-pulse" : ""}`}
@@ -288,16 +279,11 @@ export function MobileDashboard({
                   hapticFeedback.light()
                   setHideBalances(!hideBalances)
                 }}
-                className="h-9 w-9 rounded-full flex items-center justify-center transition-all"
-                style={{
-                  background: hideBalances
-                    ? "oklch(0.68 0.17 192 / 0.15)"
-                    : "var(--card)",
-                  border: hideBalances
-                    ? "1px solid oklch(0.68 0.17 192 / 0.30)"
-                    : "1px solid var(--border)",
-                  color: hideBalances ? "var(--primary)" : "var(--muted-foreground)",
-                }}
+                className={`h-9 w-9 rounded-full flex items-center justify-center transition-all border ${
+                  hideBalances 
+                    ? "bg-primary/15 border-primary/30 text-primary" 
+                    : "bg-card border-border text-muted-foreground"
+                }`}
                 aria-label={hideBalances ? "Mostrar balances" : "Ocultar balances"}
               >
                 {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -322,11 +308,9 @@ export function MobileDashboard({
                 <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
-                  style={{
-                    background: scrubData.pnl >= 0 ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
-                    color: scrubData.pnl >= 0 ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
-                  }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+                    scrubData.pnl >= 0 ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
+                  }`}
                 >
                   {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                   <span className="text-[14px] font-bold font-tabular">
@@ -340,11 +324,9 @@ export function MobileDashboard({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
-                    style={{
-                      background: isPositive ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
-                      color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
-                    }}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+                      isPositive ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
+                    }`}
                   >
                     {isPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                     <span className="text-[14px] font-bold font-tabular">
@@ -359,15 +341,12 @@ export function MobileDashboard({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg"
-                    style={{
-                      background: daily24Positive ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
-                      border: `1px solid ${daily24Positive ? "oklch(0.65 0.19 155 / 0.20)" : "oklch(0.62 0.20 20 / 0.20)"}`,
-                    }}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${
+                      daily24Positive ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                    }`}
                   >
                     <span
-                      className="text-[11px] font-semibold"
-                      style={{ color: "var(--muted-foreground)", opacity: 0.7 }}
+                      className="text-[11px] font-semibold opacity-70"
                     >Hoy</span>
                     <span className="text-[13px] font-bold font-tabular">
                       {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
@@ -431,17 +410,11 @@ export function MobileDashboard({
         <div className="grid grid-cols-2 gap-3">
           {/* Box 1: Invested */}
           <div
-            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
-            style={{
-              background: "linear-gradient(145deg, oklch(0.975 0.004 200) 0%, oklch(0.95 0.01 200) 100%)",
-              border: "1px solid oklch(0.68 0.17 192 / 0.10)",
-              boxShadow: "0 8px 24px -8px oklch(0 0 0 / 0.05)",
-            }}
+            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden bg-card border border-border/50 shadow-sm"
           >
             <div className="flex items-center justify-between mb-3">
               <div
-                className="p-1.5 rounded-xl"
-                style={{ background: "oklch(0.68 0.17 192 / 0.08)", color: "var(--primary)" }}
+                className="p-1.5 rounded-xl bg-primary/10 text-primary"
               >
                 <Wallet className="w-4 h-4" />
               </div>
@@ -458,29 +431,24 @@ export function MobileDashboard({
 
           {/* Box 2: Total PnL (Dynamic Color) */}
           <div
-            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
-            style={{
-              background: isPositive ? "linear-gradient(145deg, oklch(0.65 0.19 155 / 0.12), oklch(0.65 0.19 155 / 0.05))" : "linear-gradient(145deg, oklch(0.62 0.20 20 / 0.12), oklch(0.62 0.20 20 / 0.05))",
-              border: `1px solid ${isPositive ? "oklch(0.65 0.19 155 / 0.20)" : "oklch(0.62 0.20 20 / 0.20)"}`,
-              boxShadow: isPositive ? "0 8px 24px -8px oklch(0.65 0.19 155 / 0.2)" : "0 8px 24px -8px oklch(0.62 0.20 20 / 0.2)",
-            }}
+            className={`flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden border shadow-sm ${
+              isPositive ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"
+            }`}
           >
             <div className="flex items-center justify-between mb-3">
               <div
-                className="p-1.5 rounded-xl"
-                style={{
-                  background: isPositive ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)",
-                  color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)"
-                }}
+                className={`p-1.5 rounded-xl ${
+                  isPositive ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
+                }`}
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)", opacity: 0.8 }}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest opacity-80 ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
                 Ganancia
               </p>
-              <p className="text-[16px] font-extrabold font-tabular mt-0.5" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
+              <p className={`text-[16px] font-extrabold font-tabular mt-0.5 ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
                 {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
               </p>
             </div>
@@ -489,20 +457,18 @@ export function MobileDashboard({
           {/* Box 3: 24h */}
           <div className="col-span-2">
             <div
-              className="flex items-center justify-between p-3 rounded-2xl"
-              style={{
-                background: daily24Positive ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
-                border: `1px solid ${daily24Positive ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)"}`,
-              }}
+              className={`flex items-center justify-between p-3 rounded-2xl border ${
+                daily24Positive ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"
+              }`}
             >
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hoy</p>
-                <p className="text-[14px] font-bold font-tabular mt-0.5" style={{ color: daily24Positive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
+                <p className={`text-[14px] font-bold font-tabular mt-0.5 ${daily24Positive ? "text-emerald-500" : "text-rose-500"}`}>
                   {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[12px] font-bold font-tabular" style={{ color: daily24Positive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)", opacity: 0.9 }}>
+                <p className={`text-[12px] font-bold font-tabular opacity-90 ${daily24Positive ? "text-emerald-500" : "text-rose-500"}`}>
                   {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                 </p>
               </div>
@@ -531,11 +497,9 @@ export function MobileDashboard({
                 return (
                   <Link key={p.activo_id} href={`/activo/${p.activo_id}`}>
                     <div 
-                      className="flex items-center gap-2 px-3 py-2 mx-1.5 rounded-[14px] transition-colors border"
-                      style={{
-                        background: isGain ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
-                        borderColor: isGain ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)",
-                      }}
+                      className={`flex items-center gap-2 px-3 py-2 mx-1.5 rounded-[14px] transition-colors border ${
+                        isGain ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"
+                      }`}
                     >
                       <span className="text-[12px] font-extrabold" style={{ color: "var(--foreground)" }}>
                         {p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" 
@@ -543,8 +507,7 @@ export function MobileDashboard({
                           : p.ticker.split(".")[0]}
                       </span>
                       <span 
-                        className="text-[12px] font-bold font-tabular flex items-center"
-                        style={{ color: isGain ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+                        className={`text-[12px] font-bold font-tabular flex items-center ${isGain ? "text-emerald-500" : "text-rose-500"}`}
                       >
                         {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
                       </span>
@@ -560,13 +523,11 @@ export function MobileDashboard({
       {/* ─── Asset filter pills ──────────────────────────────────────────── */}
       {assetTypes.length > 2 && (
         <div
-          className="sticky z-10 px-4 py-2"
+          className="sticky z-10 px-4 py-2 bg-background/80 border-b border-border/50"
           style={{
             top: 0,
-            background: "oklch(0.095 0.012 235 / 0.75)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderBottom: "1px solid var(--border)",
           }}
         >
           <div className="flex gap-2 overflow-x-auto hide-scrollbar">
@@ -583,11 +544,8 @@ export function MobileDashboard({
                 {filterType === type && (
                   <motion.div
                     layoutId="filterPill"
-                    className="absolute inset-0 rounded-full"
+                    className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-emerald-500"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                    style={{
-                      background: "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))",
-                    }}
                   />
                 )}
                 <span className="relative z-10">
