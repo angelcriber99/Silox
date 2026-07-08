@@ -127,7 +127,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             minTickGap={30}
           />
           <YAxis 
-            hide={hideYAxis !== false}
+            hide={hideYAxis}
             axisLine={false}
             tickLine={false}
             tickFormatter={(value) => `€${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`}
