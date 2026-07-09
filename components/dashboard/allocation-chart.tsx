@@ -589,6 +589,10 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
     
   const hoverPercent = hoverPnl / startValue * 100
 
+  const isLastPoint = hoveredPoint && filteredData.length > 0 && hoveredPoint.timestamp === filteredData[filteredData.length - 1].timestamp
+  const displayDailyPnl = (hoveredPoint && !isLastPoint) ? hoveredPoint.pnl : currentPnl24h
+  const displayDailyLabel = (hoveredPoint && !isLastPoint) ? 'Ese día:' : 'Hoy:'
+
   return (
     <div className="flex flex-col h-full relative group">
       {/* Header Overlay */}
@@ -608,9 +612,9 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
             </div>
             
             {timeRange !== '1D' && (
-              <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${(hoveredPoint ? hoveredPoint.pnl : currentPnl24h) >= 0 ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-500 dark:text-rose-400'}`}>
-                <span className="opacity-70">{hoveredPoint ? 'Ese día:' : 'Hoy:'}</span>
-                <span>{(hoveredPoint ? hoveredPoint.pnl : currentPnl24h) >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(hoveredPoint ? hoveredPoint.pnl : currentPnl24h)}</span>
+              <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${displayDailyPnl >= 0 ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-500 dark:text-rose-400'}`}>
+                <span className="opacity-70">{displayDailyLabel}</span>
+                <span>{displayDailyPnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayDailyPnl)}</span>
               </div>
             )}
           </div>
