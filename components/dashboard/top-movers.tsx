@@ -118,11 +118,14 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 className="flex justify-between items-center gap-2"
               >
                 <span
-                  className="text-[12px] font-medium truncate flex-1"
+                  className="text-[12px] font-medium truncate flex-1 flex items-center gap-1.5"
                   style={{ color: "var(--foreground)" }}
                   title={p.nombre || p.ticker}
                 >
-                  {getDisplayName(p)}
+                  <span>{getDisplayName(p)}</span>
+                  {p.change_percent_24h && p.change_percent_24h >= 3 ? (
+                    <span title="¡Activo on fire! (>3% de subida hoy)" className="animate-pulse">🔥</span>
+                  ) : null}
                 </span>
                 <span
                   className="text-[11px] font-bold font-tabular px-1.5 py-0.5 rounded-md flex-shrink-0"
