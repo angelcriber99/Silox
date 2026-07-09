@@ -608,9 +608,9 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
             </div>
             
             {timeRange !== '1D' && (
-              <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${currentPnl24h >= 0 ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-500 dark:text-rose-400'}`}>
-                <span className="opacity-70">Hoy:</span>
-                <span>{currentPnl24h >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(currentPnl24h)}</span>
+              <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${(hoveredPoint ? hoveredPoint.pnl : currentPnl24h) >= 0 ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-500 dark:text-rose-400'}`}>
+                <span className="opacity-70">{hoveredPoint ? 'Ese día:' : 'Hoy:'}</span>
+                <span>{(hoveredPoint ? hoveredPoint.pnl : currentPnl24h) >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(hoveredPoint ? hoveredPoint.pnl : currentPnl24h)}</span>
               </div>
             )}
           </div>
