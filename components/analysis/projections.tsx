@@ -138,12 +138,7 @@ export function Projections() {
           return (
             <div 
               key={idx} 
-              className="p-4 rounded-[24px] relative overflow-hidden flex flex-col justify-between min-h-[140px]"
-              style={{
-                background: "linear-gradient(145deg, oklch(0.975 0.004 200) 0%, oklch(0.95 0.01 200) 100%)",
-                border: "1px solid oklch(0.68 0.17 192 / 0.10)",
-                boxShadow: "0 8px 24px -8px oklch(0 0 0 / 0.05)",
-              }}
+              className="p-4 rounded-[24px] relative overflow-hidden flex flex-col justify-between min-h-[140px] bg-card/10 border border-border/30 shadow-sm"
             >
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-primary/80 mb-2">
