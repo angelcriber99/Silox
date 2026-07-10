@@ -13,6 +13,7 @@ import {
   FileText,
   Activity,
   TrendingUp,
+  PieChart,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -23,6 +24,7 @@ import { useEffect, useState } from "react"
 const navItems = [
   { key: "dashboard",  label: "Dashboard",   href: "/",            icon: LayoutDashboard, group: "main" },
   { key: "portfolio",  label: "Movimientos", href: "/movimientos", icon: History,          group: "main" },
+  { key: "analisis-page", label: "Análisis", href: "/analisis", icon: PieChart,         group: "analysis" },
   { key: "analisis",   label: "Histórico",   href: "/historial",   icon: TrendingUp,       group: "analysis" },
   { key: "declarar",   label: "Declarar",    href: "/declarar",    icon: FileText,         group: "analysis" },
   { key: "settings",   label: "Ajustes",     href: "/settings",    icon: Settings,         group: "system" },

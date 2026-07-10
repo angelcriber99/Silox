@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, LayoutDashboard, History, Settings } from "lucide-react"
+import { Activity, LayoutDashboard, History, Settings, PieChart } from "lucide-react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
@@ -19,6 +19,7 @@ export function Header() {
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Movimientos", href: "/movimientos", icon: History },
+    { name: "Análisis", href: "/analisis", icon: PieChart },
     { name: "Historial", href: "/historial", icon: Activity },
   ]
 
