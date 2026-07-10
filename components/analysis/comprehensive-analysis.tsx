@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useState, useRef } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
-import { getFundHoldings, FundHoldingsResponse } from "@/lib/actions/market-data"
+import { FundHoldingsResponse } from "@/lib/actions/market-data"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts"
 import { Loader2, TrendingUp, Wallet, Globe2, Briefcase, Activity, Lightbulb } from "lucide-react"
@@ -70,7 +70,15 @@ export function ComprehensiveAnalysis() {
           const identifier = p.isin || p.ticker || p.nombre || '';
           if (identifier) {
             try {
-              const data = await getFundHoldings(identifier, p.isin);
+              const res = await fetch('/api/market-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier, isin: p.isin })
+              });
+              
+              if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+              const data = await res.json();
+              
               newData[p.activo_id] = data;
               hasChanges = true;
             } catch (e) {
