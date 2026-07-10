@@ -16,6 +16,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 5MB limit' }, { status: 413 })
+    }
+
+    const validMimes = ['text/csv', 'application/vnd.ms-excel'];
+    if (!validMimes.includes(file.type) && !file.name.toLowerCase().endsWith('.csv')) {
+      return NextResponse.json({ error: 'Invalid file format. Only CSV allowed.' }, { status: 415 })
+    }
+
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     

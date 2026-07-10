@@ -38,6 +38,13 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# Local Data / Security 
+*.csv
+*.pdf
+*_backup.json
+transacciones*.json
+local-data/
 next-env.d.ts
 
 # capacitor ios (artefactos de build, no el proyecto)
