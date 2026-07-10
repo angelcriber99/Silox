@@ -5,7 +5,7 @@ import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts"
-import { Loader2, TrendingUp, Wallet, Globe2, Briefcase, Activity, Lightbulb } from "lucide-react"
+import { Loader2, TrendingUp, Wallet, Globe2, Briefcase, Activity } from "lucide-react"
 
 // Theme colors
 const COLORS = [
@@ -113,62 +113,6 @@ export function ComprehensiveAnalysis() {
       topPositions: top
     }
   }, [positions])
-
-  // Generate dynamic insights based on the portfolio data
-  const insights = useMemo(() => {
-    if (!positions || totals.totalValue === 0) return []
-    
-    const messages = []
-    
-    // 1. Geographic concentration
-    const usExposure = geos.find(g => g.name.toLowerCase().includes('usa') || g.name.toLowerCase().includes('estados unidos'))
-    if (usExposure && (usExposure.value / totals.totalValue) > 0.7) {
-      messages.push({
-        type: 'warning',
-        title: 'Alta Concentración Geográfica (EEUU)',
-        desc: `Más del 70% de tu cartera está en Estados Unidos. Aunque es el mercado principal, podrías reducir el riesgo añadiendo exposición a mercados emergentes (EJ: MSCI Emerging Markets) o Europa (EJ: Stoxx 600).`
-      })
-    }
-
-    // 2. Sector concentration
-    const techExposure = sectors.find(s => s.name.toLowerCase().includes('tecno') || s.name.toLowerCase().includes('technology'))
-    if (techExposure && (techExposure.value / totals.totalValue) > 0.4) {
-      messages.push({
-        type: 'warning',
-        title: 'Sobre-exposición Tecnológica',
-        desc: `Tienes más del 40% en el sector tecnológico. Esto aumenta la volatilidad de tu cartera. Considera diversificar hacia sectores más defensivos como Salud (Healthcare) o Consumo Básico (Consumer Staples).`
-      })
-    }
-
-    // 3. Top 5 concentration
-    const top5Weight = topPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0) / totals.totalValue
-    if (top5Weight > 0.5) {
-      messages.push({
-        type: 'caution',
-        title: 'Riesgo de Activo Individual',
-        desc: `Tus 5 mayores posiciones representan el ${(top5Weight * 100).toFixed(1)}% de tu dinero. Si una de ellas cae bruscamente, el impacto será grave. La regla general es no tener más del 5-10% en una sola acción/cripto.`
-      })
-    }
-
-    // 4. Crypto exposure
-    const cryptoExposure = assetTypes.find(a => a.name.toLowerCase().includes('cripto') || a.name.toLowerCase().includes('crypto'))
-    if (cryptoExposure && (cryptoExposure.value / totals.totalValue) > 0.2) {
-      messages.push({
-        type: 'caution',
-        title: 'Alta Volatilidad por Criptomonedas',
-        desc: `Tienes más de un 20% en criptomonedas. Esto es considerado un nivel de riesgo muy alto. Las filosofías de inversión tradicionales recomiendan limitar los activos especulativos a un máximo del 5-10%.`
-      })
-    }
-
-    // 5. Classic Philosophy Recommendation
-    messages.push({
-      type: 'tip',
-      title: 'Filosofía Bogleheads',
-      desc: `Para una base sólida a largo plazo, la filosofía Boglehead recomienda fondos indexados globales de muy bajo coste (como el MSCI World o FTSE All-World). Deberían formar el núcleo de tu cartera para garantizar un crecimiento compuesto seguro.`
-    })
-
-    return messages
-  }, [totals.totalValue, geos, sectors, topPositions, assetTypes])
 
   if (portfolioLoading || historyLoading) {
     return (
@@ -410,45 +354,6 @@ export function ComprehensiveAnalysis() {
                   <span className="text-xs font-semibold text-muted-foreground mt-1 font-tabular">
                     {formatCurrency(geo.value)}
                   </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Recomendaciones Estratégicas (Insights) */}
-        <div className="p-5 rounded-[32px] border border-border col-span-1 md:col-span-2 relative overflow-hidden" style={{ background: "var(--card)" }}>
-          {/* Subtle gradient background effect */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10 pointer-events-none" />
-          
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/15">
-              <Lightbulb className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold tracking-tight text-foreground">Recomendaciones Estratégicas</h3>
-              <p className="text-xs font-medium text-muted-foreground">Basado en el estado actual de tu portfolio</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {insights.map((insight, idx) => {
-              const colors = {
-                warning: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
-                caution: 'text-red-500 bg-red-500/10 border-red-500/20',
-                tip: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-                info: 'text-blue-500 bg-blue-500/10 border-blue-500/20'
-              }
-              const colorClass = colors[insight.type as keyof typeof colors] || colors.info
-
-              return (
-                <div key={idx} className={`p-4 rounded-2xl border ${colorClass} backdrop-blur-sm`}>
-                  <h4 className="text-sm font-bold mb-1.5 flex items-center gap-2">
-                    {insight.type === 'tip' ? '💡' : (insight.type === 'warning' ? '⚠️' : '🚨')} {insight.title}
-                  </h4>
-                  <p className="text-xs font-medium opacity-90 leading-relaxed">
-                    {insight.desc}
-                  </p>
                 </div>
               )
             })}
