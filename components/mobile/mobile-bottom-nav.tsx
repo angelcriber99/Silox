@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, History, Plus, Settings, TrendingUp } from "lucide-react"
+import { LayoutDashboard, Plus, UserCircle, ArrowLeftRight, LineChart } from "lucide-react"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { motion } from "framer-motion"
 
@@ -11,11 +11,11 @@ interface MobileBottomNavProps {
 }
 
 const tabs = [
-  { name: "Inicio",       href: "/",           icon: LayoutDashboard },
-  { name: "Histórico",    href: "/historial",   icon: TrendingUp },
-  { name: "Añadir",       href: "#",            icon: Plus, isFab: true },
-  { name: "Movimientos",  href: "/movimientos", icon: History },
-  { name: "Ajustes",      href: "/settings",    icon: Settings },
+  { name: "Inicio",      href: "/",           icon: LayoutDashboard },
+  { name: "Análisis",    href: "/analisis",    icon: LineChart },
+  { name: "Añadir",      href: "#",            icon: Plus, isFab: true },
+  { name: "Movimientos", href: "/movimientos", icon: ArrowLeftRight },
+  { name: "Perfil",      href: "/settings",    icon: UserCircle },
 ]
 
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
