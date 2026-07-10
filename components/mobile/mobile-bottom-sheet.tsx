@@ -13,6 +13,7 @@ interface MobileBottomSheetProps {
   open: boolean
   onClose: () => void
   positions: EnrichedPosition[]
+  preselectedAsset?: EnrichedPosition | null
 }
 
 const TIPOS = ["ETF", "Fondo Indexado", "Fondo Monetario", "Acción", "Crypto"] as const
@@ -23,6 +24,7 @@ export function MobileBottomSheet({
   open,
   onClose,
   positions,
+  preselectedAsset,
 }: MobileBottomSheetProps) {
   const [activeTab, setActiveTab] = useState<"operacion" | "nuevo" | "importar">("operacion")
   
@@ -81,6 +83,16 @@ export function MobileBottomSheet({
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
+
+  // Auto-select asset if preselectedAsset changes while sheet opens
+  useEffect(() => {
+    if (open && preselectedAsset) {
+      setActiveTab("operacion")
+      setSelectedAsset(preselectedAsset)
+      setStep("form")
+      if (preselectedAsset.precio_actual) setPrecio(preselectedAsset.precio_actual.toFixed(2))
+    }
+  }, [open, preselectedAsset])
 
   // ==============================
   // TAB 1 LOGIC

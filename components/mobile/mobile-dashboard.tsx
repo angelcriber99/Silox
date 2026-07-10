@@ -84,9 +84,9 @@ export function MobileDashboard({
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
   const areaColor = isPositive
-    ? "oklch(0.65 0.19 155)"
-    : "oklch(0.62 0.20 20)"
-  const areaColorHex = isPositive ? "#22c55e" : "#ef4444"
+    ? "oklch(0.70 0.21 155)"
+    : "oklch(0.65 0.22 22)"
+  const areaColorHex = isPositive ? "#10d98a" : "#ff4d6a"
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
@@ -296,15 +296,22 @@ export function MobileDashboard({
             </div>
           </div>
 
-          {/* Main KPI — portfolio value (Scrubbable) */}
-          <div className="mb-1">
+          {/* Main KPI — portfolio value (Scrubbable + double-tap to toggle incognito) */}
+          <motion.div
+            className="mb-1 cursor-pointer select-none"
+            onDoubleClick={() => {
+              hapticFeedback.medium()
+              setHideBalances(!hideBalances)
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
             <h1
               className="font-extrabold tracking-tighter leading-none font-display-number transition-all duration-200"
               style={{ fontSize: "clamp(42px, 12vw, 54px)", color: "var(--foreground)" }}
             >
               <AnimatedNumber value={scrubData ? scrubData.v : totals.totalValue} format="currency" hide={hideBalances} />
             </h1>
-          </div>
+          </motion.div>
 
           {/* PnL badges */}
           {totals.totalCost > 0 && (
@@ -451,27 +458,27 @@ export function MobileDashboard({
           <div
             className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
             style={{
-              background: isPositive ? "linear-gradient(145deg, oklch(0.65 0.19 155 / 0.12), oklch(0.65 0.19 155 / 0.05))" : "linear-gradient(145deg, oklch(0.62 0.20 20 / 0.12), oklch(0.62 0.20 20 / 0.05))",
-              border: `1px solid ${isPositive ? "oklch(0.65 0.19 155 / 0.20)" : "oklch(0.62 0.20 20 / 0.20)"}`,
-              boxShadow: isPositive ? "0 8px 24px -8px oklch(0.65 0.19 155 / 0.2)" : "0 8px 24px -8px oklch(0.62 0.20 20 / 0.2)",
+              background: isPositive ? "linear-gradient(145deg, oklch(0.70 0.21 155 / 0.14), oklch(0.70 0.21 155 / 0.06))" : "linear-gradient(145deg, oklch(0.65 0.22 22 / 0.14), oklch(0.65 0.22 22 / 0.06))",
+              border: `1px solid ${isPositive ? "oklch(0.70 0.21 155 / 0.25)" : "oklch(0.65 0.22 22 / 0.25)"}`,
+              boxShadow: isPositive ? "0 8px 24px -8px oklch(0.70 0.21 155 / 0.25)" : "0 8px 24px -8px oklch(0.65 0.22 22 / 0.25)",
             }}
           >
             <div className="flex items-center justify-between mb-3">
               <div
                 className="p-1.5 rounded-xl"
                 style={{
-                  background: isPositive ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)",
-                  color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)"
+                  background: isPositive ? "oklch(0.70 0.21 155 / 0.15)" : "oklch(0.65 0.22 22 / 0.15)",
+                  color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)"
                 }}
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)", opacity: 0.8 }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)", opacity: 0.8 }}>
                 Ganancia
               </p>
-              <p className="text-[16px] font-extrabold font-tabular mt-0.5" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
+              <p className="text-[16px] font-extrabold font-tabular mt-0.5" style={{ color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)" }}>
                 {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
               </p>
             </div>
@@ -482,18 +489,18 @@ export function MobileDashboard({
             <div
               className="flex items-center justify-between p-3 rounded-2xl"
               style={{
-                background: daily24Positive ? "oklch(0.65 0.19 155 / 0.08)" : "oklch(0.62 0.20 20 / 0.08)",
-                border: `1px solid ${daily24Positive ? "oklch(0.65 0.19 155 / 0.15)" : "oklch(0.62 0.20 20 / 0.15)"}`,
+                background: daily24Positive ? "oklch(0.70 0.21 155 / 0.10)" : "oklch(0.65 0.22 22 / 0.10)",
+                border: `1px solid ${daily24Positive ? "oklch(0.70 0.21 155 / 0.20)" : "oklch(0.65 0.22 22 / 0.20)"}`,
               }}
             >
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hoy</p>
-                <p className="text-[14px] font-bold font-tabular mt-0.5" style={{ color: daily24Positive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
+                <p className="text-[14px] font-bold font-tabular mt.0.5" style={{ color: daily24Positive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)" }}>
                   {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[12px] font-bold font-tabular" style={{ color: daily24Positive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)", opacity: 0.9 }}>
+                <p className="text-[12px] font-bold font-tabular" style={{ color: daily24Positive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)", opacity: 0.9 }}>
                   {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                 </p>
               </div>
