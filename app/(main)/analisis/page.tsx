@@ -7,15 +7,15 @@ import { TrendingUp, PieChart, Target } from "lucide-react"
 // We will create these components next
 import { HistoricalChart } from "@/components/analysis/historical-chart"
 import { AdvancedDiversification } from "@/components/analysis/advanced-diversification"
-import { FireTracker } from "@/components/analysis/fire-tracker"
+import { Projections } from "@/components/analysis/projections"
 
 export default function AnalysisPage() {
-  const [activeTab, setActiveTab] = useState<"evolucion" | "diversificacion" | "fire">("evolucion")
+  const [activeTab, setActiveTab] = useState<"evolucion" | "diversificacion" | "proyecciones">("evolucion")
 
   const tabs = [
     { id: "evolucion", label: "Evolución", icon: TrendingUp },
     { id: "diversificacion", label: "Diversificación", icon: PieChart },
-    { id: "fire", label: "Libertad Financiera", icon: Target },
+    { id: "proyecciones", label: "Proyecciones", icon: Target },
   ] as const
 
   return (
@@ -67,7 +67,7 @@ export default function AnalysisPage() {
           >
             {activeTab === "evolucion" && <HistoricalChart />}
             {activeTab === "diversificacion" && <AdvancedDiversification />}
-            {activeTab === "fire" && <FireTracker />}
+            {activeTab === "proyecciones" && <Projections />}
           </motion.div>
         </AnimatePresence>
       </main>
