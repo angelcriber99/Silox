@@ -15,21 +15,14 @@ export function Projections() {
   }, [positions])
 
   // Initial state derived from portfolio, but allow user to tweak it
-  const [initialCapital, setInitialCapital] = useState<string | number>("")
-  const [monthlySaving, setMonthlySaving] = useState<string | number>(500)
-  const [futureSaving, setFutureSaving] = useState<string | number>("")
-  const [futureSavingYear, setFutureSavingYear] = useState<string | number>("")
-  const [annualReturn, setAnnualReturn] = useState<string | number>(8)
+  const [initialCapital, setInitialCapital] = useState<number | null>(null)
+  const [monthlySaving, setMonthlySaving] = useState(500)
+  const [annualReturn, setAnnualReturn] = useState(8)
 
-  const startingCapital = initialCapital !== "" ? Number(initialCapital) : currentTotal
+  const startingCapital = initialCapital !== null ? initialCapital : currentTotal
 
   const projectionData = useMemo(() => {
-    // Para que un 8% anual sea exactamente un 8% al final del año, usamos la tasa efectiva mensual
-    const annualReturnNum = Number(annualReturn) || 0
-    const monthlySavingNum = Number(monthlySaving) || 0
-    const futureSavingNum = Number(futureSaving) || 0
-    const futureSavingYearNum = Number(futureSavingYear) || 0
-    const monthlyRate = Math.pow(1 + annualReturnNum / 100, 1 / 12) - 1
+    const monthlyRate = annualReturn / 100 / 12
     let currentBalance = startingCapital
     let totalContributed = startingCapital
     
@@ -49,14 +42,8 @@ export function Projections() {
 
     // Project 15 years (180 months)
     for (let i = 1; i <= 180; i++) {
-      // Determine which saving amount to use
-      let currentSaving = monthlySavingNum
-      if (futureSavingYearNum > 0 && i > futureSavingYearNum * 12) {
-        currentSaving = futureSavingNum
-      }
-
-      currentBalance = currentBalance * (1 + monthlyRate) + currentSaving
-      totalContributed += currentSaving
+      currentBalance = currentBalance * (1 + monthlyRate) + monthlySaving
+      totalContributed += monthlySaving
       
       const futureDate = new Date(today)
       futureDate.setMonth(futureDate.getMonth() + i)
@@ -73,7 +60,7 @@ export function Projections() {
     }
 
     return data
-  }, [startingCapital, monthlySaving, futureSaving, futureSavingYear, annualReturn])
+  }, [startingCapital, monthlySaving, annualReturn])
 
   if (isLoading) {
     return (
@@ -105,72 +92,40 @@ export function Projections() {
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="p-4 bg-card/10 border border-border/30 rounded-2xl flex flex-col justify-between">
-          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
-            <Wallet className="w-3.5 h-3.5 text-violet-500" /> Capital Inicial
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
+          <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
+            <Wallet className="w-4 h-4 text-violet-500" /> Capital Inicial (€)
           </label>
           <input 
             type="number" 
-            value={initialCapital !== "" ? initialCapital : (currentTotal > 0 ? Math.round(currentTotal) : "")} 
-            onChange={e => setInitialCapital(e.target.value)}
-            className="w-full bg-background border border-border/50 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-primary outline-none"
+            value={Math.round(startingCapital)} 
+            onChange={e => setInitialCapital(Number(e.target.value))}
+            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none"
           />
         </div>
         
-        <div className="p-4 bg-card/10 border border-border/30 rounded-2xl flex flex-col justify-between">
-          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
-            <PiggyBank className="w-3.5 h-3.5 text-emerald-500" /> Ahorro Mensual
+        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
+          <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
+            <PiggyBank className="w-4 h-4 text-emerald-500" /> Ahorro Mensual (€)
           </label>
           <input 
             type="number" 
             value={monthlySaving} 
-            onChange={e => setMonthlySaving(e.target.value)}
-            className="w-full bg-background border border-border/50 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-primary outline-none"
+            onChange={e => setMonthlySaving(Number(e.target.value))}
+            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none"
           />
         </div>
 
-        <div className="p-4 bg-card/10 border border-border/30 rounded-2xl flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 bg-amber-500/10 text-amber-500 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
-            OPCIONAL
-          </div>
-          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
-            <PiggyBank className="w-3.5 h-3.5 text-amber-500" /> Ahorro Futuro
-          </label>
-          <input 
-            type="number" 
-            placeholder="Ej: 1000"
-            value={futureSaving} 
-            onChange={e => setFutureSaving(e.target.value)}
-            className="w-full bg-background border border-border/50 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-primary outline-none"
-          />
-        </div>
-
-        <div className="p-4 bg-card/10 border border-border/30 rounded-2xl flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 bg-amber-500/10 text-amber-500 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
-            OPCIONAL
-          </div>
-          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
-            <TrendingUp className="w-3.5 h-3.5 text-amber-500" /> A partir del Año
-          </label>
-          <input 
-            type="number" 
-            placeholder="Ej: 3"
-            value={futureSavingYear} 
-            onChange={e => setFutureSavingYear(e.target.value)}
-            className="w-full bg-background border border-border/50 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-primary outline-none"
-          />
-        </div>
-
-        <div className="p-4 bg-card/10 border border-border/30 rounded-2xl flex flex-col justify-between">
-          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2 whitespace-nowrap">
-            <TrendingUp className="w-3.5 h-3.5 text-blue-500" /> Rentabilidad (%)
+        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
+          <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
+            <TrendingUp className="w-4 h-4 text-blue-500" /> Rentabilidad Anual (%)
           </label>
           <input 
             type="number" 
             value={annualReturn} 
-            onChange={e => setAnnualReturn(e.target.value)}
-            className="w-full bg-background border border-border/50 rounded-xl px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-primary outline-none"
+            onChange={e => setAnnualReturn(Number(e.target.value))}
+            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none"
           />
         </div>
       </div>
