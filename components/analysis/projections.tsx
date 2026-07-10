@@ -18,6 +18,8 @@ export function Projections() {
   const [initialCapital, setInitialCapital] = useState<number | null>(null)
   const [monthlySaving, setMonthlySaving] = useState(500)
   const [annualReturn, setAnnualReturn] = useState(8)
+  const [futureSaving, setFutureSaving] = useState<number | ''>('')
+  const [futureSavingYear, setFutureSavingYear] = useState<number | ''>('')
 
   const startingCapital = initialCapital !== null ? initialCapital : currentTotal
 
@@ -42,8 +44,12 @@ export function Projections() {
 
     // Project 15 years (180 months)
     for (let i = 1; i <= 180; i++) {
-      currentBalance = currentBalance * (1 + monthlyRate) + monthlySaving
-      totalContributed += monthlySaving
+      const currentYear = Math.floor((i - 1) / 12) + 1
+      const isFuture = typeof futureSavingYear === 'number' && typeof futureSaving === 'number' && currentYear >= futureSavingYear
+      const activeMonthlySaving = isFuture ? futureSaving : monthlySaving
+
+      currentBalance = currentBalance * (1 + monthlyRate) + activeMonthlySaving
+      totalContributed += activeMonthlySaving
       
       const futureDate = new Date(today)
       futureDate.setMonth(futureDate.getMonth() + i)
@@ -60,7 +66,7 @@ export function Projections() {
     }
 
     return data
-  }, [startingCapital, monthlySaving, annualReturn])
+  }, [startingCapital, monthlySaving, annualReturn, futureSaving, futureSavingYear])
 
   if (isLoading) {
     return (
@@ -92,40 +98,72 @@ export function Projections() {
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
-          <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
-            <Wallet className="w-4 h-4 text-violet-500" /> Capital Inicial (€)
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl">
+          <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
+            <Wallet className="w-4 h-4 text-violet-500 flex-shrink-0" /> Capital Inicial
           </label>
           <input 
             type="number" 
             value={Math.round(startingCapital)} 
             onChange={e => setInitialCapital(Number(e.target.value))}
-            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none"
+            className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
           />
         </div>
         
-        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
-          <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
-            <PiggyBank className="w-4 h-4 text-emerald-500" /> Ahorro Mensual (€)
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl">
+          <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
+            <PiggyBank className="w-4 h-4 text-emerald-500 flex-shrink-0" /> Ahorro Mensual
           </label>
           <input 
             type="number" 
             value={monthlySaving} 
             onChange={e => setMonthlySaving(Number(e.target.value))}
-            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none"
+            className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
           />
         </div>
 
-        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
-          <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-blue-500" /> Rentabilidad Anual (%)
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-1 bg-amber-500/20 rounded-bl-lg">
+            <span className="text-[9px] font-bold text-amber-500 uppercase px-1">Opcional</span>
+          </div>
+          <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
+            <PiggyBank className="w-4 h-4 text-amber-500 flex-shrink-0" /> Ahorro Futuro
+          </label>
+          <input 
+            type="number" 
+            placeholder="Ej: 1000"
+            value={futureSaving} 
+            onChange={e => setFutureSaving(e.target.value === '' ? '' : Number(e.target.value))}
+            className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
+          />
+        </div>
+
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-1 bg-amber-500/20 rounded-bl-lg">
+            <span className="text-[9px] font-bold text-amber-500 uppercase px-1">Opcional</span>
+          </div>
+          <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
+            <TrendingUp className="w-4 h-4 text-amber-500 flex-shrink-0" /> A partir del Año
+          </label>
+          <input 
+            type="number" 
+            placeholder="Ej: 3"
+            value={futureSavingYear} 
+            onChange={e => setFutureSavingYear(e.target.value === '' ? '' : Number(e.target.value))}
+            className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
+          />
+        </div>
+
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl">
+          <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
+            <TrendingUp className="w-4 h-4 text-blue-500 flex-shrink-0" /> Rentabilidad (%)
           </label>
           <input 
             type="number" 
             value={annualReturn} 
             onChange={e => setAnnualReturn(Number(e.target.value))}
-            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none"
+            className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
           />
         </div>
       </div>
