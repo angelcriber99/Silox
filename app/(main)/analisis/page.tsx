@@ -5,16 +5,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import { TrendingUp, PieChart, Target } from "lucide-react"
 
 // We will create these components next
-import { HistoricalChart } from "@/components/analysis/historical-chart"
-import { AdvancedDiversification } from "@/components/analysis/advanced-diversification"
+import { ComprehensiveAnalysis } from "@/components/analysis/comprehensive-analysis"
 import { Projections } from "@/components/analysis/projections"
 
 export default function AnalysisPage() {
-  const [activeTab, setActiveTab] = useState<"evolucion" | "diversificacion" | "proyecciones">("evolucion")
+  const [activeTab, setActiveTab] = useState<"exhaustivo" | "proyecciones">("exhaustivo")
 
   const tabs = [
-    { id: "evolucion", label: "Evolución", icon: TrendingUp },
-    { id: "diversificacion", label: "Diversificación", icon: PieChart },
+    { id: "exhaustivo", label: "Análisis Exhaustivo", icon: PieChart },
     { id: "proyecciones", label: "Proyecciones", icon: Target },
   ] as const
 
@@ -65,8 +63,7 @@ export default function AnalysisPage() {
             transition={{ duration: 0.2 }}
             className="w-full h-full max-w-6xl mx-auto"
           >
-            {activeTab === "evolucion" && <HistoricalChart />}
-            {activeTab === "diversificacion" && <AdvancedDiversification />}
+            {activeTab === "exhaustivo" && <ComprehensiveAnalysis />}
             {activeTab === "proyecciones" && <Projections />}
           </motion.div>
         </AnimatePresence>
