@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useEffect, useState } from "react"
+import { useMemo, useEffect, useState, useRef } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
 import { getFundHoldings, FundHoldingsResponse } from "@/lib/actions/market-data"
@@ -50,31 +50,47 @@ export function ComprehensiveAnalysis() {
   const [historyLoading, setHistoryLoading] = useState(true)
   const [marketDataMap, setMarketDataMap] = useState<Record<string, FundHoldingsResponse | null>>({})
   const [isEnriching, setIsEnriching] = useState(false)
+  const fetchedIds = useRef<Set<string>>(new Set());
 
   // Fetch true market holdings for all positions
   useEffect(() => {
     if (!positions || positions.length === 0) return;
     
     async function fetchAllMarketData() {
-      setIsEnriching(true);
-      const newData: Record<string, FundHoldingsResponse | null> = {};
-      let hasChanges = false;
+      const positionsToFetch = positions.filter(p => !fetchedIds.current.has(p.activo_id));
+      if (positionsToFetch.length === 0) return;
 
-      for (const p of positions) {
-        if (marketDataMap[p.activo_id] === undefined) {
+      setIsEnriching(true);
+      try {
+        const newData: Record<string, FundHoldingsResponse | null> = {};
+        let hasChanges = false;
+
+        const promises = positionsToFetch.map(async (p) => {
+          fetchedIds.current.add(p.activo_id); // Optimistically mark as fetched so we don't retry on error
           const identifier = p.isin || p.ticker || p.nombre || '';
           if (identifier) {
-            const data = await getFundHoldings(identifier, p.isin);
-            newData[p.activo_id] = data;
-            hasChanges = true;
+            try {
+              const data = await getFundHoldings(identifier, p.isin);
+              newData[p.activo_id] = data;
+              hasChanges = true;
+            } catch (e) {
+              console.error(`Error fetching for ${identifier}`, e);
+              newData[p.activo_id] = null;
+              hasChanges = true;
+            }
           }
-        }
-      }
+        });
 
-      if (hasChanges) {
-        setMarketDataMap(prev => ({ ...prev, ...newData }));
+        await Promise.all(promises);
+
+        if (hasChanges) {
+          setMarketDataMap(prev => ({ ...prev, ...newData }));
+        }
+      } catch (e) {
+        console.error("Critical error in fetchAllMarketData", e);
+      } finally {
+        setIsEnriching(false);
       }
-      setIsEnriching(false);
     }
 
     fetchAllMarketData();
@@ -411,7 +427,7 @@ export function ComprehensiveAnalysis() {
                   <div className="text-right">
                     <p className="text-sm font-bold font-tabular text-foreground">{formatCurrency(p.valor_actual || 0)}</p>
                     <p className={`text-[11px] font-bold font-tabular ${isPositive ? 'text-positive' : 'text-negative'}`}>
-                      {isPositive ? '+' : ''}{formatPercent(p.pnl_percent || 0)}
+                      {formatPercent(p.pnl_percent || 0)}
                     </p>
                   </div>
                 </div>
