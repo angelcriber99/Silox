@@ -24,7 +24,8 @@ export function Projections() {
   const startingCapital = initialCapital !== null ? initialCapital : currentTotal
 
   const projectionData = useMemo(() => {
-    const monthlyRate = annualReturn / 100 / 12
+    // Para que un 8% anual sea exactamente un 8% al final del año, usamos la tasa efectiva mensual
+    const monthlyRate = Math.pow(1 + annualReturn / 100, 1 / 12) - 1
     let currentBalance = startingCapital
     let totalContributed = startingCapital
     
