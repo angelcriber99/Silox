@@ -1,6 +1,7 @@
 "use server"
 
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 import { unstable_cache } from 'next/cache';
 
 // Tipos extraídos de la doc de yahoo-finance2
@@ -30,8 +31,6 @@ export interface FundHoldingsResponse {
 export const getFundHoldings = unstable_cache(
   async (identifier: string, isin?: string | null): Promise<FundHoldingsResponse | null> => {
     try {
-      // @ts-ignore: suppressNotices might not be in the type definitions depending on the version
-      yahooFinance.suppressNotices(['yahooFinanceIsAModule']);
       let tickerToFetch = identifier;
 
       // 1. Si tenemos un ISIN pero el identificador no parece un ticker válido,
@@ -54,9 +53,21 @@ export const getFundHoldings = unstable_cache(
       console.log(`Fetching Yahoo Finance data for Ticker: ${tickerToFetch}`);
 
       // 2. Fetch the topHoldings and fundProfile
-      const result: any = await yahooFinance.quoteSummary(tickerToFetch, { 
-        modules: ['topHoldings', 'fundProfile', 'price'] 
-      });
+      let result: any;
+      try {
+        result = await yahooFinance.quoteSummary(tickerToFetch, { 
+          modules: ['topHoldings', 'fundProfile', 'price'] 
+        });
+      } catch (e: any) {
+        // If Yahoo's API returns a slightly different format, the library throws a validation error
+        // but still provides the extracted data in e.result
+        if (e.name === 'FailedYahooValidationError' && e.result) {
+          console.warn(`Yahoo validation error for ${tickerToFetch}, but continuing with extracted data.`);
+          result = e.result;
+        } else {
+          throw e;
+        }
+      }
 
       if (!result) return null;
 

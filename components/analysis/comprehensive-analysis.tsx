@@ -435,42 +435,30 @@ export function ComprehensiveAnalysis() {
               </span>
             )}
           </div>
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sectors} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
-                <XAxis type="number" hide />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  axisLine={false} 
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "var(--foreground)", fontWeight: 600 }}
-                  width={100}
-                />
-                <RechartsTooltip 
-                  cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-card border border-border/50 px-3 py-2 rounded-lg shadow-xl backdrop-blur-md">
-                          <p className="text-sm font-bold text-foreground">{payload[0].payload.name}</p>
-                          <p className="text-sm font-bold text-primary font-tabular mt-0.5">{formatCurrency(payload[0].value as number)}</p>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                            {((payload[0].value as number) / totals.totalValue * 100).toFixed(1)}%
-                          </p>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Bar dataKey="value" fill="oklch(0.65 0.17 270)" radius={[0, 4, 4, 0]} barSize={24}>
-                  {sectors.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {sectors.map((sector, index) => {
+              const weight = sector.value / totals.totalValue * 100
+              return (
+                <div key={sector.name} className="flex flex-col gap-2 p-4 rounded-2xl bg-muted/30 border border-border/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-foreground truncate mr-2">{sector.name}</span>
+                    <span className="text-sm font-bold font-tabular text-muted-foreground">{weight.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div 
+                      className="h-full rounded-full" 
+                      style={{ 
+                        width: `${weight}%`,
+                        background: COLORS[index % COLORS.length]
+                      }} 
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-muted-foreground mt-1 font-tabular">
+                    {formatCurrency(sector.value)}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
 
