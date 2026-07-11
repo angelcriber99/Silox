@@ -295,7 +295,7 @@ export function MobileBottomSheet({
                       <FileUp className="w-8 h-8" />
                     </div>
                     <h3 className="font-bold text-lg text-foreground">Importar Archivo</h3>
-                    <p className="text-sm text-muted-foreground">Sube un archivo PDF o CSV con tus transacciones de brokers como Revolut, DeGiro, etc.</p>
+                    <p className="text-sm text-muted-foreground">Sube un archivo CSV o Excel con tus transacciones de brokers como Revolut, DeGiro, etc.</p>
                     
                     <div className="pt-4 w-full">
                       <RevolutSync className="w-full">

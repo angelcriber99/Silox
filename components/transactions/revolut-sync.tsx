@@ -71,7 +71,7 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
         {children}
         <input 
           type="file" 
-          accept=".pdf,.csv" 
+          accept=".csv,.xlsx"
           className="hidden" 
           onChange={handleFileChange}
         />
