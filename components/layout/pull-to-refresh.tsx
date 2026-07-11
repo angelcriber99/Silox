@@ -16,6 +16,7 @@ const MAX_PULL = 120
 export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [pullProgress, setPullProgress] = useState(0)
+  const [indicatorVisible, setIndicatorVisible] = useState(false)
   
   const containerRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
@@ -38,6 +39,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     if (quantized === pullProgressRef.current) return
 
     pullProgressRef.current = quantized
+    if (quantized > 0) setIndicatorVisible(true)
 
     if (progressFrame.current !== null) return
 
@@ -54,6 +56,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     }
     pullProgressRef.current = 0
     setPullProgress(0)
+    setIndicatorVisible(false)
     y.set(0)
   }, [y])
 
@@ -118,6 +121,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     if (currentPull >= PULL_THRESHOLD) {
       hapticFeedback.medium()
       isRefreshingRef.current = true
+      setIndicatorVisible(true)
       setIsRefreshing(true)
       y.set(0)
       
@@ -159,29 +163,30 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
 
   return (
     <div ref={containerRef} className="relative min-h-full w-full bg-background">
-      {/* Indicator (Behind content) */}
-      <div 
-        className="absolute top-0 left-0 right-0 flex justify-center items-center z-30 pointer-events-none"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 30px)" }}
-      >
-        <motion.div
-          animate={{
-            scale: isRefreshing ? 1 : Math.max(0.5, pullProgress),
-            opacity: pullProgress > 0 || isRefreshing ? 1 : 0
-          }}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-card border border-border shadow-lg"
+      {indicatorVisible && (
+        <div
+          className="absolute top-0 left-0 right-0 flex justify-center items-center z-30 pointer-events-none"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 30px)" }}
         >
-          {isRefreshing ? (
-            <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          ) : (
-            <motion.div
-              animate={{ rotate: pullProgress === 1 ? 180 : 0 }}
-            >
-              <ArrowDown className="w-5 h-5 text-primary" />
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
+          <motion.div
+            animate={{
+              scale: isRefreshing ? 1 : Math.max(0.5, pullProgress),
+              opacity: 1
+            }}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-card border border-border shadow-lg"
+          >
+            {isRefreshing ? (
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            ) : (
+              <motion.div
+                animate={{ rotate: pullProgress === 1 ? 180 : 0 }}
+              >
+                <ArrowDown className="w-5 h-5 text-primary" />
+              </motion.div>
+            )}
+          </motion.div>
+        </div>
+      )}
 
       {/* Content */}
       <motion.div 
