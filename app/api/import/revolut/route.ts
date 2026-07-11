@@ -55,17 +55,17 @@ const METAL_NAMES: Record<string, string> = {
 }
 
 const METAL_YAHOO_TICKERS: Record<string, string> = {
-  XAG: 'XAGEUR=X',
-  XAU: 'XAUEUR=X',
-  XPD: 'XPDEUR=X',
-  XPT: 'XPTEUR=X',
+  XAG: 'SI=F',
+  XAU: 'GC=F',
+  XPD: 'PA=F',
+  XPT: 'PL=F',
 }
 
-const LEGACY_METAL_YAHOO_TICKERS: Record<string, string> = {
-  XAG: 'XAGUSD=X',
-  XAU: 'XAUUSD=X',
-  XPD: 'XPDUSD=X',
-  XPT: 'XPTUSD=X',
+const LEGACY_METAL_YAHOO_TICKERS: Record<string, string[]> = {
+  XAG: ['XAGUSD=X', 'XAGEUR=X'],
+  XAU: ['XAUUSD=X', 'XAUEUR=X'],
+  XPD: ['XPDUSD=X', 'XPDEUR=X'],
+  XPT: ['XPTUSD=X', 'XPTEUR=X'],
 }
 
 const SPANISH_MONTHS: Record<string, string> = {
@@ -241,9 +241,9 @@ function normalizeMetalTicker(symbol: string): string {
   return METAL_YAHOO_TICKERS[clean] ?? clean
 }
 
-function normalizeLegacyMetalTicker(symbol: string): string {
+function getLegacyMetalTickers(symbol: string): string[] {
   const clean = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '')
-  return LEGACY_METAL_YAHOO_TICKERS[clean] ?? clean
+  return LEGACY_METAL_YAHOO_TICKERS[clean] ?? []
 }
 
 function getAssetSector(kind: AssetKind): string {
@@ -283,7 +283,7 @@ function inferAsset(rawTicker: string, rowText: string): {
       rawTicker: base,
       nombre: METAL_NAMES[base] ?? base,
       tipoActivo: 'Metal',
-      moneda: 'EUR',
+      moneda: 'USD',
     }
   }
 
@@ -520,7 +520,7 @@ function parseMetalRows(rows: string[][], userId: string): ParsedImportTransacti
       rawTicker: metalSymbol,
       nombre: name,
       tipoActivo: 'Metal',
-      moneda: 'EUR',
+      moneda: 'USD',
       tipo_operacion: operation,
       cantidad: quantity,
       precio_unitario: 0,
@@ -742,7 +742,7 @@ export async function POST(request: Request) {
       let existingActivo = activos?.find(a =>
         a.ticker === tx.ticker ||
         ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && a.ticker === tx.rawTicker) ||
-        (tx.tipoActivo === 'Metal' && a.ticker === normalizeLegacyMetalTicker(tx.rawTicker))
+        (tx.tipoActivo === 'Metal' && getLegacyMetalTickers(tx.rawTicker).includes(a.ticker))
       )
 
       if (existingActivo) {

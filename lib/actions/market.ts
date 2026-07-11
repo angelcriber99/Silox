@@ -13,6 +13,27 @@ import {
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
+const METAL_RATE_API_URL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json'
+
+const METAL_TICKER_CODES: Record<string, 'xag' | 'xau' | 'xpd' | 'xpt'> = {
+  'SI=F': 'xag',
+  'XAG': 'xag',
+  'XAGUSD=X': 'xag',
+  'XAGEUR=X': 'xag',
+  'GC=F': 'xau',
+  'XAU': 'xau',
+  'XAUUSD=X': 'xau',
+  'XAUEUR=X': 'xau',
+  'PA=F': 'xpd',
+  'XPD': 'xpd',
+  'XPDUSD=X': 'xpd',
+  'XPDEUR=X': 'xpd',
+  'PL=F': 'xpt',
+  'XPT': 'xpt',
+  'XPTUSD=X': 'xpt',
+  'XPTEUR=X': 'xpt',
+}
+
 interface YahooQuote {
   regularMarketPrice?: number
   regularMarketChangePercent?: number
@@ -25,6 +46,44 @@ interface YahooQuote {
   postMarketTime?: string | Date
   exchangeTimezoneName?: string
   marketState?: string
+}
+
+interface MetalRatesResponse {
+  eur?: Partial<Record<'xag' | 'xau' | 'xpd' | 'xpt', number>>
+}
+
+function getMetalCode(ticker: string): 'xag' | 'xau' | 'xpd' | 'xpt' | null {
+  return METAL_TICKER_CODES[ticker.toUpperCase()] ?? null
+}
+
+async function fetchMetalPriceInEur(ticker: string): Promise<PriceEntry | null> {
+  const metalCode = getMetalCode(ticker)
+  if (!metalCode) return null
+
+  try {
+    const response = await fetch(METAL_RATE_API_URL, {
+      next: { revalidate: 300 },
+    })
+    if (!response.ok) return null
+
+    const data = await response.json() as MetalRatesResponse
+    const unitsPerEur = data.eur?.[metalCode]
+    if (!unitsPerEur || unitsPerEur <= 0) return null
+
+    const price = 1 / unitsPerEur
+
+    return {
+      price,
+      sparkline: [price, price, price, price, price, price, price],
+      currency: 'EUR',
+      changePercent24h: 0,
+      originalPrice: price,
+      originalCurrency: 'EUR',
+      marketState: 'OPEN',
+    }
+  } catch {
+    return null
+  }
 }
 
 async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
@@ -113,6 +172,14 @@ async function _fetchMarketPrices(
           originalPrice: 1.0,
           originalCurrency: 'EUR',
           marketState: 'OPEN'
+        }
+      }
+
+      const metalPrice = await fetchMetalPriceInEur(ticker)
+      if (metalPrice) {
+        return {
+          ticker,
+          ...metalPrice,
         }
       }
 
@@ -288,4 +355,3 @@ export async function fetchAssetDetails(ticker: string) {
     return null
   }
 }
-

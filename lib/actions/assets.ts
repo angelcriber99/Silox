@@ -14,7 +14,11 @@ function displayAssetType<T extends { tipo: string; sector?: string | null; tick
     asset.ticker === 'XPDUSD=X' ||
     asset.ticker === 'XPDEUR=X' ||
     asset.ticker === 'XPTUSD=X' ||
-    asset.ticker === 'XPTEUR=X'
+    asset.ticker === 'XPTEUR=X' ||
+    asset.ticker === 'SI=F' ||
+    asset.ticker === 'GC=F' ||
+    asset.ticker === 'PA=F' ||
+    asset.ticker === 'PL=F'
 
   return isMetal ? ({ ...asset, tipo: 'Metal' } as T) : asset
 }
