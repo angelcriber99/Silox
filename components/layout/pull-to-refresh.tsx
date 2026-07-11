@@ -47,6 +47,16 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     })
   }, [])
 
+  const resetPullIndicator = useCallback(() => {
+    if (progressFrame.current !== null) {
+      window.cancelAnimationFrame(progressFrame.current)
+      progressFrame.current = null
+    }
+    pullProgressRef.current = 0
+    setPullProgress(0)
+    y.set(0)
+  }, [y])
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
     // Check if we are at the top of the actual scroll container
     const mainEl = document.querySelector('main')
@@ -119,13 +129,13 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       } finally {
         isRefreshingRef.current = false
         setIsRefreshing(false)
-        updatePullProgress(0)
+        resetPullIndicator()
       }
     } else {
       await animate(y, 0, { type: "spring", stiffness: 300, damping: 30 })
-      updatePullProgress(0)
+      resetPullIndicator()
     }
-  }, [onRefresh, updatePullProgress, y])
+  }, [onRefresh, resetPullIndicator, y])
 
   useEffect(() => {
     const el = containerRef.current
