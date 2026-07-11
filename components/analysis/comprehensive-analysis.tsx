@@ -73,7 +73,11 @@ export function ComprehensiveAnalysis() {
               const res = await fetch('/api/market-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier, isin: p.isin })
+                body: JSON.stringify({ 
+                  identifier, 
+                  isin: p.isin,
+                  name: p.nombre 
+                })
               });
               
               if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);

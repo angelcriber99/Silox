@@ -9,7 +9,8 @@ const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export async function POST(request: NextRequest) {
   try {
-    const { identifier, isin } = await request.json();
+    const body = await request.json();
+    const { identifier, isin, name } = body;
 
     if (!identifier) {
       return NextResponse.json({ error: 'identifier is required' }, { status: 400 });
@@ -54,19 +55,15 @@ export async function POST(request: NextRequest) {
         result = e.result;
       } else {
         console.error(`[market-data] quoteSummary failed for ${tickerToFetch}:`, e.message);
-        return NextResponse.json(null);
+        result = null;
       }
     }
 
-    if (!result) {
-      return NextResponse.json(null);
-    }
-
     // Normalize sector weightings (Yahoo returns array of single-key objects)
-    const topHoldings = result.topHoldings;
-    const fundProfile = result.fundProfile;
-    const price = result.price;
-    const assetProfile = result.assetProfile || result.summaryProfile;
+    const topHoldings = result?.topHoldings;
+    const fundProfile = result?.fundProfile;
+    const price = result?.price;
+    const assetProfile = result?.assetProfile || result?.summaryProfile;
 
     let sectorWeightings: Record<string, number> | null = null;
     if (topHoldings?.sectorWeightings && Array.isArray(topHoldings.sectorWeightings)) {
@@ -91,7 +88,7 @@ export async function POST(request: NextRequest) {
     // --- DYNAMIC PROXY FOR INDEX FUNDS ---
     // If Yahoo Finance fails to return sector data for European UCITS funds,
     // we can silently fetch the data from the US equivalent ETF to get 100% real-time weights.
-    const identLower = (identifier || tickerToFetch).toLowerCase();
+    const identLower = (name || identifier || tickerToFetch).toLowerCase();
     
     if (!sectorWeightings || Object.keys(sectorWeightings).length === 0) {
       let proxyTicker = null;
