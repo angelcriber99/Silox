@@ -271,7 +271,10 @@ export function ComprehensiveAnalysis() {
            addToMap(sMap, "Otros", remainder, assetName, assetSymbol);
         }
       } else {
-        const fallbackSector = mData?.sector ? translateSectorKey(mData.sector.toLowerCase().replace(/ /g, '_')) : (p.sector || 'Desconocido')
+        let fallbackSector = mData?.sector ? translateSectorKey(mData.sector.toLowerCase().replace(/ /g, '_')) : (p.sector || 'Desconocido')
+        if (assetSymbol.toUpperCase().startsWith('UNH')) {
+          fallbackSector = 'Salud';
+        }
         addToMap(sMap, fallbackSector, val, assetName, assetSymbol);
       }
 
