@@ -68,6 +68,17 @@ const LEGACY_METAL_YAHOO_TICKERS: Record<string, string[]> = {
   XPT: ['XPTUSD=X', 'XPTEUR=X'],
 }
 
+type MetalRateCode = 'xag' | 'xau' | 'xpd' | 'xpt'
+type MetalRates = Partial<Record<MetalRateCode, number>>
+
+const METAL_RATE_API_BASE = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api'
+const METAL_RATE_CODES: Record<string, MetalRateCode> = {
+  XAG: 'xag',
+  XAU: 'xau',
+  XPD: 'xpd',
+  XPT: 'xpt',
+}
+
 const SPANISH_MONTHS: Record<string, string> = {
   ene: '01',
   enero: '01',
@@ -283,7 +294,7 @@ function inferAsset(rawTicker: string, rowText: string): {
       rawTicker: base,
       nombre: METAL_NAMES[base] ?? base,
       tipoActivo: 'Metal',
-      moneda: 'USD',
+      moneda: 'EUR',
     }
   }
 
@@ -368,7 +379,47 @@ function findPairedFiatTotal(
   return Number.NaN
 }
 
-function parseRows(rows: string[][], userId: string): ParsedImportTransaction[] {
+async function fetchMetalRatesForDate(
+  date: string,
+  cache: Map<string, Promise<MetalRates | null>>
+): Promise<MetalRates | null> {
+  if (!cache.has(date)) {
+    cache.set(date, (async () => {
+      try {
+        const response = await fetch(`${METAL_RATE_API_BASE}@${date}/v1/currencies/eur.json`, {
+          next: { revalidate: 86400 },
+        })
+        if (!response.ok) return null
+
+        const data = await response.json() as { eur?: MetalRates }
+        return data.eur ?? null
+      } catch {
+        return null
+      }
+    })())
+  }
+
+  return cache.get(date) ?? null
+}
+
+async function fetchMetalUnitPriceEur(
+  metalSymbol: string,
+  date: string,
+  cache: Map<string, Promise<MetalRates | null>>
+): Promise<number | null> {
+  const metalCode = METAL_RATE_CODES[metalSymbol]
+  if (!metalCode) return null
+
+  const datedRates = await fetchMetalRatesForDate(date, cache)
+  const datedUnitsPerEur = datedRates?.[metalCode]
+  if (datedUnitsPerEur && datedUnitsPerEur > 0) return 1 / datedUnitsPerEur
+
+  const latestRates = await fetchMetalRatesForDate('latest', cache)
+  const latestUnitsPerEur = latestRates?.[metalCode]
+  return latestUnitsPerEur && latestUnitsPerEur > 0 ? 1 / latestUnitsPerEur : null
+}
+
+async function parseRows(rows: string[][], userId: string): Promise<ParsedImportTransaction[]> {
   if (rows.length < 2) return []
 
   const headers = rows[0].map(normalizeHeader)
@@ -479,7 +530,7 @@ function isMetalAccountStatement(headers: string[]): boolean {
   )
 }
 
-function parseMetalRows(rows: string[][], userId: string): ParsedImportTransaction[] {
+async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedImportTransaction[]> {
   const headers = rows[0].map(normalizeHeader)
   const dateIdx = findIndex(headers, ['fechadefinalizacion', 'fechadeinicio', 'date', 'fecha'])
   const amountIdx = findIndex(headers, ['importe', 'amount'])
@@ -490,6 +541,7 @@ function parseMetalRows(rows: string[][], userId: string): ParsedImportTransacti
   if (dateIdx < 0 || amountIdx < 0 || currencyIdx < 0) return []
 
   const parsed: ParsedImportTransaction[] = []
+  const metalRateCache = new Map<string, Promise<MetalRates | null>>()
 
   for (const row of rows.slice(1)) {
     const state = normalizeText(row[stateIdx]).toUpperCase()
@@ -513,6 +565,12 @@ function parseMetalRows(rows: string[][], userId: string): ParsedImportTransacti
     if (!Number.isFinite(quantity) || quantity <= 0) continue
 
     const name = METAL_NAMES[metalSymbol] ?? metalSymbol
+    const historicalUnitPriceEur = await fetchMetalUnitPriceEur(metalSymbol, date, metalRateCache)
+    if (!historicalUnitPriceEur || historicalUnitPriceEur <= 0) continue
+
+    const effectiveUnitPriceEur = operation === 'Compra'
+      ? historicalUnitPriceEur * (grossQuantity / quantity)
+      : historicalUnitPriceEur
 
     parsed.push({
       user_id: userId,
@@ -520,10 +578,10 @@ function parseMetalRows(rows: string[][], userId: string): ParsedImportTransacti
       rawTicker: metalSymbol,
       nombre: name,
       tipoActivo: 'Metal',
-      moneda: 'USD',
+      moneda: 'EUR',
       tipo_operacion: operation,
       cantidad: quantity,
-      precio_unitario: 0,
+      precio_unitario: effectiveUnitPriceEur,
       fecha: date,
       comision: 0,
     })
@@ -664,17 +722,17 @@ export async function POST(request: Request) {
       ? await parseWorkbook(buffer)
       : parseCsv(buffer.toString('utf-8'))
 
-    const parsedTransactions = parseRows(rows, user.id)
+    const parsedTransactions = await parseRows(rows, user.id)
     const internalCryptoMovements = parseInternalCryptoMovements(rows, user.id)
 
     let { data: activos } = await supabase
       .from('activos')
-      .select('id, ticker, tipo, sector')
+      .select('id, ticker, tipo, sector, moneda')
       .eq('user_id', user.id)
 
     let { data: existingTransactions } = await supabase
       .from('transacciones')
-      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, fecha')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha')
       .eq('user_id', user.id)
 
     let removedInternalMovements = 0
@@ -724,6 +782,7 @@ export async function POST(request: Request) {
         success: true,
         message: 'No se encontraron operaciones de compra/venta en este archivo.',
         newTransactions: 0,
+        updatedTransactions: 0,
         ignoredDuplicates: 0,
         removedInternalMovements,
         imported: [],
@@ -733,6 +792,7 @@ export async function POST(request: Request) {
 
     let newTxCount = 0
     let ignoredCount = 0
+    let updatedTxCount = 0
     const toInsert = []
     const imported = []
     const ignored = []
@@ -748,7 +808,7 @@ export async function POST(request: Request) {
       if (existingActivo) {
         activo_id = existingActivo.id
         const dbTipo = getDatabaseAssetType(tx.tipoActivo)
-        if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== dbTipo || existingActivo.sector !== getAssetSector(tx.tipoActivo))) {
+        if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== dbTipo || existingActivo.sector !== getAssetSector(tx.tipoActivo) || existingActivo.moneda !== tx.moneda)) {
           await supabase
             .from('activos')
             .update({
@@ -764,6 +824,7 @@ export async function POST(request: Request) {
           existingActivo.ticker = tx.ticker
           existingActivo.tipo = dbTipo
           existingActivo.sector = getAssetSector(tx.tipoActivo)
+          existingActivo.moneda = tx.moneda
         }
       } else {
         const dbTipo = getDatabaseAssetType(tx.tipoActivo)
@@ -779,7 +840,7 @@ export async function POST(request: Request) {
             sector: getAssetSector(tx.tipoActivo),
             geografia: getAssetGeography(tx.tipoActivo),
           })
-          .select('id, ticker, tipo, sector')
+          .select('id, ticker, tipo, sector, moneda')
           .single()
 
         if (createError) {
@@ -797,16 +858,44 @@ export async function POST(request: Request) {
 
       if (!activo_id) continue
 
-      const exists = existingTransactions?.some(existing => {
+      const matchingExisting = existingTransactions?.find(existing => {
         const isSameActivo = existing.activo_id === activo_id
         const isSameType = existing.tipo_operacion === tx.tipo_operacion
         const isSameQty = Math.abs(existing.cantidad - tx.cantidad) < 0.00000001
-        const isSamePrice = Math.abs(existing.precio_unitario - tx.precio_unitario) < 0.01
         const isSameDate = existing.fecha === tx.fecha
-        return isSameActivo && isSameType && isSameQty && isSamePrice && isSameDate
+        return isSameActivo && isSameType && isSameQty && isSameDate
       })
 
-      if (exists) {
+      if (matchingExisting && tx.tipoActivo === 'Metal') {
+        const shouldUpdate =
+          Math.abs(matchingExisting.precio_unitario - tx.precio_unitario) >= 0.01 ||
+          Math.abs((matchingExisting.comision ?? 0) - tx.comision) >= 0.01
+
+        if (shouldUpdate) {
+          const { error: updateError } = await supabase
+            .from('transacciones')
+            .update({
+              precio_unitario: tx.precio_unitario,
+              comision: tx.comision,
+            })
+            .eq('id', matchingExisting.id)
+            .eq('user_id', user.id)
+
+          if (updateError) {
+            return NextResponse.json({
+              error: `No se pudo actualizar el histórico de ${tx.ticker}: ${updateError.message}`,
+            }, { status: 500 })
+          }
+
+          matchingExisting.precio_unitario = tx.precio_unitario
+          matchingExisting.comision = tx.comision
+          imported.push(tx)
+          updatedTxCount++
+        } else {
+          ignoredCount++
+          ignored.push(tx)
+        }
+      } else if (matchingExisting && Math.abs(matchingExisting.precio_unitario - tx.precio_unitario) < 0.01) {
         ignoredCount++
         ignored.push(tx)
       } else {
@@ -836,6 +925,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       newTransactions: newTxCount,
+      updatedTransactions: updatedTxCount,
       ignoredDuplicates: ignoredCount,
       removedInternalMovements,
       imported,
