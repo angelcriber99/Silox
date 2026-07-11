@@ -317,8 +317,8 @@ function parseRows(rows: string[][], userId: string): ParsedImportTransaction[] 
   const tickerIdx = findIndex(headers, ['ticker', 'symbol', 'asset', 'instrument', 'crypto', 'currency', 'moneda'])
   const typeIdx = findIndex(headers, ['type', 'tipo', 'transactiontype', 'operation', 'operacion'])
   const qtyIdx = findIndex(headers, ['quantity', 'cantidad', 'units', 'shares', 'amount'])
-  const priceIdx = findIndex(headers, ['price', 'precio', 'unitprice', 'priceperunit', 'rate'])
-  const totalIdx = findIndex(headers, ['total', 'value', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
+  const priceIdx = findIndex(headers, ['price', 'precio', 'unitprice', 'priceperunit', 'pricepershare', 'shareprice', 'averageprice', 'avgprice', 'rate'])
+  const totalIdx = findIndex(headers, ['total', 'value', 'totalamount', 'totalvalue', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
   const feeIdx = findIndex(headers, ['fee', 'fees', 'commission', 'comision'])
   const nameIdx = findIndex(headers, ['name', 'nombre', 'instrumentname', 'assetname', 'product'])
   const descriptionIdx = findIndex(headers, ['description', 'descripcion', 'details', 'concept'])
@@ -407,8 +407,8 @@ function parseInternalCryptoMovements(rows: string[][], userId: string): ParsedI
   const tickerIdx = findIndex(headers, ['ticker', 'symbol', 'asset', 'instrument', 'crypto', 'currency', 'moneda'])
   const typeIdx = findIndex(headers, ['type', 'tipo', 'transactiontype', 'operation', 'operacion'])
   const qtyIdx = findIndex(headers, ['quantity', 'cantidad', 'units', 'shares', 'amount'])
-  const priceIdx = findIndex(headers, ['price', 'precio', 'unitprice', 'priceperunit', 'rate'])
-  const totalIdx = findIndex(headers, ['total', 'value', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
+  const priceIdx = findIndex(headers, ['price', 'precio', 'unitprice', 'priceperunit', 'pricepershare', 'shareprice', 'averageprice', 'avgprice', 'rate'])
+  const totalIdx = findIndex(headers, ['total', 'value', 'totalamount', 'totalvalue', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
   const feeIdx = findIndex(headers, ['fee', 'fees', 'commission', 'comision'])
   const isCryptoAccountStatement =
     headers.includes('symbol') &&
