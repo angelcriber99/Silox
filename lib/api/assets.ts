@@ -120,7 +120,16 @@ export function enrichPositions(
 ): EnrichedPosition[] {
   const { prices, fxRates = {} } = priceDataPayload
 
-  return positions.map((p) => {
+  return positions.map((pos) => {
+    const p = { ...pos }
+    
+    // Si la liquidez entra en negativo (porque se ha comprado sin registrar un ingreso previo),
+    // la ignoramos forzando a 0 para que no reste del total del portfolio.
+    if ((p.tipo === 'Liquidez' || p.ticker === 'CASH') && p.unidades < 0) {
+      p.unidades = 0
+      p.coste_total = 0
+    }
+
     const priceData = prices[p.ticker]
     const precio_medio_real = p.unidades > 0 ? p.coste_total / p.unidades : 0
 
