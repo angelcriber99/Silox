@@ -1,11 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { lazy, Suspense, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { PieChart, Target } from "lucide-react"
 
-import { ComprehensiveAnalysis } from "@/components/analysis/comprehensive-analysis"
-import { Projections } from "@/components/analysis/projections"
+const ComprehensiveAnalysis = lazy(() =>
+  import("@/components/analysis/comprehensive-analysis").then((mod) => ({
+    default: mod.ComprehensiveAnalysis,
+  }))
+)
+const Projections = lazy(() =>
+  import("@/components/analysis/projections").then((mod) => ({
+    default: mod.Projections,
+  }))
+)
 
 export default function AnalysisPage() {
   const [activeTab, setActiveTab] = useState<"exhaustivo" | "proyecciones">("exhaustivo")
@@ -62,8 +70,10 @@ export default function AnalysisPage() {
             transition={{ duration: 0.2 }}
             className="w-full h-full max-w-6xl mx-auto"
           >
-            {activeTab === "exhaustivo" && <ComprehensiveAnalysis />}
-            {activeTab === "proyecciones" && <Projections />}
+            <Suspense fallback={null}>
+              {activeTab === "exhaustivo" && <ComprehensiveAnalysis />}
+              {activeTab === "proyecciones" && <Projections />}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

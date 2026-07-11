@@ -109,7 +109,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       hapticFeedback.medium()
       isRefreshingRef.current = true
       setIsRefreshing(true)
-      await animate(y, 0, { type: "spring", stiffness: 500, damping: 34 })
+      y.set(0)
       
       try {
         await onRefresh()

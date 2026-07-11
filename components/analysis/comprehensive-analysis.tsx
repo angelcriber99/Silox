@@ -2,9 +2,8 @@
 
 import { useMemo, useEffect, useState, useRef } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
-import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
 import { FundHoldingsResponse } from "@/lib/actions/market-data"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatCurrency } from "@/lib/utils/formatters"
 import { Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Loader2, Wallet, Globe2, Briefcase, Lightbulb } from "lucide-react"
 
@@ -95,123 +94,72 @@ function translateAssetClass(key: string): string {
 
 export function ComprehensiveAnalysis() {
   const { positions, totals, isLoading: portfolioLoading } = usePortfolio()
-  const [historyData, setHistoryData] = useState<any[]>([])
-  const [historyLoading, setHistoryLoading] = useState(true)
   const [marketDataMap, setMarketDataMap] = useState<Record<string, FundHoldingsResponse | null>>({})
   const [isEnriching, setIsEnriching] = useState(false)
-  const [isSectorsExpanded, setIsSectorsExpanded] = useState(false)
-  const [isGeosExpanded, setIsGeosExpanded] = useState(false)
   const fetchedIds = useRef<Set<string>>(new Set());
 
   // Fetch true market holdings for all positions
   useEffect(() => {
     if (!positions || positions.length === 0) return;
+    let cancelled = false;
     
     async function fetchAllMarketData() {
-      const positionsToFetch = positions.filter(p => !fetchedIds.current.has(p.activo_id));
+      const positionsToFetch = positions.filter(p =>
+        p.tipo !== 'Liquidez' &&
+        p.tipo !== 'Fondo Monetario' &&
+        !p.ticker.startsWith('CASH') &&
+        !fetchedIds.current.has(p.activo_id)
+      );
       if (positionsToFetch.length === 0) return;
 
       setIsEnriching(true);
       try {
-        const newData: Record<string, FundHoldingsResponse | null> = {};
-        let hasChanges = false;
+        for (let i = 0; i < positionsToFetch.length && !cancelled; i += 3) {
+          const batch = positionsToFetch.slice(i, i + 3);
+          const batchData: Record<string, FundHoldingsResponse | null> = {};
 
-        const promises = positionsToFetch.map(async (p) => {
-          fetchedIds.current.add(p.activo_id); // Optimistically mark as fetched so we don't retry on error
-          const identifier = p.isin || p.ticker || p.nombre || '';
-          if (identifier) {
+          await Promise.all(batch.map(async (p) => {
+            fetchedIds.current.add(p.activo_id);
+            const identifier = p.isin || p.ticker || p.nombre || '';
+            if (!identifier) return;
+
             try {
               const res = await fetch('/api/market-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  identifier, 
+                body: JSON.stringify({
+                  identifier,
                   isin: p.isin,
-                  name: p.nombre 
+                  name: p.nombre
                 })
               });
-              
+
               if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-              const data = await res.json();
-              
-              newData[p.activo_id] = data;
-              hasChanges = true;
+              batchData[p.activo_id] = await res.json();
             } catch (e) {
               console.error(`Error fetching for ${identifier}`, e);
-              newData[p.activo_id] = null;
-              hasChanges = true;
+              batchData[p.activo_id] = null;
             }
+          }));
+
+          if (!cancelled && Object.keys(batchData).length > 0) {
+            setMarketDataMap(prev => ({ ...prev, ...batchData }));
           }
-        });
-
-        await Promise.all(promises);
-
-        if (hasChanges) {
-          setMarketDataMap(prev => ({ ...prev, ...newData }));
         }
       } catch (e) {
         console.error("Critical error in fetchAllMarketData", e);
       } finally {
-        setIsEnriching(false);
+        if (!cancelled) setIsEnriching(false);
       }
     }
 
-    fetchAllMarketData();
+    const timer = window.setTimeout(fetchAllMarketData, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    }
   }, [positions]); // only depends on positions, we check inside if we already fetched
-
-  // Fetch historical data
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const txs = await fetchAllTransactionsForTax()
-        const monthlyData = new Map<string, number>()
-        let cumulativeInvested = 0
-        
-        const sorted = [...txs].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-
-        for (const tx of sorted) {
-          const date = new Date(tx.fecha)
-          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-          
-          let amount = tx.cantidad * tx.precio_unitario + (tx.comision || 0)
-          if (tx.tipo_operacion === 'Compra') {
-            cumulativeInvested += amount
-          } else if (tx.tipo_operacion === 'Venta') {
-            cumulativeInvested -= amount
-          }
-          monthlyData.set(monthKey, cumulativeInvested)
-        }
-
-        if (monthlyData.size > 0) {
-          const keys = Array.from(monthlyData.keys()).sort()
-          const firstMonth = new Date(keys[0] + "-01")
-          const lastMonth = new Date()
-          
-          const finalData = []
-          let lastKnownValue = 0
-
-          let currentMonth = new Date(firstMonth)
-          while (currentMonth <= lastMonth) {
-            const key = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
-            if (monthlyData.has(key)) {
-              lastKnownValue = monthlyData.get(key)!
-            }
-            finalData.push({
-              month: currentMonth.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
-              invested: lastKnownValue,
-            })
-            currentMonth.setMonth(currentMonth.getMonth() + 1)
-          }
-          setHistoryData(finalData)
-        }
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setHistoryLoading(false)
-      }
-    }
-    loadData()
-  }, [])
 
   // Aggegations
   const { sectors, geos, assetTypes, topPositions, analysisTotal } = useMemo(() => {
@@ -446,7 +394,7 @@ export function ComprehensiveAnalysis() {
     }).slice(0, 4)
   }, [sectors, geos, assetTypes, topPositions, totals.totalValue, analysisTotal])
 
-  if (portfolioLoading || historyLoading) {
+  if (portfolioLoading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
