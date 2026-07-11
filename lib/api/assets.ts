@@ -127,8 +127,10 @@ export function enrichPositions(
     const isCashAsset = p.ticker === 'CASH'
     const fxRate = p.moneda === 'EUR' ? 1 : (fxRates[p.moneda] || 1)
     
-    const fallbackPriceNativo = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez' || isCashAsset) ? 1.00 : precio_medio_real
-    const fallbackPriceEur = fallbackPriceNativo / fxRate
+    // NUNCA hacer fallback al precio de compra para acciones/ETFs si falla la API, 
+    // porque distorsiona completamente el valor del portfolio.
+    const fallbackPriceNativo = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez' || isCashAsset) ? 1.00 : null
+    const fallbackPriceEur = fallbackPriceNativo !== null ? fallbackPriceNativo / fxRate : null
 
     const precio_actual = isCashAsset ? 1.00 : (priceData?.price ?? fallbackPriceEur)
     const precio_actual_nativo = isCashAsset ? 1.00 : (priceData?.originalPrice ?? fallbackPriceNativo)
@@ -193,10 +195,14 @@ export function computePortfolioTotals(
   positions: EnrichedPosition[]
 ): PortfolioTotals {
   const withValues = positions.filter((p) => p.valor_actual !== null)
-  const totalValue = withValues.reduce(
-    (sum, p) => sum + (p.valor_actual ?? 0),
+  
+  // Para el total, sumamos el valor real de los cotizados y el coste de los no cotizados/fallidos
+  // para evitar que el portfolio caiga a 0 por errores de API.
+  const totalValue = positions.reduce(
+    (sum, p) => sum + (p.valor_actual !== null ? p.valor_actual : p.coste_total_eur),
     0
   )
+  
   const totalCost = positions.reduce((sum, p) => sum + p.coste_total_eur, 0)
   const totalPnl = totalValue - totalCost
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
