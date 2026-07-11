@@ -7,18 +7,27 @@ import { Bell, BellRing, Plus, Trash2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { formatCurrency } from "@/lib/utils/formatters"
-import { usePreferences } from "@/lib/stores/use-preferences"
-import { toast } from "sonner"
+import type { EnrichedPosition } from "@/lib/types"
+import { usePriceAlertNotifications } from "@/components/dashboard/use-price-alert-notifications"
 
 interface PriceAlertsProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialTicker?: string
+  positions?: EnrichedPosition[]
+  checkNotifications?: boolean
 }
 
-export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsProps) {
-  const { alerts, addAlert, removeAlert, markTriggered } = useAlerts()
-  const { positions } = usePortfolio()
+export function PriceAlerts({
+  open,
+  onOpenChange,
+  initialTicker,
+  positions: providedPositions,
+  checkNotifications = true,
+}: PriceAlertsProps) {
+  const { alerts, addAlert, removeAlert } = useAlerts()
+  const { positions: fetchedPositions } = usePortfolio({ enabled: !providedPositions })
+  const positions = providedPositions ?? fetchedPositions
   const [ticker, setTicker] = useState(initialTicker || "")
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState<'above' | 'below'>('above')
@@ -29,47 +38,7 @@ export function PriceAlerts({ open, onOpenChange, initialTicker }: PriceAlertsPr
     }
   }, [open, initialTicker])
 
-  // Check alerts
-  useEffect(() => {
-    if (!positions || positions.length === 0) return
-
-    let triggeredCount = 0
-
-    alerts.forEach((alert) => {
-      if (alert.triggered) return
-
-      const pos = positions.find(p => p.ticker.toUpperCase() === alert.ticker.toUpperCase())
-      if (!pos || pos.precio_actual === null) return
-
-      const currentPrice = pos.precio_actual_nativo !== null ? pos.precio_actual_nativo : pos.precio_actual
-      if (currentPrice === null) return
-
-      let shouldTrigger = false
-      if (alert.condition === 'above' && currentPrice >= alert.target_price) {
-        shouldTrigger = true
-      } else if (alert.condition === 'below' && currentPrice <= alert.target_price) {
-        shouldTrigger = true
-      }
-
-      if (shouldTrigger) {
-        removeAlert(alert.id)
-        triggeredCount++
-        
-        // Browser native notification
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("¡Alerta de Silox!", {
-            body: `${alert.ticker} ha cruzado tu objetivo de ${formatCurrency(alert.target_price, pos.moneda || 'EUR')}. Precio actual: ${formatCurrency(currentPrice, pos.moneda || 'EUR')}`,
-            icon: '/icon-192.png'
-          })
-        }
-      }
-    })
-
-    if (triggeredCount > 0) {
-      toast.success(`${triggeredCount} alerta(s) de precio alcanzadas`)
-    }
-
-  }, [positions, alerts, markTriggered])
+  usePriceAlertNotifications(checkNotifications ? positions : [], alerts, removeAlert)
 
   const handleAdd = () => {
     if (!ticker || !targetPrice) return

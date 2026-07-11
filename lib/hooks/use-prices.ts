@@ -5,7 +5,7 @@ import { fetchPrices } from '@/lib/api/market'
 import { useRef, useEffect } from 'react'
 import type { PriceData } from '@/lib/types'
 
-export function usePrices(tickers: string[]) {
+export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
   const lastKnownPrices = useRef<Record<string, PriceData>>({})
 
   // Cargar de localStorage al inicio
@@ -53,7 +53,7 @@ export function usePrices(tickers: string[]) {
       
       return { ...data, prices: mergedPrices }
     },
-    enabled: tickers.length > 0,
+    enabled: tickers.length > 0 && (options?.enabled ?? true),
     staleTime: 15_000,
     refetchInterval: 15_000, // Auto-refresh every 15 seconds
   })

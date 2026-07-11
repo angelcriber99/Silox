@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, ReactNode } from "react"
+import { useState, useRef, useEffect, useCallback, ReactNode } from "react"
 import { motion, useAnimation, useMotionValue } from "framer-motion"
 import { Loader2, ArrowDown } from "lucide-react"
 import { hapticFeedback } from "@/lib/utils/haptics"
@@ -23,11 +23,32 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const currentY = useRef(0)
   const isPulling = useRef(false)
   const isHorizontalScroll = useRef(false)
+  const isRefreshingRef = useRef(false)
+  const pullProgressRef = useRef(0)
+  const progressFrame = useRef<number | null>(null)
   
   const y = useMotionValue(0)
   const controls = useAnimation()
 
-  const handleTouchStart = (e: TouchEvent) => {
+  useEffect(() => {
+    isRefreshingRef.current = isRefreshing
+  }, [isRefreshing])
+
+  const updatePullProgress = useCallback((nextProgress: number) => {
+    const quantized = Math.round(nextProgress * 20) / 20
+    if (quantized === pullProgressRef.current) return
+
+    pullProgressRef.current = quantized
+
+    if (progressFrame.current !== null) return
+
+    progressFrame.current = window.requestAnimationFrame(() => {
+      progressFrame.current = null
+      setPullProgress(pullProgressRef.current)
+    })
+  }, [])
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
     // Check if we are at the top of the actual scroll container
     const mainEl = document.querySelector('main')
     const scrollTop = mainEl ? mainEl.scrollTop : window.scrollY
@@ -38,10 +59,10 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       isPulling.current = true
       isHorizontalScroll.current = false
     }
-  }
+  }, [])
 
-  const handleTouchMove = (e: TouchEvent) => {
-    if (!isPulling.current || isRefreshing) return
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isPulling.current || isRefreshingRef.current) return
     
     currentY.current = e.touches[0].clientY
     const currentX = e.touches[0].clientX
@@ -70,22 +91,24 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       y.set(pull)
       
       const progress = Math.min(pull / PULL_THRESHOLD, 1)
-      setPullProgress(progress)
+      const previousProgress = pullProgressRef.current
+      updatePullProgress(progress)
       
-      if (progress === 1 && pullProgress < 1) {
+      if (progress === 1 && previousProgress < 1) {
         hapticFeedback.light()
       }
     }
-  }
+  }, [updatePullProgress, y])
 
-  const handleTouchEnd = async () => {
-    if (!isPulling.current || isRefreshing) return
+  const handleTouchEnd = useCallback(async () => {
+    if (!isPulling.current || isRefreshingRef.current) return
     isPulling.current = false
     
     const currentPull = y.get()
     
     if (currentPull >= PULL_THRESHOLD) {
       hapticFeedback.medium()
+      isRefreshingRef.current = true
       setIsRefreshing(true)
       controls.start({ y: 50, transition: { type: "spring", stiffness: 400, damping: 25 } })
       
@@ -102,16 +125,17 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
         // Animate back to top first
         await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
         // Then reset state so the spinner stays visible during the slide up
+        isRefreshingRef.current = false
         setIsRefreshing(false)
-        setPullProgress(0)
+        updatePullProgress(0)
         y.set(0)
       }
     } else {
       await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
       y.set(0)
-      setPullProgress(0)
+      updatePullProgress(0)
     }
-  }
+  }, [controls, onRefresh, updatePullProgress, y])
 
   useEffect(() => {
     const el = containerRef.current
@@ -126,8 +150,12 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       el.removeEventListener("touchstart", handleTouchStart)
       el.removeEventListener("touchmove", handleTouchMove)
       el.removeEventListener("touchend", handleTouchEnd)
+      if (progressFrame.current !== null) {
+        window.cancelAnimationFrame(progressFrame.current)
+        progressFrame.current = null
+      }
     }
-  }, [isRefreshing, pullProgress])
+  }, [handleTouchEnd, handleTouchMove, handleTouchStart])
 
   return (
     <div ref={containerRef} className="relative min-h-full w-full bg-background">

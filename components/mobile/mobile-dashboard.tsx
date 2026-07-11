@@ -1,10 +1,9 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { lazy, Suspense, useMemo, useState } from "react"
 import {
   Bell, Eye, EyeOff, TrendingUp, TrendingDown,
-  ChevronRight, Activity, Wallet, BarChart2,
-  FileUp, ArrowUp, ArrowDown,
+  Wallet, FileUp, ArrowUp, ArrowDown,
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
@@ -12,13 +11,13 @@ import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { hapticFeedback } from "@/lib/utils/haptics"
-import { PriceAlerts } from "@/components/dashboard/price-alerts"
-import { usePortfolio, useHistory } from "@/lib/hooks/use-portfolio"
+import { useHistory } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
-import Marquee from "react-fast-marquee"
+import { useAlerts } from "@/lib/hooks/use-alerts"
+import { usePriceAlertNotifications } from "@/components/dashboard/use-price-alert-notifications"
 import Link from "next/link"
 
 interface MobileDashboardProps {
@@ -28,15 +27,13 @@ interface MobileDashboardProps {
   marketState?: string
 }
 
-// ── Type color map ────────────────────────────────────────────────────────
-const TYPE_COLORS: Record<string, string> = {
-  "ETF": "oklch(0.60 0.17 270)",
-  "Fondo Indexado": "oklch(0.65 0.17 310)",
-  "Fondo Monetario": "oklch(0.65 0.17 192)",
-  "Acción": "oklch(0.72 0.15 55)",
-  "Crypto": "oklch(0.70 0.18 30)",
-  "Liquidez": "oklch(0.60 0.016 230)",
-}
+const TYPE_ORDER = ["Fondo Indexado", "ETF", "Fondo Monetario", "Acción", "Crypto", "Liquidez"]
+const MAX_STAGGERED_ROWS = 12
+const PriceAlerts = lazy(() =>
+  import("@/components/dashboard/price-alerts").then((mod) => ({
+    default: mod.PriceAlerts,
+  }))
+)
 
 // ── Section header ─────────────────────────────────────────────────────────
 function SectionHeader({ label, count }: { label: string; count: number }) {
@@ -78,12 +75,11 @@ export function MobileDashboard({
   const t = useTranslations("Dashboard")
 
   const { data: snapshots } = useHistory()
+  const { alerts, removeAlert } = useAlerts()
+  usePriceAlertNotifications(positions, alerts, removeAlert)
 
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
-  const areaColor = isPositive
-    ? "oklch(0.70 0.21 155)"
-    : "oklch(0.65 0.22 22)"
   const areaColorHex = isPositive ? "#10d98a" : "#ff4d6a"
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
@@ -136,33 +132,23 @@ export function MobileDashboard({
   const grouped = useMemo(() => {
     if (filterType !== "All") return null
     const map = new Map<string, EnrichedPosition[]>()
-    const typeOrder = ["Fondo Indexado", "ETF", "Fondo Monetario", "Acción", "Crypto", "Liquidez"]
-    for (const t of typeOrder) {
-      const items = sortedPositions.filter(p => p.tipo === t)
-      if (items.length > 0) map.set(t, items)
-    }
+
+    for (const type of TYPE_ORDER) map.set(type, [])
+
     for (const p of sortedPositions) {
-      if (!typeOrder.includes(p.tipo)) {
-        const existing = map.get(p.tipo) || []
-        map.set(p.tipo, [...existing, p])
-      }
+      const items = map.get(p.tipo)
+      if (items) items.push(p)
+      else map.set(p.tipo, [p])
     }
+
+    for (const [type, items] of map) {
+      if (items.length === 0) map.delete(type)
+    }
+
     return map
   }, [sortedPositions, filterType])
 
   const totalPortfolioValue = totals.totalValue
-
-  const bestPerformer = useMemo(() => {
-    const c = positions.filter(p => typeof p.change_percent_24h === "number" && p.unidades > 0)
-    if (!c.length) return null
-    return c.reduce((a, b) => (a.change_percent_24h! > b.change_percent_24h! ? a : b))
-  }, [positions])
-
-  const worstPerformer = useMemo(() => {
-    const c = positions.filter(p => typeof p.change_percent_24h === "number" && p.unidades > 0 && p.change_percent_24h! < 0)
-    if (!c.length) return null
-    return c.reduce((a, b) => (a.change_percent_24h! < b.change_percent_24h! ? a : b))
-  }, [positions])
 
   // Movers calculation for real-time impact
   const movers = useMemo(() => {
@@ -170,6 +156,27 @@ export function MobileDashboard({
       .filter(p => p.change_amount_24h && Math.abs(p.change_amount_24h) > 0.01)
       .sort((a, b) => (b.change_amount_24h || 0) - (a.change_amount_24h || 0))
   }, [positions])
+
+  const renderAssetCard = (p: EnrichedPosition, i: number) => {
+    const card = (
+      <MobileAssetCard
+        position={p}
+        totalPortfolioValue={totalPortfolioValue}
+      />
+    )
+
+    if (i >= MAX_STAGGERED_ROWS) return card
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: i * 0.02, duration: 0.2 }}
+      >
+        {card}
+      </motion.div>
+    )
+  }
 
   // ── Loading skeleton ───────────────────────────────────────────────────
   if (isLoading) {
@@ -630,17 +637,9 @@ export function MobileDashboard({
                 />
                 <div>
                   {items.map((p, i) => (
-                    <motion.div
-                      key={p.activo_id}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03, duration: 0.25 }}
-                    >
-                      <MobileAssetCard
-                        position={p}
-                        totalPortfolioValue={totalPortfolioValue}
-                      />
-                    </motion.div>
+                    <div key={p.activo_id}>
+                      {renderAssetCard(p, i)}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -650,21 +649,25 @@ export function MobileDashboard({
           /* Flat filtered list */
           <div>
             {sortedPositions.map((p, i) => (
-              <motion.div
-                key={p.activo_id}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03, duration: 0.25 }}
-              >
-                <MobileAssetCard position={p} totalPortfolioValue={totalPortfolioValue} />
-              </motion.div>
+              <div key={p.activo_id}>
+                {renderAssetCard(p, i)}
+              </div>
             ))}
           </div>
         )}
       </div>
 
       {/* ─── Modals ──────────────────────────────────────────────────────── */}
-      <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
+      {alertsOpen && (
+        <Suspense fallback={null}>
+          <PriceAlerts
+            open={alertsOpen}
+            onOpenChange={setAlertsOpen}
+            positions={positions}
+            checkNotifications={false}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

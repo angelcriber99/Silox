@@ -9,34 +9,37 @@ import { usePrices } from "./use-prices"
 import { createClient } from '@/lib/supabase/client'
 import { fetchPendingTransactions } from '@/lib/api/transactions'
 
-export function usePositions() {
+export function usePositions(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["positions"],
     queryFn: fetchPosiciones,
     staleTime: 60_000, // 1 minute, but invalidated via websockets instantly
+    enabled: options?.enabled ?? true,
   })
 }
 
-export function usePendingTransactions() {
+export function usePendingTransactions(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["pending-transactions"],
     queryFn: fetchPendingTransactions,
     staleTime: 60_000,
+    enabled: options?.enabled ?? true,
   })
 }
 
-export function usePortfolio() {
+export function usePortfolio(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true
   const {
     data: positions,
     isLoading: positionsLoading,
     error: positionsError,
     refetch: refetchPositions,
-  } = usePositions()
+  } = usePositions({ enabled })
   
   const {
     data: pendingTxs,
     refetch: refetchPending,
-  } = usePendingTransactions()
+  } = usePendingTransactions({ enabled })
 
   const adjustedPositions = useMemo(() => {
     if (!positions) return []
@@ -77,7 +80,7 @@ export function usePortfolio() {
     isLoading: pricesLoading,
     refetch: refetchPrices,
     dataUpdatedAt: pricesUpdatedAt,
-  } = usePrices(tickers)
+  } = usePrices(tickers, { enabled })
 
   const enriched: EnrichedPosition[] = useMemo(() => {
     if (!adjustedPositions) return []
@@ -94,14 +97,16 @@ export function usePortfolio() {
 
   // Save portfolio history automatically
   useEffect(() => {
-    if (!positionsLoading && !pricesLoading && totals.totalValue > 0 && !snapshotSaved.current) {
+    if (enabled && !positionsLoading && !pricesLoading && totals.totalValue > 0 && !snapshotSaved.current) {
       snapshotSaved.current = true
       savePortfolioHistory(totals.totalValue, totals.totalCost).catch(console.error)
     }
-  }, [totals.totalValue, totals.totalCost, positionsLoading, pricesLoading])
+  }, [enabled, totals.totalValue, totals.totalCost, positionsLoading, pricesLoading])
 
   // Supabase Realtime: Súper Tiempo Real
   useEffect(() => {
+    if (!enabled) return
+
     const supabase = createClient()
     const channelName = `portfolio-realtime-${Math.random()}`
     
@@ -118,7 +123,7 @@ export function usePortfolio() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [refetchPositions, refetchPending])
+  }, [enabled, refetchPositions, refetchPending])
 
   const refetch = async () => {
     await refetchPositions()

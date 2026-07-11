@@ -7,7 +7,7 @@ import { useQuickAdd } from "@/lib/stores/use-quick-add"
 
 export function MobileShell() {
   const { isOpen, preselectedAsset, openEmpty, close } = useQuickAdd()
-  const { positions } = usePortfolio()
+  const { positions } = usePortfolio({ enabled: isOpen })
 
   return (
     <>
