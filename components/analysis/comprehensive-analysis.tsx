@@ -190,12 +190,19 @@ export function ComprehensiveAnalysis() {
            sMap.set("Otros", (sMap.get("Otros") || 0) + remainder);
         }
       } else {
-        const sector = p.sector || 'Desconocido'
-        sMap.set(sector, (sMap.get(sector) || 0) + val)
+        const fallbackSector = mData?.sector ? translateSectorKey(mData.sector.toLowerCase().replace(/ /g, '_')) : (p.sector || 'Desconocido')
+        sMap.set(fallbackSector, (sMap.get(fallbackSector) || 0) + val)
       }
 
       // GEO LOGIC: (Yahoo finance quoteSummary free module doesn't easily return geographic weights for all UCITS. Fallback to DB geo)
-      const geo = p.geografia || 'Desconocida'
+      // However, if we fetched a single stock, mData.country might be available!
+      let geo = 'Desconocida';
+      if (mData?.country) {
+        // Map common country codes/names if necessary
+        geo = mData.country === 'United States' ? 'USA' : mData.country;
+      } else if (p.geografia) {
+        geo = p.geografia;
+      }
       gMap.set(geo, (gMap.get(geo) || 0) + val)
 
       // ASSET TYPE LOGIC

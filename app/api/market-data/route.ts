@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     let result: any;
     try {
       result = await yahooFinance.quoteSummary(tickerToFetch, {
-        modules: ['topHoldings', 'fundProfile', 'price'],
+        modules: ['topHoldings', 'fundProfile', 'price', 'assetProfile', 'summaryProfile'],
       });
     } catch (e: any) {
       if (e.name === 'FailedYahooValidationError' && e.result) {
@@ -66,9 +66,11 @@ export async function POST(request: NextRequest) {
     const topHoldings = result.topHoldings;
     const fundProfile = result.fundProfile;
     const price = result.price;
+    const assetProfile = result.assetProfile || result.summaryProfile;
 
     let sectorWeightings: Record<string, number> | null = null;
     if (topHoldings?.sectorWeightings && Array.isArray(topHoldings.sectorWeightings)) {
+      // It's a fund
       sectorWeightings = {};
       for (const sectorObj of topHoldings.sectorWeightings) {
         for (const [key, value] of Object.entries(sectorObj)) {
@@ -77,13 +79,17 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    } else if (assetProfile?.sector) {
+      // It's a single stock
+      sectorWeightings = {};
+      const sectorKey = assetProfile.sector.toLowerCase().replace(/ /g, '_');
+      sectorWeightings[sectorKey] = 1.0; // 100% of this stock is in its own sector
     }
 
-    const holdingsList = topHoldings?.holdings?.map((h: any) => ({
-      symbol: h.symbol || '',
-      holdingName: h.holdingName || '',
-      holdingPercent: h.holdingPercent || 0,
-    })) || null;
+    let holdingsList: any[] = [];
+    if (topHoldings?.holdings && Array.isArray(topHoldings.holdings)) {
+      holdingsList = topHoldings.holdings;
+    }
 
     const responseData = {
       symbol: tickerToFetch,
@@ -91,6 +97,8 @@ export async function POST(request: NextRequest) {
       sectorWeightings,
       topHoldings: holdingsList,
       assetClass: fundProfile?.legalType || null,
+      country: assetProfile?.country || null,
+      sector: assetProfile?.sector || null,
     };
 
     // Store in cache
@@ -98,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(responseData);
   } catch (error: any) {
-    console.error('[market-data] Unhandled error:', error.message);
-    return NextResponse.json(null);
+    console.error('[market-data] API error:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

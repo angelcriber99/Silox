@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -20,6 +20,33 @@ export function Projections() {
   const [annualReturn, setAnnualReturn] = useState(8)
   const [futureSaving, setFutureSaving] = useState<number | ''>('')
   const [futureSavingYear, setFutureSavingYear] = useState<number | ''>('')
+
+  useEffect(() => {
+    try {
+      const savedMonthly = localStorage.getItem('silox_proj_monthly');
+      const savedFuture = localStorage.getItem('silox_proj_future');
+      const savedYear = localStorage.getItem('silox_proj_year');
+      
+      if (savedMonthly) setMonthlySaving(Number(savedMonthly));
+      if (savedFuture) setFutureSaving(Number(savedFuture));
+      if (savedYear) setFutureSavingYear(Number(savedYear));
+    } catch (e) {
+      console.error("Error loading projection defaults", e);
+    }
+  }, []);
+
+  const saveDefaults = () => {
+    try {
+      localStorage.setItem('silox_proj_monthly', monthlySaving.toString());
+      if (futureSaving !== '') localStorage.setItem('silox_proj_future', futureSaving.toString());
+      else localStorage.removeItem('silox_proj_future');
+      
+      if (futureSavingYear !== '') localStorage.setItem('silox_proj_year', futureSavingYear.toString());
+      else localStorage.removeItem('silox_proj_year');
+    } catch (e) {
+      console.error("Error saving projection defaults", e);
+    }
+  };
 
   const startingCapital = initialCapital !== null ? initialCapital : currentTotal
 
@@ -167,6 +194,15 @@ export function Projections() {
             className="w-full bg-background border border-border/50 rounded-xl px-3 py-2 font-semibold focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
           />
         </div>
+      </div>
+      
+      <div className="flex justify-end mt-2">
+        <button 
+          onClick={saveDefaults}
+          className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors bg-card/50 px-3 py-1.5 rounded-lg border border-border/50"
+        >
+          Guardar valores por defecto
+        </button>
       </div>
 
       {/* Milestones Bento Grid */}
