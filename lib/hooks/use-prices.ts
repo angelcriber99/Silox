@@ -8,6 +8,18 @@ import type { PriceData } from '@/lib/types'
 export function usePrices(tickers: string[]) {
   const lastKnownPrices = useRef<Record<string, PriceData>>({})
 
+  // Cargar de localStorage al inicio
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('silox_last_prices')
+      if (saved) {
+        lastKnownPrices.current = JSON.parse(saved)
+      }
+    } catch (e) {
+      console.error('Error loading prices from local storage', e)
+    }
+  }, [])
+
   return useQuery({
     queryKey: ["prices", tickers.slice().sort().join(",")],
     queryFn: async () => {
@@ -15,6 +27,8 @@ export function usePrices(tickers: string[]) {
       
       // Merge with last known good prices for any failed fetches (price === null)
       const mergedPrices = { ...data.prices }
+      let hasUpdates = false
+
       for (const ticker of tickers) {
         if (mergedPrices[ticker]?.price === null && lastKnownPrices.current[ticker]?.price != null) {
           mergedPrices[ticker] = {
@@ -24,6 +38,16 @@ export function usePrices(tickers: string[]) {
         } else if (mergedPrices[ticker]?.price != null) {
           // Update last known good price
           lastKnownPrices.current[ticker] = mergedPrices[ticker]
+          hasUpdates = true
+        }
+      }
+      
+      // Guardar en localStorage para sobrevivir F5
+      if (hasUpdates) {
+        try {
+          localStorage.setItem('silox_last_prices', JSON.stringify(lastKnownPrices.current))
+        } catch (e) {
+          // ignore quota errors
         }
       }
       
