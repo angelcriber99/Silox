@@ -378,21 +378,20 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                     <p className="text-base font-medium text-foreground/90 group-hover:text-foreground transition-colors truncate leading-tight">
                       {d.name}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-0.5 justify-start">
-                      {marketState === 'CLOSED' ? (
-                        <p className="text-[10px] font-medium opacity-60 uppercase tracking-wide">
+                    <div className="flex flex-col gap-0.5 mt-0.5 justify-center">
+                      <div className="flex items-center gap-1.5">
+                        <p className={`text-xs font-bold ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          <span className="text-[10px] uppercase opacity-70 mr-1 font-semibold">Hoy:</span>
+                          {d.pnlAmount24h > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.pnlAmount24h)}
+                        </p>
+                        <p className={`text-[10px] font-medium opacity-80 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          ({d.pnlPercent24h > 0 ? '+' : ''}{formatPercent(d.pnlPercent24h).replace('+', '')})
+                        </p>
+                      </div>
+                      {marketState === 'CLOSED' && (
+                        <p className="text-[9px] font-medium opacity-50 uppercase tracking-wide">
                           MERCADO CERRADO
                         </p>
-                      ) : (
-                        <>
-                          <p className={`text-xs font-bold ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            <span className="text-[10px] uppercase opacity-70 mr-1 font-semibold">Hoy:</span>
-                            {d.pnlAmount24h > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.pnlAmount24h)}
-                          </p>
-                          <p className={`text-[10px] font-medium opacity-80 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            ({d.pnlPercent24h > 0 ? '+' : ''}{formatPercent(d.pnlPercent24h).replace('+', '')})
-                          </p>
-                        </>
                       )}
                     </div>
                   </div>
