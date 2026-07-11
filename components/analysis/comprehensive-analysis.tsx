@@ -332,67 +332,115 @@ export function ComprehensiveAnalysis() {
 
   // Generate dynamic insights based on the portfolio data
   const insights = useMemo(() => {
-    if (!positions || totals.totalValue === 0) return []
+    if (!positions || totals.totalValue === 0 || analysisTotal === 0) return []
     
     const messages = []
     
     // 1. Geographic concentration
-    const usExposure = geos.find(g => g.name.toLowerCase().includes('usa') || g.name.toLowerCase().includes('estados unidos'))
-    if (usExposure && (usExposure.value / totals.totalValue) > 0.7) {
+    const topGeo = geos[0]
+    if (topGeo && (topGeo.value / analysisTotal) > 0.6) {
       messages.push({
         type: 'warning',
-        title: 'Alta Concentración Geográfica (EEUU)',
-        desc: `Más del 70% de tu cartera está en Estados Unidos. Aunque es el mercado principal, podrías reducir el riesgo añadiendo exposición a mercados emergentes (EJ: MSCI Emerging Markets) o Europa (EJ: Stoxx 600).`
+        title: `Alta Concentración en ${topGeo.name}`,
+        desc: `Tienes un ${(topGeo.value / analysisTotal * 100).toFixed(1)}% de tu inversión en ${topGeo.name}. Sería prudente diversificar tus futuras aportaciones hacia otras regiones para mitigar el riesgo país.`
+      })
+    } else if (topGeo && (topGeo.value / analysisTotal) <= 0.5) {
+       messages.push({
+        type: 'tip',
+        title: 'Buena Diversificación Geográfica',
+        desc: `Tu exposición a ${topGeo.name} está bien controlada (${(topGeo.value / analysisTotal * 100).toFixed(1)}%). Tienes una cartera global que te protege frente a crisis regionales.`
       })
     }
 
     // 2. Sector concentration
     const techExposure = sectors.find(s => s.name.toLowerCase().includes('tecno') || s.name.toLowerCase().includes('technology'))
-    if (techExposure && (techExposure.value / totals.totalValue) > 0.4) {
+    if (techExposure && (techExposure.value / analysisTotal) > 0.35) {
       messages.push({
         type: 'warning',
         title: 'Sobre-exposición Tecnológica',
-        desc: `Tienes más del 40% en el sector tecnológico. Esto aumenta la volatilidad de tu cartera. Considera diversificar hacia sectores más defensivos como Salud (Healthcare) o Consumo Básico (Consumer Staples).`
+        desc: `El sector tecnológico representa un ${(techExposure.value / analysisTotal * 100).toFixed(1)}% de tus inversiones, aumentando la volatilidad. Considera destinar nuevas aportaciones a sectores más estables como Salud o Consumo Básico.`
       })
     }
 
-    // 3. Top 5 concentration
-    const top5Weight = topPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0) / totals.totalValue
-    if (top5Weight > 0.5) {
+    const topSector = sectors[0]
+    if (topSector && topSector.name !== techExposure?.name && (topSector.value / analysisTotal) > 0.4) {
       messages.push({
         type: 'caution',
-        title: 'Riesgo de Activo Individual',
-        desc: `Tus 5 mayores posiciones representan el ${(top5Weight * 100).toFixed(1)}% de tu dinero. Si una de ellas cae bruscamente, el impacto será grave. La regla general es no tener más del 5-10% en una sola acción/cripto.`
+        title: `Concentración en sector ${topSector.name}`,
+        desc: `Tu cartera depende en un ${(topSector.value / analysisTotal * 100).toFixed(1)}% del sector ${topSector.name}. Evalúa detener las aportaciones a este sector para equilibrar tu riesgo.`
       })
     }
 
-    // 4. Crypto exposure risk
+    // 3. Top 5 & Individual Asset concentration
+    const top1 = topPositions[0]
+    const isTop1GlobalFund = top1?.nombre?.toLowerCase().includes('msci') || top1?.nombre?.toLowerCase().includes('world') || top1?.nombre?.toLowerCase().includes('sp500') || top1?.nombre?.toLowerCase().includes('all world');
+    
+    if (top1 && (top1.valor_actual || 0) / analysisTotal > 0.25 && !isTop1GlobalFund) {
+      messages.push({
+        type: 'caution',
+        title: `Excesiva dependencia de ${top1.nombre || top1.ticker}`,
+        desc: `Un solo activo específico pesa el ${((top1.valor_actual || 0) / analysisTotal * 100).toFixed(1)}% de tu cartera. Es un riesgo altísimo. Deberías asegurar tu posición reduciendo exposición o diversificando las próximas compras.`
+      })
+    } else if (top1 && isTop1GlobalFund && (top1.valor_actual || 0) / analysisTotal > 0.5) {
+      messages.push({
+        type: 'tip',
+        title: 'Núcleo Sólido (Core-Satellite)',
+        desc: `¡Genial! Tu posición principal es un fondo global (${top1.nombre || top1.ticker}) con un ${((top1.valor_actual || 0) / analysisTotal * 100).toFixed(1)}%. Estás aplicando perfectamente la filosofía pasiva para el núcleo de tu cartera.`
+      })
+    }
+
+    const top5Weight = topPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0) / analysisTotal
+    if (top5Weight > 0.65 && !isTop1GlobalFund) {
+      messages.push({
+        type: 'caution',
+        title: 'Falta de Diversificación (Top 5)',
+        desc: `Tus 5 mayores posiciones (excluyendo liquidez) suman el ${(top5Weight * 100).toFixed(1)}%. Si alguna sufre una caída drástica, tu cartera entera sufrirá.`
+      })
+    }
+
+    // 4. Crypto exposure
     const cryptoExposure = assetTypes.find(a => a.name.toLowerCase().includes('cripto') || a.name.toLowerCase().includes('crypto'))
-    if (cryptoExposure && (cryptoExposure.value / totals.totalValue) > 0.2) {
+    if (cryptoExposure && (cryptoExposure.value / analysisTotal) > 0.15) {
       messages.push({
-        type: 'caution',
-        title: 'Alta Volatilidad por Criptomonedas',
-        desc: `Más del 20% de tu portfolio está en criptomonedas. Esto representa un perfil de riesgo extremadamente alto. Asegúrate de que esto se alinea con tu tolerancia al riesgo a largo plazo.`
+        type: 'warning',
+        title: 'Alerta de Volatilidad Cripto',
+        desc: `Tienes un ${(cryptoExposure.value / analysisTotal * 100).toFixed(1)}% invertido en criptomonedas. Vigila de cerca estas posiciones y toma beneficios si tu tolerancia al riesgo a largo plazo ha cambiado.`
       })
     }
 
-    // 5. Default Boglehead tip
+    // 5. Winners/Losers (Take profit / Cut losses)
+    const bigWinner = topPositions.find(p => (p.pnl_percent || 0) > 40)
+    if (bigWinner) {
+      messages.push({
+        type: 'info',
+        title: `Asegurar ganancias en ${bigWinner.nombre || bigWinner.ticker}`,
+        desc: `Llevas un +${(bigWinner.pnl_percent || 0).toFixed(1)}% de rentabilidad en este activo. Plantéate una venta parcial para asegurar beneficios (Take Profit) y rebalancear la cartera.`
+      })
+    }
+
+    const bigLoser = topPositions.find(p => (p.pnl_percent || 0) < -25)
+    if (bigLoser) {
+       messages.push({
+        type: 'caution',
+        title: `Revisar posición en ${bigLoser.nombre || bigLoser.ticker}`,
+        desc: `Este activo acumula una caída del ${(bigLoser.pnl_percent || 0).toFixed(1)}%. Revisa tu tesis de inversión inicial: a veces es mejor cortar pérdidas a tiempo que promediar a la baja.`
+      })
+    }
+
     if (messages.length === 0) {
       messages.push({
         type: 'tip',
-        title: 'Cartera Equilibrada (Filosofía Bogle)',
-        desc: `Tu cartera parece bien diversificada. Recuerda la regla de oro de John Bogle: "No busques la aguja, compra el pajar". Mantén tus costes bajos y aporta regularmente a tus fondos indexados globales.`
-      })
-    } else {
-      messages.push({
-        type: 'tip',
-        title: 'El núcleo de tu cartera',
-        desc: `Según los Bogleheads, el núcleo (Core) de tu cartera debería ser un fondo global diversificado y de bajo coste (como MSCI World o FTSE All-World) ocupando el 60-80% de tus activos.`
+        title: 'Cartera Equilibrada',
+        desc: `Tu cartera está bien balanceada y no salta ninguna alarma de riesgo activa. Sigue aportando pacientemente a largo plazo.`
       })
     }
 
-    return messages
-  }, [sectors, geos, assetTypes, topPositions, totals.totalValue])
+    // Order matters, we want to show the most pressing ones first.
+    return messages.sort((a, b) => {
+      const p = { warning: 3, caution: 2, info: 1, tip: 0 };
+      return (p[b.type as keyof typeof p] || 0) - (p[a.type as keyof typeof p] || 0);
+    }).slice(0, 4)
+  }, [sectors, geos, assetTypes, topPositions, totals.totalValue, analysisTotal])
 
   if (portfolioLoading || historyLoading) {
     return (
@@ -465,7 +513,7 @@ export function ComprehensiveAnalysis() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         
         {/* Tipos de Activo */}
         <div className="p-5 rounded-[32px] border border-border flex flex-col" style={{ background: "var(--card)" }}>
@@ -520,16 +568,16 @@ export function ComprehensiveAnalysis() {
         </div>
 
         {/* Top 5 Posiciones */}
-        <div className="p-5 rounded-[32px] border border-border flex flex-col" style={{ background: "var(--card)" }}>
+        <div className="p-5 rounded-[32px] border border-border flex flex-col lg:col-span-2" style={{ background: "var(--card)" }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.70 0.21 155 / 0.15)" }}>
               <Activity className="w-5 h-5" style={{ color: "oklch(0.70 0.21 155)" }} />
             </div>
             <h3 className="text-lg font-bold tracking-tight text-foreground">Top 5 Posiciones</h3>
           </div>
-          <div className="flex-1 flex flex-col gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {topPositions.map((p, i) => {
-              const weight = (p.valor_actual || 0) / totals.totalValue * 100
+              const weight = (p.valor_actual || 0) / analysisTotal * 100
               const isPositive = (p.pnl_percent || 0) >= 0
               return (
                 <div key={p.activo_id} className="flex items-center justify-between p-3 rounded-2xl bg-muted/40 border border-border/50">
@@ -538,8 +586,8 @@ export function ComprehensiveAnalysis() {
                       {i + 1}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground truncate max-w-[120px] sm:max-w-[180px]">{p.ticker.split(".")[0]}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{weight.toFixed(1)}% peso</p>
+                      <p className="text-sm font-bold text-foreground truncate max-w-[120px] sm:max-w-[180px]">{p.nombre || p.ticker.split(".")[0]}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{weight.toFixed(1)}% global</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -555,7 +603,7 @@ export function ComprehensiveAnalysis() {
         </div>
 
         {/* Sectores */}
-        <div className="p-5 rounded-[32px] border border-border col-span-1 md:col-span-2" style={{ background: "var(--card)" }}>
+        <div className="p-5 rounded-[32px] border border-border lg:col-span-3" style={{ background: "var(--card)" }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.65 0.17 270 / 0.15)" }}>
