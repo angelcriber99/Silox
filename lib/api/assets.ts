@@ -241,7 +241,7 @@ export function computePortfolioTotals(
     totalPnl24h,
     totalPnlPercent24h,
     positionCount: positions.length,
-    hasAllPrices: withValues.length === positions.filter((p) => p.unidades > 0).length,
+    hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => p.valor_actual !== null),
   }
 }
 
