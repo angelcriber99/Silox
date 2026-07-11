@@ -21,22 +21,19 @@ const tabs = [
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
 
+  return (
     <div
       className="md:hidden fixed z-50 bottom-0 left-0 right-0"
     >
       <div 
-        className="absolute inset-0 bg-background/80 dark:bg-[#13141c]/80 border-t border-border/50"
-        style={{
-          backdropFilter: "blur(20px) saturate(150%)",
-          WebkitBackdropFilter: "blur(20px) saturate(150%)",
-        }}
+        className="absolute inset-0 bg-background border-t border-border/20"
       />
 
       <div 
         className="relative flex items-center justify-around w-full"
         style={{
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)",
-          paddingTop: "8px",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
+          paddingTop: "12px",
           height: "calc(60px + env(safe-area-inset-bottom, 0px))"
         }}
       >
@@ -53,11 +50,10 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                     hapticFeedback.heavy()
                     onAddPress()
                   }}
-                  className="flex items-center justify-center outline-none z-50 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                  style={{ width: "44px", height: "44px" }}
+                  className="flex items-center justify-center outline-none z-50"
                   aria-label="Añadir transacción"
                 >
-                  <Plus className="h-6 w-6 stroke-[2.5]" />
+                  <Plus className="h-[28px] w-[28px] stroke-[2.5] text-foreground" />
                 </motion.button>
               </div>
             )
@@ -68,33 +64,24 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
               key={tab.name}
               href={tab.href}
               onClick={() => hapticFeedback.light()}
-              className="relative flex flex-col items-center justify-center gap-1 min-w-[64px]"
+              className="relative flex flex-col items-center justify-center min-w-[64px]"
               aria-label={tab.name}
             >
               <motion.div
                 animate={{
-                  scale: isActive ? 1.1 : 1,
+                  scale: isActive ? 1.15 : 1,
                   y: isActive ? -2 : 0,
                 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >
                 <tab.icon
-                  className="h-6 w-6 transition-colors duration-200"
+                  className="h-[26px] w-[26px] transition-colors duration-200"
                   strokeWidth={isActive ? 2.5 : 2}
                   style={{
-                    color: isActive ? "var(--primary)" : "var(--muted-foreground)",
+                    color: isActive ? "var(--foreground)" : "var(--muted-foreground)",
                   }}
                 />
               </motion.div>
-              <span
-                className="text-[10px] font-medium tracking-wide transition-colors duration-200"
-                style={{
-                  color: isActive ? "var(--primary)" : "var(--muted-foreground)",
-                  opacity: isActive ? 1 : 0.8
-                }}
-              >
-                {tab.name}
-              </span>
             </Link>
           )
         })}
