@@ -5,10 +5,11 @@ import { usePreferences, type Language } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
-import { 
-  Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell, 
-  Volume2, Shield, Download, CreditCard, Link as LinkIcon, 
-  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings
+import {
+  Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell,
+  Volume2, Shield, Download, CreditCard, Link as LinkIcon,
+  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings,
+  AlertTriangle, Loader2, Trash2
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
@@ -17,6 +18,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -52,6 +54,9 @@ export default function SettingsPage() {
     weeklyReport: false,
     dividendAlerts: true
   })
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState("")
+  const [deletePending, setDeletePending] = useState(false)
 
 
   useEffect(() => {
@@ -76,6 +81,36 @@ export default function SettingsPage() {
   const handleToggle = (key: keyof typeof toggles) => {
     setToggles(prev => ({ ...prev, [key]: !prev[key] }))
     toast.success("Preferencia actualizada")
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== "BORRAR") {
+      toast.error("Escribe BORRAR para confirmar")
+      return
+    }
+
+    setDeletePending(true)
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: deleteConfirmation }),
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(data.error || 'No se pudo borrar la cuenta')
+      }
+
+      toast.success("Cuenta borrada correctamente")
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      window.location.href = "/login"
+    } catch (error: any) {
+      toast.error(error.message || "No se pudo borrar la cuenta")
+    } finally {
+      setDeletePending(false)
+    }
   }
 
   const tabs: { id: Tab, label: string, icon: any, color: string, accent: string }[] = [
@@ -486,7 +521,11 @@ export default function SettingsPage() {
                       <h3 className="font-bold text-rose-500">Eliminar Cuenta</h3>
                       <p className="text-sm text-rose-500/70 mt-1 max-w-md">Esta acción es irreversible y borrará todos tus datos, transacciones y configuraciones.</p>
                     </div>
-                    <button className="shrink-0 px-4 py-2.5 bg-rose-500 text-white shadow-sm hover:bg-rose-600 rounded-xl text-sm font-bold transition-colors">
+                    <button
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white shadow-sm hover:bg-rose-600 rounded-xl text-sm font-bold transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
                       Borrar Cuenta
                     </button>
                   </div>
@@ -496,6 +535,56 @@ export default function SettingsPage() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        if (deletePending) return
+        setDeleteDialogOpen(open)
+        if (!open) setDeleteConfirmation("")
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <DialogTitle>Borrar cuenta definitivamente</DialogTitle>
+            <DialogDescription>
+              Esta acción eliminará tu usuario y todos tus activos, transacciones, alertas, historial y configuración. No se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <label htmlFor="delete-account-confirmation" className="text-sm font-medium text-foreground">
+              Escribe BORRAR para confirmar
+            </label>
+            <input
+              id="delete-account-confirmation"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              disabled={deletePending}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              autoComplete="off"
+            />
+          </div>
+
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deletePending}
+              className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deletePending || deleteConfirmation !== "BORRAR"}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {deletePending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Borrar definitivamente
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
