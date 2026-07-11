@@ -135,13 +135,17 @@ async function _fetchMarketPrices(
         } else {
           changePercent24h = 0
         }
-      } else if (assetState === 'POST' || assetState === 'POSTPOST') {
-        if (quote.postMarketPrice && quote.regularMarketPrice) {
+      } else if (assetState === 'POST' || assetState === 'POSTPOST' || assetState === 'CLOSED') {
+        // En POST o CLOSED (fin de semana), si hay precio post-mercado disponible, lo usamos para 
+        // tener el último valor real. El % de cambio será desde el cierre del día anterior (regular) hasta el final del post-market.
+        // Yahoo a veces guarda el postMarketPrice en fin de semana.
+        if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
           rawPrice = quote.postMarketPrice
-          changePercent24h = ((rawPrice - quote.regularMarketPrice) / quote.regularMarketPrice) * 100
+          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
+        } else if (assetState === 'CLOSED') {
+          // Si no hay post-market, simplemente usamos el regularMarket (que ya está seteado por defecto)
+          // Quitamos la lógica que lo forzaba a 0, así en fin de semana se ve la ganancia/pérdida del viernes.
         }
-      } else if (assetState === 'CLOSED') {
-        changePercent24h = 0
       }
 
       let sparkline: number[] = []
