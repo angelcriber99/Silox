@@ -88,7 +88,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
     const colors = groupBy === "tipo" ? TYPE_COLORS : STRATEGY_COLORS
 
     for (const p of positions) {
-      if (p.tipo === 'Liquidez') continue;
+      if (p.tipo === 'Liquidez' || p.tipo === 'Fondo Monetario') continue;
       
       const key = groupBy === "tipo" ? p.tipo : p.estrategia
       const value = p.valor_actual ?? p.coste_total

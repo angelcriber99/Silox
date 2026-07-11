@@ -4,7 +4,7 @@ import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters
 import {
   TrendingUp, TrendingDown, Wallet, Briefcase,
   BarChart2, Target, ArrowUpRight, ArrowDownRight,
-  Activity, Minus, Sparkles,
+  Activity, Minus, Sparkles, PiggyBank,
 } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
@@ -44,9 +44,13 @@ export function PortfolioSummary({
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
 
-  const cashPositions = positions.filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez' || p.tipo === 'Fondo Monetario')
+  const cashPositions = positions.filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez')
   const liquidezAmount = cashPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
   const liquidezPos = cashPositions.length > 0 ? cashPositions[0] : null
+
+  const fmPositions = positions.filter(p => p.tipo === 'Fondo Monetario')
+  const fmAmount = fmPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
+  const fmPos = fmPositions.length > 0 ? fmPositions[0] : null
 
   const pendingCashEur = useMemo(() => {
     if (!pendingTxs) return 0
@@ -175,6 +179,23 @@ export function PortfolioSummary({
                     -{formatCurrency(pendingCashEur)} en uso
                   </span>
                 )}
+              </div>
+            )}
+            {fmAmount > 0 && (
+              <div className="flex flex-col items-center md:items-end gap-1">
+                <button
+                  onClick={() => {
+                    if (fmPos) {
+                      setCashAssetId(fmPos.activo_id)
+                      setWithdrawModalOpen(true)
+                    }
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/60 hover:bg-card text-foreground border border-border/40 transition-all text-[13px] font-medium backdrop-blur-md shadow-sm w-full md:w-auto"
+                >
+                  <PiggyBank className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">F. Monetario:</span>
+                  <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(fmAmount)}</span>
+                </button>
               </div>
             )}
             <button

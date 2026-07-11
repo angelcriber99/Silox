@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell, Wallet } from "lucide-react"
+import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell, Wallet, PiggyBank } from "lucide-react"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatUnits, formatPnl } from "@/lib/utils/formatters"
 import { Sparkline } from "@/components/asset/sparkline"
@@ -198,7 +198,8 @@ export function PositionsTable({
     let list = positions.filter(p => 
       p.unidades > 0 && 
       !p.ticker.startsWith('CASH') && 
-      !p.nombre?.toLowerCase().includes('efectivo')
+      !p.nombre?.toLowerCase().includes('efectivo') &&
+      p.tipo !== 'Fondo Monetario'
     )
     if (searchQuery.trim() !== "") {
       const lowerQuery = searchQuery.toLowerCase()
@@ -220,7 +221,7 @@ export function PositionsTable({
   }, [positions, filter, searchQuery, sortKey, sortDir])
 
   const typesWithData = useMemo(() => {
-    const types = new Set(positions.map((p) => p.tipo))
+    const types = new Set(positions.filter(p => p.tipo !== 'Fondo Monetario').map((p) => p.tipo))
     return types
   }, [positions])
 
@@ -249,7 +250,13 @@ export function PositionsTable({
 
   const liquidezAmount = useMemo(() => {
     return positions
-      .filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez' || p.tipo === 'Fondo Monetario')
+      .filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez')
+      .reduce((acc, p) => acc + (p.valor_actual ?? 0), 0)
+  }, [positions])
+
+  const fondoMonetarioAmount = useMemo(() => {
+    return positions
+      .filter(p => p.tipo === 'Fondo Monetario')
       .reduce((acc, p) => acc + (p.valor_actual ?? 0), 0)
   }, [positions])
 
@@ -262,10 +269,19 @@ export function PositionsTable({
             <span>{t('positions')}</span>
           </CardTitle>
 
-          <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
-            <Wallet className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Liquidez:</span>
-            <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
+              <Wallet className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Liquidez:</span>
+              <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
+            </div>
+            {fondoMonetarioAmount > 0 && (
+              <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
+                <PiggyBank className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">F. Monetario:</span>
+                <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(fondoMonetarioAmount)}</span>
+              </div>
+            )}
           </div>
 
           {/* Filters & Search */}
