@@ -90,18 +90,23 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       controls.start({ y: 50, transition: { type: "spring", stiffness: 400, damping: 25 } })
       
       try {
-        await onRefresh()
+        // Enforce a minimum 1 second delay so the UI feels like it's doing work
+        await Promise.all([
+          onRefresh(),
+          new Promise(resolve => setTimeout(resolve, 1000))
+        ])
         hapticFeedback.success()
       } catch (error) {
         hapticFeedback.error()
       } finally {
         setIsRefreshing(false)
         setPullProgress(0)
-        controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
+        // Await the animation to finish before snapping the motion value
+        await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
         y.set(0)
       }
     } else {
-      controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
+      await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
       y.set(0)
       setPullProgress(0)
     }
