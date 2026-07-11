@@ -24,21 +24,17 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   return (
     <div
       className="md:hidden fixed z-50 flex justify-center left-0 right-0 pointer-events-none"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)" }}
     >
       {/* Wrapper to handle Safari overflow-visible + backdrop-filter bug */}
-      <div className="w-[92%] max-w-[400px] relative pointer-events-auto">
+      <div className="w-[94%] max-w-[400px] relative pointer-events-auto">
         
         {/* Background layer with blur and clip */}
         <div 
-          className="absolute inset-0 rounded-[32px] overflow-hidden"
+          className="absolute inset-0 rounded-[32px] overflow-hidden bg-background/70 dark:bg-[oklch(0.125_0.014_235/0.65)] border border-border/50 dark:border-[oklch(0.68_0.17_192/0.25)] shadow-xl dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.75),0_0_0_1px_oklch(0.68_0.17_192/0.15)_inset,0_8px_16px_rgba(0,0,0,0.4)]"
           style={{
-            background: "oklch(0.125 0.014 235 / 0.65)",
             backdropFilter: "blur(40px) saturate(250%)",
             WebkitBackdropFilter: "blur(40px) saturate(250%)",
-            border: "1px solid oklch(0.68 0.17 192 / 0.25)",
-            boxShadow:
-              "0 24px 48px -12px oklch(0 0 0 / 0.75), 0 0 0 1px oklch(0.68 0.17 192 / 0.15) inset, 0 8px 16px oklch(0 0 0 / 0.4)",
           }}
         />
 

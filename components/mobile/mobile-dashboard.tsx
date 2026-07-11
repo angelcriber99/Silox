@@ -495,7 +495,7 @@ export function MobileDashboard({
 
       {/* ─── Live Market Movers (Top Gainers/Losers) ────────────────────── */}
       {movers.length > 0 && (
-        <div className="py-4 mt-2 mb-4 border-y border-border/10 bg-black/20">
+        <div className="py-4 mt-2 mb-4 border-y border-border/10 bg-black/5 dark:bg-black/20">
           <div className="flex items-center px-4 mb-3 gap-2">
             <div className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -506,14 +506,15 @@ export function MobileDashboard({
             </p>
           </div>
           
-          <div className="w-full [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
-            <Marquee speed={40} gradient={false} pauseOnHover>
+          <div className="w-full relative">
+            <div className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory px-4 pb-2 pt-1 gap-3 scroll-smooth">
               {movers.map(p => {
                 const isGain = (p.change_amount_24h || 0) >= 0;
                 return (
-                  <Link key={p.activo_id} href={`/activo/${p.activo_id}`}>
-                    <div 
-                      className={`flex items-center gap-2 px-3 py-2 mx-1.5 rounded-[14px] transition-colors border ${
+                  <Link key={p.activo_id} href={`/activo/${p.activo_id}`} className="snap-center shrink-0">
+                    <motion.div 
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-[14px] transition-colors border shadow-sm ${
                         isGain ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"
                       }`}
                     >
@@ -527,11 +528,11 @@ export function MobileDashboard({
                       >
                         {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
                       </span>
-                    </div>
+                    </motion.div>
                   </Link>
                 )
               })}
-            </Marquee>
+            </div>
           </div>
         </div>
       )}
