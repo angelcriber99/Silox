@@ -249,7 +249,7 @@ export function PositionsTable({
 
   const liquidezAmount = useMemo(() => {
     return positions
-      .filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez')
+      .filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez' || p.tipo === 'Fondo Monetario')
       .reduce((acc, p) => acc + (p.valor_actual ?? 0), 0)
   }, [positions])
 

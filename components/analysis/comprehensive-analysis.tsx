@@ -18,9 +18,9 @@ const COLORS = [
   'oklch(0.60 0.016 230)', // Muted 
 ]
 
-function CategoryCard({ item, totals, index }: { item: any, totals: any, index: number }) {
+function CategoryCard({ item, totalValue, index }: { item: any, totalValue: number, index: number }) {
   const [expanded, setExpanded] = useState(false);
-  const weight = item.value / totals.totalValue * 100;
+  const weight = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
 
   return (
     <div 
@@ -213,8 +213,11 @@ export function ComprehensiveAnalysis() {
   }, [])
 
   // Aggegations
-  const { sectors, geos, assetTypes, topPositions } = useMemo(() => {
-    if (!positions) return { sectors: [], geos: [], assetTypes: [], topPositions: [] }
+  const { sectors, geos, assetTypes, topPositions, analysisTotal } = useMemo(() => {
+    if (!positions) return { sectors: [], geos: [], assetTypes: [], topPositions: [], analysisTotal: 0 }
+
+    const analysisPositions = positions.filter(p => p.tipo !== 'Liquidez' && p.tipo !== 'Fondo Monetario' && !p.ticker.startsWith('CASH'))
+    const analysisTotal = analysisPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
 
     const sMap = new Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>()
     const gMap = new Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>()
@@ -241,7 +244,7 @@ export function ComprehensiveAnalysis() {
       }
     }
 
-    positions.forEach(p => {
+    analysisPositions.forEach(p => {
       const val = p.valor_actual || 0
       if (val <= 0) return
       
@@ -313,7 +316,7 @@ export function ComprehensiveAnalysis() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
 
-    const top = [...positions]
+    const top = [...analysisPositions]
       .filter(p => (p.valor_actual || 0) > 0)
       .sort((a, b) => (b.valor_actual || 0) - (a.valor_actual || 0))
       .slice(0, 5)
@@ -322,7 +325,8 @@ export function ComprehensiveAnalysis() {
       sectors: toArrayWithAssets(sMap),
       geos: toArrayWithAssets(gMap),
       assetTypes: toArray(tMap),
-      topPositions: top
+      topPositions: top,
+      analysisTotal
     }
   }, [positions, marketDataMap])
 
@@ -565,12 +569,12 @@ export function ComprehensiveAnalysis() {
               </span>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start">
             {sectors.map((sector, index) => (
               <CategoryCard 
                 key={sector.name} 
                 item={sector} 
-                totals={totals} 
+                totalValue={analysisTotal} 
                 index={index} 
               />
             ))}
@@ -585,12 +589,12 @@ export function ComprehensiveAnalysis() {
             </div>
             <h3 className="text-lg font-bold tracking-tight text-foreground">Exposición Geográfica</h3>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start">
             {geos.map((geo, index) => (
               <CategoryCard 
                 key={geo.name} 
                 item={geo} 
-                totals={totals} 
+                totalValue={analysisTotal} 
                 index={index} 
               />
             ))}
@@ -635,7 +639,6 @@ export function ComprehensiveAnalysis() {
             })}
           </div>
         </div>
-
       </div>
     </div>
   )

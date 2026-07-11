@@ -44,7 +44,7 @@ export function PortfolioSummary({
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
 
-  const cashPositions = positions.filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez')
+  const cashPositions = positions.filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez' || p.tipo === 'Fondo Monetario')
   const liquidezAmount = cashPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
   const liquidezPos = cashPositions.length > 0 ? cashPositions[0] : null
 
