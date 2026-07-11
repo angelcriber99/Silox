@@ -17,9 +17,10 @@ import { AddEventModal } from "@/components/market/add-event-modal"
 import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { PendingOrders } from "@/components/transactions/pending-orders"
+import { PullToRefresh } from "@/components/layout/pull-to-refresh"
 
 export default function Home() {
-  const { positions, totals, isLoading, pricesUpdatedAt, marketState, pendingTxs } = usePortfolio()
+  const { positions, totals, isLoading, pricesUpdatedAt, marketState, pendingTxs, refetch } = usePortfolio()
   const { data: allTransactions } = useAllTransactions()
   const { zenMode } = usePreferences()
 
@@ -39,9 +40,10 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-full bg-background text-foreground flex flex-col">
+    <PullToRefresh onRefresh={async () => { await refetch() }}>
+      <main className="min-h-full bg-background text-foreground flex flex-col">
 
-      {/* ── Mobile ─────────────────────────────────────────────────── */}
+        {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden">
         <MobileDashboard
           positions={positions}
@@ -124,6 +126,7 @@ export default function Home() {
         initialData={editEventData}
         onSuccess={() => window.location.reload()}
       />
-    </main>
+      </main>
+    </PullToRefresh>
   )
 }
