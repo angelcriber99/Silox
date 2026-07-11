@@ -113,11 +113,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       controls.start({ y: 50, transition: { type: "spring", stiffness: 400, damping: 25 } })
       
       try {
-        // Enforce a minimum 1 second delay so the UI feels like it's doing work
-        await Promise.all([
-          onRefresh(),
-          new Promise(resolve => setTimeout(resolve, 1000))
-        ])
+        await onRefresh()
         hapticFeedback.success()
       } catch (error) {
         hapticFeedback.error()

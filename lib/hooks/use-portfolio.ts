@@ -126,9 +126,11 @@ export function usePortfolio(options?: { enabled?: boolean }) {
   }, [enabled, refetchPositions, refetchPending])
 
   const refetch = async () => {
-    await refetchPositions()
-    await refetchPending()
-    await refetchPrices()
+    await Promise.all([
+      refetchPositions(),
+      refetchPending(),
+      refetchPrices(),
+    ])
   }
 
   return {

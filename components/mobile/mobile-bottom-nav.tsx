@@ -1,7 +1,8 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Plus, UserCircle, ArrowLeftRight, LineChart } from "lucide-react"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { motion } from "framer-motion"
@@ -20,6 +21,18 @@ const tabs = [
 
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [optimisticPath, setOptimisticPath] = useState(pathname)
+
+  useEffect(() => {
+    setOptimisticPath(pathname)
+  }, [pathname])
+
+  useEffect(() => {
+    tabs.forEach((tab) => {
+      if (!tab.isFab) router.prefetch(tab.href)
+    })
+  }, [router])
 
   return (
     <div
@@ -38,7 +51,7 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
         }}
       >
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href
+          const isActive = optimisticPath === tab.href
 
           if (tab.isFab) {
             return (
@@ -63,7 +76,12 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
             <Link
               key={tab.name}
               href={tab.href}
-              onClick={() => hapticFeedback.light()}
+              prefetch
+              onPointerDown={() => {
+                setOptimisticPath(tab.href)
+                hapticFeedback.light()
+                router.prefetch(tab.href)
+              }}
               className="relative flex flex-col items-center justify-center min-w-[64px]"
               aria-label={tab.name}
             >
