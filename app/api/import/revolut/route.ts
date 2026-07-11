@@ -55,6 +55,13 @@ const METAL_NAMES: Record<string, string> = {
 }
 
 const METAL_YAHOO_TICKERS: Record<string, string> = {
+  XAG: 'XAGEUR=X',
+  XAU: 'XAUEUR=X',
+  XPD: 'XPDEUR=X',
+  XPT: 'XPTEUR=X',
+}
+
+const LEGACY_METAL_YAHOO_TICKERS: Record<string, string> = {
   XAG: 'XAGUSD=X',
   XAU: 'XAUUSD=X',
   XPD: 'XPDUSD=X',
@@ -234,6 +241,11 @@ function normalizeMetalTicker(symbol: string): string {
   return METAL_YAHOO_TICKERS[clean] ?? clean
 }
 
+function normalizeLegacyMetalTicker(symbol: string): string {
+  const clean = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return LEGACY_METAL_YAHOO_TICKERS[clean] ?? clean
+}
+
 function getAssetSector(kind: AssetKind): string {
   if (kind === 'Crypto') return 'Crypto'
   if (kind === 'Metal') return 'Metales'
@@ -271,7 +283,7 @@ function inferAsset(rawTicker: string, rowText: string): {
       rawTicker: base,
       nombre: METAL_NAMES[base] ?? base,
       tipoActivo: 'Metal',
-      moneda: 'USD',
+      moneda: 'EUR',
     }
   }
 
@@ -508,7 +520,7 @@ function parseMetalRows(rows: string[][], userId: string): ParsedImportTransacti
       rawTicker: metalSymbol,
       nombre: name,
       tipoActivo: 'Metal',
-      moneda: 'USD',
+      moneda: 'EUR',
       tipo_operacion: operation,
       cantidad: quantity,
       precio_unitario: 0,
@@ -729,7 +741,8 @@ export async function POST(request: Request) {
       let activo_id = null
       let existingActivo = activos?.find(a =>
         a.ticker === tx.ticker ||
-        ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && a.ticker === tx.rawTicker)
+        ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && a.ticker === tx.rawTicker) ||
+        (tx.tipoActivo === 'Metal' && a.ticker === normalizeLegacyMetalTicker(tx.rawTicker))
       )
 
       if (existingActivo) {
