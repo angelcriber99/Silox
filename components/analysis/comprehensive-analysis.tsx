@@ -100,6 +100,8 @@ export function ComprehensiveAnalysis() {
   const [historyLoading, setHistoryLoading] = useState(true)
   const [marketDataMap, setMarketDataMap] = useState<Record<string, FundHoldingsResponse | null>>({})
   const [isEnriching, setIsEnriching] = useState(false)
+  const [isSectorsExpanded, setIsSectorsExpanded] = useState(false)
+  const [isGeosExpanded, setIsGeosExpanded] = useState(false)
   const fetchedIds = useRef<Set<string>>(new Set());
 
   // Fetch true market holdings for all positions
@@ -603,54 +605,86 @@ export function ComprehensiveAnalysis() {
         </div>
 
         {/* Sectores */}
-        <div className="p-5 rounded-[32px] border border-border lg:col-span-3" style={{ background: "var(--card)" }}>
-          <div className="flex items-center justify-between mb-6">
+        <div className="p-5 rounded-[32px] border border-border lg:col-span-3 transition-all" style={{ background: "var(--card)" }}>
+          <div 
+            className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => setIsSectorsExpanded(!isSectorsExpanded)}
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.65 0.17 270 / 0.15)" }}>
                 <Briefcase className="w-5 h-5" style={{ color: "oklch(0.65 0.17 270)" }} />
               </div>
-              <h3 className="text-lg font-bold tracking-tight text-foreground">Exposición Sectorial (Look-through)</h3>
+              <div>
+                <h3 className="text-lg font-bold tracking-tight text-foreground">Exposición Sectorial (Look-through)</h3>
+                {!isSectorsExpanded && sectors.length > 0 && (
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5">
+                    {sectors.slice(0, 3).map(s => s.name).join(', ')}{sectors.length > 3 ? '...' : ''}
+                  </p>
+                )}
+              </div>
             </div>
-            {isEnriching && (
-              <span className="text-xs font-semibold text-primary animate-pulse flex items-center gap-1.5">
-                <Loader2 className="w-3 h-3 animate-spin" /> Escaneando mercado...
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {isEnriching && (
+                <span className="text-xs font-semibold text-primary animate-pulse flex items-center gap-1.5 hidden sm:flex">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Escaneando...
+                </span>
+              )}
+              {isSectorsExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start">
-            {sectors.map((sector, index) => (
-              <CategoryCard 
-                key={sector.name} 
-                item={sector} 
-                totalValue={analysisTotal} 
-                index={index} 
-              />
-            ))}
-          </div>
+          {isSectorsExpanded && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+              {sectors.map((sector, index) => (
+                <CategoryCard 
+                  key={sector.name} 
+                  item={sector} 
+                  totalValue={analysisTotal} 
+                  index={index} 
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Geografía */}
-        <div className="p-5 rounded-[32px] border border-border col-span-1 md:col-span-2" style={{ background: "var(--card)" }}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.60 0.016 230 / 0.20)" }}>
-              <Globe2 className="w-5 h-5 text-foreground" />
+        <div className="p-5 rounded-[32px] border border-border lg:col-span-3 transition-all" style={{ background: "var(--card)" }}>
+          <div 
+            className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => setIsGeosExpanded(!isGeosExpanded)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.60 0.016 230 / 0.20)" }}>
+                <Globe2 className="w-5 h-5 text-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold tracking-tight text-foreground">Exposición Geográfica</h3>
+                {!isGeosExpanded && geos.length > 0 && (
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5">
+                    {geos.slice(0, 3).map(g => g.name).join(', ')}{geos.length > 3 ? '...' : ''}
+                  </p>
+                )}
+              </div>
             </div>
-            <h3 className="text-lg font-bold tracking-tight text-foreground">Exposición Geográfica</h3>
+            <div className="flex items-center gap-3">
+              {isGeosExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start">
-            {geos.map((geo, index) => (
-              <CategoryCard 
-                key={geo.name} 
-                item={geo} 
-                totalValue={analysisTotal} 
-                index={index} 
-              />
-            ))}
-          </div>
+          {isGeosExpanded && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-start mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+              {geos.map((geo, index) => (
+                <CategoryCard 
+                  key={geo.name} 
+                  item={geo} 
+                  totalValue={analysisTotal} 
+                  index={index} 
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Recomendaciones Estratégicas (Insights) */}
-        <div className="p-5 rounded-[32px] border border-border col-span-1 md:col-span-2 relative overflow-hidden" style={{ background: "var(--card)" }}>
+        <div className="p-5 rounded-[32px] border border-border lg:col-span-3 relative overflow-hidden" style={{ background: "var(--card)" }}>
           {/* Subtle gradient background effect */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10 pointer-events-none" />
           
