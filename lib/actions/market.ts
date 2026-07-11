@@ -231,7 +231,7 @@ export async function fetchMarketPrices(
 
   // Create a unique cache key based on the requested tickers
   const sortedTickers = [...tickers].sort()
-  const cacheKey = `market-prices-${sortedTickers.join('-')}-${convertToEurFlag}`
+  const cacheKey = `market-prices-v2-${sortedTickers.join('-')}-${convertToEurFlag}`
   
   // Cache for 5 minutes (300 seconds)
   const getCachedPrices = unstable_cache(
