@@ -19,17 +19,24 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   
   const containerRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
+  const startX = useRef(0)
   const currentY = useRef(0)
   const isPulling = useRef(false)
+  const isHorizontalScroll = useRef(false)
   
   const y = useMotionValue(0)
   const controls = useAnimation()
 
   const handleTouchStart = (e: TouchEvent) => {
-    // Only allow pull-to-refresh if we are at the top of the container
-    if (window.scrollY === 0 || document.documentElement.scrollTop === 0) {
+    // Check if we are at the top of the actual scroll container
+    const mainEl = document.querySelector('main')
+    const scrollTop = mainEl ? mainEl.scrollTop : window.scrollY
+    
+    if (scrollTop <= 0) {
       startY.current = e.touches[0].clientY
+      startX.current = e.touches[0].clientX
       isPulling.current = true
+      isHorizontalScroll.current = false
     }
   }
 
@@ -37,10 +44,25 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     if (!isPulling.current || isRefreshing) return
     
     currentY.current = e.touches[0].clientY
+    const currentX = e.touches[0].clientX
+    
     const deltaY = currentY.current - startY.current
+    const deltaX = currentX - startX.current
+    
+    // If user is swiping horizontally more than vertically, ignore pull to refresh
+    if (!isHorizontalScroll.current && Math.abs(deltaX) > Math.abs(deltaY)) {
+      isHorizontalScroll.current = true
+      isPulling.current = false
+      return
+    }
+    
+    if (isHorizontalScroll.current) return
+
+    const mainEl = document.querySelector('main')
+    const scrollTop = mainEl ? mainEl.scrollTop : window.scrollY
     
     // Only pull down
-    if (deltaY > 0 && (window.scrollY === 0 || document.documentElement.scrollTop === 0)) {
+    if (deltaY > 0 && scrollTop <= 0) {
       // Prevent default scrolling when pulling
       e.preventDefault()
       

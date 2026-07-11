@@ -69,7 +69,7 @@ export default async function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
       </head>
-      <body className="flex flex-col h-[100dvh] w-full overflow-hidden bg-background text-foreground" suppressHydrationWarning>
+      <body className="flex flex-col h-[100vh] w-full overflow-hidden bg-background text-foreground" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider
             attribute="class"
