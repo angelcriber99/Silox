@@ -6,7 +6,7 @@ import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
 import { FundHoldingsResponse } from "@/lib/actions/market-data"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts"
-import { Loader2, TrendingUp, Wallet, Globe2, Briefcase, Activity, Lightbulb } from "lucide-react"
+import { Loader2, TrendingUp, Wallet, Globe2, Briefcase, Activity, Lightbulb, ChevronUp, ChevronDown } from "lucide-react"
 
 // Theme colors
 const COLORS = [
@@ -17,6 +17,56 @@ const COLORS = [
   'oklch(0.65 0.22 22)',  // Negative Red
   'oklch(0.60 0.016 230)', // Muted 
 ]
+
+function CategoryCard({ item, totals, index }: { item: any, totals: any, index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const weight = item.value / totals.totalValue * 100;
+
+  return (
+    <div 
+      className={`flex flex-col gap-2 p-4 rounded-2xl bg-muted/30 border border-border/50 transition-all duration-300 ${expanded ? 'bg-muted/50' : 'cursor-pointer hover:bg-muted/40'}`}
+      onClick={() => setExpanded(!expanded)}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-bold text-foreground truncate mr-2">{item.name}</span>
+        <span className="text-sm font-bold font-tabular text-muted-foreground">{weight.toFixed(1)}%</span>
+      </div>
+      <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+        <div 
+          className="h-full rounded-full transition-all duration-500" 
+          style={{ 
+            width: `${weight}%`,
+            background: COLORS[index % COLORS.length]
+          }} 
+        />
+      </div>
+      <div className="flex items-center justify-between mt-1">
+        <span className="text-xs font-semibold text-muted-foreground font-tabular">
+          {formatCurrency(item.value)}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </span>
+      </div>
+
+      {expanded && item.assets && (
+        <div className="mt-3 pt-3 border-t border-border/50 flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+          {item.assets.map((a: any, i: number) => {
+            const assetWeight = a.value / item.value * 100;
+            return (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground truncate max-w-[140px]" title={a.name}>{a.name}</span>
+                <span className="font-tabular text-muted-foreground whitespace-nowrap ml-2">
+                  {formatCurrency(a.value)} <span className="opacity-50 text-[10px] ml-1">({assetWeight.toFixed(1)}%)</span>
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function translateSectorKey(key: string): string {
   const map: Record<string, string> = {
@@ -166,15 +216,38 @@ export function ComprehensiveAnalysis() {
   const { sectors, geos, assetTypes, topPositions } = useMemo(() => {
     if (!positions) return { sectors: [], geos: [], assetTypes: [], topPositions: [] }
 
-    const sMap = new Map<string, number>()
-    const gMap = new Map<string, number>()
+    const sMap = new Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>()
+    const gMap = new Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>()
     const tMap = new Map<string, number>()
+
+    const addToMap = (
+      map: Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>,
+      key: string,
+      valToAdd: number,
+      assetName: string,
+      assetSymbol: string
+    ) => {
+      if (!map.has(key)) {
+        map.set(key, { value: 0, assets: [] });
+      }
+      const entry = map.get(key)!;
+      entry.value += valToAdd;
+      
+      const existingAsset = entry.assets.find(a => a.name === assetName);
+      if (existingAsset) {
+        existingAsset.value += valToAdd;
+      } else {
+        entry.assets.push({ name: assetName, value: valToAdd, symbol: assetSymbol });
+      }
+    }
 
     positions.forEach(p => {
       const val = p.valor_actual || 0
       if (val <= 0) return
       
       const mData = marketDataMap[p.activo_id];
+      const assetName = p.nombre || p.ticker || p.isin || 'Desconocido'
+      const assetSymbol = p.ticker || ''
 
       // SECTOR LOGIC: use look-through if available
       if (mData && mData.sectorWeightings) {
@@ -184,18 +257,18 @@ export function ComprehensiveAnalysis() {
           if (w > 0) {
             const actualVal = val * w;
             const translatedSector = translateSectorKey(sKey);
-            sMap.set(translatedSector, (sMap.get(translatedSector) || 0) + actualVal);
+            addToMap(sMap, translatedSector, actualVal, assetName, assetSymbol);
             totalAssigned += actualVal;
           }
         }
         // If weights didn't sum to 100%, assign remainder to Other/Cash
         if (totalAssigned < val * 0.99) {
            const remainder = val - totalAssigned;
-           sMap.set("Otros", (sMap.get("Otros") || 0) + remainder);
+           addToMap(sMap, "Otros", remainder, assetName, assetSymbol);
         }
       } else {
         const fallbackSector = mData?.sector ? translateSectorKey(mData.sector.toLowerCase().replace(/ /g, '_')) : (p.sector || 'Desconocido')
-        sMap.set(fallbackSector, (sMap.get(fallbackSector) || 0) + val)
+        addToMap(sMap, fallbackSector, val, assetName, assetSymbol);
       }
 
       // GEO LOGIC:
@@ -205,27 +278,36 @@ export function ComprehensiveAnalysis() {
           const w = typeof weight === 'number' ? weight : 0;
           if (w > 0) {
             const actualVal = val * w;
-            gMap.set(cKey, (gMap.get(cKey) || 0) + actualVal);
+            addToMap(gMap, cKey, actualVal, assetName, assetSymbol);
             totalAssigned += actualVal;
           }
         }
         if (totalAssigned < val * 0.99) {
            const remainder = val - totalAssigned;
-           gMap.set("Otros", (gMap.get("Otros") || 0) + remainder);
+           addToMap(gMap, "Otros", remainder, assetName, assetSymbol);
         }
       } else if (mData?.country) {
         // Map common country codes/names if necessary
         const geo = mData.country === 'United States' ? 'USA' : mData.country;
-        gMap.set(geo, (gMap.get(geo) || 0) + val)
+        addToMap(gMap, geo, val, assetName, assetSymbol);
       } else {
         const geo = p.geografia || 'Desconocida'
-        gMap.set(geo, (gMap.get(geo) || 0) + val)
+        addToMap(gMap, geo, val, assetName, assetSymbol);
       }
 
       // ASSET TYPE LOGIC
       const type = mData?.assetClass ? translateAssetClass(mData.assetClass) : (p.tipo || 'Otro');
       tMap.set(type, (tMap.get(type) || 0) + val)
     })
+
+    const toArrayWithAssets = (map: Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>) => 
+      Array.from(map.entries())
+      .map(([name, data]) => ({ 
+        name, 
+        value: data.value, 
+        assets: data.assets.sort((a, b) => b.value - a.value) 
+      }))
+      .sort((a, b) => b.value - a.value)
 
     const toArray = (map: Map<string, number>) => Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
@@ -237,8 +319,8 @@ export function ComprehensiveAnalysis() {
       .slice(0, 5)
 
     return {
-      sectors: toArray(sMap),
-      geos: toArray(gMap),
+      sectors: toArrayWithAssets(sMap),
+      geos: toArrayWithAssets(gMap),
       assetTypes: toArray(tMap),
       topPositions: top
     }
@@ -484,29 +566,14 @@ export function ComprehensiveAnalysis() {
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {sectors.map((sector, index) => {
-              const weight = sector.value / totals.totalValue * 100
-              return (
-                <div key={sector.name} className="flex flex-col gap-2 p-4 rounded-2xl bg-muted/30 border border-border/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-foreground truncate mr-2">{sector.name}</span>
-                    <span className="text-sm font-bold font-tabular text-muted-foreground">{weight.toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div 
-                      className="h-full rounded-full" 
-                      style={{ 
-                        width: `${weight}%`,
-                        background: COLORS[index % COLORS.length]
-                      }} 
-                    />
-                  </div>
-                  <span className="text-xs font-semibold text-muted-foreground mt-1 font-tabular">
-                    {formatCurrency(sector.value)}
-                  </span>
-                </div>
-              )
-            })}
+            {sectors.map((sector, index) => (
+              <CategoryCard 
+                key={sector.name} 
+                item={sector} 
+                totals={totals} 
+                index={index} 
+              />
+            ))}
           </div>
         </div>
 
@@ -519,29 +586,14 @@ export function ComprehensiveAnalysis() {
             <h3 className="text-lg font-bold tracking-tight text-foreground">Exposición Geográfica</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {geos.map((geo, index) => {
-              const weight = geo.value / totals.totalValue * 100
-              return (
-                <div key={geo.name} className="flex flex-col gap-2 p-4 rounded-2xl bg-muted/30 border border-border/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-foreground truncate mr-2">{geo.name}</span>
-                    <span className="text-sm font-bold font-tabular text-muted-foreground">{weight.toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div 
-                      className="h-full rounded-full" 
-                      style={{ 
-                        width: `${weight}%`,
-                        background: COLORS[index % COLORS.length]
-                      }} 
-                    />
-                  </div>
-                  <span className="text-xs font-semibold text-muted-foreground mt-1 font-tabular">
-                    {formatCurrency(geo.value)}
-                  </span>
-                </div>
-              )
-            })}
+            {geos.map((geo, index) => (
+              <CategoryCard 
+                key={geo.name} 
+                item={geo} 
+                totals={totals} 
+                index={index} 
+              />
+            ))}
           </div>
         </div>
 
