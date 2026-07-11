@@ -243,10 +243,10 @@ function inferAsset(rawTicker: string, rowText: string): {
 }
 
 function inferOperation(typeValue: string, description: string, quantity: number): ImportOperation | null {
-  const text = `${typeValue} ${description}`
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  const normalizedType = normalizeOperationText(typeValue)
+  const text = `${normalizedType} ${normalizeOperationText(description)}`
+
+  if (normalizedType === 'staking') return null
 
   if (/(^|\s)(buy|bought|compra|comprar|comprado)(\s|$)/.test(text)) return 'Compra'
   if (/(^|\s)(sell|sold|venta|vender|vendido)(\s|$)/.test(text)) return 'Venta'
@@ -261,6 +261,14 @@ function inferOperation(typeValue: string, description: string, quantity: number
   }
 
   return null
+}
+
+function normalizeOperationText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
 }
 
 function findPairedFiatTotal(
@@ -391,6 +399,67 @@ function parseRows(rows: string[][], userId: string): ParsedImportTransaction[] 
   return parsed
 }
 
+function parseInternalCryptoMovements(rows: string[][], userId: string): ParsedImportTransaction[] {
+  if (rows.length < 2) return []
+
+  const headers = rows[0].map(normalizeHeader)
+  const dateIdx = findIndex(headers, ['date', 'fecha', 'completeddate', 'completed', 'executeddate', 'starteddate'])
+  const tickerIdx = findIndex(headers, ['ticker', 'symbol', 'asset', 'instrument', 'crypto', 'currency', 'moneda'])
+  const typeIdx = findIndex(headers, ['type', 'tipo', 'transactiontype', 'operation', 'operacion'])
+  const qtyIdx = findIndex(headers, ['quantity', 'cantidad', 'units', 'shares', 'amount'])
+  const priceIdx = findIndex(headers, ['price', 'precio', 'unitprice', 'priceperunit', 'rate'])
+  const totalIdx = findIndex(headers, ['total', 'value', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
+  const feeIdx = findIndex(headers, ['fee', 'fees', 'commission', 'comision'])
+  const isCryptoAccountStatement =
+    headers.includes('symbol') &&
+    headers.includes('type') &&
+    headers.includes('quantity') &&
+    headers.includes('price') &&
+    headers.includes('value') &&
+    headers.includes('fees') &&
+    headers.includes('date')
+
+  if (!isCryptoAccountStatement || dateIdx < 0 || tickerIdx < 0 || typeIdx < 0 || qtyIdx < 0) return []
+
+  const internalMovements: ParsedImportTransaction[] = []
+
+  for (const row of rows.slice(1)) {
+    const typeValue = normalizeText(row[typeIdx])
+    if (normalizeOperationText(typeValue) !== 'staking') continue
+
+    const rawTicker = normalizeText(row[tickerIdx])
+    const date = parseDate(row[dateIdx])
+    const quantity = Math.abs(parseNumber(row[qtyIdx]))
+
+    if (!rawTicker || !date || !Number.isFinite(quantity) || quantity <= 0) continue
+
+    const rawSymbol = rawTicker.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    const price = parseNumber(row[priceIdx])
+    const total = parseNumber(row[totalIdx])
+    const precioUnitario = Number.isFinite(price) && price > 0
+      ? price
+      : Number.isFinite(total) && total !== 0
+        ? Math.abs(total) / quantity
+        : 0
+
+    internalMovements.push({
+      user_id: userId,
+      ticker: normalizeCryptoTicker(rawTicker),
+      rawTicker: rawSymbol,
+      nombre: CRYPTO_NAMES[rawSymbol] ?? rawSymbol,
+      tipoActivo: 'Crypto',
+      moneda: 'USD',
+      tipo_operacion: 'Compra',
+      cantidad: quantity,
+      precio_unitario: precioUnitario,
+      fecha: date,
+      comision: Number.isFinite(parseNumber(row[feeIdx])) ? Math.abs(parseNumber(row[feeIdx])) : 0,
+    })
+  }
+
+  return internalMovements
+}
+
 function parseFixedRows(rows: string[][], userId: string): ParsedImportTransaction[] {
   const parsed: ParsedImportTransaction[] = []
 
@@ -463,6 +532,59 @@ export async function POST(request: Request) {
       : parseCsv(buffer.toString('utf-8'))
 
     const parsedTransactions = parseRows(rows, user.id)
+    const internalCryptoMovements = parseInternalCryptoMovements(rows, user.id)
+
+    let { data: activos } = await supabase
+      .from('activos')
+      .select('id, ticker, tipo')
+      .eq('user_id', user.id)
+
+    let { data: existingTransactions } = await supabase
+      .from('transacciones')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, fecha')
+      .eq('user_id', user.id)
+
+    let removedInternalMovements = 0
+    if (internalCryptoMovements.length > 0 && activos && existingTransactions) {
+      const idsToDelete = new Set<string>()
+
+      for (const movement of internalCryptoMovements) {
+        const existingActivo = activos.find(a =>
+          a.ticker === movement.ticker ||
+          (movement.tipoActivo === 'Crypto' && a.ticker === movement.rawTicker)
+        )
+        if (!existingActivo) continue
+
+        for (const existing of existingTransactions) {
+          const isSameActivo = existing.activo_id === existingActivo.id
+          const isSameType = existing.tipo_operacion === movement.tipo_operacion
+          const isSameQty = Math.abs(existing.cantidad - movement.cantidad) < 0.00000001
+          const isSamePrice = Math.abs(existing.precio_unitario - movement.precio_unitario) < 0.01
+          const isSameDate = existing.fecha === movement.fecha
+
+          if (isSameActivo && isSameType && isSameQty && isSamePrice && isSameDate) {
+            idsToDelete.add(existing.id)
+          }
+        }
+      }
+
+      if (idsToDelete.size > 0) {
+        const ids = Array.from(idsToDelete)
+        const { error: deleteError } = await supabase
+          .from('transacciones')
+          .delete()
+          .in('id', ids)
+
+        if (deleteError) {
+          return NextResponse.json({
+            error: `No se pudieron limpiar movimientos internos de staking: ${deleteError.message}`,
+          }, { status: 500 })
+        }
+
+        removedInternalMovements = ids.length
+        existingTransactions = existingTransactions.filter(tx => !idsToDelete.has(tx.id))
+      }
+    }
 
     if (parsedTransactions.length === 0) {
       return NextResponse.json({
@@ -470,20 +592,11 @@ export async function POST(request: Request) {
         message: 'No se encontraron operaciones de compra/venta en este archivo.',
         newTransactions: 0,
         ignoredDuplicates: 0,
+        removedInternalMovements,
         imported: [],
         ignored: [],
       })
     }
-
-    let { data: activos } = await supabase
-      .from('activos')
-      .select('id, ticker, tipo')
-      .eq('user_id', user.id)
-
-    const { data: existingTransactions } = await supabase
-      .from('transacciones')
-      .select('activo_id, tipo_operacion, cantidad, precio_unitario, fecha')
-      .eq('user_id', user.id)
 
     let newTxCount = 0
     let ignoredCount = 0
@@ -587,6 +700,7 @@ export async function POST(request: Request) {
       success: true,
       newTransactions: newTxCount,
       ignoredDuplicates: ignoredCount,
+      removedInternalMovements,
       imported,
       ignored,
     })

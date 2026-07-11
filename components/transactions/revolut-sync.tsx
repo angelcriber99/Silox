@@ -56,7 +56,12 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
       }),
       {
         loading: 'Analizando movimientos...',
-        success: (data) => `¡Listo! ${data.newTransactions} nuevos importados. (${data.ignoredDuplicates} ignorados por duplicidad).`,
+        success: (data) => {
+          const removed = data.removedInternalMovements
+            ? ` ${data.removedInternalMovements} movimientos internos de staking limpiados.`
+            : ''
+          return `¡Listo! ${data.newTransactions} nuevos importados. (${data.ignoredDuplicates} ignorados por duplicidad).${removed}`
+        },
         error: (err) => err.message || 'Ocurrió un error al procesar el archivo.'
       }
     )
