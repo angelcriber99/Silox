@@ -240,6 +240,11 @@ function getAssetSector(kind: AssetKind): string {
   return 'Desconocido'
 }
 
+function getDatabaseAssetType(kind: AssetKind): 'Acción' | 'Crypto' {
+  if (kind === 'Metal') return 'Crypto'
+  return kind
+}
+
 function getAssetGeography(kind: AssetKind): string {
   if (kind === 'Crypto' || kind === 'Metal') return 'Global'
   return 'Desconocida'
@@ -652,7 +657,7 @@ export async function POST(request: Request) {
 
     let { data: activos } = await supabase
       .from('activos')
-      .select('id, ticker, tipo')
+      .select('id, ticker, tipo, sector')
       .eq('user_id', user.id)
 
     let { data: existingTransactions } = await supabase
@@ -729,13 +734,14 @@ export async function POST(request: Request) {
 
       if (existingActivo) {
         activo_id = existingActivo.id
-        if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== tx.tipoActivo)) {
+        const dbTipo = getDatabaseAssetType(tx.tipoActivo)
+        if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== dbTipo || existingActivo.sector !== getAssetSector(tx.tipoActivo))) {
           await supabase
             .from('activos')
             .update({
               ticker: tx.ticker,
               nombre: tx.nombre,
-              tipo: tx.tipoActivo,
+              tipo: dbTipo,
               moneda: tx.moneda,
               sector: getAssetSector(tx.tipoActivo),
               geografia: getAssetGeography(tx.tipoActivo),
@@ -743,22 +749,24 @@ export async function POST(request: Request) {
             .eq('id', existingActivo.id)
 
           existingActivo.ticker = tx.ticker
-          existingActivo.tipo = tx.tipoActivo
+          existingActivo.tipo = dbTipo
+          existingActivo.sector = getAssetSector(tx.tipoActivo)
         }
       } else {
+        const dbTipo = getDatabaseAssetType(tx.tipoActivo)
         const { data: newActivo, error: createError } = await supabase
           .from('activos')
           .insert({
             user_id: user.id,
             ticker: tx.ticker,
             nombre: tx.nombre,
-            tipo: tx.tipoActivo,
+            tipo: dbTipo,
             estrategia: 'Satellite',
             moneda: tx.moneda,
             sector: getAssetSector(tx.tipoActivo),
             geografia: getAssetGeography(tx.tipoActivo),
           })
-          .select('id, ticker, tipo')
+          .select('id, ticker, tipo, sector')
           .single()
 
         if (createError) {

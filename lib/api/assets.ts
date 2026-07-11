@@ -1,6 +1,27 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 
+function displayAssetType<T extends { tipo: string; sector?: string | null; ticker?: string | null }>(asset: T): T {
+  const isMetal =
+    asset.sector === 'Metales' ||
+    asset.ticker === 'XAGUSD=X' ||
+    asset.ticker === 'XAUUSD=X' ||
+    asset.ticker === 'XPDUSD=X' ||
+    asset.ticker === 'XPTUSD=X'
+
+  return isMetal ? ({ ...asset, tipo: 'Metal' } as T) : asset
+}
+
+function toDatabaseAssetPayload<T extends { tipo?: string; sector?: string; geografia?: string }>(asset: T): T {
+  if (asset.tipo !== 'Metal') return asset
+  return {
+    ...asset,
+    tipo: 'Crypto',
+    sector: asset.sector || 'Metales',
+    geografia: asset.geografia || 'Global',
+  } as T
+}
+
 export async function fetchPosiciones(): Promise<Posicion[]> {
   const supabase = createClient()
   const { data: posiciones, error: errorPos } = await supabase
@@ -17,7 +38,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   const notasMap = new Map(activos.map(a => [a.id, a.notas]))
 
-  return (posiciones ?? []).map(p => ({
+  return (posiciones ?? []).map(p => displayAssetType({
     ...p,
     notas: notasMap.get(p.activo_id) ?? null
   }))
@@ -30,7 +51,7 @@ export async function fetchActivos(): Promise<Activo[]> {
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(`Error cargando activos: ${error.message}`)
-  return data ?? []
+  return (data ?? []).map(displayAssetType)
 }
 
 export async function insertActivo(activo: {
@@ -50,7 +71,7 @@ export async function insertActivo(activo: {
 
   const { data, error } = await supabase
     .from('activos')
-    .insert([{ ...activo, user_id: user.id }])
+    .insert([{ ...toDatabaseAssetPayload(activo), user_id: user.id }])
     .select()
     .single()
 
@@ -71,7 +92,7 @@ export async function updateActivo(id: string, updates: {
 }): Promise<Activo> {
   const { data, error } = await createClient()
     .from('activos')
-    .update(updates)
+    .update(toDatabaseAssetPayload(updates))
     .eq('id', id)
     .select()
     .single()
