@@ -37,6 +37,30 @@ const groupLabels: Record<string, string> = {
 }
 
 export function ProSidebar() {
+  const isDesktop = useIsDesktop()
+
+  if (!isDesktop) return null
+
+  return <ProSidebarContent />
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)")
+    const update = () => setIsDesktop(media.matches)
+
+    update()
+    media.addEventListener("change", update)
+
+    return () => media.removeEventListener("change", update)
+  }, [])
+
+  return isDesktop
+}
+
+function ProSidebarContent() {
   const pathname = usePathname()
   const router = useRouter()
   const { sidebarCollapsed, setSidebarCollapsed, zenMode } = usePreferences()

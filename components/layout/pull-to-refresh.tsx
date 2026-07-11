@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback, ReactNode } from "react"
-import { motion, useAnimation, useMotionValue } from "framer-motion"
+import { animate, motion, useMotionValue } from "framer-motion"
 import { Loader2, ArrowDown } from "lucide-react"
 import { hapticFeedback } from "@/lib/utils/haptics"
 
@@ -28,7 +28,6 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const progressFrame = useRef<number | null>(null)
   
   const y = useMotionValue(0)
-  const controls = useAnimation()
 
   useEffect(() => {
     isRefreshingRef.current = isRefreshing
@@ -110,7 +109,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       hapticFeedback.medium()
       isRefreshingRef.current = true
       setIsRefreshing(true)
-      controls.start({ y: 50, transition: { type: "spring", stiffness: 400, damping: 25 } })
+      await animate(y, 0, { type: "spring", stiffness: 500, damping: 34 })
       
       try {
         await onRefresh()
@@ -118,20 +117,15 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       } catch (error) {
         hapticFeedback.error()
       } finally {
-        // Animate back to top first
-        await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
-        // Then reset state so the spinner stays visible during the slide up
         isRefreshingRef.current = false
         setIsRefreshing(false)
         updatePullProgress(0)
-        y.set(0)
       }
     } else {
-      await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
-      y.set(0)
+      await animate(y, 0, { type: "spring", stiffness: 300, damping: 30 })
       updatePullProgress(0)
     }
-  }, [controls, onRefresh, updatePullProgress, y])
+  }, [onRefresh, updatePullProgress, y])
 
   useEffect(() => {
     const el = containerRef.current
@@ -157,7 +151,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     <div ref={containerRef} className="relative min-h-full w-full bg-background">
       {/* Indicator (Behind content) */}
       <div 
-        className="absolute top-0 left-0 right-0 flex justify-center items-center z-0"
+        className="absolute top-0 left-0 right-0 flex justify-center items-center z-30 pointer-events-none"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 30px)" }}
       >
         <motion.div
@@ -181,7 +175,6 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
 
       {/* Content */}
       <motion.div 
-        animate={controls}
         style={{ y }}
         className="min-h-full w-full bg-background relative z-10"
       >

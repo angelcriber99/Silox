@@ -1,11 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Plus, UserCircle, ArrowLeftRight, LineChart } from "lucide-react"
 import { hapticFeedback } from "@/lib/utils/haptics"
-import { motion } from "framer-motion"
 
 interface MobileBottomNavProps {
   onAddPress: () => void
@@ -34,6 +32,14 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
     })
   }, [router])
 
+  const navigate = (href: string) => {
+    if (href === pathname) return
+    setOptimisticPath(href)
+    hapticFeedback.light()
+    router.prefetch(href)
+    router.push(href)
+  }
+
   return (
     <div
       className="md:hidden fixed z-50 bottom-0 left-0 right-0"
@@ -56,41 +62,37 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
           if (tab.isFab) {
             return (
               <div key="fab-container" className="relative flex justify-center items-center px-2">
-                <motion.button
-                  whileTap={{ scale: 0.88 }}
-                  whileHover={{ scale: 1.04 }}
+                <button
                   onClick={() => {
                     hapticFeedback.heavy()
                     onAddPress()
                   }}
-                  className="flex items-center justify-center outline-none z-50"
+                  className="flex items-center justify-center outline-none z-50 transition-transform active:scale-90"
                   aria-label="Añadir transacción"
                 >
                   <Plus className="h-[28px] w-[28px] stroke-[2.5] text-foreground" />
-                </motion.button>
+                </button>
               </div>
             )
           }
 
           return (
-            <Link
+            <button
               key={tab.name}
-              href={tab.href}
-              prefetch
-              onPointerDown={() => {
-                setOptimisticPath(tab.href)
-                hapticFeedback.light()
-                router.prefetch(tab.href)
+              type="button"
+              onPointerDown={() => navigate(tab.href)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") navigate(tab.href)
               }}
               className="relative flex flex-col items-center justify-center min-w-[64px]"
               aria-label={tab.name}
+              aria-current={isActive ? "page" : undefined}
             >
-              <motion.div
-                animate={{
-                  scale: isActive ? 1.15 : 1,
-                  y: isActive ? -2 : 0,
+              <div
+                className="transition-transform duration-100 ease-out"
+                style={{
+                  transform: isActive ? "translateY(-2px) scale(1.15)" : "translateY(0) scale(1)",
                 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >
                 <tab.icon
                   className="h-[26px] w-[26px] transition-colors duration-200"
@@ -99,8 +101,8 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                     color: isActive ? "var(--foreground)" : "var(--muted-foreground)",
                   }}
                 />
-              </motion.div>
-            </Link>
+              </div>
+            </button>
           )
         })}
       </div>
