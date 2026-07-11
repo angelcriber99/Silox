@@ -99,10 +99,11 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       } catch (error) {
         hapticFeedback.error()
       } finally {
+        // Animate back to top first
+        await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
+        // Then reset state so the spinner stays visible during the slide up
         setIsRefreshing(false)
         setPullProgress(0)
-        // Await the animation to finish before snapping the motion value
-        await controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } })
         y.set(0)
       }
     } else {
