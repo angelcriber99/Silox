@@ -88,12 +88,41 @@ export async function POST(request: NextRequest) {
 
     let geographicWeightings: Record<string, number> | null = null;
 
-    // --- FALLBACK LOGIC FOR INDEX FUNDS ---
-    // If we couldn't get sector or country data, check if it's a known index fund by name or ticker
+    // --- DYNAMIC PROXY FOR INDEX FUNDS ---
+    // If Yahoo Finance fails to return sector data for European UCITS funds,
+    // we can silently fetch the data from the US equivalent ETF to get 100% real-time weights.
     const identLower = (identifier || tickerToFetch).toLowerCase();
     
-    // MSCI World Fallback
-    if (identLower.includes('msci world') || identLower.includes('msci-world') || identLower.includes('msci') && identLower.includes('world')) {
+    if (!sectorWeightings || Object.keys(sectorWeightings).length === 0) {
+      let proxyTicker = null;
+      if (identLower.includes('msci world') || identLower.includes('msci-world') || (identLower.includes('msci') && identLower.includes('world'))) {
+        proxyTicker = 'URTH'; // iShares MSCI World ETF
+      } else if (identLower.includes('s&p 500') || identLower.includes('sp500') || identLower.includes('s&p500') || identLower.includes('s&p')) {
+        proxyTicker = 'SPY'; // SPDR S&P 500 ETF Trust
+      }
+
+      if (proxyTicker) {
+        try {
+          const proxyResult: any = await yahooFinance.quoteSummary(proxyTicker, { modules: ['topHoldings'] });
+          if (proxyResult?.topHoldings?.sectorWeightings && Array.isArray(proxyResult.topHoldings.sectorWeightings)) {
+            sectorWeightings = {};
+            for (const sectorObj of proxyResult.topHoldings.sectorWeightings) {
+              for (const [key, value] of Object.entries(sectorObj)) {
+                if (typeof value === 'number' && value > 0) {
+                  sectorWeightings[key] = value;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(`[market-data] Failed to fetch proxy ticker ${proxyTicker} for ${identifier}`);
+        }
+      }
+    }
+
+    // --- STATIC FALLBACK LOGIC ---
+    // If even the proxy fails, or for geography (which Yahoo doesn't provide for funds easily)
+    if (identLower.includes('msci world') || identLower.includes('msci-world') || (identLower.includes('msci') && identLower.includes('world'))) {
       if (!sectorWeightings || Object.keys(sectorWeightings).length === 0) {
         sectorWeightings = {
           technology: 0.24,
