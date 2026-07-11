@@ -17,6 +17,9 @@ const COLORS = [
   'oklch(0.60 0.016 230)', // Muted 
 ]
 
+const marketDataCache: Record<string, FundHoldingsResponse | null> = {}
+const fetchedMarketDataIds = new Set<string>()
+
 function DistributionRow({ item, totalValue, index }: { item: any, totalValue: number, index: number }) {
   const [expanded, setExpanded] = useState(false);
   const weight = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
@@ -94,9 +97,9 @@ function translateAssetClass(key: string): string {
 
 export function ComprehensiveAnalysis() {
   const { positions, totals, isLoading: portfolioLoading } = usePortfolio()
-  const [marketDataMap, setMarketDataMap] = useState<Record<string, FundHoldingsResponse | null>>({})
+  const [marketDataMap, setMarketDataMap] = useState<Record<string, FundHoldingsResponse | null>>(() => ({ ...marketDataCache }))
   const [isEnriching, setIsEnriching] = useState(false)
-  const fetchedIds = useRef<Set<string>>(new Set());
+  const fetchedIds = useRef(fetchedMarketDataIds);
 
   // Fetch true market holdings for all positions
   useEffect(() => {
@@ -119,7 +122,6 @@ export function ComprehensiveAnalysis() {
           const batchData: Record<string, FundHoldingsResponse | null> = {};
 
           await Promise.all(batch.map(async (p) => {
-            fetchedIds.current.add(p.activo_id);
             const identifier = p.isin || p.ticker || p.nombre || '';
             if (!identifier) return;
 
@@ -143,6 +145,8 @@ export function ComprehensiveAnalysis() {
           }));
 
           if (!cancelled && Object.keys(batchData).length > 0) {
+            Object.assign(marketDataCache, batchData);
+            Object.keys(batchData).forEach(id => fetchedIds.current.add(id));
             setMarketDataMap(prev => ({ ...prev, ...batchData }));
           }
         }

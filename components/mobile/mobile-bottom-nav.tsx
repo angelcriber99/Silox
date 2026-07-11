@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Plus, UserCircle, ArrowLeftRight, LineChart } from "lucide-react"
 import { hapticFeedback } from "@/lib/utils/haptics"
@@ -20,6 +20,7 @@ const tabs = [
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const [optimisticPath, setOptimisticPath] = useState(pathname)
 
   useEffect(() => {
@@ -27,17 +28,30 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   }, [pathname])
 
   useEffect(() => {
-    tabs.forEach((tab) => {
-      if (!tab.isFab) router.prefetch(tab.href)
-    })
+    const prewarm = () => {
+      tabs.forEach((tab) => {
+        if (!tab.isFab) router.prefetch(tab.href)
+      })
+      void import("@/components/analysis/comprehensive-analysis")
+    }
+
+    const idle = window.requestIdleCallback?.(prewarm, { timeout: 1200 })
+    const timer = idle ? null : window.setTimeout(prewarm, 400)
+
+    return () => {
+      if (idle) window.cancelIdleCallback(idle)
+      if (timer) window.clearTimeout(timer)
+    }
   }, [router])
 
   const navigate = (href: string) => {
     if (href === pathname) return
     setOptimisticPath(href)
-    hapticFeedback.light()
     router.prefetch(href)
-    router.push(href)
+    window.requestAnimationFrame(() => hapticFeedback.light())
+    startTransition(() => {
+      router.push(href)
+    })
   }
 
   return (
