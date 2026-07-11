@@ -194,16 +194,29 @@ export function ComprehensiveAnalysis() {
         sMap.set(fallbackSector, (sMap.get(fallbackSector) || 0) + val)
       }
 
-      // GEO LOGIC: (Yahoo finance quoteSummary free module doesn't easily return geographic weights for all UCITS. Fallback to DB geo)
-      // However, if we fetched a single stock, mData.country might be available!
-      let geo = 'Desconocida';
-      if (mData?.country) {
+      // GEO LOGIC:
+      if (mData && mData.geographicWeightings) {
+        let totalAssigned = 0;
+        for (const [cKey, weight] of Object.entries(mData.geographicWeightings)) {
+          const w = typeof weight === 'number' ? weight : 0;
+          if (w > 0) {
+            const actualVal = val * w;
+            gMap.set(cKey, (gMap.get(cKey) || 0) + actualVal);
+            totalAssigned += actualVal;
+          }
+        }
+        if (totalAssigned < val * 0.99) {
+           const remainder = val - totalAssigned;
+           gMap.set("Otros", (gMap.get("Otros") || 0) + remainder);
+        }
+      } else if (mData?.country) {
         // Map common country codes/names if necessary
-        geo = mData.country === 'United States' ? 'USA' : mData.country;
-      } else if (p.geografia) {
-        geo = p.geografia;
+        const geo = mData.country === 'United States' ? 'USA' : mData.country;
+        gMap.set(geo, (gMap.get(geo) || 0) + val)
+      } else {
+        const geo = p.geografia || 'Desconocida'
+        gMap.set(geo, (gMap.get(geo) || 0) + val)
       }
-      gMap.set(geo, (gMap.get(geo) || 0) + val)
 
       // ASSET TYPE LOGIC
       const type = mData?.assetClass ? translateAssetClass(mData.assetClass) : (p.tipo || 'Otro');

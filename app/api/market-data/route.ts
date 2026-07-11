@@ -86,6 +86,62 @@ export async function POST(request: NextRequest) {
       sectorWeightings[sectorKey] = 1.0; // 100% of this stock is in its own sector
     }
 
+    let geographicWeightings: Record<string, number> | null = null;
+
+    // --- FALLBACK LOGIC FOR INDEX FUNDS ---
+    // If we couldn't get sector or country data, check if it's a known index fund by name or ticker
+    const identLower = (identifier || tickerToFetch).toLowerCase();
+    
+    // MSCI World Fallback
+    if (identLower.includes('msci world') || identLower.includes('msci-world') || identLower.includes('msci') && identLower.includes('world')) {
+      if (!sectorWeightings || Object.keys(sectorWeightings).length === 0) {
+        sectorWeightings = {
+          technology: 0.24,
+          financial_services: 0.15,
+          healthcare: 0.12,
+          industrials: 0.11,
+          consumer_cyclical: 0.11,
+          communication_services: 0.07,
+          consumer_defensive: 0.06,
+          energy: 0.04,
+          basic_materials: 0.04,
+          utilities: 0.03,
+          realestate: 0.02
+        };
+      }
+      geographicWeightings = {
+        'USA': 0.70,
+        'Japan': 0.06,
+        'United Kingdom': 0.04,
+        'France': 0.03,
+        'Canada': 0.03,
+        'Switzerland': 0.02,
+        'Germany': 0.02,
+        'Otros': 0.10
+      };
+    } 
+    // S&P 500 Fallback
+    else if (identLower.includes('s&p 500') || identLower.includes('sp500') || identLower.includes('s&p500') || identLower.includes('s&p')) {
+      if (!sectorWeightings || Object.keys(sectorWeightings).length === 0) {
+        sectorWeightings = {
+          technology: 0.30,
+          financial_services: 0.13,
+          healthcare: 0.13,
+          consumer_cyclical: 0.10,
+          communication_services: 0.09,
+          industrials: 0.09,
+          consumer_defensive: 0.06,
+          energy: 0.04,
+          utilities: 0.02,
+          realestate: 0.02,
+          basic_materials: 0.02
+        };
+      }
+      geographicWeightings = {
+        'USA': 1.0
+      };
+    }
+
     let holdingsList: any[] = [];
     if (topHoldings?.holdings && Array.isArray(topHoldings.holdings)) {
       holdingsList = topHoldings.holdings;
@@ -99,6 +155,7 @@ export async function POST(request: NextRequest) {
       assetClass: fundProfile?.legalType || null,
       country: assetProfile?.country || null,
       sector: assetProfile?.sector || null,
+      geographicWeightings
     };
 
     // Store in cache

@@ -31,6 +31,7 @@ export interface FundHoldingsResponse {
   sectorWeightings: Record<string, number> | null;
   topHoldings: Holding[] | null;
   assetClass: string | null;
+  geographicWeightings?: Record<string, number> | null;
   country?: string | null;
   sector?: string | null;
 }
