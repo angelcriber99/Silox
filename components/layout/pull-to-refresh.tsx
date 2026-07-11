@@ -102,10 +102,11 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   }, [isRefreshing, pullProgress])
 
   return (
-    <div ref={containerRef} className="relative min-h-full w-full">
-      {/* Indicator */}
+    <div ref={containerRef} className="relative min-h-full w-full bg-background">
+      {/* Indicator (Behind content) */}
       <div 
-        className="absolute top-0 left-0 right-0 flex justify-center items-center h-[50px] -mt-[50px]"
+        className="absolute top-0 left-0 right-0 flex justify-center items-center z-0"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 30px)" }}
       >
         <motion.div
           animate={{
@@ -130,7 +131,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       <motion.div 
         animate={controls}
         style={{ y }}
-        className="min-h-full w-full bg-background"
+        className="min-h-full w-full bg-background relative z-10"
       >
         {children}
       </motion.div>

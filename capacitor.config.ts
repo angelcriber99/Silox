@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
     cleartext: serverUrl.startsWith('http://'),
   },
   ios: {
-    contentInset: 'automatic',
+    contentInset: 'always',
     scheme: 'Silox',
   },
 };
