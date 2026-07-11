@@ -29,6 +29,7 @@ const TIPOS = [
   "Fondo Monetario",
   "Acción",
   "Crypto",
+  "Metal",
 ] as const
 
 const ESTRATEGIAS = ["Core", "Satellite"] as const

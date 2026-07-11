@@ -40,6 +40,7 @@ const TIPO_BADGE_STYLES: Record<string, string> = {
   "Fondo Monetario": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
   Acción: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   Crypto: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  Metal: "bg-stone-500/10 text-stone-300 border-stone-500/20",
 }
 
 const FILTER_OPTIONS = [
@@ -49,6 +50,7 @@ const FILTER_OPTIONS = [
   "Fondo Monetario",
   "Acción",
   "Crypto",
+  "Metal",
 ] as const
 
 const translateType = (type: string, t: any) => {
@@ -58,6 +60,7 @@ const translateType = (type: string, t: any) => {
     "Fondo Monetario": "type_money_market",
     "Acción": "type_stock",
     "Crypto": "type_crypto",
+    "Metal": "type_metal",
   }
   return map[type] ? t(map[type]) : type
 }
@@ -738,4 +741,3 @@ export function PositionsTable({
     </Card>
   )
 }
-

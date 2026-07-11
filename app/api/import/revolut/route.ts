@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export const runtime = 'nodejs'
 
 type ImportOperation = 'Compra' | 'Venta'
-type AssetKind = 'Acción' | 'Crypto'
+type AssetKind = 'Acción' | 'Crypto' | 'Metal'
 
 interface ParsedImportTransaction {
   user_id: string
@@ -27,6 +27,7 @@ const CRYPTO_SYMBOLS = new Set([
   'UNI', 'USDC', 'USDT', 'VET', 'WAXL', 'XLM', 'XMR', 'XRP', 'XTZ', 'ZKJ',
 ])
 const FIAT_SYMBOLS = new Set(['EUR', 'USD', 'GBP', 'CHF', 'JPY'])
+const METAL_SYMBOLS = new Set(['XAG', 'XAU', 'XPD', 'XPT'])
 
 const CRYPTO_NAMES: Record<string, string> = {
   BTC: 'Bitcoin',
@@ -44,6 +45,20 @@ const CRYPTO_NAMES: Record<string, string> = {
   BCH: 'Bitcoin Cash',
   USDC: 'USD Coin',
   USDT: 'Tether',
+}
+
+const METAL_NAMES: Record<string, string> = {
+  XAG: 'Silver',
+  XAU: 'Gold',
+  XPD: 'Palladium',
+  XPT: 'Platinum',
+}
+
+const METAL_YAHOO_TICKERS: Record<string, string> = {
+  XAG: 'XAGUSD=X',
+  XAU: 'XAUUSD=X',
+  XPD: 'XPDUSD=X',
+  XPT: 'XPTUSD=X',
 }
 
 const SPANISH_MONTHS: Record<string, string> = {
@@ -114,6 +129,12 @@ function parseDate(value: unknown): string | null {
 
   const raw = normalizeText(value)
   if (!raw) return null
+
+  const isoLike = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (isoLike) {
+    const [, y, m, d] = isoLike
+    return `${y}-${m}-${d}`
+  }
 
   const date = new Date(raw)
   if (!Number.isNaN(date.getTime())) return date.toISOString().split('T')[0]
@@ -208,6 +229,22 @@ function normalizeCryptoTicker(symbol: string): string {
   return `${clean}-USD`
 }
 
+function normalizeMetalTicker(symbol: string): string {
+  const clean = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return METAL_YAHOO_TICKERS[clean] ?? clean
+}
+
+function getAssetSector(kind: AssetKind): string {
+  if (kind === 'Crypto') return 'Crypto'
+  if (kind === 'Metal') return 'Metales'
+  return 'Desconocido'
+}
+
+function getAssetGeography(kind: AssetKind): string {
+  if (kind === 'Crypto' || kind === 'Metal') return 'Global'
+  return 'Desconocida'
+}
+
 function inferAsset(rawTicker: string, rowText: string): {
   ticker: string
   rawTicker: string
@@ -221,6 +258,17 @@ function inferAsset(rawTicker: string, rowText: string): {
     CRYPTO_SYMBOLS.has(symbol) ||
     upper.endsWith('-USD') ||
     /crypto|criptomoneda|bitcoin|ethereum|solana|cardano|dogecoin/i.test(rowText)
+
+  if (METAL_SYMBOLS.has(symbol) || upper.endsWith('USD=X') || /metal|metales|gold|silver|palladium|platinum|oro|plata/i.test(rowText)) {
+    const base = upper.endsWith('USD=X') ? upper.replace('USD=X', '') : symbol
+    return {
+      ticker: normalizeMetalTicker(base),
+      rawTicker: base,
+      nombre: METAL_NAMES[base] ?? base,
+      tipoActivo: 'Metal',
+      moneda: 'USD',
+    }
+  }
 
   if (isCrypto) {
     const base = upper.endsWith('-USD') ? upper.replace('-USD', '') : symbol
@@ -307,6 +355,8 @@ function parseRows(rows: string[][], userId: string): ParsedImportTransaction[] 
   if (rows.length < 2) return []
 
   const headers = rows[0].map(normalizeHeader)
+  if (isMetalAccountStatement(headers)) return parseMetalRows(rows, userId)
+
   const hasHeaders = headers.some(header =>
     ['ticker', 'symbol', 'asset', 'instrument', 'date', 'fecha', 'type', 'quantity', 'price'].includes(header)
   )
@@ -393,6 +443,72 @@ function parseRows(rows: string[][], userId: string): ParsedImportTransaction[] 
       precio_unitario: precioUnitario,
       fecha: date,
       comision: Number.isFinite(parseNumber(row[feeIdx])) ? Math.abs(parseNumber(row[feeIdx])) : 0,
+    })
+  }
+
+  return parsed
+}
+
+function isMetalAccountStatement(headers: string[]): boolean {
+  return (
+    headers.includes('tipo') &&
+    headers.includes('producto') &&
+    headers.includes('fechadeinicio') &&
+    headers.includes('descripcion') &&
+    headers.includes('importe') &&
+    headers.includes('comision') &&
+    headers.includes('divisa') &&
+    headers.includes('saldo')
+  )
+}
+
+function parseMetalRows(rows: string[][], userId: string): ParsedImportTransaction[] {
+  const headers = rows[0].map(normalizeHeader)
+  const dateIdx = findIndex(headers, ['fechadefinalizacion', 'fechadeinicio', 'date', 'fecha'])
+  const amountIdx = findIndex(headers, ['importe', 'amount'])
+  const feeIdx = findIndex(headers, ['comision', 'commission', 'fee', 'fees'])
+  const currencyIdx = findIndex(headers, ['divisa', 'currency', 'moneda'])
+  const stateIdx = findIndex(headers, ['state', 'estado'])
+
+  if (dateIdx < 0 || amountIdx < 0 || currencyIdx < 0) return []
+
+  const parsed: ParsedImportTransaction[] = []
+
+  for (const row of rows.slice(1)) {
+    const state = normalizeText(row[stateIdx]).toUpperCase()
+    if (state && state !== 'COMPLETADO' && state !== 'COMPLETED') continue
+
+    const metalSymbol = normalizeText(row[currencyIdx]).toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (!METAL_SYMBOLS.has(metalSymbol)) continue
+
+    const amount = parseNumber(row[amountIdx])
+    const feeInUnits = Math.abs(parseNumber(row[feeIdx]))
+    const date = parseDate(row[dateIdx])
+    const operation: ImportOperation | null = amount > 0 ? 'Compra' : amount < 0 ? 'Venta' : null
+
+    if (!date || !operation || !Number.isFinite(amount) || amount === 0) continue
+
+    const grossQuantity = Math.abs(amount)
+    const quantity = operation === 'Compra' && Number.isFinite(feeInUnits)
+      ? grossQuantity - feeInUnits
+      : grossQuantity
+
+    if (!Number.isFinite(quantity) || quantity <= 0) continue
+
+    const name = METAL_NAMES[metalSymbol] ?? metalSymbol
+
+    parsed.push({
+      user_id: userId,
+      ticker: normalizeMetalTicker(metalSymbol),
+      rawTicker: metalSymbol,
+      nombre: name,
+      tipoActivo: 'Metal',
+      moneda: 'USD',
+      tipo_operacion: operation,
+      cantidad: quantity,
+      precio_unitario: 0,
+      fecha: date,
+      comision: 0,
     })
   }
 
@@ -608,26 +724,26 @@ export async function POST(request: Request) {
       let activo_id = null
       let existingActivo = activos?.find(a =>
         a.ticker === tx.ticker ||
-        (tx.tipoActivo === 'Crypto' && a.ticker === tx.rawTicker)
+        ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && a.ticker === tx.rawTicker)
       )
 
       if (existingActivo) {
         activo_id = existingActivo.id
-        if (tx.tipoActivo === 'Crypto' && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== 'Crypto')) {
+        if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== tx.tipoActivo)) {
           await supabase
             .from('activos')
             .update({
               ticker: tx.ticker,
               nombre: tx.nombre,
-              tipo: 'Crypto',
+              tipo: tx.tipoActivo,
               moneda: tx.moneda,
-              sector: 'Crypto',
-              geografia: 'Global',
+              sector: getAssetSector(tx.tipoActivo),
+              geografia: getAssetGeography(tx.tipoActivo),
             })
             .eq('id', existingActivo.id)
 
           existingActivo.ticker = tx.ticker
-          existingActivo.tipo = 'Crypto'
+          existingActivo.tipo = tx.tipoActivo
         }
       } else {
         const { data: newActivo, error: createError } = await supabase
@@ -639,8 +755,8 @@ export async function POST(request: Request) {
             tipo: tx.tipoActivo,
             estrategia: 'Satellite',
             moneda: tx.moneda,
-            sector: tx.tipoActivo === 'Crypto' ? 'Crypto' : 'Desconocido',
-            geografia: tx.tipoActivo === 'Crypto' ? 'Global' : 'Desconocida',
+            sector: getAssetSector(tx.tipoActivo),
+            geografia: getAssetGeography(tx.tipoActivo),
           })
           .select('id, ticker, tipo')
           .single()

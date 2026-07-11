@@ -16,7 +16,7 @@ interface MobileBottomSheetProps {
   preselectedAsset?: EnrichedPosition | null
 }
 
-const TIPOS = ["ETF", "Fondo Indexado", "Fondo Monetario", "Acción", "Crypto"] as const
+const TIPOS = ["ETF", "Fondo Indexado", "Fondo Monetario", "Acción", "Crypto", "Metal"] as const
 const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 

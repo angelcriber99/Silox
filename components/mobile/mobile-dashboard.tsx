@@ -27,7 +27,7 @@ interface MobileDashboardProps {
   marketState?: string
 }
 
-const TYPE_ORDER = ["Fondo Indexado", "ETF", "Fondo Monetario", "Acción", "Crypto", "Liquidez"]
+const TYPE_ORDER = ["Fondo Indexado", "ETF", "Fondo Monetario", "Acción", "Crypto", "Metal", "Liquidez"]
 const MAX_STAGGERED_ROWS = 12
 const PriceAlerts = lazy(() =>
   import("@/components/dashboard/price-alerts").then((mod) => ({
@@ -579,6 +579,7 @@ export function MobileDashboard({
                     : type === "Fondo Monetario" ? t("type_money_market")
                     : type === "Acción" ? t("type_stock")
                     : type === "Crypto" ? t("type_crypto")
+                    : type === "Metal" ? t("type_metal")
                     : type === "ETF" ? t("type_etf")
                     : type}
                 </span>
@@ -630,6 +631,7 @@ export function MobileDashboard({
                     : type === "Fondo Monetario" ? t("type_money_market")
                     : type === "Acción" ? t("type_stock")
                     : type === "Crypto" ? t("type_crypto")
+                    : type === "Metal" ? t("type_metal")
                     : type === "ETF" ? t("type_etf")
                     : type
                   }

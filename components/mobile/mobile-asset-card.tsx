@@ -22,6 +22,7 @@ const TYPE_CONFIG: Record<string, { color: string; label: string }> = {
   "Fondo Monetario":  { color: "oklch(0.72 0.18 192)", label: "Monetario" },
   "Acción":           { color: "oklch(0.72 0.15 55)",  label: "Acción"    },
   "Crypto":           { color: "oklch(0.70 0.18 30)",  label: "Crypto"    },
+  "Metal":            { color: "oklch(0.70 0.06 75)",  label: "Metal"     },
   "Liquidez":         { color: "oklch(0.60 0.016 230)",label: "Efectivo"  },
 }
 

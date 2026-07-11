@@ -91,7 +91,7 @@ export default function ActivoPage() {
     return <LiquidityDetailClient position={position} transactions={transactions} />
   } else if (position.tipo === "Acción") {
     return <StockDetailClient position={position} transactions={transactions} assetDetails={assetDetails} />
-  } else if (position.tipo === "Crypto") {
+  } else if (position.tipo === "Crypto" || position.tipo === "Metal") {
     return <CryptoDetailClient position={position} transactions={transactions} />
   } else if (position.tipo === "ETF") {
     return <EtfDetailClient position={position} transactions={transactions} assetDetails={assetDetails} />

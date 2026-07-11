@@ -24,6 +24,7 @@ interface CryptoDetailClientProps {
 
 const TIPO_BADGE_STYLES: Record<string, string> = {
   Crypto: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  Metal: "bg-stone-500/10 text-stone-300 border-stone-500/20",
 }
 
 export function CryptoDetailClient({ position, transactions }: CryptoDetailClientProps) {

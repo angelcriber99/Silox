@@ -15,6 +15,7 @@ const TYPE_COLORS: Record<string, string> = {
   "Fondo Monetario": "#06b6d4",
   Acción: "#f59e0b",
   Crypto: "#f97316",
+  Metal: "#a8a29e",
   Liquidez: "#a1a1aa",
 }
 
