@@ -154,23 +154,25 @@ export function enrichPositions(
     const coste_total_eur = p.coste_total / fxRate
     
     const valor_actual_eur =
+      p.unidades === 0 ? 0 :
       precio_actual !== null && p.unidades > 0
         ? p.unidades * precio_actual
         : null
 
     const valor_actual_nativo = 
+      p.unidades === 0 ? 0 :
       precio_actual_nativo !== null && p.unidades > 0
         ? p.unidades * precio_actual_nativo
         : null
 
     const pnl =
-      valor_actual_eur !== null && coste_total_eur > 0
+      valor_actual_eur !== null
         ? valor_actual_eur - coste_total_eur
         : null
         
     const pnl_percent =
-      pnl !== null && coste_total_eur > 0
-        ? (pnl / coste_total_eur) * 100
+      pnl !== null && coste_total_eur !== 0
+        ? (pnl / Math.abs(coste_total_eur)) * 100
         : null
         
     let change_amount_24h = null
