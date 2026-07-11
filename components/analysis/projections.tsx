@@ -16,10 +16,10 @@ export function Projections() {
 
   // Initial state derived from portfolio, but allow user to tweak it
   const [initialCapital, setInitialCapital] = useState<number | null>(null)
-  const [monthlySaving, setMonthlySaving] = useState(500)
-  const [annualReturn, setAnnualReturn] = useState(8)
-  const [futureSaving, setFutureSaving] = useState<number | ''>('')
-  const [futureSavingYear, setFutureSavingYear] = useState<number | ''>('')
+  const [monthlySaving, setMonthlySaving] = useState(800)
+  const [annualReturn, setAnnualReturn] = useState(25)
+  const [futureSaving, setFutureSaving] = useState<number | ''>(300)
+  const [futureSavingYear, setFutureSavingYear] = useState<number | ''>(3)
 
   useEffect(() => {
     try {
