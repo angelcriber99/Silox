@@ -195,23 +195,33 @@ async function _fetchMarketPrices(
       const usMarketState = getUSMarketState() // Force US Market hours for global UI
       const assetState = quote.marketState || usMarketState // Use native state for the asset logic
 
+      let latestTime = quote.regularMarketTime
+
       if (assetState === 'PRE' || assetState === 'PREPRE') {
         if (quote.preMarketPrice && quote.regularMarketPrice) {
           rawPrice = quote.preMarketPrice
           changePercent24h = ((rawPrice - quote.regularMarketPrice) / quote.regularMarketPrice) * 100
+          latestTime = quote.preMarketTime || latestTime
         } else {
           changePercent24h = 0
         }
       } else if (assetState === 'POST' || assetState === 'POSTPOST' || assetState === 'CLOSED') {
-        // En POST o CLOSED (fin de semana), si hay precio post-mercado disponible, lo usamos para 
-        // tener el último valor real. El % de cambio será desde el cierre del día anterior (regular) hasta el final del post-market.
-        // Yahoo a veces guarda el postMarketPrice en fin de semana.
         if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
           rawPrice = quote.postMarketPrice
           changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
-        } else if (assetState === 'CLOSED') {
-          // Si no hay post-market, simplemente usamos el regularMarket (que ya está seteado por defecto)
-          // Quitamos la lógica que lo forzaba a 0, así en fin de semana se ve la ganancia/pérdida del viernes.
+          latestTime = quote.postMarketTime || latestTime
+        }
+      }
+
+      // Reseteo a 0 si ha cambiado de día.
+      // Si la última cotización es de ayer (o del viernes), hoy "no ha habido cambio" todavía.
+      if (latestTime) {
+        const fmt = new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', year: 'numeric', month: 'numeric', day: 'numeric' })
+        const latestTimeFormatted = fmt.format(new Date(latestTime))
+        const todayFormatted = fmt.format(new Date())
+        
+        if (latestTimeFormatted !== todayFormatted) {
+          changePercent24h = 0
         }
       }
 
