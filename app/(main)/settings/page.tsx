@@ -166,6 +166,7 @@ export default function SettingsPage() {
     </div>
   )
 
+  return (
     <div className="flex flex-col h-full w-full">
       {/* ── Mobile View (iOS Grouped List) ──────────────────────────────── */}
       <div className="md:hidden flex flex-col flex-1 pb-24 bg-background">
