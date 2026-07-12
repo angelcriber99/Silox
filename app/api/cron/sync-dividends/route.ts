@@ -93,7 +93,7 @@ export async function GET(request: Request) {
       try {
         historicalDivs = await yahooFinance.historical(tickerToCheck, {
           period1: startDate,
-          events: 'div'
+          events: 'dividends'
         })
       } catch (err) {
         console.error(`Error fetching historical dividends for ${tickerToCheck}:`, err)
