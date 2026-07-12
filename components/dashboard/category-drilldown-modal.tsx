@@ -73,7 +73,7 @@ export function CategoryDrilldownModal({
                   </span>
                   {!hideBalances && (
                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isPnlPositive ? 'bg-emerald-400/10 text-emerald-400' : 'bg-rose-400/10 text-rose-400'}`}>
-                      {isPnlPositive ? '+' : ''}{formatPercent(totalPnlPercent)}
+                      {formatPercent(totalPnlPercent)}
                     </span>
                   )}
                 </div>
