@@ -352,15 +352,29 @@ export default function MovimientosPage() {
                  </div>
                </div>
             ) : (
-              filteredTransactions.map((tx) => {
+              filteredTransactions.map((tx, index) => {
                  const isCompra = tx.tipo_operacion === "Compra"
-                 const total = isCompra 
-                   ? tx.cantidad * tx.precio_unitario + tx.comision 
-                   : tx.cantidad * tx.precio_unitario - tx.comision
+                 const isDividendo = tx.tipo_operacion === "Dividendo"
+                 let total = 0
+                 if (isCompra) {
+                   total = tx.cantidad * tx.precio_unitario + tx.comision
+                 } else if (isDividendo) {
+                   total = tx.precio_unitario - tx.comision - (tx.retencion_origen || 0) - (tx.retencion_destino || 0)
+                 } else {
+                   total = tx.cantidad * tx.precio_unitario - tx.comision
+                 }
                  const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
                    month: 'short',
                    day: 'numeric'
                  })
+                 const monthLabel = new Date(tx.fecha).toLocaleDateString('es-ES', {
+                   month: 'long',
+                   year: 'numeric'
+                 })
+                 const previousMonthLabel = index > 0
+                   ? new Date(filteredTransactions[index - 1].fecha).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+                   : null
+                 const showMonthHeader = monthLabel !== previousMonthLabel
 
                  const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
                  const ticker = tx.activo 
@@ -368,17 +382,27 @@ export default function MovimientosPage() {
                    : "—"
 
                  return (
-                   <div key={tx.id} className="mobile-panel flex items-center justify-between p-3.5 transition-colors active:bg-muted/40">
+                   <div key={tx.id} className="space-y-2">
+                   {showMonthHeader && (
+                     <div className="flex items-center gap-2 px-1 pt-2">
+                       <span className="mobile-caption">{monthLabel}</span>
+                       <span className="h-px flex-1 bg-border/50" />
+                     </div>
+                   )}
+                   <div className="mobile-panel relative flex items-center justify-between p-3.5 pl-4 transition-colors active:bg-muted/40">
+                     <span
+                       className={`absolute left-0 top-3 bottom-3 w-1 rounded-r ${isCompra ? "bg-emerald-500" : isDividendo ? "bg-violet-500" : "bg-rose-500"}`}
+                     />
                      <div className="flex items-center gap-3 overflow-hidden">
                        <div className={`flex-shrink-0 h-11 w-11 rounded-lg flex items-center justify-center ${
-                          isCompra ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                          isCompra ? "bg-emerald-500/10 text-emerald-400" : isDividendo ? "bg-violet-500/10 text-violet-400" : "bg-rose-500/10 text-rose-400"
                         }`}>
                           {isCompra ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="font-black text-foreground text-[15px] truncate">{ticker}</span>
                           <span className="text-[11px] font-bold text-muted-foreground/80 truncate">
-                            {isCompra ? "Compra" : "Venta"} • {date}
+                            {tx.tipo_operacion} • {date}
                             {tx.estado === "Pendiente" && (
                               <span className="ml-1.5 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
                                 Pendiente
@@ -390,7 +414,7 @@ export default function MovimientosPage() {
 
                      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                         <div className="flex flex-col items-end min-w-0">
-                           <span className={`mobile-value text-[14px] font-black leading-tight truncate max-w-[112px] ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
+                           <span className={`mobile-value text-[14px] font-black leading-tight truncate max-w-[112px] ${isCompra ? "text-foreground" : isDividendo ? "text-violet-400" : "text-emerald-400"}`}>
                              {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
                            </span>
                            <span className="mobile-value text-[10px] font-bold text-muted-foreground/80 mt-0.5 truncate max-w-[112px]">
@@ -412,6 +436,7 @@ export default function MovimientosPage() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                      </div>
+                   </div>
                    </div>
                  )
               })
