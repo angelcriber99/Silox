@@ -161,16 +161,16 @@ export default function MovimientosPage() {
           </div>
 
           {/* Filter chips */}
-          <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar w-full">
+          <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar w-full snap-x">
             {(["Todos", "Compra", "Venta", "Dividendo"] as const).map(opt => (
               <button
                 key={opt}
                 onClick={() => setTypeFilter(opt)}
-                className="flex-shrink-0 px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all"
+                className="flex-shrink-0 snap-start px-4 py-1.5 rounded-full text-sm font-semibold transition-all"
                 style={{
-                  background: typeFilter === opt ? "oklch(0.68 0.17 192 / 0.12)" : "var(--muted)",
-                  border: typeFilter === opt ? "1px solid oklch(0.68 0.17 192 / 0.30)" : "1px solid transparent",
-                  color: typeFilter === opt ? "var(--primary)" : "var(--muted-foreground)",
+                  background: typeFilter === opt ? "var(--primary)" : "var(--muted)",
+                  border: "1px solid transparent",
+                  color: typeFilter === opt ? "var(--primary-foreground)" : "var(--muted-foreground)",
                 }}
               >
                 {opt === "Todos" ? "Todas" : opt === "Compra" ? "Compras" : opt === "Venta" ? "Ventas" : "Dividendos"}
@@ -178,7 +178,7 @@ export default function MovimientosPage() {
             ))}
 
             <div
-              className="flex items-center gap-2 flex-shrink-0 rounded-xl px-3 py-1.5"
+              className="flex items-center gap-2 flex-shrink-0 snap-start rounded-full px-3 py-1.5"
               style={{ background: "var(--muted)", border: "1px solid transparent" }}
             >
               <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Desde</span>
@@ -192,7 +192,7 @@ export default function MovimientosPage() {
             </div>
 
             <div
-              className="flex items-center gap-2 flex-shrink-0 rounded-xl px-3 py-1.5"
+              className="flex items-center gap-2 flex-shrink-0 snap-start rounded-full px-3 py-1.5"
               style={{ background: "var(--muted)", border: "1px solid transparent" }}
             >
               <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hasta</span>

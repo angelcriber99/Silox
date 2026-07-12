@@ -26,15 +26,15 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
       className="md:hidden fixed z-50 bottom-0 left-0 right-0"
     >
       <div 
-        className="absolute inset-0 bg-background border-t border-border/20"
+        className="absolute inset-0 bg-background/80 backdrop-blur-xl border-t border-border/40"
       />
 
       <div 
         className="relative flex items-center justify-around w-full"
         style={{
-          paddingBottom: "16px",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 8px)",
           paddingTop: "12px",
-          height: "64px"
+          minHeight: "calc(64px + env(safe-area-inset-bottom, 20px))"
         }}
       >
         {tabs.map((tab) => {
@@ -50,10 +50,11 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                     hapticFeedback.heavy()
                     onAddPress()
                   }}
-                  className="flex items-center justify-center outline-none z-50"
+                  className="flex items-center justify-center outline-none z-50 h-14 w-14 rounded-full shadow-lg shadow-primary/25"
+                  style={{ background: "var(--primary)" }}
                   aria-label="Añadir transacción"
                 >
-                  <Plus className="h-[28px] w-[28px] stroke-[2.5] text-foreground" />
+                  <Plus className="h-7 w-7 stroke-[2.5]" style={{ color: "var(--primary-foreground)" }} />
                 </motion.button>
               </div>
             )
@@ -64,18 +65,26 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
               key={tab.name}
               href={tab.href}
               onClick={() => hapticFeedback.light()}
-              className="relative flex flex-col items-center justify-center min-w-[64px]"
+              className="relative flex flex-col items-center justify-center min-w-[56px] h-12"
               aria-label={tab.name}
             >
+              {isActive && (
+                <motion.div
+                  layoutId="activeBottomTab"
+                  className="absolute inset-0 rounded-2xl bg-muted/60"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                />
+              )}
               <motion.div
+                className="relative z-10 flex items-center justify-center"
                 animate={{
-                  scale: isActive ? 1.15 : 1,
-                  y: isActive ? -2 : 0,
+                  scale: isActive ? 1.05 : 1,
+                  y: isActive ? -1 : 0,
                 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >
                 <tab.icon
-                  className="h-[26px] w-[26px] transition-colors duration-200"
+                  className="h-6 w-6 transition-colors duration-200"
                   strokeWidth={isActive ? 2.5 : 2}
                   style={{
                     color: isActive ? "var(--foreground)" : "var(--muted-foreground)",
