@@ -55,19 +55,15 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   }
 
   return (
-    <div
-      className="md:hidden fixed z-50 bottom-0 left-0 right-0"
-    >
-      <div
-        className="absolute inset-0 bg-background border-t border-border/20"
-      />
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      <div className="absolute inset-0 border-t border-[var(--mobile-line)] bg-[var(--mobile-canvas)]/96 backdrop-blur-xl" />
 
       <div
-        className="relative flex items-center justify-around w-full"
+        className="relative flex w-full items-end justify-around px-2"
         style={{
-          paddingBottom: "16px",
-          paddingTop: "12px",
-          height: "64px"
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
+          paddingTop: "9px",
+          minHeight: "74px"
         }}
       >
         {tabs.map((tab) => {
@@ -75,16 +71,16 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
 
           if (tab.isFab) {
             return (
-              <div key="fab-container" className="relative flex justify-center items-center px-2">
+              <div key="fab-container" className="relative flex items-center justify-center px-2">
                 <button
                   onClick={() => {
                     hapticFeedback.heavy()
                     onAddPress()
                   }}
-                  className="flex items-center justify-center outline-none z-50 transition-transform active:scale-90"
+                  className="z-50 flex h-14 w-14 items-center justify-center bg-[var(--mobile-ink)] text-[var(--mobile-canvas)] shadow-[0_12px_26px_rgba(20,20,20,0.24)] outline-none transition-transform active:scale-90 dark:shadow-[0_12px_26px_rgba(0,0,0,0.5)]"
                   aria-label="Añadir transacción"
                 >
-                  <Plus className="h-[28px] w-[28px] stroke-[2.5] text-foreground" />
+                  <Plus className="h-7 w-7 stroke-[2.75]" />
                 </button>
               </div>
             )
@@ -98,24 +94,30 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") navigate(tab.href)
               }}
-              className="relative flex flex-col items-center justify-center min-w-[64px]"
+              className="relative flex min-w-[58px] flex-col items-center justify-center gap-1"
               aria-label={tab.name}
               aria-current={isActive ? "page" : undefined}
             >
               <div
                 className="transition-transform duration-100 ease-out"
                 style={{
-                  transform: isActive ? "translateY(-2px) scale(1.15)" : "translateY(0) scale(1)",
+                  transform: isActive ? "translateY(-2px)" : "translateY(0)",
                 }}
               >
                 <tab.icon
-                  className="h-[26px] w-[26px] transition-colors duration-200"
+                  className="h-[23px] w-[23px] transition-colors duration-200"
                   strokeWidth={isActive ? 2.5 : 2}
                   style={{
-                    color: isActive ? "var(--foreground)" : "var(--muted-foreground)",
+                    color: isActive ? "var(--mobile-ink)" : "var(--mobile-muted)",
                   }}
                 />
               </div>
+              <span
+                className="max-w-[56px] truncate text-[9px] font-black uppercase"
+                style={{ color: isActive ? "var(--mobile-ink)" : "var(--mobile-muted)" }}
+              >
+                {tab.name}
+              </span>
             </button>
           )
         })}
