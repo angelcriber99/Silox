@@ -15,7 +15,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     } else {
       root.classList.remove('amoled')
     }
-  }, [accentColor, amoled])
+  }, [amoled])
 
   return (
     <>
