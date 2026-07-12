@@ -166,11 +166,77 @@ export default function SettingsPage() {
     </div>
   )
 
-  return (
-    <div
-      className="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-6 md:gap-8 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0 animate-fade-in"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}
-    >
+    <div className="flex flex-col h-full w-full">
+      {/* ── Mobile View (iOS Grouped List) ──────────────────────────────── */}
+      <div className="md:hidden flex flex-col flex-1 pb-24 bg-background">
+        <div className="px-5 pb-2 pt-6 sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-border/40">
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+            {t('title')}
+          </h1>
+        </div>
+        
+        <div className="flex flex-col gap-6 px-4 pt-6">
+          {/* Apariencia */}
+          <section>
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Apariencia</h2>
+            <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
+              <div className="p-4 flex items-center justify-between bg-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Palette className="w-5 h-5" /></div>
+                  <span className="font-semibold text-[15px]">Tema</span>
+                </div>
+                <div className="flex bg-muted/50 p-1 rounded-xl">
+                  <button onClick={() => setTheme('light')} className={`px-3 py-1 text-sm font-semibold rounded-lg ${theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>Claro</button>
+                  <button onClick={() => setTheme('dark')} className={`px-3 py-1 text-sm font-semibold rounded-lg ${theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>Oscuro</button>
+                </div>
+              </div>
+              <div className="p-4 flex items-center justify-between bg-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><EyeOff className="w-5 h-5" /></div>
+                  <span className="font-semibold text-[15px]">Ocultar Saldos</span>
+                </div>
+                <CustomSwitch checked={hideBalances} onChange={() => setHideBalances(!hideBalances)} />
+              </div>
+            </div>
+          </section>
+
+          {/* Seguridad */}
+          <section>
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Seguridad</h2>
+            <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
+              <div className="p-4 flex items-center justify-between bg-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-rose-500/10 text-rose-500 rounded-lg"><Shield className="w-5 h-5" /></div>
+                  <span className="font-semibold text-[15px]">Autenticación 2FA</span>
+                </div>
+                <CustomSwitch checked={twoFactor} onChange={() => setTwoFactor(!twoFactor)} />
+              </div>
+            </div>
+          </section>
+
+          {/* Peligro */}
+          <section>
+            <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl overflow-hidden">
+              <button onClick={() => setDeleteDialogOpen(true)} className="w-full p-4 flex items-center justify-center gap-2 text-rose-500 font-bold active:bg-rose-500/20 transition-colors">
+                <Trash2 className="w-5 h-5" /> Borrar Cuenta
+              </button>
+            </div>
+          </section>
+
+          {/* Logout */}
+          <section className="mt-4">
+            <button onClick={handleLogout} className="w-full p-4 rounded-2xl bg-muted border border-border/50 font-bold text-foreground active:bg-muted/80 transition-colors">
+              Cerrar Sesión
+            </button>
+          </section>
+        </div>
+      </div>
+
+      {/* ── Desktop View ────────────────────────────────────────────── */}
+      <div
+        className="hidden md:flex max-w-6xl w-full mx-auto flex-col md:flex-row gap-6 md:gap-8 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0 animate-fade-in"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}
+      >
       
       {/* ── Sidebar ───────────────────────────────────────── */}
       <aside className="w-full md:w-[240px] shrink-0 flex flex-col">
@@ -585,6 +651,7 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 }

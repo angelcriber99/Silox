@@ -102,11 +102,11 @@
 
 .dark {
   /* Space Black — deeper, richer dark */
-  --background: oklch(0.075 0.014 240);
+  --background: oklch(0 0 0);
   --foreground: oklch(0.97 0 0);
-  --card: oklch(0.105 0.015 238);
+  --card: oklch(0.08 0.01 240);
   --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.105 0.015 238);
+  --popover: oklch(0.08 0.01 240);
   --popover-foreground: oklch(0.97 0 0);
   /* Primary: Electric Teal — more luminous */
   --primary: oklch(0.72 0.18 192);

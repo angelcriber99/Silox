@@ -12,8 +12,7 @@ import { Input } from "@/components/ui/input"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import Link from "next/link"
 import { usePreferences } from "@/lib/stores/use-preferences"
-
-import {
+import { IOSHeader } from "@/components/ui/ios-header"
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -95,8 +94,102 @@ export default function MovimientosPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
+      {/* ── Mobile View ────────────────────────────────────────────── */}
+      <div className="md:hidden flex flex-col pb-24 bg-background">
+        <IOSHeader title="Movimientos">
+          <div className="flex flex-col gap-3">
+            {/* Native Style Search Bar */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar activo o ticker..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-muted/60 border-none h-10 rounded-xl"
+              />
+            </div>
+            
+            {/* Filter Pills */}
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar w-full snap-x">
+              {(["Todos", "Compra", "Venta", "Dividendo"] as const).map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => setTypeFilter(opt)}
+                  className={`flex-shrink-0 snap-start px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                    typeFilter === opt ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground"
+                  }`}
+                >
+                  {opt === "Todos" ? "Todas" : opt === "Compra" ? "Compras" : opt === "Venta" ? "Ventas" : "Dividendos"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </IOSHeader>
 
+        <div className="px-4 pt-4">
+          <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Historial</h2>
+          <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
+            {isLoading ? (
+               Array.from({ length: 4 }).map((_, i) => (
+                 <div key={i} className="p-4 flex flex-col gap-3">
+                   <div className="flex justify-between">
+                     <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                     <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+                   </div>
+                   <div className="h-10 w-full bg-muted animate-pulse rounded" />
+                 </div>
+               ))
+            ) : filteredTransactions.length === 0 ? (
+               <div className="text-center text-muted-foreground/60 py-12">
+                 <div className="flex flex-col items-center gap-2">
+                   <History className="h-8 w-8 text-muted-foreground/40 mb-1" />
+                   <p className="font-medium text-sm">No se encontraron movimientos</p>
+                 </div>
+               </div>
+            ) : (
+              filteredTransactions.map((tx) => {
+                 const isCompra = tx.tipo_operacion === "Compra"
+                 const total = isCompra
+                   ? tx.cantidad * tx.precio_unitario + tx.comision
+                   : tx.cantidad * tx.precio_unitario - tx.comision
+                 const date = new Date(tx.fecha).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
+                 const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
+                 const ticker = tx.activo ? (isFondo ? tx.activo.nombre?.split(' ')[0].toUpperCase() : tx.activo.ticker.split('.')[0]) : "—"
+
+                 return (
+                   <div key={tx.id} onClick={() => handleEdit(tx)} className="p-3.5 flex items-center justify-between active:bg-muted/30 transition-colors cursor-pointer">
+                     <div className="flex items-center gap-3 overflow-hidden">
+                       <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center ${
+                          isCompra ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+                        }`}>
+                          {isCompra ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-semibold text-[15px] truncate">{ticker}</span>
+                          <span className="text-[12px] font-medium text-muted-foreground truncate">
+                            {isCompra ? "Compra" : "Venta"} • {date}
+                          </span>
+                        </div>
+                     </div>
+                     <div className="flex flex-col items-end min-w-0">
+                        <span className={`text-[15px] font-bold tabular-nums truncate ${isCompra ? "text-foreground" : "text-emerald-500"}`}>
+                          {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
+                        </span>
+                        <span className="text-[11px] font-medium text-muted-foreground tabular-nums mt-0.5 truncate">
+                          {hideBalances ? "****" : `${formatUnits(tx.cantidad)} × ${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`}
+                        </span>
+                     </div>
+                   </div>
+                 )
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Desktop View ────────────────────────────────────────────── */}
+      <div className="hidden md:flex flex-1 max-w-7xl mx-auto w-full flex-col px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
+        
         {/* ── Page Header ────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
           <div className="flex flex-col gap-1.5">
@@ -330,92 +423,6 @@ export default function MovimientosPage() {
                 )}
               </tbody>
             </table>
-          </div>
-
-          {/* Mobile Cards View */}
-          <div className="md:hidden flex flex-col divide-y divide-zinc-800/40">
-            {isLoading ? (
-               Array.from({ length: 4 }).map((_, i) => (
-                 <div key={i} className="p-4 flex flex-col gap-3">
-                   <div className="flex justify-between">
-                     <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-                     <div className="h-4 w-16 bg-muted animate-pulse rounded" />
-                   </div>
-                   <div className="h-10 w-full bg-muted animate-pulse rounded" />
-                 </div>
-               ))
-            ) : filteredTransactions.length === 0 ? (
-               <div className="text-center text-muted-foreground/60 py-16">
-                 <div className="flex flex-col items-center gap-3">
-                   <History className="h-10 w-10 text-muted-foreground/60 mb-2 opacity-50" />
-                   <p className="font-medium text-muted-foreground">No se encontraron movimientos</p>
-                 </div>
-               </div>
-            ) : (
-              filteredTransactions.map((tx) => {
-                 const isCompra = tx.tipo_operacion === "Compra"
-                 const total = isCompra
-                   ? tx.cantidad * tx.precio_unitario + tx.comision
-                   : tx.cantidad * tx.precio_unitario - tx.comision
-                 const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
-                   month: 'short',
-                   day: 'numeric'
-                 })
-
-                 const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
-                 const ticker = tx.activo
-                   ? (isFondo ? tx.activo.nombre?.split(' ')[0].toUpperCase() : tx.activo.ticker.split('.')[0])
-                   : "—"
-
-                 return (
-                   <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
-                     <div className="flex items-center gap-3 overflow-hidden">
-                       <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
-                          isCompra ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
-                        }`}>
-                          {isCompra ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-bold text-foreground text-[15px] truncate">{ticker}</span>
-                          <span className="text-xs font-medium text-muted-foreground/80 truncate">
-                            {isCompra ? "Compra" : "Venta"} • {date}
-                            {tx.estado === "Pendiente" && (
-                              <span className="ml-1.5 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                Pendiente
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                     </div>
-
-                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                        <div className="flex flex-col items-end min-w-0">
-                           <span className={`text-[14px] font-bold tabular-nums leading-tight truncate max-w-[100px] xs:max-w-[130px] ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
-                             {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
-                           </span>
-                           <span className="text-[10px] font-medium text-muted-foreground/80 tabular-nums mt-0.5 truncate max-w-[100px] xs:max-w-[130px]">
-                             {hideBalances ? "****" : `${formatUnits(tx.cantidad)} × ${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`}
-                           </span>
-                        </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="p-1 hover:bg-muted rounded-md focus:outline-none flex items-center justify-center">
-                            <MoreHorizontal className="h-4 w-4 text-muted-foreground/60" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(tx)}
-                              className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
-                            >
-                              <Pencil className="h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                     </div>
-                   </div>
-                 )
-              })
-            )}
           </div>
         </div>
       </div>

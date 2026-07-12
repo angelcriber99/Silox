@@ -30,11 +30,9 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
       />
 
       <div 
-        className="relative flex items-center justify-around w-full"
+        className="relative flex items-center justify-around w-full h-[64px]"
         style={{
-          paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 8px)",
-          paddingTop: "12px",
-          minHeight: "calc(64px + env(safe-area-inset-bottom, 20px))"
+          paddingTop: "4px"
         }}
       >
         {tabs.map((tab) => {

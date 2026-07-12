@@ -15,7 +15,7 @@ export default function MainLayout({
       <ProSidebar />
       
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 pb-[calc(env(safe-area-inset-bottom,20px)+80px)] md:pb-0">
+      <main className="flex-1 flex flex-col min-w-0 pb-[80px] md:pb-0">
         {children}
       </main>
 
