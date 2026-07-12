@@ -116,7 +116,7 @@ export function PortfolioSummary({
               {/* Total PnL */}
               <div
                 className="flex items-center justify-center gap-1.5"
-                style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
+                style={{ color: isPositive ? "#30D158" : "#FF453A" }}
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="text-[16px] font-bold tabular-nums">
@@ -132,7 +132,7 @@ export function PortfolioSummary({
               {/* 24h */}
               <div
                 className="flex items-center gap-1 text-[13px] font-medium"
-                style={{ color: daily24Positive ? "oklch(0.65 0.19 155 / 0.9)" : "oklch(0.62 0.20 20 / 0.9)" }}
+                style={{ color: daily24Positive ? "rgba(48,209,88,0.9)" : "rgba(255,69,58,0.9)" }}
               >
                 <span className="text-muted-foreground font-normal">Hoy</span>
                 <span className="font-semibold tabular-nums">

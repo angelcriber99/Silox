@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import React, { useState, useMemo, Fragment } from "react"
 import { useTransactions, useDeleteTransaction } from "@/lib/hooks/use-transactions"
 import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
 import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Trash2, Search, Filter, Scale, Star } from "lucide-react"
@@ -292,9 +292,9 @@ export default function MovimientosPage() {
               href="/declarar"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
               style={{
-                background: "oklch(0.68 0.17 192 / 0.10)",
-                border: "1px solid oklch(0.68 0.17 192 / 0.25)",
-                color: "var(--primary)",
+                background: "rgba(48,209,88,0.10)",
+                border: "1px solid rgba(48,209,88,0.25)",
+                color: "#30D158",
               }}
             >
               <Scale className="h-4 w-4" />
@@ -416,84 +416,99 @@ export default function MovimientosPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredTransactions.map((tx) => {
-                    const isCompra = tx.tipo_operacion === "Compra"
-                    const isDividendo = tx.tipo_operacion === "Dividendo"
-                    let total = 0
-                    if (isCompra) {
-                      total = tx.cantidad * tx.precio_unitario + tx.comision
-                    } else if (isDividendo) {
-                      total = tx.precio_unitario - tx.comision - (tx.retencion_origen || 0) - (tx.retencion_destino || 0)
-                    } else {
-                      total = tx.cantidad * tx.precio_unitario - tx.comision
-                    }
-                    const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })
-
-                    const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
-                    const ticker = tx.activo
-                      ? (isFondo ? tx.activo.nombre?.split(' ')[0].toUpperCase() : tx.activo.ticker.split('.')[0])
-                      : "—"
-
-                    return (
-                      <tr key={tx.id} className="hover:bg-muted/30 transition-colors group">
-                        <td className="px-6 py-4 whitespace-nowrap text-foreground/80">
-                          {date}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                            isCompra ? "bg-emerald-500/10 text-emerald-400" : isDividendo ? "bg-violet-500/10 text-violet-400" : "bg-rose-500/10 text-rose-400"
-                          }`}>
-                            {isCompra ? <ArrowUpRight className="h-3 w-3" /> : isDividendo ? <ArrowDownRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                            {tx.tipo_operacion}
-                          </span>
-                          {tx.estado === "Pendiente" && (
-                            <span className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                              Pendiente
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-foreground/90">{ticker}</span>
-                            <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">{tx.activo?.nombre}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80">
-                          {hideBalances ? "****" : formatUnits(tx.cantidad)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80">
-                          {hideBalances ? "****" : tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-muted-foreground/80">
-                          {hideBalances ? "****" : (tx.comision > 0 ? formatCurrency(tx.comision, tx.activo?.moneda || "EUR") : "0,00")}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-right tabular-nums font-medium ${
-                          isCompra ? "text-emerald-400" : isDividendo ? "text-violet-400" : "text-rose-400"
-                        }`}>
-                          {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted rounded-md focus:outline-none focus:opacity-100">
-                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
-                              <DropdownMenuItem
-                                onClick={() => handleEdit(tx)}
-                                className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
-                              >
-                                <Pencil className="h-4 w-4" /> Editar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                  groupedByMonth.map(({ label, items }) => (
+                    <Fragment key={label}>
+                      {/* Month Header Row */}
+                      <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                        <td colSpan={8} className="px-6 py-2 text-xs font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          {label}
                         </td>
                       </tr>
-                    )
-                  })
+                      {items.map((tx) => {
+                        const isCompra = tx.tipo_operacion === "Compra"
+                        const isDividendo = tx.tipo_operacion === "Dividendo"
+                        let total = 0
+                        if (isCompra) {
+                          total = tx.cantidad * tx.precio_unitario + tx.comision
+                        } else if (isDividendo) {
+                          total = tx.precio_unitario - tx.comision - (tx.retencion_origen || 0) - (tx.retencion_destino || 0)
+                        } else {
+                          total = tx.cantidad * tx.precio_unitario - tx.comision
+                        }
+                        const date = new Date(tx.fecha).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+
+                        const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
+                        const ticker = tx.activo
+                          ? (isFondo ? tx.activo.nombre?.split(' ')[0].toUpperCase() : tx.activo.ticker.split('.')[0])
+                          : "—"
+
+                        return (
+                          <tr key={tx.id} className="hover:bg-muted/30 transition-colors group">
+                            <td className="px-6 py-4 whitespace-nowrap text-foreground/80">
+                              {date}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                                style={{
+                                  background: isCompra ? "rgba(48,209,88,0.12)" : isDividendo ? "rgba(255,214,10,0.12)" : "rgba(255,69,58,0.12)",
+                                  color: isCompra ? "#30D158" : isDividendo ? "#FFD60A" : "#FF453A",
+                                }}
+                              >
+                                {isCompra ? <ArrowUpRight className="h-3 w-3" /> : isDividendo ? <Star className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                                {tx.tipo_operacion}
+                              </span>
+                              {tx.estado === "Pendiente" && (
+                                <span className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                  Pendiente
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span className="font-medium text-foreground/90">{ticker}</span>
+                                <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">{tx.activo?.nombre}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80">
+                              {hideBalances ? "****" : formatUnits(tx.cantidad)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80">
+                              {hideBalances ? "****" : tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-muted-foreground/80">
+                              {hideBalances ? "****" : (tx.comision > 0 ? formatCurrency(tx.comision, tx.activo?.moneda || "EUR") : "0,00")}
+                            </td>
+                            <td
+                              className="px-6 py-4 whitespace-nowrap text-right tabular-nums font-medium"
+                              style={{ color: isCompra ? "#FFFFFF" : isDividendo ? "#FFD60A" : "#30D158" }}
+                            >
+                              {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-center">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted rounded-md focus:outline-none focus:opacity-100">
+                                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
+                                  <DropdownMenuItem
+                                    onClick={() => handleEdit(tx)}
+                                    className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
+                                  >
+                                    <Pencil className="h-4 w-4" /> Editar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </Fragment>
+                  ))
                 )}
               </tbody>
             </table>

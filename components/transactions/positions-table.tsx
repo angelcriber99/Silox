@@ -34,13 +34,13 @@ interface PositionsTableProps {
   onEditAsset: (position: EnrichedPosition) => void
 }
 
-const TIPO_BADGE_STYLES: Record<string, string> = {
-  ETF: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  "Fondo Indexado": "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  "Fondo Monetario": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-  Acción: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  Crypto: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  Metal: "bg-stone-500/10 text-stone-300 border-stone-500/20",
+const TIPO_BADGE_STYLES: Record<string, any> = {
+  ETF: { bg: "rgba(10,132,255,0.12)", color: "#0A84FF" },
+  "Fondo Indexado": { bg: "rgba(191,90,242,0.12)", color: "#BF5AF2" },
+  "Fondo Monetario": { bg: "rgba(50,173,230,0.12)", color: "#32ADE6" },
+  Acción: { bg: "rgba(255,214,10,0.12)", color: "#FFD60A" },
+  Crypto: { bg: "rgba(255,159,10,0.12)", color: "#FF9F0A" },
+  Metal: { bg: "rgba(152,152,157,0.12)", color: "#98989D" },
 }
 
 const FILTER_OPTIONS = [
@@ -92,17 +92,20 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
   if (hideBalances) return <span className="text-muted-foreground/60">****</span>
   if (value === null) return <span className="text-muted-foreground/60">—</span>
 
-  const textColor = value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-muted-foreground"
+  const textColor = value > 0 ? "#30D158" : value < 0 ? "#FF453A" : "var(--muted-foreground)"
   const formatted = type === "currency" ? formatPnl(value) : formatPercent(value)
 
-  const flashClasses = flash === 'up' 
-    ? 'bg-emerald-500/20' 
-    : flash === 'down' 
-      ? 'bg-rose-500/20 animate-pulse' 
-      : 'bg-transparent';
+  const flashStyle = flash === 'up'
+    ? { background: "rgba(48,209,88,0.2)" }
+    : flash === 'down'
+      ? { background: "rgba(255,69,58,0.2)" }
+      : { background: "transparent" }
 
   return (
-    <span className={`inline-flex items-center gap-1 tabular-nums transition-colors duration-1000 rounded px-1.5 py-0.5 -mr-1.5 ${textColor} ${flashClasses}`}>
+    <span 
+      className={`inline-flex items-center gap-1 tabular-nums transition-colors duration-1000 rounded px-1.5 py-0.5 -mr-1.5 ${flash === 'down' ? 'animate-pulse' : ''}`}
+      style={{ color: textColor, ...flashStyle }}
+    >
       {value > 0 ? "+" : ""}{formatted.replace("+", "")}
     </span>
   )
@@ -140,14 +143,17 @@ function LivePrice({
   if (value === null) return <span className="text-muted-foreground/60 text-xs">pendiente</span>;
 
   const baseClasses = "transition-colors duration-1000 rounded px-1.5 py-0.5 tabular-nums inline-block -mr-1.5";
-  const flashClasses = flash === 'up' 
-    ? 'bg-emerald-500/20 text-emerald-400' 
-    : flash === 'down' 
-      ? 'bg-rose-500/20 text-rose-400 animate-pulse' 
-      : 'bg-transparent text-foreground/80';
+  const flashStyle = flash === 'up'
+    ? { background: "rgba(48,209,88,0.2)", color: "#30D158" }
+    : flash === 'down'
+      ? { background: "rgba(255,69,58,0.2)", color: "#FF453A" }
+      : { background: "transparent", color: "rgba(255,255,255,0.8)" }
 
   return (
-    <span className={`${baseClasses} ${flashClasses}`}>
+    <span 
+      className={`${baseClasses} ${flash === 'down' ? 'animate-pulse' : ''}`}
+      style={flashStyle}
+    >
       {formatCurrency(value, currency || 'EUR')}
     </span>
   );
@@ -464,10 +470,8 @@ export function PositionsTable({
                       <TableCell className={cellPadding}>
                         <Badge
                           variant="outline"
-                          className={
-                            TIPO_BADGE_STYLES[p.tipo] ??
-                            "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
-                          }
+                          className="border-none"
+                          style={TIPO_BADGE_STYLES[p.tipo] || { background: "rgba(161,161,170,0.1)", color: "#a1a1aa" }}
                         >
                           {translateType(p.tipo, t)}
                         </Badge>
