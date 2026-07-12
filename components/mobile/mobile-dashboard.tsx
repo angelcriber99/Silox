@@ -74,6 +74,7 @@ export function MobileDashboard({
   const { hideBalances, setHideBalances } = usePreferences()
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [filterType, setFilterType] = useState<string>("All")
+  const [chartRange, setChartRange] = useState<"1W" | "1M" | "3M" | "YTD" | "1Y" | "MAX">("1M")
   const [scrubData, setScrubData] = useState<{ i: number; v: number; pnl: number } | null>(null)
   const t = useTranslations("Dashboard")
 
@@ -94,7 +95,7 @@ export function MobileDashboard({
     }
   }
 
-  // Portfolio sparkline (last 7 days)
+  // Portfolio chart data (Filtered by range)
   const portfolioSparkline = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return []
     const sorted = [...snapshots].sort(
@@ -105,17 +106,51 @@ export function MobileDashboard({
       const day = new Date(s.timestamp).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
       dailySnapshots.set(day, s)
     })
-    const last7Days = Array.from(dailySnapshots.values())
+    
+    let filtered = Array.from(dailySnapshots.values())
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      .slice(-7)
-    if (last7Days.length < 2) return []
-    const start = last7Days[0].total_value
-    return last7Days.map((s, i) => ({
+
+    if (filtered.length < 2) return []
+
+    const now = new Date()
+    const cutoff = new Date()
+    switch (chartRange) {
+      case "1W":
+        cutoff.setDate(now.getDate() - 7)
+        break
+      case "1M":
+        cutoff.setMonth(now.getMonth() - 1)
+        break
+      case "3M":
+        cutoff.setMonth(now.getMonth() - 3)
+        break
+      case "YTD":
+        cutoff.setFullYear(now.getFullYear(), 0, 1)
+        break
+      case "1Y":
+        cutoff.setFullYear(now.getFullYear() - 1)
+        break
+      case "MAX":
+        cutoff.setFullYear(2000) // All time
+        break
+    }
+
+    filtered = filtered.filter(s => new Date(s.timestamp) >= cutoff)
+    
+    // Fallback if no data in range
+    if (filtered.length < 2) {
+      filtered = Array.from(dailySnapshots.values())
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .slice(-2) // Need at least 2 points
+    }
+
+    const start = filtered[0].total_value
+    return filtered.map((s, i) => ({
       i,
       v: s.total_value,
       pnl: s.total_value - start,
     }))
-  }, [snapshots])
+  }, [snapshots, chartRange])
 
   // Sorted + filtered positions
   const sortedPositions = useMemo(() => {
@@ -332,7 +367,7 @@ export function MobileDashboard({
                   <span className="text-[14px] font-bold tabular-nums">
                     {hideBalances ? "••••" : `${scrubData.pnl >= 0 ? "+" : ""}${formatCurrency(scrubData.pnl)}`}
                   </span>
-                  <span className="text-[12px] font-semibold opacity-80">vs 7d</span>
+                  <span className="text-[12px] font-semibold opacity-80">vs {chartRange}</span>
                 </motion.div>
               ) : (
                 <>
@@ -424,6 +459,23 @@ export function MobileDashboard({
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* ─── Chart Range Selector ────────────────────────────────────── */}
+      <div className="px-4 pb-4 flex justify-between gap-1">
+        {(["1W", "1M", "3M", "YTD", "1Y", "MAX"] as const).map(range => (
+          <button
+            key={range}
+            onClick={() => { hapticFeedback.light(); setChartRange(range); }}
+            className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+              chartRange === range
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground/60 hover:bg-muted/50"
+            }`}
+          >
+            {range}
+          </button>
+        ))}
+      </div>
 
       {/* ─── Bento Grid Metrics ────────────────────────────────────────────── */}
       <div className="px-4 py-2 mb-2">

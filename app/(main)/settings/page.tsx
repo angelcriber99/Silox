@@ -44,16 +44,14 @@ export default function SettingsPage() {
     twoFactor, setTwoFactor,
     tableDensity, setTableDensity,
     showPnlPercentOnly, setShowPnlPercentOnly,
-    hideBalances, setHideBalances
+    hideBalances, setHideBalances,
+    pushNotifs, setPushNotifs,
+    emailNotifs, setEmailNotifs,
+    priceAlerts, setPriceAlerts,
+    weeklyReport, setWeeklyReport,
+    dividendAlerts, setDividendAlerts
   } = usePreferences()
 
-  const [toggles, setToggles] = useState({
-    pushNotifs: true,
-    emailNotifs: true,
-    priceAlerts: true,
-    weeklyReport: false,
-    dividendAlerts: true
-  })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [deletePending, setDeletePending] = useState(false)
@@ -76,11 +74,6 @@ export default function SettingsPage() {
     document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000`
     toast.success("Idioma actualizado")
     window.location.reload()
-  }
-
-  const handleToggle = (key: keyof typeof toggles) => {
-    setToggles(prev => ({ ...prev, [key]: !prev[key] }))
-    toast.success("Preferencia actualizada")
   }
 
   const handleDeleteAccount = async () => {
@@ -191,15 +184,43 @@ export default function SettingsPage() {
                   <button onClick={() => setTheme('dark')} className={`px-3 py-1 text-sm font-semibold rounded-lg ${theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>Oscuro</button>
                 </div>
               </div>
-              <div className="p-4 flex items-center justify-between bg-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><EyeOff className="w-5 h-5" /></div>
-                  <span className="font-semibold text-[15px]">Ocultar Saldos</span>
+                <div className="p-4 flex items-center justify-between bg-card">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><EyeOff className="w-5 h-5" /></div>
+                    <span className="font-semibold text-[15px]">Ocultar Saldos</span>
+                  </div>
+                  <CustomSwitch checked={hideBalances} onChange={() => setHideBalances(!hideBalances)} />
                 </div>
-                <CustomSwitch checked={hideBalances} onChange={() => setHideBalances(!hideBalances)} />
+                <div className="p-4 flex flex-col gap-3 bg-card border-t border-border/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-rose-500/10 text-rose-500 rounded-lg"><Palette className="w-5 h-5" /></div>
+                    <span className="font-semibold text-[15px]">Color de Acento</span>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+                    {(['blue', 'emerald', 'violet', 'rose', 'amber', 'indigo', 'teal', 'pink'] as const).map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setAccentColor(color)}
+                        className={`flex-shrink-0 w-10 h-10 rounded-full border-[3px] transition-all flex items-center justify-center ${
+                          accentColor === color ? 'border-foreground scale-110 shadow-sm' : 'border-transparent hover:scale-105 opacity-80'
+                        } ${
+                          color === 'blue' ? 'bg-[#3b82f6]' :
+                          color === 'emerald' ? 'bg-[#10b981]' :
+                          color === 'violet' ? 'bg-[#8b5cf6]' :
+                          color === 'rose' ? 'bg-[#f43f5e]' :
+                          color === 'amber' ? 'bg-[#f59e0b]' :
+                          color === 'indigo' ? 'bg-[#6366f1]' :
+                          color === 'teal' ? 'bg-[#14b8a6]' :
+                          'bg-[#ec4899]'
+                        }`}
+                      >
+                        {accentColor === color && <Check className="w-4 h-4 text-white shadow-sm" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
 
           {/* Seguridad */}
           <section>
@@ -355,19 +376,22 @@ export default function SettingsPage() {
                   {/* Accent Color */}
                   <div className="space-y-3 pt-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Color de Acento</label>
-                    <div className="flex gap-4 p-4 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm">
-                      {(['blue', 'emerald', 'violet', 'rose', 'amber'] as const).map((color) => (
+                    <div className="flex gap-4 p-4 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm overflow-x-auto hide-scrollbar">
+                      {(['blue', 'emerald', 'violet', 'rose', 'amber', 'indigo', 'teal', 'pink'] as const).map((color) => (
                         <button
                           key={color}
                           onClick={() => setAccentColor(color)}
-                          className={`w-12 h-12 rounded-full border-[3px] transition-all flex items-center justify-center ${
+                          className={`flex-shrink-0 w-12 h-12 rounded-full border-[3px] transition-all flex items-center justify-center ${
                             accentColor === color ? 'border-foreground scale-110 shadow-lg' : 'border-transparent hover:scale-105 opacity-80'
                           } ${
                             color === 'blue' ? 'bg-[#3b82f6]' :
                             color === 'emerald' ? 'bg-[#10b981]' :
                             color === 'violet' ? 'bg-[#8b5cf6]' :
                             color === 'rose' ? 'bg-[#f43f5e]' :
-                            'bg-[#f59e0b]'
+                            color === 'amber' ? 'bg-[#f59e0b]' :
+                            color === 'indigo' ? 'bg-[#6366f1]' :
+                            color === 'teal' ? 'bg-[#14b8a6]' :
+                            'bg-[#ec4899]'
                           }`}
                         >
                           {accentColor === color && <Check className="w-5 h-5 text-white shadow-sm" />}
@@ -491,22 +515,22 @@ export default function SettingsPage() {
                   <SettingRow 
                     icon={Bell} title="Notificaciones Push" desc="Recibe alertas directamente en tu dispositivo."
                     iconColor="text-rose-500"
-                    action={<CustomSwitch checked={toggles.pushNotifs} onChange={() => handleToggle('pushNotifs')} />} 
+                    action={<CustomSwitch checked={pushNotifs} onChange={() => { setPushNotifs(!pushNotifs); toast.success("Preferencia actualizada") }} />} 
                   />
                   <SettingRow 
                     icon={Zap} title="Alertas de Precio" desc="Avisos cuando un activo sube o baja drásticamente."
                     iconColor="text-amber-500"
-                    action={<CustomSwitch checked={toggles.priceAlerts} onChange={() => handleToggle('priceAlerts')} />} 
+                    action={<CustomSwitch checked={priceAlerts} onChange={() => { setPriceAlerts(!priceAlerts); toast.success("Preferencia actualizada") }} />} 
                   />
                   <SettingRow 
                     icon={Download} title="Cobro de Dividendos" desc="Notificar cuando se reciba un dividendo de una empresa."
                     iconColor="text-emerald-500"
-                    action={<CustomSwitch checked={toggles.dividendAlerts} onChange={() => handleToggle('dividendAlerts')} />} 
+                    action={<CustomSwitch checked={dividendAlerts} onChange={() => { setDividendAlerts(!dividendAlerts); toast.success("Preferencia actualizada") }} />} 
                   />
                   <SettingRow 
                     icon={LogOut} title="Resumen Semanal" desc="Email cada domingo con el estado de tu cartera."
                     iconColor="text-blue-500"
-                    action={<CustomSwitch checked={toggles.weeklyReport} onChange={() => handleToggle('weeklyReport')} />} 
+                    action={<CustomSwitch checked={weeklyReport} onChange={() => { setWeeklyReport(!weeklyReport); toast.success("Preferencia actualizada") }} />} 
                   />
                 </div>
               </div>
