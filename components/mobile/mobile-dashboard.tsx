@@ -41,6 +41,11 @@ type SparklinePointerState = {
   activePayload?: Array<{ payload: { i: number; v: number; pnl: number } }>
 }
 
+function getSparklinePayload(event: unknown) {
+  const maybeEvent = event as SparklinePointerState
+  return maybeEvent.activePayload?.[0]?.payload ?? null
+}
+
 const TYPE_ORDER = ["Fondo Indexado", "ETF", "Fondo Monetario", "Acción", "Crypto", "Metal", "Liquidez"]
 const MAX_STAGGERED_ROWS = 12
 const PriceAlerts = lazy(() =>
@@ -317,9 +322,9 @@ export function MobileDashboard({
             <AreaChart
               data={portfolioSparkline}
               margin={{ top: 22, right: 0, left: 0, bottom: 0 }}
-              onMouseMove={(e: SparklinePointerState) => {
-                if (e.activePayload && e.activePayload.length > 0) {
-                  const newScrub = e.activePayload[0].payload
+              onMouseMove={(e: unknown) => {
+                const newScrub = getSparklinePayload(e)
+                if (newScrub) {
                   setScrubData((prev) => {
                     if (prev?.i !== newScrub.i) hapticFeedback.light()
                     return newScrub
