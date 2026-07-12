@@ -256,11 +256,6 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Number formatting */
-  .font-tabular {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum';
-  }
 
   /* Financial display numbers */
   .font-display-number {
@@ -357,7 +352,7 @@
   }
 
   .mobile-signal {
-    @apply inline-flex h-8 items-center gap-1.5 border px-2.5 font-tabular text-[12px] font-black;
+    @apply inline-flex h-8 items-center gap-1.5 border px-2.5 tabular-nums text-[12px] font-black;
     background: var(--mobile-paper);
     border-color: var(--mobile-line);
   }

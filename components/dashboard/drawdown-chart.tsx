@@ -61,7 +61,7 @@ export function DrawdownChart() {
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
               Drawdown
             </p>
-            <p className="font-bold text-xl font-tabular text-rose-400">
+            <p className="font-bold text-xl tabular-nums text-rose-400">
               {formatPercent(value)}
             </p>
           </div>

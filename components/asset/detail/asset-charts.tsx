@@ -35,7 +35,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
               return (
                 <div className="bg-card border border-border p-3 rounded-lg shadow-xl">
                   <p className="text-foreground text-sm font-bold">{d.name}</p>
-                  <p className="text-foreground/80 text-sm font-tabular">{formatCurrency(d.value, position.moneda)}</p>
+                  <p className="text-foreground/80 text-sm tabular-nums">{formatCurrency(d.value, position.moneda)}</p>
                 </div>
               )
             }} />
@@ -43,7 +43,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground/80 uppercase font-medium">Total</p>
-              <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(position.valor_actual_nativo ?? 0, position.moneda)}</p>
+              <p className="text-lg font-bold text-foreground tabular-nums">{formatCurrency(position.valor_actual_nativo ?? 0, position.moneda)}</p>
             </div>
           </div>
         </div>
@@ -53,14 +53,14 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
               <div className="w-3 h-3 rounded-full bg-blue-500" />
               <span className="text-muted-foreground text-sm">Tu Dinero</span>
             </div>
-            <span className="text-foreground font-bold font-tabular text-sm">{formatCurrency(position.coste_total, position.moneda)}</span>
+            <span className="text-foreground font-bold tabular-nums text-sm">{formatCurrency(position.coste_total, position.moneda)}</span>
           </div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500" />
               <span className="text-muted-foreground text-sm">Intereses</span>
             </div>
-            <span className="text-emerald-400 font-bold font-tabular text-sm">
+            <span className="text-emerald-400 font-bold tabular-nums text-sm">
               +{formatCurrency(Math.max(0, stats.gananciaIntereses), position.moneda)}
             </span>
           </div>
@@ -68,7 +68,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
             <div className="pt-2 border-t border-border">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground/80 text-xs">Comisiones pagadas</span>
-                <span className="text-muted-foreground font-tabular text-xs">-{formatCurrency(position.comisiones_total)}</span>
+                <span className="text-muted-foreground tabular-nums text-xs">-{formatCurrency(position.comisiones_total)}</span>
               </div>
             </div>
           )}
@@ -128,15 +128,15 @@ export function AssetEvolutionChart({ evolutionData }: any) {
                     <div className="space-y-2">
                       <div className="flex justify-between gap-6">
                         <span className="text-emerald-400 text-sm">Valor Total</span>
-                        <span className="text-emerald-400 text-sm font-bold font-tabular">{formatCurrency(val)}</span>
+                        <span className="text-emerald-400 text-sm font-bold tabular-nums">{formatCurrency(val)}</span>
                       </div>
                       <div className="flex justify-between gap-6">
                         <span className="text-blue-400 text-sm">Aportaciones</span>
-                        <span className="text-blue-400 text-sm font-bold font-tabular">{formatCurrency(inv)}</span>
+                        <span className="text-blue-400 text-sm font-bold tabular-nums">{formatCurrency(inv)}</span>
                       </div>
                       <div className="pt-2 mt-2 border-t border-border flex justify-between gap-6">
                         <span className="text-amber-400 text-xs">Intereses</span>
-                        <span className={`text-xs font-bold font-tabular ${prof >= 0 ? 'text-amber-400' : 'text-rose-400'}`}>
+                        <span className={`text-xs font-bold tabular-nums ${prof >= 0 ? 'text-amber-400' : 'text-rose-400'}`}>
                           {prof >= 0 ? '+' : ''}{formatCurrency(prof)}
                         </span>
                       </div>
@@ -186,7 +186,7 @@ export function AssetContributionsChart({ monthlyContributionsData }: any) {
                   return (
                     <div className="bg-card border border-border p-3 rounded-lg shadow-xl">
                       <p className="text-foreground/80 text-sm font-medium mb-1">{label}</p>
-                      <p className="text-amber-400 text-sm font-bold font-tabular">{formatCurrency(payload[0].value as number)}</p>
+                      <p className="text-amber-400 text-sm font-bold tabular-nums">{formatCurrency(payload[0].value as number)}</p>
                     </div>
                   )
                 }} />

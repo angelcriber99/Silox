@@ -55,31 +55,31 @@ export function MarketStats({ ticker, moneda }: MarketStatsProps) {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">Market Cap</p>
-            <p className="text-lg font-bold text-foreground font-tabular">{quote.marketCap || "—"}</p>
+            <p className="text-lg font-bold text-foreground tabular-nums">{quote.marketCap || "—"}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">P/E Ratio</p>
-            <p className="text-lg font-bold text-foreground font-tabular">{quote.peRatio || "—"}</p>
+            <p className="text-lg font-bold text-foreground tabular-nums">{quote.peRatio || "—"}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">Div Yield</p>
-            <p className="text-lg font-bold text-foreground font-tabular">{quote.divYield || "—"}</p>
+            <p className="text-lg font-bold text-foreground tabular-nums">{quote.divYield || "—"}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">Max 52 sem.</p>
-            <p className="text-lg font-bold text-foreground font-tabular">
+            <p className="text-lg font-bold text-foreground tabular-nums">
               {quote.week52High ? formatCurrency(quote.week52High, quote.currency || moneda) : "—"}
             </p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">Min 52 sem.</p>
-            <p className="text-lg font-bold text-foreground font-tabular">
+            <p className="text-lg font-bold text-foreground tabular-nums">
               {quote.week52Low ? formatCurrency(quote.week52Low, quote.currency || moneda) : "—"}
             </p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">Volumen</p>
-            <p className="text-lg font-bold text-foreground font-tabular">{quote.volume || "—"}</p>
+            <p className="text-lg font-bold text-foreground tabular-nums">{quote.volume || "—"}</p>
           </div>
         </div>
       </CardContent>

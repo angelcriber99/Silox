@@ -69,12 +69,12 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
             </p>
           </div>
           <div className="text-left md:text-right">
-            <p className="text-5xl md:text-6xl font-bold text-foreground font-tabular drop-shadow-md">
+            <p className="text-5xl md:text-6xl font-bold text-foreground tabular-nums drop-shadow-md">
               {position.precio_actual !== null ? formatCurrency(position.precio_actual, position.moneda) : "—"}
             </p>
             <div className="flex items-center md:justify-end gap-2 mt-2">
               {position.change_percent_24h !== null && position.change_amount_24h !== null && (
-                <p className={`text-lg font-bold font-tabular flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                <p className={`text-lg font-bold tabular-nums flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
                   {isPositive ? "+" : ""}{formatCurrency(position.change_amount_24h, position.moneda)} 
                   <span className="ml-1 opacity-80">({isPositive ? "+" : ""}{position.change_percent_24h.toFixed(2)}%)</span>
                   <span className="text-muted-foreground text-sm ml-2 font-medium">Hoy</span>
@@ -97,22 +97,22 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-in stagger-2">
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tokens</span>
-            <p className="text-2xl font-bold text-foreground font-tabular mt-1">{position.unidades.toFixed(6)}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{position.unidades.toFixed(6)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Balance</span>
-            <p className="text-2xl font-bold text-foreground font-tabular mt-1">{formatCurrency(position.valor_actual || 0, 'EUR')}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual || 0, 'EUR')}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Precio Medio</span>
-            <p className="text-2xl font-bold text-foreground font-tabular mt-1">{formatCurrency(stats.precioMedio, position.moneda)}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(stats.precioMedio, position.moneda)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rentabilidad Total</span>
-            <p className={`text-2xl font-bold font-tabular mt-1 ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <p className={`text-2xl font-bold tabular-nums mt-1 ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
               {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
             </p>
-            <p className={`text-sm font-bold font-tabular ${stats.precioPorcentaje >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+            <p className={`text-sm font-bold tabular-nums ${stats.precioPorcentaje >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}%
             </p>
           </div>
@@ -173,9 +173,9 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-right font-tabular text-foreground/80">{Number(tx.cantidad).toFixed(6)}</td>
-                    <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
-                    <td className="px-5 py-4 text-right font-tabular font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{Number(tx.cantidad).toFixed(6)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
                   </tr>
                 ))}
               </tbody>

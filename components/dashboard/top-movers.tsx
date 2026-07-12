@@ -128,7 +128,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                   ) : null}
                 </span>
                 <span
-                  className="text-[11px] font-bold font-tabular px-1.5 py-0.5 rounded-md flex-shrink-0"
+                  className="text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0"
                   style={{
                     color: "oklch(0.65 0.19 155)",
                     background: "oklch(0.65 0.19 155 / 0.10)",
@@ -176,7 +176,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                   {getDisplayName(p)}
                 </span>
                 <span
-                  className="text-[11px] font-bold font-tabular px-1.5 py-0.5 rounded-md flex-shrink-0"
+                  className="text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0"
                   style={{
                     color: "oklch(0.62 0.20 20)",
                     background: "oklch(0.62 0.20 20 / 0.10)",

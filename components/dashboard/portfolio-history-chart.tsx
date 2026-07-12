@@ -65,22 +65,22 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
           <p className="text-muted-foreground text-xs mb-3 font-medium uppercase tracking-wider border-b border-border/50 pb-2">{formattedDate}</p>
           <div className="mb-2.5">
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">Patrimonio</p>
-            <p className="font-bold text-lg font-tabular text-foreground leading-none">
+            <p className="font-bold text-lg tabular-nums text-foreground leading-none">
               {hideBalances ? "****" : formatCurrency(data.value)}
             </p>
           </div>
           <div className="mb-2.5">
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">Ganancia Total</p>
-            <p className={`font-bold text-sm font-tabular leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <p className={`font-bold text-sm tabular-nums leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
               {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.totalPnl)}`}
             </p>
           </div>
           <div>
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">PnL Instante</p>
             {data.isFirstPoint ? (
-              <p className="font-bold text-sm font-tabular text-muted-foreground leading-none">—</p>
+              <p className="font-bold text-sm tabular-nums text-muted-foreground leading-none">—</p>
             ) : (
-              <p className={`font-bold text-sm font-tabular leading-none ${data.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <p className={`font-bold text-sm tabular-nums leading-none ${data.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {hideBalances ? "****" : `${data.pnl >= 0 ? '+' : ''}${formatCurrency(data.pnl)}`}
               </p>
             )}

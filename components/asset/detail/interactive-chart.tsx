@@ -96,7 +96,7 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex }: InteractiveA
                           : date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
                         }
                       </p>
-                      <p className="text-foreground font-bold font-tabular text-lg">
+                      <p className="text-foreground font-bold tabular-nums text-lg">
                         {formatCurrency(point.price, moneda)}
                       </p>
                     </div>

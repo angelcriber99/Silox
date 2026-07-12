@@ -60,7 +60,7 @@ function SectionHeader({ label, count }: { label: string; count: number }) {
       <span className="text-[11px] font-black uppercase text-[var(--mobile-ink)]">
         {label}
       </span>
-      <span className="font-tabular text-[11px] font-bold text-[var(--mobile-muted)]">
+      <span className="tabular-nums text-[11px] font-bold text-[var(--mobile-muted)]">
         {count.toString().padStart(2, "0")}
       </span>
     </div>
@@ -91,7 +91,7 @@ function MetricTile({
         {icon}
         <span className="text-[9px] font-black uppercase">{label}</span>
       </div>
-      <p className={`font-tabular text-[14px] font-black ${toneClass}`}>{value}</p>
+      <p className={`tabular-nums text-[14px] font-black ${toneClass}`}>{value}</p>
     </div>
   )
 }
@@ -399,7 +399,7 @@ export function MobileDashboard({
                         ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
                         : p.ticker.split(".")[0]}
                     </span>
-                    <span className={`font-tabular text-[11px] font-black ${isGain ? "text-[var(--mobile-positive)]" : "text-[var(--mobile-negative)]"}`}>
+                    <span className={`tabular-nums text-[11px] font-black ${isGain ? "text-[var(--mobile-positive)]" : "text-[var(--mobile-negative)]"}`}>
                       {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
                     </span>
                   </motion.div>
@@ -445,7 +445,7 @@ export function MobileDashboard({
         <div className="px-5 pt-5">
           <div className="flex items-end justify-between border-b border-[var(--mobile-line)] pb-2">
             <p className="text-[18px] font-black">Activos</p>
-            <p className="font-tabular text-[11px] font-bold text-[var(--mobile-muted)]">{sortedPositions.length} posiciones</p>
+            <p className="tabular-nums text-[11px] font-bold text-[var(--mobile-muted)]">{sortedPositions.length} posiciones</p>
           </div>
         </div>
 

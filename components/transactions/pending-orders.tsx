@@ -113,13 +113,13 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
                       {tx.tipo_operacion}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right font-tabular">
+                  <TableCell className="text-right tabular-nums">
                     {hideBalances ? "****" : formatUnits(tx.cantidad)}
                   </TableCell>
-                  <TableCell className="text-right font-tabular text-muted-foreground">
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
                     {hideBalances ? "****" : formatCurrency(tx.precio_unitario, tx.activo?.moneda || 'USD')}
                   </TableCell>
-                  <TableCell className="text-right pr-6 font-tabular">
+                  <TableCell className="text-right pr-6 tabular-nums">
                     {hideBalances ? "****" : formatCurrency(tx.cantidad * tx.precio_unitario, tx.activo?.moneda || 'USD')}
                   </TableCell>
                   <TableCell>

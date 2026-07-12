@@ -75,7 +75,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
           </div>
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground uppercase font-bold tracking-wider mb-1">Saldo Actual</p>
-            <p className="text-5xl font-bold text-foreground font-tabular drop-shadow-md text-emerald-500">
+            <p className="text-5xl font-bold text-foreground tabular-nums drop-shadow-md text-emerald-500">
               {formatCurrency(position.valor_actual || 0, 'EUR')}
             </p>
           </div>
@@ -88,7 +88,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total Ingresado</p>
-                  <p className="text-2xl font-bold font-tabular">{formatCurrency(metrics.totalDepositos, 'EUR')}</p>
+                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(metrics.totalDepositos, 'EUR')}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
                   <PiggyBank className="h-5 w-5 text-emerald-500" />
@@ -101,7 +101,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total Retirado</p>
-                  <p className="text-2xl font-bold font-tabular">{formatCurrency(metrics.totalRetiradas, 'EUR')}</p>
+                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(metrics.totalRetiradas, 'EUR')}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-rose-500/10 flex items-center justify-center">
                   <Wallet className="h-5 w-5 text-rose-500" />
@@ -139,7 +139,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
                 </div>
               </div>
               <div className="text-right">
-                <p className={`font-bold font-tabular ${isDeposit ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <p className={`font-bold tabular-nums ${isDeposit ? 'text-emerald-500' : 'text-rose-500'}`}>
                   {isDeposit ? '+' : '-'}{formatCurrency(tx.total, 'EUR')}
                 </p>
               </div>

@@ -35,8 +35,8 @@ function DistributionRow({ item, totalValue, index }: { item: any, totalValue: n
           {item.name}
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-muted-foreground font-tabular hidden sm:inline-block">{formatCurrency(item.value)}</span>
-          <span className="font-bold text-foreground font-tabular w-12 text-right">{weight.toFixed(1)}%</span>
+          <span className="text-xs font-medium text-muted-foreground tabular-nums hidden sm:inline-block">{formatCurrency(item.value)}</span>
+          <span className="font-bold text-foreground tabular-nums w-12 text-right">{weight.toFixed(1)}%</span>
         </div>
       </div>
       <div className="w-full h-2.5 rounded-full bg-muted/50 overflow-hidden relative">
@@ -56,7 +56,7 @@ function DistributionRow({ item, totalValue, index }: { item: any, totalValue: n
             return (
               <div key={i} className="flex items-center justify-between text-xs">
                 <span className="font-medium text-muted-foreground truncate max-w-[140px]" title={a.name}>{a.name}</span>
-                <span className="font-tabular text-muted-foreground whitespace-nowrap ml-2 flex items-center gap-2">
+                <span className="tabular-nums text-muted-foreground whitespace-nowrap ml-2 flex items-center gap-2">
                   {formatCurrency(a.value)}
                   <span className="text-foreground font-semibold w-8 text-right">{assetWeight.toFixed(1)}%</span>
                 </span>
@@ -449,7 +449,7 @@ export function ComprehensiveAnalysis() {
                       return (
                         <div className="bg-card border border-border/50 px-3 py-2 rounded-lg shadow-xl backdrop-blur-md">
                           <p className="text-sm font-bold text-foreground">{payload[0].payload.name}</p>
-                          <p className="text-sm font-bold text-primary font-tabular mt-0.5">{formatCurrency(payload[0].value as number)}</p>
+                          <p className="text-sm font-bold text-primary tabular-nums mt-0.5">{formatCurrency(payload[0].value as number)}</p>
                         </div>
                       )
                     }
@@ -464,7 +464,7 @@ export function ComprehensiveAnalysis() {
               <div key={type.name} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORS[idx % COLORS.length] }} />
                 <span className="text-[12px] font-bold text-foreground">{type.name}</span>
-                <span className="text-[11px] font-semibold text-muted-foreground font-tabular ml-1">
+                <span className="text-[11px] font-semibold text-muted-foreground tabular-nums ml-1">
                   {((type.value / analysisTotal) * 100).toFixed(1)}%
                 </span>
               </div>

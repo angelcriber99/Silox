@@ -500,7 +500,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
             <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-4 py-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Inversión total</span>
-                <span className="text-lg font-bold font-tabular text-emerald-400">
+                <span className="text-lg font-bold tabular-nums text-emerald-400">
                   {formatCurrency(totalEstimado, moneda)}
                 </span>
               </div>

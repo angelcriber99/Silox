@@ -119,19 +119,19 @@ export function ContributionsChart({ transactions, currentPrice }: Contributions
                         <div className="space-y-2">
                           <div className="flex justify-between gap-4">
                             <span className="text-emerald-400 text-sm font-medium">Valor Mercado:</span>
-                            <span className="text-emerald-400 text-sm font-bold font-tabular">
+                            <span className="text-emerald-400 text-sm font-bold tabular-nums">
                               {formatCurrency(value)}
                             </span>
                           </div>
                           <div className="flex justify-between gap-4">
                             <span className="text-blue-400 text-sm font-medium">Aportado:</span>
-                            <span className="text-blue-400 text-sm font-bold font-tabular">
+                            <span className="text-blue-400 text-sm font-bold tabular-nums">
                               {formatCurrency(invested)}
                             </span>
                           </div>
                           <div className="pt-2 mt-2 border-t border-border flex justify-between gap-4">
                             <span className="text-muted-foreground text-xs font-medium">Beneficio latente:</span>
-                            <span className={`text-xs font-bold font-tabular ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <span className={`text-xs font-bold tabular-nums ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {isPositive ? '+' : ''}{formatCurrency(diff)}
                             </span>
                           </div>

@@ -104,11 +104,11 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
           </span>
 
           <div className="flex flex-col items-end">
-            <span className="font-tabular text-[13px] font-black text-[var(--mobile-ink)]">
+            <span className="tabular-nums text-[13px] font-black text-[var(--mobile-ink)]">
               {hideBalances ? "••••" : formatCurrency(p.valor_actual ?? 0)}
             </span>
             <span
-              className="font-tabular text-[10px] font-bold"
+              className="tabular-nums text-[10px] font-bold"
               style={{ color: is24hPositive ? "var(--mobile-positive)" : "var(--mobile-negative)" }}
             >
               {hideBalances ? "•••" : formatPercent(change24h)}
@@ -205,7 +205,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
                     />
                   </div>
                   <span
-                    className="flex-shrink-0 font-tabular text-[9px] font-bold text-[var(--mobile-muted)]"
+                    className="flex-shrink-0 tabular-nums text-[9px] font-bold text-[var(--mobile-muted)]"
                   >
                     {weight.toFixed(1)}%
                   </span>
@@ -214,7 +214,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
 
               <div className="flex flex-col items-end flex-shrink-0 gap-1">
                 <span
-                  className="font-tabular text-[15px] font-black leading-tight text-[var(--mobile-ink)]"
+                  className="tabular-nums text-[15px] font-black leading-tight text-[var(--mobile-ink)]"
                 >
                   {hideBalances
                     ? "••••"
@@ -231,7 +231,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
                   }}
                 >
                   <span
-                    className="font-tabular text-[11px] font-black"
+                    className="tabular-nums text-[11px] font-black"
                     style={{
                       color: is24hPositive ? "var(--mobile-positive)" : "var(--mobile-negative)",
                     }}

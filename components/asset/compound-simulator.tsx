@@ -104,15 +104,15 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
             <div className="pt-4 border-t border-border/50 space-y-4">
               <div>
                 <p className="text-xs text-muted-foreground/80 uppercase font-medium">Total Invertido</p>
-                <p className="text-lg font-bold text-foreground font-tabular">{formatCurrency(finalInvested)}</p>
+                <p className="text-lg font-bold text-foreground tabular-nums">{formatCurrency(finalInvested)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground/80 uppercase font-medium">Intereses Generados</p>
-                <p className="text-lg font-bold text-emerald-400 font-tabular">+{formatCurrency(finalInterest)}</p>
+                <p className="text-lg font-bold text-emerald-400 tabular-nums">+{formatCurrency(finalInterest)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground/80 uppercase font-medium">Capital Final</p>
-                <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] font-tabular">
+                <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] tabular-nums">
                   {formatCurrency(finalCapital)}
                 </p>
               </div>
@@ -152,10 +152,10 @@ export function CompoundSimulator({ initialCapital }: CompoundSimulatorProps) {
                         <div className="bg-card border border-border p-3 rounded-lg shadow-xl">
                           <p className="text-foreground/80 text-sm mb-2 font-medium">Año {label}</p>
                           <div className="space-y-1">
-                            <p className="text-purple-400 text-sm font-bold font-tabular">
+                            <p className="text-purple-400 text-sm font-bold tabular-nums">
                               Capital: {formatCurrency(payload[0].value as number)}
                             </p>
-                            <p className="text-blue-400 text-sm font-tabular">
+                            <p className="text-blue-400 text-sm tabular-nums">
                               Invertido: {formatCurrency(payload[1].value as number)}
                             </p>
                           </div>

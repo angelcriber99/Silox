@@ -102,7 +102,7 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
       : 'bg-transparent';
 
   return (
-    <span className={`inline-flex items-center gap-1 font-tabular transition-colors duration-1000 rounded px-1.5 py-0.5 -mr-1.5 ${textColor} ${flashClasses}`}>
+    <span className={`inline-flex items-center gap-1 tabular-nums transition-colors duration-1000 rounded px-1.5 py-0.5 -mr-1.5 ${textColor} ${flashClasses}`}>
       {value > 0 ? "+" : ""}{formatted.replace("+", "")}
     </span>
   )
@@ -139,7 +139,7 @@ function LivePrice({
   if (hideBalances) return <span>****</span>;
   if (value === null) return <span className="text-muted-foreground/60 text-xs">pendiente</span>;
 
-  const baseClasses = "transition-colors duration-1000 rounded px-1.5 py-0.5 font-tabular inline-block -mr-1.5";
+  const baseClasses = "transition-colors duration-1000 rounded px-1.5 py-0.5 tabular-nums inline-block -mr-1.5";
   const flashClasses = flash === 'up' 
     ? 'bg-emerald-500/20 text-emerald-400' 
     : flash === 'down' 
@@ -441,7 +441,7 @@ export function PositionsTable({
                       }`}
                       style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(245 158 11), 0 0 20px rgba(245, 158, 11, 0.4)" } : undefined}
                     >
-                      <TableCell className={`font-medium text-foreground font-tabular ${cellPadding}`}>
+                      <TableCell className={`font-medium text-foreground tabular-nums ${cellPadding}`}>
                         <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
                           <span>
                             {displaySymbol}
@@ -472,22 +472,22 @@ export function PositionsTable({
                           {translateType(p.tipo, t)}
                         </Badge>
                       </TableCell>
-                      <TableCell className={`text-right font-tabular text-foreground/80 ${cellPadding}`}>
+                      <TableCell className={`text-right tabular-nums text-foreground/80 ${cellPadding}`}>
                         {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
                       </TableCell>
-                      <TableCell className={`text-right font-tabular text-muted-foreground/80 hidden lg:table-cell ${cellPadding}`}>
+                      <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden lg:table-cell ${cellPadding}`}>
                         {p.precio_medio > 0
                           ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda))
                           : "—"}
                       </TableCell>
-                      <TableCell className={`text-right font-tabular ${cellPadding}`}>
+                      <TableCell className={`text-right tabular-nums ${cellPadding}`}>
                         <LivePrice 
                           value={p.precio_actual_nativo !== null ? p.precio_actual_nativo : p.precio_actual}
                           currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
                           hideBalances={hideBalances}
                         />
                       </TableCell>
-                      <TableCell className={`text-right font-tabular text-foreground font-medium ${cellPadding}`}>
+                      <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>
                         <div className="flex flex-col items-end gap-1">
                           <span>
                             {hideBalances ? "****" : (p.valor_actual !== null
@@ -637,7 +637,7 @@ export function PositionsTable({
                    <div className="flex justify-between items-end">
                      <div className="flex flex-col">
                        <span className="text-xs text-muted-foreground/80 mb-0.5">Posición</span>
-                       <span className="text-sm font-medium font-tabular text-foreground/80 flex items-center gap-1">
+                       <span className="text-sm font-medium tabular-nums text-foreground/80 flex items-center gap-1">
                          {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-muted-foreground/60">x</span>
                          <LivePrice 
                           value={p.precio_actual}
@@ -649,7 +649,7 @@ export function PositionsTable({
                      <div className="flex flex-col items-end">
                        <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
                        <div className="flex flex-col items-end">
-                         <span className="text-base font-bold font-tabular text-foreground">
+                         <span className="text-base font-bold tabular-nums text-foreground">
                            {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
                          </span>
                          {p.coste_total_eur > 0 && (

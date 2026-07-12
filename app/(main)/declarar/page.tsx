@@ -178,7 +178,7 @@ export default function DeclararPage() {
                   <TrendingUp className="h-5 w-5 text-emerald-400" />
                   Total Ganancias
                 </div>
-                <div className="text-3xl font-bold text-foreground font-tabular">
+                <div className="text-3xl font-bold text-foreground tabular-nums">
                   {formatCurrency(totals.gains)}
                 </div>
                 <p className="text-sm text-muted-foreground/80 mt-2">
@@ -191,7 +191,7 @@ export default function DeclararPage() {
                   <TrendingDown className="h-5 w-5 text-rose-400" />
                   Total Pérdidas
                 </div>
-                <div className="text-3xl font-bold text-foreground font-tabular">
+                <div className="text-3xl font-bold text-foreground tabular-nums">
                   {formatCurrency(totals.losses)}
                 </div>
                 <p className="text-sm text-muted-foreground/80 mt-2">
@@ -211,7 +211,7 @@ export default function DeclararPage() {
                   Rendimiento Neto
                 </div>
                 <div
-                  className="text-3xl font-bold font-tabular"
+                  className="text-3xl font-bold tabular-nums"
                   style={{ color: totals.net >= 0 ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
                 >
                   {totals.net >= 0 ? "+" : ""}{formatCurrency(totals.net)}
@@ -229,7 +229,7 @@ export default function DeclararPage() {
                   <TrendingUp className="h-5 w-5" />
                   Rendimiento Bruto (Dividendos)
                 </div>
-                <div className="text-3xl font-bold text-foreground font-tabular">
+                <div className="text-3xl font-bold text-foreground tabular-nums">
                   {formatCurrency(dividendTotals.gross)}
                 </div>
                 <p className="text-sm text-violet-400/80 mt-2 font-medium">
@@ -242,7 +242,7 @@ export default function DeclararPage() {
                   <TrendingDown className="h-5 w-5" />
                   Gastos Deducibles
                 </div>
-                <div className="text-3xl font-bold text-foreground font-tabular">
+                <div className="text-3xl font-bold text-foreground tabular-nums">
                   {formatCurrency(dividendTotals.fees)}
                 </div>
                 <p className="text-sm text-violet-400/80 mt-2 font-medium">
@@ -255,7 +255,7 @@ export default function DeclararPage() {
                   <Scale className="h-5 w-5" />
                   Rendimiento Neto a Tributar
                 </div>
-                <div className={`text-3xl font-bold font-tabular text-violet-300`}>
+                <div className={`text-3xl font-bold tabular-nums text-violet-300`}>
                   {dividendTotals.baseImponible > 0 ? "+" : ""}{formatCurrency(dividendTotals.baseImponible)}
                 </div>
                 <p className="text-sm text-violet-300/80 mt-2 font-medium">
@@ -318,16 +318,16 @@ export default function DeclararPage() {
                                 <span className="text-[10px] text-muted-foreground/60 leading-tight max-w-[250px]">{e.detalles}</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80 align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80 align-top">
                               {e.cantidadVendida.toLocaleString('es-ES', { maximumFractionDigits: 4 })}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-muted-foreground align-top">
                               {formatCurrency(e.ingresoVenta)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-muted-foreground align-top">
                               {formatCurrency(e.costeAdquisicion)}
                             </td>
-                            <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-bold align-top ${
+                            <td className={`px-6 py-4 whitespace-nowrap text-right tabular-nums font-bold align-top ${
                               isGain ? "text-emerald-400" : "text-rose-400"
                             }`}>
                               {isGain ? "+" : ""}{formatCurrency(e.gananciaPatrimonial)}
@@ -394,19 +394,19 @@ export default function DeclararPage() {
                                 {e.notas && <span className="text-[10px] text-muted-foreground/60 leading-tight max-w-[250px]">{e.notas}</span>}
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-muted-foreground align-top">
                               {formatCurrency(gross)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-rose-400/80 align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-rose-400/80 align-top">
                               {retOrigen > 0 ? `-${formatCurrency(retOrigen)}` : "—"}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-rose-400/80 align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-rose-400/80 align-top">
                               {retDestino > 0 ? `-${formatCurrency(retDestino)}` : "—"}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-rose-400/80 align-top">
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-rose-400/80 align-top">
                               {fee > 0 ? `-${formatCurrency(fee)}` : "—"}
                             </td>
-                            <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-bold align-top text-violet-400`}>
+                            <td className={`px-6 py-4 whitespace-nowrap text-right tabular-nums font-bold align-top text-violet-400`}>
                               +{formatCurrency(net)}
                             </td>
                           </tr>
@@ -447,17 +447,17 @@ export default function DeclararPage() {
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="bg-violet-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-violet-400 font-bold mb-1">CASILLA 0029 (BRUTO)</div>
-                      <div className="text-sm font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.gross)}</div>
+                      <div className="text-sm font-bold tabular-nums text-violet-100">{formatCurrency(dividendTotals.gross)}</div>
                     </div>
                     <div className="bg-violet-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-violet-400 font-bold mb-1">CASILLA 0034 (GASTOS)</div>
-                      <div className="text-sm font-bold font-tabular text-violet-100">{formatCurrency(dividendTotals.fees)}</div>
+                      <div className="text-sm font-bold tabular-nums text-violet-100">{formatCurrency(dividendTotals.fees)}</div>
                     </div>
                   </div>
                   {dividendTotals.retOrigen > 0 && (
                     <div className="bg-rose-950/50 rounded-lg p-3 border border-rose-900/50">
                       <div className="text-[10px] text-rose-400 font-bold mb-1">CASILLA 0588 (DOBLE IMPOSICIÓN)</div>
-                      <div className="text-sm font-bold font-tabular text-rose-100">{formatCurrency(dividendTotals.retOrigen)}</div>
+                      <div className="text-sm font-bold tabular-nums text-rose-100">{formatCurrency(dividendTotals.retOrigen)}</div>
                       <div className="text-[10px] text-muted-foreground mt-1">Impuesto retenido en origen (ej. 15% W-8BEN) a deducir.</div>
                     </div>
                   )}
@@ -473,11 +473,11 @@ export default function DeclararPage() {
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="bg-orange-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-orange-400 font-bold mb-1">CASILLAS 312-313 (VENTA)</div>
-                      <div className="text-sm font-bold font-tabular text-orange-100">{formatCurrency(fundTotals.saleValue)}</div>
+                      <div className="text-sm font-bold tabular-nums text-orange-100">{formatCurrency(fundTotals.saleValue)}</div>
                     </div>
                     <div className="bg-orange-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-orange-400 font-bold mb-1">CASILLAS 314-315 (COMPRA)</div>
-                      <div className="text-sm font-bold font-tabular text-orange-100">{formatCurrency(fundTotals.purchaseValue)}</div>
+                      <div className="text-sm font-bold tabular-nums text-orange-100">{formatCurrency(fundTotals.purchaseValue)}</div>
                     </div>
                   </div>
                   <div className="text-[10px] text-muted-foreground">Comprueba esto con tu PDF fiscal para asegurar que cuadra, y añade manualmente los intereses diarios de la C. Flexible.</div>
@@ -493,17 +493,17 @@ export default function DeclararPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-emerald-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-emerald-400 font-bold mb-1">CASILLA 0327 (VENTA)</div>
-                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(stockTotals.saleValue)}</div>
+                      <div className="text-sm font-bold tabular-nums text-emerald-100">{formatCurrency(stockTotals.saleValue)}</div>
                     </div>
                     <div className="bg-emerald-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-emerald-400 font-bold mb-1">CASILLA 0328 (COMPRA)</div>
-                      <div className="text-sm font-bold font-tabular text-emerald-100">{formatCurrency(stockTotals.purchaseValue)}</div>
+                      <div className="text-sm font-bold tabular-nums text-emerald-100">{formatCurrency(stockTotals.purchaseValue)}</div>
                     </div>
                   </div>
                   {(stockTotals.retDestino > 0 || stockTotals.retOrigen > 0) && (
                     <div className="bg-rose-950/50 rounded-lg p-3 border border-rose-900/50 mt-2">
                       <div className="text-[10px] text-rose-400 font-bold mb-1">RETENCIONES PAGADAS EN VENTAS</div>
-                      <div className="text-sm font-bold font-tabular text-rose-100">{formatCurrency(stockTotals.retDestino + stockTotals.retOrigen)}</div>
+                      <div className="text-sm font-bold tabular-nums text-rose-100">{formatCurrency(stockTotals.retDestino + stockTotals.retOrigen)}</div>
                       <div className="text-[10px] text-muted-foreground mt-1">Impuestos ya pagados al Estado. ¡No olvides deducirlos!</div>
                     </div>
                   )}
@@ -519,11 +519,11 @@ export default function DeclararPage() {
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="bg-yellow-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-yellow-400 font-bold mb-1">CASILLA 1802 (VENTA)</div>
-                      <div className="text-sm font-bold font-tabular text-yellow-100">{formatCurrency(cryptoTotals.saleValue)}</div>
+                      <div className="text-sm font-bold tabular-nums text-yellow-100">{formatCurrency(cryptoTotals.saleValue)}</div>
                     </div>
                     <div className="bg-yellow-950/50 rounded-lg p-3">
                       <div className="text-[10px] text-yellow-400 font-bold mb-1">CASILLA 1803 (COMPRA)</div>
-                      <div className="text-sm font-bold font-tabular text-yellow-100">{formatCurrency(cryptoTotals.purchaseValue)}</div>
+                      <div className="text-sm font-bold tabular-nums text-yellow-100">{formatCurrency(cryptoTotals.purchaseValue)}</div>
                     </div>
                   </div>
                   <div className="text-[10px] text-muted-foreground">Declaración obligatoria de cada permuta o venta en Revolut.</div>

@@ -150,17 +150,17 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
           </div>
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground/80 uppercase font-bold tracking-wider mb-1">Valor Actual</p>
-            <p className="text-4xl md:text-5xl font-bold text-foreground font-tabular drop-shadow-md">
+            <p className="text-4xl md:text-5xl font-bold text-foreground tabular-nums drop-shadow-md">
               {position.valor_actual !== null ? formatCurrency(position.valor_actual, 'EUR') : "—"}
             </p>
             <div className="flex flex-col md:flex-row items-end justify-end gap-3 mt-1">
               {position.change_percent_24h !== null && (
-                <p className={`text-base font-medium font-tabular flex items-center gap-1 ${position.change_percent_24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                <p className={`text-base font-medium tabular-nums flex items-center gap-1 ${position.change_percent_24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   {position.change_percent_24h >= 0 ? "+" : ""}{position.change_percent_24h.toFixed(2)}% hoy
                 </p>
               )}
               {position.pnl_percent !== null && (
-                <p className={`text-lg font-medium font-tabular flex items-center gap-1 ${position.pnl_percent >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                <p className={`text-lg font-medium tabular-nums flex items-center gap-1 ${position.pnl_percent >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   <span className="text-muted-foreground/60 hidden md:inline">|</span>
                   {position.pnl_percent >= 0 ? <TrendingUp className="h-5 w-5 ml-2" /> : <TrendingDown className="h-5 w-5 ml-2" />}
                   {formatPercent(position.pnl_percent)} global
@@ -183,7 +183,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <span className={`text-sm font-bold font-tabular ${sparklineData.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                <span className={`text-sm font-bold tabular-nums ${sparklineData.isPositive ? "text-emerald-400" : "text-rose-400"}`}>
                   {sparklineData.isPositive ? "+" : ""}{sparklineData.change.toFixed(2)}% 7d
                 </span>
               </div>
@@ -198,14 +198,14 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <Wallet className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Total Invertido</span>
             </div>
-            <p className="text-2xl font-bold text-foreground font-tabular">{formatCurrency(position.coste_total, 'EUR')}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(position.coste_total, 'EUR')}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
               <Sparkles className="h-4 w-4 text-emerald-400" />
               <span className="text-xs font-medium uppercase tracking-wider">Ganado por Mercado</span>
             </div>
-            <p className={`text-2xl font-bold font-tabular ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <p className={`text-2xl font-bold tabular-nums ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
               {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
             </p>
           </div>
@@ -214,14 +214,14 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <Layers className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Participaciones</span>
             </div>
-            <p className="text-2xl font-bold text-foreground font-tabular">{formatUnits(position.unidades)}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatUnits(position.unidades)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
               <CalendarDays className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Operaciones</span>
             </div>
-            <p className="text-2xl font-bold text-foreground font-tabular">{position.num_operaciones}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{position.num_operaciones}</p>
           </div>
         </div>
 
@@ -232,7 +232,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <Zap className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">CAGR</span>
             </div>
-            <p className="text-2xl font-bold text-purple-300 font-tabular">
+            <p className="text-2xl font-bold text-purple-300 tabular-nums">
               {stats.cagr > 0 ? "+" : ""}{stats.cagr.toFixed(2)}%
             </p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Rentabilidad anualizada</p>
@@ -242,7 +242,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <Clock className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Tiempo</span>
             </div>
-            <p className="text-2xl font-bold text-blue-300 font-tabular">{stats.monthsInvested} meses</p>
+            <p className="text-2xl font-bold text-blue-300 tabular-nums">{stats.monthsInvested} meses</p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Desde {stats.firstTxDate?.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }) || '—'}</p>
           </div>
           <div className="bg-gradient-to-br from-amber-950/40 to-zinc-900/60 border border-amber-800/30 rounded-xl p-5 backdrop-blur-sm">
@@ -250,7 +250,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <DollarSign className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Media / Mes</span>
             </div>
-            <p className="text-2xl font-bold text-amber-300 font-tabular">{formatCurrency(stats.avgMonthly, 'EUR')}</p>
+            <p className="text-2xl font-bold text-amber-300 tabular-nums">{formatCurrency(stats.avgMonthly, 'EUR')}</p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Aportación media mensual</p>
           </div>
           <div className="bg-gradient-to-br from-emerald-950/40 to-zinc-900/60 border border-emerald-800/30 rounded-xl p-5 backdrop-blur-sm">
@@ -258,7 +258,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <Award className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Mayor Compra</span>
             </div>
-            <p className="text-2xl font-bold text-emerald-300 font-tabular">{formatCurrency(stats.maxCompra, 'EUR')}</p>
+            <p className="text-2xl font-bold text-emerald-300 tabular-nums">{formatCurrency(stats.maxCompra, 'EUR')}</p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Tu mayor aportación</p>
           </div>
         </div>
@@ -285,7 +285,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                 <Target className="h-5 w-5 text-amber-400" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Precio Medio de Compra</p>
-                  <p className="text-xl font-bold text-foreground font-tabular">{formatCurrency(stats.precioMedio, position.moneda)}</p>
+                  <p className="text-xl font-bold text-foreground tabular-nums">{formatCurrency(stats.precioMedio, position.moneda)}</p>
                 </div>
               </div>
               <div className="flex-1 max-w-md mx-4">
@@ -295,13 +295,13 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                     style={{ width: `${Math.min(100, Math.abs(stats.precioPorcentaje) + 50)}%` }}
                   />
                 </div>
-                <p className={`text-center mt-2 text-sm font-medium font-tabular ${stats.precioPorcentaje >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <p className={`text-center mt-2 text-sm font-medium tabular-nums ${stats.precioPorcentaje >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}% respecto a tu precio medio
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-muted-foreground">Precio Actual</p>
-                <p className="text-xl font-bold text-foreground font-tabular">{formatCurrency(stats.precioActual, position.moneda)}</p>
+                <p className="text-xl font-bold text-foreground tabular-nums">{formatCurrency(stats.precioActual, position.moneda)}</p>
               </div>
             </div>
           </CardContent>
@@ -365,15 +365,15 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                   <div className="pt-4 border-t border-border/50 space-y-4">
                     <div>
                       <p className="text-xs text-muted-foreground/80 uppercase font-medium">De tu bolsillo</p>
-                      <p className="text-lg font-bold text-blue-400 font-tabular">{formatCurrency(finalData?.invested ?? 0)}</p>
+                      <p className="text-lg font-bold text-blue-400 tabular-nums">{formatCurrency(finalData?.invested ?? 0)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground/80 uppercase font-medium">Intereses Generados</p>
-                      <p className="text-lg font-bold text-emerald-400 font-tabular">+{formatCurrency(finalData?.interest ?? 0)}</p>
+                      <p className="text-lg font-bold text-emerald-400 tabular-nums">+{formatCurrency(finalData?.interest ?? 0)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground/80 uppercase font-medium">Capital Final</p>
-                      <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] font-tabular">
+                      <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] tabular-nums">
                         {formatCurrency(finalData?.capital ?? 0)}
                       </p>
                     </div>
@@ -407,15 +407,15 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                             <div className="space-y-2">
                               <div className="flex justify-between gap-6">
                                 <span className="text-purple-400 text-sm">Capital Total</span>
-                                <span className="text-purple-400 text-sm font-bold font-tabular">{formatCurrency(cap)}</span>
+                                <span className="text-purple-400 text-sm font-bold tabular-nums">{formatCurrency(cap)}</span>
                               </div>
                               <div className="flex justify-between gap-6">
                                 <span className="text-blue-400 text-sm">Tu Dinero</span>
-                                <span className="text-blue-400 text-sm font-bold font-tabular">{formatCurrency(inv)}</span>
+                                <span className="text-blue-400 text-sm font-bold tabular-nums">{formatCurrency(inv)}</span>
                               </div>
                               <div className="pt-2 mt-2 border-t border-border flex justify-between gap-6">
                                 <span className="text-emerald-400 text-xs">Intereses</span>
-                                <span className="text-emerald-400 text-xs font-bold font-tabular">+{formatCurrency(cap - inv)}</span>
+                                <span className="text-emerald-400 text-xs font-bold tabular-nums">+{formatCurrency(cap - inv)}</span>
                               </div>
                             </div>
                           </div>
@@ -468,13 +468,13 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
-                    <td className="px-5 py-4 text-right font-tabular text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
-                    <td className="px-5 py-4 text-right font-tabular font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
-                    <td className="px-5 py-4 text-right font-tabular text-muted-foreground/80">
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-muted-foreground/80">
                       {tx.comision > 0 ? formatCurrency(tx.comision, position.moneda) : "—"}
                     </td>
-                    <td className="px-5 py-4 text-right font-tabular">
+                    <td className="px-5 py-4 text-right tabular-nums">
                       {tx.pnlTotal !== null ? (
                         <span className={tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}>
                           {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotal)}
@@ -486,7 +486,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                         <span className="text-muted-foreground/60">—</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-right font-tabular text-muted-foreground">{formatCurrency(tx.accumulated, position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">{formatCurrency(tx.accumulated, position.moneda)}</td>
                   </tr>
                 ))}
                 {transactions.length === 0 && (

@@ -28,7 +28,7 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
               PnL Diario
             </p>
-            <p className={`font-bold text-xl font-tabular leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <p className={`font-bold text-xl tabular-nums leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
               {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.pnl)}`}
             </p>
           </div>

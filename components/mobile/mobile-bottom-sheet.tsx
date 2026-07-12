@@ -215,7 +215,7 @@ export function MobileBottomSheet({
   const isCompra = tipoOp === "Compra"
   const isPending = addTx.isPending || addInvestment.isPending
 
-  const premiumInputClass = "w-full border border-[var(--mobile-line)] bg-[var(--mobile-paper)] px-4 py-4 font-tabular text-xl font-black text-[var(--mobile-ink)] placeholder:text-[var(--mobile-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--mobile-amber)]/25 transition-all"
+  const premiumInputClass = "w-full border border-[var(--mobile-line)] bg-[var(--mobile-paper)] px-4 py-4 tabular-nums text-xl font-black text-[var(--mobile-ink)] placeholder:text-[var(--mobile-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--mobile-amber)]/25 transition-all"
   const labelClass = "mb-2 block text-[10px] font-black uppercase text-[var(--mobile-muted)]"
   const selectClass = "w-full appearance-none border border-[var(--mobile-line)] bg-[var(--mobile-paper)] px-4 py-4 text-sm font-black text-[var(--mobile-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--mobile-amber)]/25 transition-all"
 
@@ -336,7 +336,7 @@ export function MobileBottomSheet({
                                 <p className="truncate text-xs text-[var(--mobile-muted)]">{p.nombre}</p>
                               </div>
                               <div className="flex-shrink-0 text-right">
-                                <p className="font-tabular text-sm font-black text-[var(--mobile-ink)]">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
+                                <p className="tabular-nums text-sm font-black text-[var(--mobile-ink)]">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
                               </div>
                             </motion.button>
                           )

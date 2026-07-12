@@ -57,7 +57,7 @@ export function AssetAlerts({ ticker, moneda, onOpenAlertsModal }: AssetAlertsPr
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="font-bold text-foreground font-tabular">
+                <span className="font-bold text-foreground tabular-nums">
                   {formatCurrency(alert.target_price, moneda)}
                 </span>
                 <button

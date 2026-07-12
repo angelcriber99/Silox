@@ -203,14 +203,14 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
             <div className="flex items-end gap-6 mb-4">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Patrimonio</p>
-                <p className="text-3xl font-bold font-tabular text-foreground">
+                <p className="text-3xl font-bold tabular-nums text-foreground">
                   {hideBalances ? "****" : formatCurrency(displayData.endValue)}
                 </p>
               </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">{displayData.dateLabel}</p>
                 <div className="flex items-baseline gap-2">
-                  <p className={`text-xl font-bold font-tabular ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <p className={`text-xl font-bold tabular-nums ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {displayData.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayData.pnl)}
                   </p>
                   <p className={`text-sm font-medium ${displayData.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>

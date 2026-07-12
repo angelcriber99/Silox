@@ -87,7 +87,7 @@ export function MonthlyChart({ transactions, year }: MonthlyChartProps) {
                           <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                           <span className="text-sm font-medium text-foreground">{entry.name}</span>
                         </div>
-                        <span className="text-sm font-bold font-tabular" style={{ color: entry.color }}>
+                        <span className="text-sm font-bold tabular-nums" style={{ color: entry.color }}>
                           {formatCurrency(entry.value)}
                         </span>
                       </div>

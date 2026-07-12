@@ -119,7 +119,7 @@ export function PortfolioSummary({
                 style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                <span className="text-[16px] font-bold font-tabular">
+                <span className="text-[16px] font-bold tabular-nums">
                   {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
                 </span>
                 <span className="text-[14px] font-semibold opacity-80">
@@ -135,7 +135,7 @@ export function PortfolioSummary({
                 style={{ color: daily24Positive ? "oklch(0.65 0.19 155 / 0.9)" : "oklch(0.62 0.20 20 / 0.9)" }}
               >
                 <span className="text-muted-foreground font-normal">Hoy</span>
-                <span className="font-semibold font-tabular">
+                <span className="font-semibold tabular-nums">
                   {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                 </span>
                 {!hideBalances && (
@@ -220,7 +220,7 @@ export function PortfolioSummary({
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-xl md:text-2xl font-bold font-tabular text-foreground">
+          <p className="text-xl md:text-2xl font-bold tabular-nums text-foreground">
             <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
           </p>
           <p className="text-xs text-muted-foreground/60">
@@ -245,7 +245,7 @@ export function PortfolioSummary({
             </div>
           </div>
           <p
-            className="text-xl md:text-2xl font-bold font-tabular"
+            className="text-xl md:text-2xl font-bold tabular-nums"
             style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
           >
             <AnimatedNumber value={totals.totalPnl} format="pnl" hide={hideBalances} />
@@ -270,7 +270,7 @@ export function PortfolioSummary({
             </div>
           </div>
           <p
-            className="text-xl md:text-2xl font-bold font-tabular"
+            className="text-xl md:text-2xl font-bold tabular-nums"
             style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
           >
             <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
@@ -300,7 +300,7 @@ export function PortfolioSummary({
                     : topDailyAsset.ticker.split(".")[0]}
                 </p>
               </Link>
-              <p className={`text-xs font-semibold font-tabular ${(topDailyAsset.change_amount_24h || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              <p className={`text-xs font-semibold tabular-nums ${(topDailyAsset.change_amount_24h || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                 {hideBalances ? "••••" : formatPnl(topDailyAsset.change_amount_24h || 0)} hoy
               </p>
             </>
@@ -331,7 +331,7 @@ export function PortfolioSummary({
                       ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
                       : p.ticker.split(".")[0]}
                   </span>
-                  <span className={`text-[11px] font-bold font-tabular flex items-center ${isGain ? "text-emerald-400" : "text-rose-400"}`}>
+                  <span className={`text-[11px] font-bold tabular-nums flex items-center ${isGain ? "text-emerald-400" : "text-rose-400"}`}>
                     {isGain ? "+" : ""}{formatCurrency(p.change_amount_24h || 0)}
                   </span>
                 </Link>

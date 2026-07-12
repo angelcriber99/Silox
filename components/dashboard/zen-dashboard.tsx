@@ -237,7 +237,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
         >
           <div className="flex items-center gap-2 text-muted-foreground/40">
             <Clock className="w-4 h-4" />
-            <span className="text-sm font-medium tracking-widest font-tabular">
+            <span className="text-sm font-medium tracking-widest tabular-nums">
               {time.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
           </div>
@@ -261,7 +261,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
             {memeMode ? "🚀 TO THE MOON PORTFOLIO 🚀" : "Valor del Portfolio"}
           </p>
-          <h1 className={`text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold font-tabular tracking-tighter leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'} ${memeMode ? 'drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]' : ''}`}>
+          <h1 className={`text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold tabular-nums tracking-tighter leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'} ${memeMode ? 'drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]' : ''}`}>
             <ZenLiveValue value={totals.totalValue} formatter={formatCurrency} glow={true} />
           </h1>
         </motion.div>
@@ -273,7 +273,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           transition={{ delay: 0.3 }}
           className="flex items-center gap-4 mb-12"
         >
-          <div className={`flex items-center gap-2 text-2xl md:text-4xl font-bold font-tabular ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+          <div className={`flex items-center gap-2 text-2xl md:text-4xl font-bold tabular-nums ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
             {isPositive ? <TrendingUp className="w-6 h-6 md:w-8 md:h-8" /> : <TrendingDown className="w-6 h-6 md:w-8 md:h-8" />}
             <ZenLiveValue
               value={totals.totalPnl24h}
@@ -281,7 +281,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
               glow={true}
             />
           </div>
-          <div className={`px-4 py-2 rounded-2xl text-lg md:text-2xl font-bold font-tabular border backdrop-blur-sm ${
+          <div className={`px-4 py-2 rounded-2xl text-lg md:text-2xl font-bold tabular-nums border backdrop-blur-sm ${
             isPositive
               ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400"
               : "bg-rose-500/5 border-rose-500/20 text-rose-400"
@@ -393,11 +393,11 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                           : "bg-rose-500/5 border-rose-500/15 text-rose-400"
                       }`}>
                         <TrendIcon className="w-3.5 h-3.5" />
-                        <span className="text-[13px] font-bold font-tabular">
+                        <span className="text-[13px] font-bold tabular-nums">
                           {formatPercent(percent)}
                         </span>
                       </div>
-                      <span className={`text-[12px] font-medium font-tabular w-[80px] text-right ${isPosPositive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
+                      <span className={`text-[12px] font-medium tabular-nums w-[80px] text-right ${isPosPositive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
                         {pnl24h >= 0 ? "+" : ""}{formatCurrency(pnl24h)}
                       </span>
                     </div>

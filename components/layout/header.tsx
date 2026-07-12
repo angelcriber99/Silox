@@ -68,7 +68,7 @@ export function Header() {
                   <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider">
                     Portfolio
                   </p>
-                  <p className="text-sm font-bold font-tabular text-foreground">
+                  <p className="text-sm font-bold tabular-nums text-foreground">
                     {hideBalances ? "****" : formatCurrency(totals.totalValue)}
                   </p>
                 </div>
@@ -76,7 +76,7 @@ export function Header() {
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                     P&L
                   </p>
-                  <p className={`text-sm font-bold font-tabular ${pnlColor}`}>
+                  <p className={`text-sm font-bold tabular-nums ${pnlColor}`}>
                     {hideBalances ? "****" : `${formatPnl(totals.totalPnl)} (${formatPercent(totals.totalPnlPercent)})`}
                   </p>
                 </div>

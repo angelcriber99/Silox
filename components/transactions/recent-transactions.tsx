@@ -88,7 +88,7 @@ export function RecentTransactions() {
                         {isCompra ? "Compra" : isDividendo ? "Dividendo" : "Venta"}
                       </span>
                       <span className="text-xs text-muted-foreground/80">·</span>
-                      <span className="text-sm font-tabular text-foreground/80">
+                      <span className="text-sm tabular-nums text-foreground/80">
                         {ticker.split('.')[0]}
                         {ticker.includes('.') && !isFondo && (
                           <span className="text-muted-foreground/80 text-[10px]">.{ticker.split('.').slice(1).join('.')}</span>
@@ -108,7 +108,7 @@ export function RecentTransactions() {
                   {/* Value + date */}
                   <div className="text-right flex-shrink-0">
                     <p
-                      className={`text-sm font-tabular font-medium ${
+                      className={`text-sm tabular-nums font-medium ${
                         isCompra ? "text-emerald-400" : isDividendo ? "text-violet-400" : "text-rose-400"
                       }`}
                     >

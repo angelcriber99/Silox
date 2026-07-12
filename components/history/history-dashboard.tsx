@@ -107,7 +107,7 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-tabular">{formatCurrency(kpis.invertido)}</div>
+            <div className="text-2xl font-bold tabular-nums">{formatCurrency(kpis.invertido)}</div>
             <p className="text-xs text-muted-foreground mt-1">Capital aportado</p>
           </CardContent>
         </Card>
@@ -120,7 +120,7 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-tabular">{formatCurrency(kpis.retirado)}</div>
+            <div className="text-2xl font-bold tabular-nums">{formatCurrency(kpis.retirado)}</div>
             <p className="text-xs text-muted-foreground mt-1">Ventas brutas</p>
           </CardContent>
         </Card>
@@ -133,7 +133,7 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold font-tabular ${kpis.ganancias >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            <div className={`text-2xl font-bold tabular-nums ${kpis.ganancias >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
               {kpis.ganancias > 0 ? "+" : ""}{formatCurrency(kpis.ganancias)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Beneficio neto en ventas (FIFO)</p>
@@ -148,7 +148,7 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-tabular text-amber-400">
+            <div className="text-2xl font-bold tabular-nums text-amber-400">
               +{formatCurrency(kpis.dividendos)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Ingresos pasivos</p>
@@ -206,18 +206,18 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="flex flex-col gap-1">
                         <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest">Comprado</span>
-                        <span className="font-tabular font-semibold text-[15px]">{formatCurrency(asset.comprado)}</span>
+                        <span className="tabular-nums font-semibold text-[15px]">{formatCurrency(asset.comprado)}</span>
                       </div>
                       <div className="flex flex-col gap-1">
                         <span className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest">Vendido</span>
-                        <span className="font-tabular font-semibold text-[15px]">{formatCurrency(asset.vendido)}</span>
+                        <span className="tabular-nums font-semibold text-[15px]">{formatCurrency(asset.vendido)}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t border-white/5 mt-auto">
                     <span className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-widest">Beneficio</span>
-                    <span className={`font-tabular font-bold text-[15px] ${totalGain > 0 ? 'text-emerald-400' : totalGain < 0 ? 'text-rose-400' : 'text-muted-foreground'}`}>
+                    <span className={`tabular-nums font-bold text-[15px] ${totalGain > 0 ? 'text-emerald-400' : totalGain < 0 ? 'text-rose-400' : 'text-muted-foreground'}`}>
                       {totalGain > 0 ? "+" : ""}{formatCurrency(totalGain)}
                     </span>
                   </div>

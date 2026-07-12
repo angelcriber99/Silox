@@ -219,7 +219,7 @@ export function Projections() {
                 <p className="text-[11px] font-bold uppercase tracking-widest text-primary/80 mb-2">
                   {milestone.label}
                 </p>
-                <p className="text-xl md:text-2xl font-extrabold text-foreground mb-1 font-tabular">
+                <p className="text-xl md:text-2xl font-extrabold text-foreground mb-1 tabular-nums">
                   {formatCurrency(milestone.data.total)}
                 </p>
               </div>
@@ -300,15 +300,15 @@ export function Projections() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center text-sm font-semibold">
                             <span className="text-muted-foreground">Capital Aportado</span>
-                            <span className="text-blue-500 font-tabular">{formatCurrency(data.contributed)}</span>
+                            <span className="text-blue-500 tabular-nums">{formatCurrency(data.contributed)}</span>
                           </div>
                           <div className="flex justify-between items-center text-sm font-semibold">
                             <span className="text-muted-foreground">Interés Pasivo</span>
-                            <span className="text-emerald-500 font-tabular">+{formatCurrency(data.interest)}</span>
+                            <span className="text-emerald-500 tabular-nums">+{formatCurrency(data.interest)}</span>
                           </div>
                           <div className="pt-2 mt-2 border-t border-border/50 flex justify-between items-center text-sm font-bold">
                             <span className="text-foreground">Total</span>
-                            <span className="text-foreground font-tabular">{formatCurrency(data.total)}</span>
+                            <span className="text-foreground tabular-nums">{formatCurrency(data.total)}</span>
                           </div>
                         </div>
                       </div>

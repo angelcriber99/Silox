@@ -82,27 +82,27 @@ export function StockExtendedStats({ ticker, moneda, precioActual }: StockExtend
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-muted-foreground font-medium mb-1">Market Cap</p>
-                <p className="text-xl font-bold text-foreground font-tabular">{quote.marketCap || "—"}</p>
+                <p className="text-xl font-bold text-foreground tabular-nums">{quote.marketCap || "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium mb-1">P/E Ratio</p>
-                <p className="text-xl font-bold text-foreground font-tabular">{quote.peRatio || "—"}</p>
+                <p className="text-xl font-bold text-foreground tabular-nums">{quote.peRatio || "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium mb-1">EPS (TTM)</p>
-                <p className="text-xl font-bold text-foreground font-tabular">{quote.eps || "—"}</p>
+                <p className="text-xl font-bold text-foreground tabular-nums">{quote.eps || "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium mb-1">Div Yield</p>
-                <p className="text-xl font-bold text-foreground font-tabular">{quote.divYield || "0.00%"}</p>
+                <p className="text-xl font-bold text-foreground tabular-nums">{quote.divYield || "0.00%"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium mb-1">Forward P/E</p>
-                <p className="text-lg font-bold text-foreground/80 font-tabular">{quote.forwardPE || "—"}</p>
+                <p className="text-lg font-bold text-foreground/80 tabular-nums">{quote.forwardPE || "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium mb-1">Volumen</p>
-                <p className="text-lg font-bold text-foreground/80 font-tabular">{quote.volume || "—"}</p>
+                <p className="text-lg font-bold text-foreground/80 tabular-nums">{quote.volume || "—"}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-sm text-muted-foreground font-medium mb-2">Rango 52 Semanas</p>
@@ -118,13 +118,13 @@ export function StockExtendedStats({ ticker, moneda, precioActual }: StockExtend
                          style={{ left: `${rangePercent}%` }}
                        />
                     </div>
-                    <div className="flex justify-between text-xs font-medium text-muted-foreground font-tabular">
+                    <div className="flex justify-between text-xs font-medium text-muted-foreground tabular-nums">
                       <span>{formatCurrency(low, moneda)}</span>
                       <span>{formatCurrency(high, moneda)}</span>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-lg font-bold text-foreground/80 font-tabular">—</p>
+                  <p className="text-lg font-bold text-foreground/80 tabular-nums">—</p>
                 )}
               </div>
             </div>
@@ -151,7 +151,7 @@ export function StockExtendedStats({ ticker, moneda, precioActual }: StockExtend
               {financials?.targetMeanPrice && (
                 <div>
                   <p className="text-sm text-muted-foreground font-medium mb-1">Precio Objetivo Medio</p>
-                  <p className="text-2xl font-bold text-foreground font-tabular">
+                  <p className="text-2xl font-bold text-foreground tabular-nums">
                     {formatCurrency(financials.targetMeanPrice, financials.financialCurrency || moneda)}
                   </p>
                   {current > 0 && (

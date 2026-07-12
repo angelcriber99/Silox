@@ -295,16 +295,16 @@ export default function MovimientosPage() {
                             <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">{tx.activo?.nombre}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80">
+                        <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80">
                           {hideBalances ? "****" : formatUnits(tx.cantidad)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-foreground/80">
+                        <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80">
                           {hideBalances ? "****" : tx.precio_unitario.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-tabular text-muted-foreground/80">
+                        <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-muted-foreground/80">
                           {hideBalances ? "****" : (tx.comision > 0 ? formatCurrency(tx.comision, tx.activo?.moneda || "EUR") : "0,00")}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-right font-tabular font-medium ${
+                        <td className={`px-6 py-4 whitespace-nowrap text-right tabular-nums font-medium ${
                           isCompra ? "text-emerald-400" : isDividendo ? "text-violet-400" : "text-rose-400"
                         }`}>
                           {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
@@ -390,10 +390,10 @@ export default function MovimientosPage() {
 
                      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                         <div className="flex flex-col items-end min-w-0">
-                           <span className={`text-[14px] font-bold font-tabular leading-tight truncate max-w-[100px] xs:max-w-[130px] ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
+                           <span className={`text-[14px] font-bold tabular-nums leading-tight truncate max-w-[100px] xs:max-w-[130px] ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
                              {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
                            </span>
-                           <span className="text-[10px] font-medium text-muted-foreground/80 font-tabular mt-0.5 truncate max-w-[100px] xs:max-w-[130px]">
+                           <span className="text-[10px] font-medium text-muted-foreground/80 tabular-nums mt-0.5 truncate max-w-[100px] xs:max-w-[130px]">
                              {hideBalances ? "****" : `${formatUnits(tx.cantidad)} × ${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`}
                            </span>
                         </div>

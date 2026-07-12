@@ -391,7 +391,7 @@ export function EditTransactionModal({
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground/80">Valor total</span>
                 <span
-                  className={`text-lg font-bold font-tabular ${
+                  className={`text-lg font-bold tabular-nums ${
                     isCompra ? "text-emerald-400" : "text-rose-400"
                   }`}
                 >
@@ -404,7 +404,7 @@ export function EditTransactionModal({
             <div className="rounded-lg bg-violet-500/10 border border-violet-500/20 px-4 py-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-violet-300/80">Rendimiento Neto</span>
-                <span className="text-lg font-bold font-tabular text-violet-400">
+                <span className="text-lg font-bold tabular-nums text-violet-400">
                   {formatCurrency(precioNum - (parseFloat(comision) || 0) - (parseFloat(retencionOrigen) || 0) - (parseFloat(retencionDestino) || 0))}
                 </span>
               </div>

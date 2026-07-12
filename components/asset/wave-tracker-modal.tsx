@@ -156,7 +156,7 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
           {/* Precio Actual Info */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50">
             <span className="text-sm font-medium text-muted-foreground">Precio Actual</span>
-            <span className="font-tabular font-bold text-lg">
+            <span className="tabular-nums font-bold text-lg">
               {currentPrice.toFixed(2)} {currencySymbol}
             </span>
           </div>
@@ -175,7 +175,7 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
                   placeholder="Ej: 45.50" 
                   value={newWavePrice} 
                   onChange={e => setNewWavePrice(e.target.value)}
-                  className="font-tabular pr-8"
+                  className="tabular-nums pr-8"
                   type="number"
                   step="0.01"
                 />
@@ -231,7 +231,7 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
                           <span className={`text-xs font-bold uppercase tracking-wider ${isSell ? 'text-emerald-500' : 'text-rose-500'}`}>
                             {isSell ? 'Toma de Beneficios' : 'Comprar Caída'}
                           </span>
-                          <span className="font-tabular font-semibold">
+                          <span className="tabular-nums font-semibold">
                             {wave.price.toFixed(2)} {currencySymbol}
                           </span>
                         </div>

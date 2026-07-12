@@ -258,7 +258,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                         <div className="mt-1">
                           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Rendimiento Hoy</p>
                           <div className="flex items-baseline gap-2">
-                            <p className={`text-2xl font-bold font-tabular ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <p className={`text-2xl font-bold tabular-nums ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {d.pnlAmount24h > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.pnlAmount24h)}
                             </p>
                             <p className={`text-sm font-medium ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -326,7 +326,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
                               <p className="text-sm font-bold text-foreground uppercase tracking-wider">{d.name}</p>
                             </div>
-                            <p className="text-2xl font-bold font-tabular text-foreground">
+                            <p className="text-2xl font-bold tabular-nums text-foreground">
                               {hideBalances ? "****" : formatCurrency(d.value)}
                             </p>
                             <p className="text-sm font-medium text-muted-foreground mt-1">
@@ -343,7 +343,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-500 group-hover:scale-110 z-0">
                 <div className="text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Total</p>
-                  <p className="text-2xl font-bold font-tabular text-foreground drop-shadow-md">
+                  <p className="text-2xl font-bold tabular-nums text-foreground drop-shadow-md">
                     {hideBalances ? "****" : formatCurrency(totals.totalValue > 0 ? totals.totalValue : chartData.total)}
                   </p>
                   {!hideBalances && (
@@ -399,15 +399,15 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                   </div>
                   <div className="text-right flex-shrink-0 flex items-center">
                     <div className="flex flex-col items-end">
-                      <p className="text-base font-bold font-tabular text-foreground">
+                      <p className="text-base font-bold tabular-nums text-foreground">
                         {hideBalances ? "****" : formatCurrency(d.value)}
                       </p>
                       {d.originalName === 'Liquidez' && pendingCashEur > 0 && !hideBalances && (
-                        <p className="text-[10px] font-medium font-tabular text-amber-400 mt-0.5">
+                        <p className="text-[10px] font-medium tabular-nums text-amber-400 mt-0.5">
                           -{formatCurrency(pendingCashEur)} en uso
                         </p>
                       )}
-                      <p className="text-xs font-medium font-tabular text-muted-foreground mt-0.5">
+                      <p className="text-xs font-medium tabular-nums text-muted-foreground mt-0.5">
                         {d.percent.toFixed(1)}%
                       </p>
                     </div>
@@ -601,7 +601,7 @@ function PerformanceBackFace({ currentTotalValue, currentPnl24h, currentTotalCos
         
         {/* Top Left: Numbers */}
         <div className="flex flex-col flex-1">
-          <p className="text-2xl sm:text-3xl font-bold font-tabular text-foreground leading-none">
+          <p className="text-2xl sm:text-3xl font-bold tabular-nums text-foreground leading-none">
             {hideBalances ? "****" : formatCurrency(displayPoint?.value || 0)}
           </p>
           <div className="flex flex-wrap items-center gap-2 mt-2">
