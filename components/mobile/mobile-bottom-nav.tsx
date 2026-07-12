@@ -2,37 +2,50 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Plus, UserCircle, ArrowLeftRight, LineChart } from "lucide-react"
-import { hapticFeedback } from "@/lib/utils/haptics"
 import { motion } from "framer-motion"
+import { hapticFeedback } from "@/lib/utils/haptics"
+import {
+  LayoutDashboard,
+  LineChart,
+  Plus,
+  ArrowLeftRight,
+  UserCircle,
+} from "lucide-react"
 
 interface MobileBottomNavProps {
   onAddPress: () => void
 }
 
 const tabs = [
-  { name: "Inicio",      href: "/",           icon: LayoutDashboard },
-  { name: "Análisis",    href: "/analisis",    icon: LineChart },
-  { name: "Añadir",      href: "#",            icon: Plus, isFab: true },
-  { name: "Movimientos", href: "/movimientos", icon: ArrowLeftRight },
-  { name: "Perfil",      href: "/settings",    icon: UserCircle },
+  { name: "Cartera",     href: "/",           lucideIcon: LayoutDashboard, label: "Cartera" },
+  { name: "Análisis",    href: "/analisis",    lucideIcon: LineChart,       label: "Análisis" },
+  { name: "fab",         href: "#",            lucideIcon: Plus,            label: "Añadir",    isFab: true },
+  { name: "Movimientos", href: "/movimientos", lucideIcon: ArrowLeftRight,  label: "Historial" },
+  { name: "Perfil",      href: "/settings",    lucideIcon: UserCircle,      label: "Yo" },
 ]
 
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
 
   return (
-    <div
-      className="md:hidden fixed z-50 bottom-0 left-0 right-0"
-    >
-      <div 
-        className="absolute inset-0 bg-background/80 backdrop-blur-xl border-t border-border/40"
+    <div className="md:hidden fixed z-50 bottom-0 left-0 right-0">
+      {/* Frosted glass background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "rgba(0,0,0,0.82)",
+          backdropFilter: "blur(40px) saturate(180%)",
+          WebkitBackdropFilter: "blur(40px) saturate(180%)",
+          borderTop: "0.5px solid rgba(255,255,255,0.12)",
+        }}
       />
 
-      <div 
-        className="relative flex items-center justify-around w-full h-[64px]"
+      {/* Tab row */}
+      <div
+        className="relative flex items-end justify-around w-full"
         style={{
-          paddingTop: "4px"
+          height: "calc(52px + env(safe-area-inset-bottom, 0px))",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
         {tabs.map((tab) => {
@@ -40,55 +53,74 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
 
           if (tab.isFab) {
             return (
-              <div key="fab-container" className="relative flex justify-center items-center px-2">
+              <div key="fab" className="flex justify-center items-center pb-1">
                 <motion.button
                   whileTap={{ scale: 0.88 }}
-                  whileHover={{ scale: 1.04 }}
                   onClick={() => {
                     hapticFeedback.heavy()
                     onAddPress()
                   }}
-                  className="flex items-center justify-center outline-none z-50 h-14 w-14 rounded-full shadow-lg shadow-primary/25"
-                  style={{ background: "var(--primary)" }}
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    background: "#30D158",
+                    boxShadow: "0 4px 20px rgba(48,209,88,0.40)",
+                  }}
                   aria-label="Añadir transacción"
                 >
-                  <Plus className="h-7 w-7 stroke-[2.5]" style={{ color: "var(--primary-foreground)" }} />
+                  <Plus
+                    className="h-6 w-6"
+                    strokeWidth={2.5}
+                    style={{ color: "#000000" }}
+                  />
                 </motion.button>
               </div>
             )
           }
+
+          const Icon = tab.lucideIcon
 
           return (
             <Link
               key={tab.name}
               href={tab.href}
               onClick={() => hapticFeedback.light()}
-              className="relative flex flex-col items-center justify-center min-w-[56px] h-12"
+              className="relative flex flex-col items-center justify-end gap-[3px] pb-2"
+              style={{ minWidth: 56, paddingTop: 6 }}
               aria-label={tab.name}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="activeBottomTab"
-                  className="absolute inset-0 rounded-2xl bg-muted/60"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                />
-              )}
+              {/* Icon */}
               <motion.div
-                className="relative z-10 flex items-center justify-center"
                 animate={{
-                  scale: isActive ? 1.05 : 1,
+                  scale: isActive ? 1.08 : 1,
                   y: isActive ? -1 : 0,
                 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
               >
-                <tab.icon
-                  className="h-6 w-6 transition-colors duration-200"
-                  strokeWidth={isActive ? 2.5 : 2}
+                <Icon
                   style={{
-                    color: isActive ? "var(--foreground)" : "var(--muted-foreground)",
+                    width: 24,
+                    height: 24,
+                    strokeWidth: isActive ? 2.2 : 1.8,
+                    color: isActive ? "#30D158" : "rgba(255,255,255,0.45)",
+                    transition: "color 0.2s ease",
                   }}
                 />
               </motion.div>
+
+              {/* Active dot indicator */}
+              <motion.div
+                animate={{ opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0.4 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: 2,
+                  background: "#30D158",
+                }}
+              />
             </Link>
           )
         })}
