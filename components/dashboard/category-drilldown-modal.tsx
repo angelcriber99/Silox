@@ -37,6 +37,10 @@ export function CategoryDrilldownModal({
   }).sort((a, b) => ((b.valor_actual ?? b.coste_total) - (a.valor_actual ?? a.coste_total)))
 
   const totalValue = categoryPositions.reduce((sum, p) => sum + (p.valor_actual ?? p.coste_total), 0)
+  const totalCost = categoryPositions.reduce((sum, p) => sum + p.coste_total_eur, 0)
+  const totalPnl = totalValue - totalCost
+  const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
+  const isPnlPositive = totalPnl >= 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,11 +50,35 @@ export function CategoryDrilldownModal({
             <Layers className="w-5 h-5 text-purple-400" />
             {categoryName}
           </DialogTitle>
-          <div className="mt-2 text-sm text-muted-foreground flex items-baseline gap-2">
-            <span className="font-semibold text-foreground text-2xl tracking-tight">
-              {hideBalances ? "****" : formatCurrency(totalValue)}
-            </span>
-            <span>Total en activos</span>
+          <div className="mt-4 flex flex-col gap-3">
+            <div className="flex items-baseline gap-2">
+              <span className="font-semibold text-foreground text-3xl tracking-tight">
+                {hideBalances ? "****" : formatCurrency(totalValue)}
+              </span>
+              <span className="text-sm text-muted-foreground font-medium">Total en activos</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-1">
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Invertido</span>
+                <span className="font-medium text-sm text-foreground">
+                  {hideBalances ? "****" : formatCurrency(totalCost)}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ganado (Total)</span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`font-medium text-sm ${isPnlPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {hideBalances ? "****" : `${isPnlPositive ? '+' : ''}${formatCurrency(totalPnl)}`}
+                  </span>
+                  {!hideBalances && (
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isPnlPositive ? 'bg-emerald-400/10 text-emerald-400' : 'bg-rose-400/10 text-rose-400'}`}>
+                      {isPnlPositive ? '+' : ''}{formatPercent(totalPnlPercent)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </DialogHeader>
         
