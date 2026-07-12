@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useTransactions, useDeleteTransaction } from "@/lib/hooks/use-transactions"
 import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
-import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Trash2, Search, Filter, Scale } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Search, Filter, Scale } from "lucide-react"
 import { toast } from "sonner"
 import type { Transaccion } from '@/lib/types'
 import { EditTransactionModal } from "@/components/transactions/edit-transaction-modal"
@@ -98,32 +98,25 @@ export default function MovimientosPage() {
       <div className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 pb-10 space-y-5 md:space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 18px)' }}>
         
         {/* ── Page Header ────────────────────────────────────────── */}
-        <div className="mobile-panel md:bg-transparent md:border-0 md:shadow-none flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 p-4 md:p-0">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-3">
-              <div
-                className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
-              >
-                <History className="h-5 w-5" style={{ color: "var(--primary)" }} />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-normal" style={{ color: "var(--foreground)" }}>
-                Movimientos
-              </h1>
-            </div>
-            <p className="text-xs md:text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
-              Historial completo de operaciones y contabilidad personal.
+        <div className="flex items-start justify-between gap-4 md:items-center">
+          <div className="min-w-0">
+            <p className="mobile-caption mb-1">Historial financiero</p>
+            <h1 className="text-[32px] font-black leading-tight tracking-normal text-foreground sm:text-4xl">
+              Movimientos
+            </h1>
+            <p className="mt-1 max-w-[240px] text-xs font-semibold text-muted-foreground md:max-w-none md:text-sm">
+              Operaciones, dividendos y contabilidad personal.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex shrink-0 items-center gap-2">
             <ExportExcelButton 
               transactions={transactions || []} 
               positions={positions || []} 
             />
             <Link 
               href="/declarar" 
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all"
+              className="mobile-focus-ring inline-flex h-10 w-10 items-center justify-center rounded-lg font-bold transition-all md:h-auto md:w-auto md:gap-2 md:px-4 md:py-2.5"
               style={{
                 background: "oklch(0.68 0.17 192 / 0.10)",
                 border: "1px solid oklch(0.68 0.17 192 / 0.25)",
@@ -131,16 +124,13 @@ export default function MovimientosPage() {
               }}
             >
               <Scale className="h-4 w-4" />
-              Declarar
+              <span className="hidden md:inline">Declarar</span>
             </Link>
           </div>
         </div>
 
         {/* ── Filters ──────────────────────────────────────────────── */}
-        <div
-          className="mobile-panel flex flex-col gap-3 p-3 md:p-4"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-        >
+        <div className="mobile-panel-muted flex flex-col gap-3 p-2.5 md:p-4">
           {/* Search */}
           <div className="relative w-full">
             <Search
@@ -151,12 +141,16 @@ export default function MovimientosPage() {
               placeholder="Buscar por activo o ticker..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-full h-11 rounded-lg"
+              className="h-12 w-full rounded-lg pl-10 pr-11 font-semibold"
               style={{
                 background: "var(--background)",
                 border: "1px solid var(--border)",
                 color: "var(--foreground)",
               }}
+            />
+            <Filter
+              className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
+              style={{ color: "var(--muted-foreground)", opacity: 0.7 }}
             />
           </div>
 
@@ -166,7 +160,7 @@ export default function MovimientosPage() {
               <button
                 key={opt}
                 onClick={() => setTypeFilter(opt)}
-                className="flex-shrink-0 px-3.5 py-2 rounded-md text-xs font-black uppercase tracking-[0.04em] transition-all"
+                className="flex-shrink-0 rounded-md px-3.5 py-2 text-xs font-black uppercase tracking-[0.04em] transition-all"
                 style={{
                   background: typeFilter === opt ? "oklch(0.68 0.17 192 / 0.12)" : "var(--muted)",
                   border: typeFilter === opt ? "1px solid oklch(0.68 0.17 192 / 0.30)" : "1px solid transparent",
@@ -382,61 +376,88 @@ export default function MovimientosPage() {
                    : "—"
 
                  return (
-                   <div key={tx.id} className="space-y-2">
-                   {showMonthHeader && (
-                     <div className="flex items-center gap-2 px-1 pt-2">
-                       <span className="mobile-caption">{monthLabel}</span>
-                       <span className="h-px flex-1 bg-border/50" />
-                     </div>
-                   )}
-                   <div className="mobile-panel relative flex items-center justify-between p-3.5 pl-4 transition-colors active:bg-muted/40">
-                     <span
-                       className={`absolute left-0 top-3 bottom-3 w-1 rounded-r ${isCompra ? "bg-emerald-500" : isDividendo ? "bg-violet-500" : "bg-rose-500"}`}
-                     />
-                     <div className="flex items-center gap-3 overflow-hidden">
-                       <div className={`flex-shrink-0 h-11 w-11 rounded-lg flex items-center justify-center ${
-                          isCompra ? "bg-emerald-500/10 text-emerald-400" : isDividendo ? "bg-violet-500/10 text-violet-400" : "bg-rose-500/10 text-rose-400"
-                        }`}>
-                          {isCompra ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-black text-foreground text-[15px] truncate">{ticker}</span>
-                          <span className="text-[11px] font-bold text-muted-foreground/80 truncate">
-                            {tx.tipo_operacion} • {date}
-                            {tx.estado === "Pendiente" && (
-                              <span className="ml-1.5 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                Pendiente
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                     </div>
+                   <div key={tx.id}>
+                     {showMonthHeader && (
+                       <div className="grid grid-cols-[54px_1fr] items-center pt-3">
+                         <div className="flex justify-center">
+                           <span className="h-2 w-2 rounded-full bg-primary" />
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <span className="mobile-caption">{monthLabel}</span>
+                           <span className="h-px flex-1 bg-border/50" />
+                         </div>
+                       </div>
+                     )}
+                     <div className="grid grid-cols-[54px_1fr]">
+                       <div className="relative flex justify-center">
+                         <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border/60" />
+                         <span
+                           className={`relative mt-4 flex h-10 w-10 items-center justify-center rounded-lg border ${
+                            isCompra ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400" : isDividendo ? "border-violet-500/25 bg-violet-500/10 text-violet-400" : "border-rose-500/25 bg-rose-500/10 text-rose-400"
+                          }`}
+                         >
+                           {isCompra ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
+                         </span>
+                       </div>
 
-                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                        <div className="flex flex-col items-end min-w-0">
-                           <span className={`mobile-value text-[14px] font-black leading-tight truncate max-w-[112px] ${isCompra ? "text-foreground" : isDividendo ? "text-violet-400" : "text-emerald-400"}`}>
-                             {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
-                           </span>
-                           <span className="mobile-value text-[10px] font-bold text-muted-foreground/80 mt-0.5 truncate max-w-[112px]">
-                             {hideBalances ? "****" : `${formatUnits(tx.cantidad)} × ${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`}
-                           </span>
-                        </div>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="p-1 hover:bg-muted rounded-md focus:outline-none flex items-center justify-center">
-                            <MoreHorizontal className="h-4 w-4 text-muted-foreground/60" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
-                            <DropdownMenuItem 
-                              onClick={() => handleEdit(tx)}
-                              className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
-                            >
-                              <Pencil className="h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                       <div className="mobile-panel mb-3 p-3.5 transition-colors active:bg-muted/40">
+                         <div className="mb-3 flex items-start justify-between gap-3">
+                           <div className="min-w-0">
+                             <div className="flex items-center gap-2">
+                               <span className="truncate text-[15px] font-black text-foreground">{ticker}</span>
+                               <span
+                                 className={`rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] ${
+                                  isCompra ? "bg-emerald-500/10 text-emerald-400" : isDividendo ? "bg-violet-500/10 text-violet-400" : "bg-rose-500/10 text-rose-400"
+                                }`}
+                               >
+                                 {tx.tipo_operacion}
+                               </span>
+                             </div>
+                             <p className="mt-1 truncate text-[11px] font-semibold text-muted-foreground/80">
+                               {tx.activo?.nombre || "Activo"} • {date}
+                             </p>
+                           </div>
+
+                           <DropdownMenu>
+                             <DropdownMenuTrigger className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted focus:outline-none">
+                               <MoreHorizontal className="h-4 w-4 text-muted-foreground/70" />
+                             </DropdownMenuTrigger>
+                             <DropdownMenuContent align="end" className="bg-card border-border text-foreground/90 min-w-[140px]">
+                               <DropdownMenuItem
+                                 onClick={() => handleEdit(tx)}
+                                 className="hover:bg-muted focus:bg-muted cursor-pointer flex items-center gap-2"
+                               >
+                                 <Pencil className="h-4 w-4" /> Editar
+                               </DropdownMenuItem>
+                             </DropdownMenuContent>
+                           </DropdownMenu>
+                         </div>
+
+                         <div className="flex items-end justify-between gap-3">
+                           <div>
+                             <p className="mobile-caption">Unidades</p>
+                             <p className="mobile-value mt-0.5 text-[12px] font-black text-foreground">
+                               {hideBalances ? "****" : formatUnits(tx.cantidad)}
+                             </p>
+                           </div>
+                           <div className="min-w-0 text-right">
+                             <p className="mobile-caption">Importe</p>
+                             <p className={`mobile-value mt-0.5 truncate text-[16px] font-black ${isCompra ? "text-foreground" : isDividendo ? "text-violet-400" : "text-emerald-400"}`}>
+                               {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
+                             </p>
+                             <p className="mobile-value mt-0.5 truncate text-[10px] font-bold text-muted-foreground/80">
+                               {hideBalances ? "****" : `${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })} / ud.`}
+                             </p>
+                           </div>
+                         </div>
+
+                         {tx.estado === "Pendiente" && (
+                           <div className="mt-3 inline-flex rounded bg-amber-500/10 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-amber-500 ring-1 ring-amber-500/20">
+                             Pendiente
+                           </div>
+                         )}
+                       </div>
                      </div>
-                   </div>
                    </div>
                  )
               })

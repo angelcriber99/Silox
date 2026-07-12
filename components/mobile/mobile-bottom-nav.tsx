@@ -11,10 +11,10 @@ interface MobileBottomNavProps {
 
 const tabs = [
   { name: "Inicio",      href: "/",           icon: LayoutDashboard },
-  { name: "Análisis",    href: "/analisis",    icon: LineChart },
-  { name: "Añadir",      href: "#",            icon: Plus, isFab: true },
   { name: "Movimientos", href: "/movimientos", icon: ArrowLeftRight },
-  { name: "Perfil",      href: "/settings",    icon: UserCircle },
+  { name: "Añadir",      href: "#",            icon: Plus, isFab: true },
+  { name: "Análisis",    href: "/analisis",    icon: LineChart },
+  { name: "Ajustes",     href: "/settings",    icon: UserCircle },
 ]
 
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
@@ -63,25 +63,26 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
         }}
       />
 
-      <div
-        className="relative mx-auto mb-[calc(env(safe-area-inset-bottom,0px)+10px)] flex h-[68px] w-[calc(100%-28px)] max-w-[430px] items-center justify-between rounded-lg border border-border/70 bg-background/90 px-2 shadow-[0_18px_48px_oklch(0_0_0/0.34)] backdrop-blur-2xl pointer-events-auto"
-      >
+      <div className="relative mx-auto mb-[calc(env(safe-area-inset-bottom,0px)+10px)] flex h-[76px] w-[calc(100%-24px)] max-w-[430px] items-stretch justify-between rounded-lg border border-border/70 bg-background/90 px-1.5 py-1.5 shadow-[0_18px_48px_oklch(0_0_0/0.34)] backdrop-blur-2xl pointer-events-auto">
         {tabs.map((tab) => {
           const isActive = optimisticPath === tab.href
 
           if (tab.isFab) {
             return (
-              <div key="fab-container" className="relative flex w-[58px] items-center justify-center">
+              <div key="fab-container" className="relative flex min-w-[58px] flex-1 items-center justify-center">
                 <button
                   onClick={() => {
                     hapticFeedback.heavy()
                     onAddPress()
                   }}
-                  className="mobile-focus-ring flex h-[52px] w-[52px] items-center justify-center rounded-lg border border-primary/30 bg-primary text-primary-foreground transition-transform active:scale-95"
+                  className="mobile-focus-ring flex h-full min-h-[62px] w-full flex-col items-center justify-center gap-1 rounded-lg border border-primary/30 bg-primary text-primary-foreground transition-transform active:scale-95"
                   style={{ boxShadow: "0 12px 30px color-mix(in oklch, var(--primary) 34%, transparent)" }}
                   aria-label="Añadir transacción"
                 >
-                  <Plus className="h-6 w-6 stroke-[2.6]" />
+                  <Plus className="h-5 w-5 stroke-[2.8]" />
+                  <span className="max-w-[56px] truncate text-[9px] font-black leading-none tracking-[0.02em]">
+                    Añadir
+                  </span>
                 </button>
               </div>
             )
@@ -95,7 +96,7 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") navigate(tab.href)
               }}
-              className="mobile-focus-ring relative flex h-[54px] min-w-[58px] flex-col items-center justify-center rounded-lg transition-colors active:bg-muted/70"
+              className="mobile-focus-ring relative flex min-h-[62px] min-w-[58px] flex-1 flex-col items-center justify-center rounded-lg transition-colors active:bg-muted/70"
               aria-label={tab.name}
               aria-current={isActive ? "page" : undefined}
             >
@@ -107,6 +108,9 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
                     border: "1px solid color-mix(in oklch, var(--primary) 20%, transparent)",
                   }}
                 />
+              )}
+              {isActive && (
+                <span className="absolute top-1.5 h-0.5 w-6 rounded-full bg-primary" />
               )}
               <div
                 className="relative z-10 transition-transform duration-100 ease-out"

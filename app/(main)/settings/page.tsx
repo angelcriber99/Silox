@@ -185,19 +185,21 @@ export default function SettingsPage() {
       
       {/* ── Sidebar ───────────────────────────────────────── */}
       <aside className="w-full md:w-[240px] shrink-0 flex flex-col">
-        <div className="mobile-panel mb-4 p-4 md:bg-transparent md:border-0 md:p-0 md:shadow-none md:mb-6">
-          <div className="flex items-center gap-3 mb-1.5">
-            <div
-              className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
-            >
-              <Settings className="h-[18px] w-[18px]" style={{ color: "var(--primary)" }} />
+        <div className="mb-5 md:mb-6">
+          <div className="mb-4 flex items-start justify-between gap-4 md:block">
+            <div className="min-w-0">
+              <p className="mobile-caption mb-1">Centro personal</p>
+              <h1 className="text-[32px] font-black leading-tight tracking-normal text-foreground">
+                {t('title')}
+              </h1>
+              <p className="mt-1 max-w-[240px] text-xs font-semibold text-muted-foreground md:max-w-none md:text-sm">
+                Preferencias, privacidad e integraciones.
+              </p>
             </div>
-            <h1 className="text-2xl font-black tracking-normal" style={{ color: "var(--foreground)" }}>
-              {t('title')}
-            </h1>
+            <div className="mobile-panel-muted flex h-10 w-10 shrink-0 items-center justify-center md:hidden">
+              <Settings className="h-[18px] w-[18px] text-primary" />
+            </div>
           </div>
-          <p className="text-xs md:text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>Preferencias personales</p>
         </div>
         
         <nav className="mobile-panel-muted flex md:flex-col gap-1 overflow-x-auto p-1 md:p-0 md:bg-transparent md:border-0 pb-1 md:pb-0 hide-scrollbar snap-x w-full">

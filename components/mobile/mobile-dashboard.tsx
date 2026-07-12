@@ -4,6 +4,7 @@ import { lazy, Suspense, useMemo, useState } from "react"
 import {
   Bell, Eye, EyeOff, TrendingUp, TrendingDown,
   Wallet, FileUp, ArrowUp, ArrowDown, Plus, LineChart, Settings,
+  Search, CalendarDays, PieChart, Activity,
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
@@ -150,6 +151,22 @@ export function MobileDashboard({
 
   const totalPortfolioValue = totals.totalValue
 
+  const strategySplit = useMemo(() => {
+    const relevant = positions.filter(p => p.unidades > 0 && (p.valor_actual ?? 0) > 0)
+    const core = relevant
+      .filter(p => p.estrategia === "Core")
+      .reduce((sum, p) => sum + (p.valor_actual ?? 0), 0)
+    const satellite = Math.max(0, totalPortfolioValue - core)
+    return {
+      core,
+      satellite,
+      corePct: totalPortfolioValue > 0 ? Math.round((core / totalPortfolioValue) * 100) : 0,
+      satellitePct: totalPortfolioValue > 0 ? Math.round((satellite / totalPortfolioValue) * 100) : 0,
+    }
+  }, [positions, totalPortfolioValue])
+
+  const topPositions = useMemo(() => sortedPositions.slice(0, 4), [sortedPositions])
+
   // Movers calculation for real-time impact
   const movers = useMemo(() => {
     return [...positions]
@@ -208,279 +225,282 @@ export function MobileDashboard({
   return (
     <div className="mobile-screen flex min-h-full flex-col">
 
-      {/* ─── Sticky header ─────────────────────────────────────────────── */}
-      <div
-        className="sticky top-0 z-20 border-b border-border/30 bg-background/80"
-        style={{
-          backdropFilter: "blur(22px) saturate(150%)",
-          WebkitBackdropFilter: "blur(22px) saturate(150%)",
-        }}
-      >
-        <div
-          className="relative px-4 pb-3"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
-        >
-          {/* Top row */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex flex-col">
-              <span
-                className="mobile-caption"
-              >
-                Silox Mobile
-              </span>
-              {/* Market status */}
-              <div
-                className={`mt-1 flex items-center gap-1.5 ${isMarketOpen ? "text-positive" : "text-muted-foreground"}`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "animate-pulse" : ""}`}
-                  style={{ background: "currentcolor" }}
-                />
-                <span className="text-[10px] font-black uppercase tracking-[0.12em]">
-                  {getMarketLabel()}
-                </span>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-2">
-              <RevolutSync>
-                <div
-                  className="mobile-panel-muted h-10 w-10 flex items-center justify-center transition-colors"
-                  style={{
-                    color: "var(--muted-foreground)",
-                  }}
-                >
-                  <FileUp className="w-4 h-4" />
-                </div>
-              </RevolutSync>
-
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
-                className="mobile-focus-ring mobile-panel-muted h-10 w-10 flex items-center justify-center transition-colors"
-                style={{
-                  color: "var(--muted-foreground)",
-                }}
-                aria-label="Alertas de precio"
-              >
-                <Bell className="w-4 h-4" />
-              </motion.button>
-
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => {
-                  hapticFeedback.light()
-                  setHideBalances(!hideBalances)
-                }}
-                className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all border ${
-                  hideBalances 
-                    ? "bg-primary/15 border-primary/30 text-primary" 
-                    : "bg-card border-border text-muted-foreground"
-                }`}
-                aria-label={hideBalances ? "Mostrar balances" : "Ocultar balances"}
-              >
-                {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </motion.button>
+      {/* ─── Portfolio cover ───────────────────────────────────────────── */}
+      <section className="px-4 pb-4" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}>
+        <div className="mb-7 flex items-center justify-between">
+          <div>
+            <p className="text-[28px] font-black leading-none tracking-normal text-foreground">Silox</p>
+            <div className={`mt-2 flex items-center gap-1.5 ${isMarketOpen ? "text-positive" : "text-muted-foreground"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isMarketOpen ? "animate-pulse" : ""}`} style={{ background: "currentcolor" }} />
+              <span className="text-[10px] font-black uppercase tracking-[0.12em]">{getMarketLabel()}</span>
             </div>
           </div>
 
-          {/* Main KPI — portfolio value (Scrubbable + double-tap to toggle incognito) */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/movimientos"
+              className="mobile-focus-ring mobile-panel-muted flex h-10 w-10 items-center justify-center"
+              aria-label="Buscar movimientos"
+            >
+              <Search className="h-4 w-4 text-muted-foreground" />
+            </Link>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
+              className="mobile-focus-ring mobile-panel-muted flex h-10 w-10 items-center justify-center"
+              aria-label="Alertas de precio"
+            >
+              <Bell className="h-4 w-4 text-muted-foreground" />
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[30px] font-black leading-tight tracking-normal text-foreground">Portfolio</p>
+            <p className="mt-0.5 text-[12px] font-semibold text-muted-foreground">Resumen general de cartera</p>
+          </div>
+          <div className="mobile-panel-muted flex shrink-0 items-center gap-1.5 px-2.5 py-2 text-[11px] font-black text-foreground">
+            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+            Hoy
+          </div>
+        </div>
+
+        <div className="flex items-start justify-between gap-3">
           <motion.div
-            className="mb-1 cursor-pointer select-none"
+            className="min-w-0 cursor-pointer select-none"
             onDoubleClick={() => {
               hapticFeedback.medium()
               setHideBalances(!hideBalances)
             }}
             whileTap={{ scale: 0.98 }}
           >
+            <p className="mobile-caption mb-1">Valor total</p>
             <h1
-              className="mobile-value font-black leading-none transition-all duration-200"
-              style={{ fontSize: "clamp(38px, 11vw, 50px)", color: "var(--foreground)" }}
+              className="mobile-value truncate font-black leading-none transition-all duration-200"
+              style={{ fontSize: "clamp(40px, 12vw, 56px)", color: "var(--foreground)" }}
             >
               <AnimatedNumber value={scrubData ? scrubData.v : totals.totalValue} format="currency" hide={hideBalances} />
             </h1>
           </motion.div>
 
-          {/* PnL badges */}
-          {totals.totalCost > 0 && (
-            <div className="flex items-center gap-2 flex-wrap min-h-[28px]">
-              {scrubData ? (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              hapticFeedback.light()
+              setHideBalances(!hideBalances)
+            }}
+            className={`mobile-focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${
+              hideBalances
+                ? "bg-primary/15 border-primary/30 text-primary"
+                : "bg-card border-border text-muted-foreground"
+            }`}
+            aria-label={hideBalances ? "Mostrar balances" : "Ocultar balances"}
+          >
+            {hideBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </motion.button>
+        </div>
+
+        {totals.totalCost > 0 && (
+          <div className="mt-3 flex min-h-[30px] flex-wrap items-center gap-2">
+            {scrubData ? (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 ${
+                  scrubData.pnl >= 0 ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
+                }`}
+              >
+                {scrubData.pnl >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                <span className="font-tabular text-[14px] font-bold">
+                  {hideBalances ? "••••" : `${scrubData.pnl >= 0 ? "+" : ""}${formatCurrency(scrubData.pnl)}`}
+                </span>
+                <span className="text-[12px] font-semibold opacity-80">vs 7d</span>
+              </motion.div>
+            ) : (
+              <>
                 <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
-                    scrubData.pnl >= 0 ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 ${
+                    isPositive ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
                   }`}
                 >
-                  {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                  <span className="text-[14px] font-bold font-tabular">
-                    {hideBalances ? "••••" : `${scrubData.pnl >= 0 ? "+" : ""}${formatCurrency(scrubData.pnl)}`}
+                  {isPositive ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                  <span className="font-tabular text-[14px] font-bold">
+                    {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
                   </span>
-                  <span className="text-[12px] font-semibold opacity-80">vs 7d</span>
+                  <span className="text-[12px] font-semibold opacity-80">
+                    ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
+                  </span>
                 </motion.div>
-              ) : (
-                <>
-                  {/* Total PnL */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
-                      isPositive ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
-                    }`}
-                  >
-                    {isPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                    <span className="text-[14px] font-bold font-tabular">
-                      {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
-                    </span>
-                    <span className="text-[12px] font-semibold opacity-80">
-                      ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
-                    </span>
-                  </motion.div>
 
-                  {/* 24h badge */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${
-                      daily24Positive ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500"
-                    }`}
-                  >
-                    <span
-                      className="text-[11px] font-semibold opacity-70"
-                    >Hoy</span>
-                    <span className="text-[13px] font-bold font-tabular">
-                      {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
-                    </span>
-                  </motion.div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`flex items-center gap-1 rounded-lg border px-2 py-1 ${
+                    daily24Positive ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                  }`}
+                >
+                  <span className="text-[11px] font-semibold opacity-70">Hoy</span>
+                  <span className="font-tabular text-[13px] font-bold">
+                    {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+                  </span>
+                </motion.div>
+              </>
+            )}
+          </div>
+        )}
+      </section>
 
       {/* ─── Sparkline chart ─────────────────────────────────────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className="mobile-panel mx-3 mt-3 h-[132px] overflow-hidden px-1 pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart 
-              data={portfolioSparkline} 
-              margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
-              onMouseMove={(e: any) => {
-                if (e.activePayload && e.activePayload.length > 0) {
-                  const newScrub = e.activePayload[0].payload;
-                  setScrubData(prev => {
-                    if (prev?.i !== newScrub.i) hapticFeedback.light();
-                    return newScrub;
-                  });
-                }
-              }}
-              onMouseLeave={() => setScrubData(null)}
-              onTouchEnd={() => setScrubData(null)}
-            >
-              <defs>
-                <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColorHex} stopOpacity={0.5} />
-                  <stop offset="60%" stopColor={areaColorHex} stopOpacity={0.1} />
-                  <stop offset="100%" stopColor={areaColorHex} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <YAxis hide domain={["dataMin - 300", "dataMax + 300"]} />
-              <Tooltip
-                content={() => null} // We use the hero section to show data instead
-                cursor={{ stroke: areaColorHex, strokeWidth: 1.5, strokeDasharray: "4 4" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="v"
-                stroke={areaColorHex}
-                strokeWidth={2.4}
-                fill="url(#mobileGrad)"
-                isAnimationActive
-                animationDuration={700}
-                activeDot={{ r: 5, fill: areaColorHex, stroke: "var(--background)", strokeWidth: 2 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="mx-4 mb-4 overflow-hidden">
+          <div className="h-[150px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={portfolioSparkline}
+                margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
+                onMouseMove={(e: any) => {
+                  if (e.activePayload && e.activePayload.length > 0) {
+                    const newScrub = e.activePayload[0].payload
+                    setScrubData(prev => {
+                      if (prev?.i !== newScrub.i) hapticFeedback.light()
+                      return newScrub
+                    })
+                  }
+                }}
+                onMouseLeave={() => setScrubData(null)}
+                onTouchEnd={() => setScrubData(null)}
+              >
+                <defs>
+                  <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={areaColorHex} stopOpacity={0.5} />
+                    <stop offset="60%" stopColor={areaColorHex} stopOpacity={0.1} />
+                    <stop offset="100%" stopColor={areaColorHex} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <YAxis hide domain={["dataMin - 300", "dataMax + 300"]} />
+                <Tooltip
+                  content={() => null}
+                  cursor={{ stroke: areaColorHex, strokeWidth: 1.5, strokeDasharray: "4 4" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="v"
+                  stroke={areaColorHex}
+                  strokeWidth={2.4}
+                  fill="url(#mobileGrad)"
+                  isAnimationActive
+                  animationDuration={700}
+                  activeDot={{ r: 5, fill: areaColorHex, stroke: "var(--background)", strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-2 flex items-center justify-between rounded-md bg-muted/40 p-1">
+            {["1D", "1S", "1M", "3M", "YTD", "1A", "TODO"].map((period, index) => (
+              <span
+                key={period}
+                className={`rounded px-2 py-1 text-[10px] font-black ${index === 0 ? "bg-background text-primary shadow-sm" : "text-muted-foreground"}`}
+              >
+                {period}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* ─── Bento Grid Metrics ────────────────────────────────────────────── */}
-      <div className="px-3 py-3">
-        <div className="grid grid-cols-3 gap-2">
-          {/* Box 1: Invested */}
-          <div
-            className="mobile-panel flex min-h-[94px] flex-col justify-between p-3"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div
-                className="rounded-md bg-primary/10 p-1.5 text-primary"
-              >
-                <Wallet className="w-4 h-4" />
-              </div>
+      {/* ─── Allocation and ledger strip ───────────────────────────────── */}
+      <section className="mx-4 mb-4 space-y-3">
+        <div className="mobile-panel p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PieChart className="h-4 w-4 text-primary" />
+              <p className="text-[13px] font-black text-foreground">Asignación estratégica</p>
             </div>
-            <div>
-              <p className="mobile-caption">
-                Invertido
-              </p>
-              <p className="mobile-value mt-1 truncate text-[14px] font-black" style={{ color: "var(--foreground)" }}>
-                {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
-              </p>
-            </div>
+            <p className="mobile-caption">{positions.filter(p => p.unidades > 0).length} activos</p>
           </div>
-
-          {/* Box 2: Total PnL (Dynamic Color) */}
-          <div
-            className="mobile-panel flex min-h-[94px] flex-col justify-between p-3"
-            style={{
-              borderColor: isPositive ? "color-mix(in oklch, var(--positive) 32%, transparent)" : "color-mix(in oklch, var(--negative) 32%, transparent)",
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div
-                className="rounded-md p-1.5"
-                style={{
-                  background: isPositive ? "color-mix(in oklch, var(--positive) 12%, transparent)" : "color-mix(in oklch, var(--negative) 12%, transparent)",
-                  color: isPositive ? "var(--positive)" : "var(--negative)"
-                }}
-              >
-                {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              </div>
-            </div>
-            <div>
-              <p className="mobile-caption" style={{ color: isPositive ? "var(--positive)" : "var(--negative)" }}>
-                Ganancia
-              </p>
-              <p className="mobile-value mt-1 truncate text-[14px] font-black" style={{ color: isPositive ? "var(--positive)" : "var(--negative)" }}>
-                {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
-              </p>
-            </div>
+          <div className="mb-3 flex h-3 overflow-hidden rounded-full bg-muted">
+            <span className="h-full bg-primary" style={{ width: `${strategySplit.corePct}%` }} />
+            <span className="h-full bg-amber-500" style={{ width: `${strategySplit.satellitePct}%` }} />
           </div>
-          
-          {/* Box 3: 24h */}
-          <div>
-            <div
-              className="mobile-panel flex min-h-[94px] flex-col justify-between p-3"
-              style={{
-                borderColor: daily24Positive ? "color-mix(in oklch, var(--positive) 24%, transparent)" : "color-mix(in oklch, var(--negative) 24%, transparent)",
-              }}
-            >
-              <div>
-                <p className="mobile-caption">Hoy</p>
-                <p className="mobile-value mt-1 truncate text-[14px] font-black" style={{ color: daily24Positive ? "var(--positive)" : "var(--negative)" }}>
-                  {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
-                </p>
-              </div>
-              <div>
-                <p className="mobile-value text-[12px] font-black" style={{ color: daily24Positive ? "var(--positive)" : "var(--negative)", opacity: 0.9 }}>
-                  {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
-                </p>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="mobile-caption">Core</p>
+              <p className="mobile-value text-[18px] font-black text-foreground">{strategySplit.corePct}%</p>
+            </div>
+            <div className="text-right">
+              <p className="mobile-caption">Satellite</p>
+              <p className="mobile-value text-[18px] font-black text-foreground">{strategySplit.satellitePct}%</p>
             </div>
           </div>
         </div>
-      </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="mobile-panel-muted min-h-[72px] p-3">
+            <Wallet className="mb-2 h-4 w-4 text-primary" />
+            <p className="mobile-caption">Invertido</p>
+            <p className="mobile-value truncate text-[13px] font-black text-foreground">{hideBalances ? "••••" : formatCurrency(totals.totalCost)}</p>
+          </div>
+          <div className="mobile-panel-muted min-h-[72px] p-3">
+            {isPositive ? <TrendingUp className="mb-2 h-4 w-4 text-positive" /> : <TrendingDown className="mb-2 h-4 w-4 text-negative" />}
+            <p className="mobile-caption">Ganancia</p>
+            <p className="mobile-value truncate text-[13px] font-black" style={{ color: isPositive ? "var(--positive)" : "var(--negative)" }}>
+              {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+            </p>
+          </div>
+          <div className="mobile-panel-muted min-h-[72px] p-3">
+            <Activity className="mb-2 h-4 w-4" style={{ color: daily24Positive ? "var(--positive)" : "var(--negative)" }} />
+            <p className="mobile-caption">Hoy</p>
+            <p className="mobile-value truncate text-[13px] font-black" style={{ color: daily24Positive ? "var(--positive)" : "var(--negative)" }}>
+              {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {topPositions.length > 0 && (
+        <section className="mx-4 mb-4 mobile-panel p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[13px] font-black text-foreground">Top posiciones</p>
+            <span className="mobile-caption">Peso cartera</span>
+          </div>
+          <div className="space-y-3">
+            {topPositions.map((p) => {
+              const weight = totalPortfolioValue > 0 ? Math.min(100, ((p.valor_actual ?? 0) / totalPortfolioValue) * 100) : 0
+              const isGain = (p.change_percent_24h ?? 0) >= 0
+              const ticker = p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
+                ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
+                : p.ticker.split(".")[0]
+              return (
+                <Link key={p.activo_id} href={`/activo/${p.activo_id}`} className="block">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-[12px] font-black text-foreground">
+                      {ticker.slice(0, 2)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center justify-between gap-3">
+                        <p className="truncate text-[13px] font-black text-foreground">{ticker}</p>
+                        <p className="mobile-value shrink-0 text-[12px] font-black text-foreground">{hideBalances ? "••••" : formatCurrency(p.valor_actual ?? 0)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                          <span className="block h-full rounded-full bg-primary" style={{ width: `${weight}%` }} />
+                        </div>
+                        <span className="w-10 text-right text-[10px] font-black text-muted-foreground">{weight.toFixed(1)}%</span>
+                        <span className={`w-14 text-right text-[10px] font-black ${isGain ? "text-positive" : "text-negative"}`}>
+                          {hideBalances ? "•••" : formatPercent(p.change_percent_24h ?? 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ─── Operational shortcuts ─────────────────────────────────────── */}
       <div className="mx-3 mb-4 grid grid-cols-4 gap-2">
