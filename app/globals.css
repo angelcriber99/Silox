@@ -278,6 +278,45 @@
   .glow-positive {
     box-shadow: 0 0 20px oklch(0.65 0.19 155 / 0.30);
   }
+
+  /* Mobile redesign surfaces */
+  .mobile-screen {
+    background:
+      linear-gradient(180deg, color-mix(in oklch, var(--background) 88%, oklch(0.20 0.04 250)) 0%, var(--background) 44%),
+      var(--background);
+  }
+  .mobile-panel {
+    background: color-mix(in oklch, var(--card) 82%, transparent);
+    border: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px oklch(0 0 0 / 0.16);
+  }
+  .mobile-panel-muted {
+    background: color-mix(in oklch, var(--muted) 58%, transparent);
+    border: 1px solid color-mix(in oklch, var(--border) 58%, transparent);
+    border-radius: 8px;
+  }
+  .mobile-topline {
+    border-top: 1px solid color-mix(in oklch, var(--foreground) 9%, transparent);
+  }
+  .mobile-caption {
+    color: color-mix(in oklch, var(--muted-foreground) 86%, transparent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .mobile-value {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+    letter-spacing: 0;
+  }
+  .mobile-focus-ring {
+    outline: 0;
+  }
+  .mobile-focus-ring:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 50%, transparent);
+  }
   .glow-negative {
     box-shadow: 0 0 20px oklch(0.62 0.20 20 / 0.30);
   }

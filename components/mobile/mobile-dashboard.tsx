@@ -39,20 +39,18 @@ const PriceAlerts = lazy(() =>
 function SectionHeader({ label, count }: { label: string; count: number }) {
   return (
     <div
-      className="flex items-center justify-between px-4 py-2 border-y border-border/10"
+      className="mx-3 mb-2 mt-4 flex items-center justify-between"
     >
       <span
-        className="text-[10px] font-bold uppercase tracking-[0.18em]"
-        style={{ color: "var(--muted-foreground)", opacity: 0.5 }}
+        className="mobile-caption"
       >
         {label}
       </span>
       <span
-        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+        className="rounded px-2 py-0.5 text-[10px] font-extrabold"
         style={{
           color: "var(--muted-foreground)",
-          background: "var(--muted)",
-          opacity: 0.7,
+          background: "color-mix(in oklch, var(--muted) 72%, transparent)",
         }}
       >
         {count}
@@ -181,24 +179,24 @@ export function MobileDashboard({
   // ── Loading skeleton ───────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="px-4 pt-6 pb-32 space-y-4">
+      <div className="mobile-screen px-4 pt-6 pb-32 space-y-4">
         <div className="flex justify-between items-center">
           <div className="h-4 w-24 rounded-lg animate-pulse" style={{ background: "var(--muted)" }} />
           <div className="flex gap-2">
-            <div className="h-9 w-9 rounded-full animate-pulse" style={{ background: "var(--muted)" }} />
-            <div className="h-9 w-9 rounded-full animate-pulse" style={{ background: "var(--muted)" }} />
+            <div className="h-9 w-9 rounded-lg animate-pulse" style={{ background: "var(--muted)" }} />
+            <div className="h-9 w-9 rounded-lg animate-pulse" style={{ background: "var(--muted)" }} />
           </div>
         </div>
-        <div className="h-14 w-56 rounded-xl animate-pulse" style={{ background: "var(--muted)" }} />
+        <div className="h-14 w-56 rounded-lg animate-pulse" style={{ background: "var(--muted)" }} />
         <div className="h-5 w-36 rounded-lg animate-pulse" style={{ background: "var(--muted)", opacity: 0.6 }} />
-        <div className="h-28 w-full rounded-2xl animate-pulse" style={{ background: "var(--muted)", opacity: 0.4 }} />
+        <div className="h-28 w-full rounded-lg animate-pulse" style={{ background: "var(--muted)", opacity: 0.4 }} />
         <div className="flex gap-2 overflow-hidden">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-16 w-28 rounded-2xl animate-pulse flex-shrink-0" style={{ background: "var(--muted)", opacity: 0.4 }} />
+            <div key={i} className="h-16 w-28 rounded-lg animate-pulse flex-shrink-0" style={{ background: "var(--muted)", opacity: 0.4 }} />
           ))}
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-[70px] w-full rounded-2xl animate-pulse" style={{ background: "var(--muted)", opacity: 0.3 }} />
+          <div key={i} className="h-[70px] w-full rounded-lg animate-pulse" style={{ background: "var(--muted)", opacity: 0.3 }} />
         ))}
       </div>
     )
@@ -206,48 +204,37 @@ export function MobileDashboard({
 
   // ── Main render ──────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col min-h-full" style={{ background: "var(--background)" }}>
+    <div className="mobile-screen flex min-h-full flex-col">
 
       {/* ─── Sticky header ─────────────────────────────────────────────── */}
       <div
-        className="sticky top-0 z-20 bg-background/90 border-b border-border/20"
+        className="sticky top-0 z-20 border-b border-border/30 bg-background/80"
         style={{
-          backdropFilter: "blur(28px) saturate(200%)",
-          WebkitBackdropFilter: "blur(28px) saturate(200%)",
+          backdropFilter: "blur(22px) saturate(150%)",
+          WebkitBackdropFilter: "blur(22px) saturate(150%)",
         }}
       >
-        {/* Subtle gradient mesh */}
         <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: isPositive
-              ? "radial-gradient(ellipse 100% 100% at 80% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 60%)"
-              : "radial-gradient(ellipse 100% 100% at 80% 0%, rgba(244, 63, 94, 0.08) 0%, transparent 60%)",
-          }}
-        />
-
-        <div
-          className="px-5 pb-4 relative"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+          className="relative px-4 pb-3"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
         >
           {/* Top row */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex flex-col">
               <span
-                className="text-[11px] font-bold uppercase tracking-[0.18em]"
-                style={{ color: "var(--muted-foreground)", opacity: 0.6 }}
+                className="mobile-caption"
               >
-                Patrimonio
+                Silox Mobile
               </span>
               {/* Market status */}
               <div
-                className={`flex items-center gap-1.5 mt-0.5 ${isMarketOpen ? "text-emerald-500" : "text-muted-foreground"}`}
+                className={`mt-1 flex items-center gap-1.5 ${isMarketOpen ? "text-positive" : "text-muted-foreground"}`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "animate-pulse" : ""}`}
                   style={{ background: "currentcolor" }}
                 />
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em]">
                   {getMarketLabel()}
                 </span>
               </div>
@@ -257,10 +244,8 @@ export function MobileDashboard({
             <div className="flex items-center gap-2">
               <RevolutSync>
                 <div
-                  className="h-9 w-9 rounded-full flex items-center justify-center transition-colors"
+                  className="mobile-panel-muted h-10 w-10 flex items-center justify-center transition-colors"
                   style={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
                     color: "var(--muted-foreground)",
                   }}
                 >
@@ -271,10 +256,8 @@ export function MobileDashboard({
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
-                className="h-9 w-9 rounded-full flex items-center justify-center transition-colors"
+                className="mobile-focus-ring mobile-panel-muted h-10 w-10 flex items-center justify-center transition-colors"
                 style={{
-                  background: "var(--card)",
-                  border: "1px solid var(--border)",
                   color: "var(--muted-foreground)",
                 }}
                 aria-label="Alertas de precio"
@@ -288,7 +271,7 @@ export function MobileDashboard({
                   hapticFeedback.light()
                   setHideBalances(!hideBalances)
                 }}
-                className={`h-9 w-9 rounded-full flex items-center justify-center transition-all border ${
+                className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all border ${
                   hideBalances 
                     ? "bg-primary/15 border-primary/30 text-primary" 
                     : "bg-card border-border text-muted-foreground"
@@ -310,8 +293,8 @@ export function MobileDashboard({
             whileTap={{ scale: 0.98 }}
           >
             <h1
-              className="font-extrabold tracking-tighter leading-none font-display-number transition-all duration-200"
-              style={{ fontSize: "clamp(42px, 12vw, 54px)", color: "var(--foreground)" }}
+              className="mobile-value font-black leading-none transition-all duration-200"
+              style={{ fontSize: "clamp(38px, 11vw, 50px)", color: "var(--foreground)" }}
             >
               <AnimatedNumber value={scrubData ? scrubData.v : totals.totalValue} format="currency" hide={hideBalances} />
             </h1>
@@ -377,7 +360,7 @@ export function MobileDashboard({
 
       {/* ─── Sparkline chart ─────────────────────────────────────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className="h-[120px] w-full relative -mt-4 mb-2">
+        <div className="mobile-panel mx-3 mt-3 h-[132px] overflow-hidden px-1 pt-2">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart 
               data={portfolioSparkline} 
@@ -410,7 +393,7 @@ export function MobileDashboard({
                 type="monotone"
                 dataKey="v"
                 stroke={areaColorHex}
-                strokeWidth={3}
+                strokeWidth={2.4}
                 fill="url(#mobileGrad)"
                 isAnimationActive
                 animationDuration={700}
@@ -422,24 +405,24 @@ export function MobileDashboard({
       )}
 
       {/* ─── Bento Grid Metrics ────────────────────────────────────────────── */}
-      <div className="px-4 py-2 mb-2">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="px-3 py-3">
+        <div className="grid grid-cols-3 gap-2">
           {/* Box 1: Invested */}
           <div
-            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden bg-card border border-border/50 shadow-sm"
+            className="mobile-panel flex min-h-[94px] flex-col justify-between p-3"
           >
             <div className="flex items-center justify-between mb-3">
               <div
-                className="p-1.5 rounded-xl bg-primary/10 text-primary"
+                className="rounded-md bg-primary/10 p-1.5 text-primary"
               >
                 <Wallet className="w-4 h-4" />
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>
+              <p className="mobile-caption">
                 Invertido
               </p>
-              <p className="text-[16px] font-extrabold font-tabular mt-0.5" style={{ color: "var(--foreground)" }}>
+              <p className="mobile-value mt-1 truncate text-[14px] font-black" style={{ color: "var(--foreground)" }}>
                 {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
               </p>
             </div>
@@ -447,51 +430,48 @@ export function MobileDashboard({
 
           {/* Box 2: Total PnL (Dynamic Color) */}
           <div
-            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
+            className="mobile-panel flex min-h-[94px] flex-col justify-between p-3"
             style={{
-              background: isPositive ? "linear-gradient(145deg, oklch(0.70 0.21 155 / 0.14), oklch(0.70 0.21 155 / 0.06))" : "linear-gradient(145deg, oklch(0.65 0.22 22 / 0.14), oklch(0.65 0.22 22 / 0.06))",
-              border: `1px solid ${isPositive ? "oklch(0.70 0.21 155 / 0.25)" : "oklch(0.65 0.22 22 / 0.25)"}`,
-              boxShadow: isPositive ? "0 8px 24px -8px oklch(0.70 0.21 155 / 0.25)" : "0 8px 24px -8px oklch(0.65 0.22 22 / 0.25)",
+              borderColor: isPositive ? "color-mix(in oklch, var(--positive) 32%, transparent)" : "color-mix(in oklch, var(--negative) 32%, transparent)",
             }}
           >
             <div className="flex items-center justify-between mb-3">
               <div
-                className="p-1.5 rounded-xl"
+                className="rounded-md p-1.5"
                 style={{
-                  background: isPositive ? "oklch(0.70 0.21 155 / 0.15)" : "oklch(0.65 0.22 22 / 0.15)",
-                  color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)"
+                  background: isPositive ? "color-mix(in oklch, var(--positive) 12%, transparent)" : "color-mix(in oklch, var(--negative) 12%, transparent)",
+                  color: isPositive ? "var(--positive)" : "var(--negative)"
                 }}
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)", opacity: 0.8 }}>
+              <p className="mobile-caption" style={{ color: isPositive ? "var(--positive)" : "var(--negative)" }}>
                 Ganancia
               </p>
-              <p className="text-[16px] font-extrabold font-tabular mt-0.5" style={{ color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)" }}>
+              <p className="mobile-value mt-1 truncate text-[14px] font-black" style={{ color: isPositive ? "var(--positive)" : "var(--negative)" }}>
                 {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
               </p>
             </div>
           </div>
           
           {/* Box 3: 24h */}
-          <div className="col-span-2">
+          <div>
             <div
-              className="flex items-center justify-between p-3 rounded-2xl"
+              className="mobile-panel flex min-h-[94px] flex-col justify-between p-3"
               style={{
-                background: daily24Positive ? "oklch(0.70 0.21 155 / 0.10)" : "oklch(0.65 0.22 22 / 0.10)",
-                border: `1px solid ${daily24Positive ? "oklch(0.70 0.21 155 / 0.20)" : "oklch(0.65 0.22 22 / 0.20)"}`,
+                borderColor: daily24Positive ? "color-mix(in oklch, var(--positive) 24%, transparent)" : "color-mix(in oklch, var(--negative) 24%, transparent)",
               }}
             >
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hoy</p>
-                <p className="text-[14px] font-bold font-tabular mt.0.5" style={{ color: daily24Positive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)" }}>
+                <p className="mobile-caption">Hoy</p>
+                <p className="mobile-value mt-1 truncate text-[14px] font-black" style={{ color: daily24Positive ? "var(--positive)" : "var(--negative)" }}>
                   {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-[12px] font-bold font-tabular" style={{ color: daily24Positive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)", opacity: 0.9 }}>
+              <div>
+                <p className="mobile-value text-[12px] font-black" style={{ color: daily24Positive ? "var(--positive)" : "var(--negative)", opacity: 0.9 }}>
                   {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                 </p>
               </div>
@@ -502,14 +482,14 @@ export function MobileDashboard({
 
       {/* ─── Live Market Movers (Top Gainers/Losers) ────────────────────── */}
       {movers.length > 0 && (
-        <div className="py-4 mt-2 mb-4 border-y border-border/10 bg-black/5 dark:bg-black/20">
+        <div className="mx-3 mb-4 mt-1 mobile-panel py-3">
           <div className="flex items-center px-4 mb-3 gap-2">
             <div className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-              Impacto Hoy en Tiempo Real
+            <p className="mobile-caption">
+              Impacto de mercado
             </p>
           </div>
           
@@ -521,9 +501,11 @@ export function MobileDashboard({
                   <Link key={p.activo_id} href={`/activo/${p.activo_id}`} className="snap-center shrink-0">
                     <motion.div 
                       whileTap={{ scale: 0.95 }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-[14px] transition-colors border shadow-sm ${
-                        isGain ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"
-                      }`}
+                      className="flex items-center gap-2 rounded-md border px-3 py-2 transition-colors"
+                      style={{
+                        background: isGain ? "color-mix(in oklch, var(--positive) 10%, transparent)" : "color-mix(in oklch, var(--negative) 10%, transparent)",
+                        borderColor: isGain ? "color-mix(in oklch, var(--positive) 22%, transparent)" : "color-mix(in oklch, var(--negative) 22%, transparent)",
+                      }}
                     >
                       <span className="text-[12px] font-extrabold" style={{ color: "var(--foreground)" }}>
                         {p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" 
@@ -531,7 +513,8 @@ export function MobileDashboard({
                           : p.ticker.split(".")[0]}
                       </span>
                       <span 
-                        className={`text-[12px] font-bold font-tabular flex items-center ${isGain ? "text-emerald-500" : "text-rose-500"}`}
+                        className="mobile-value flex items-center text-[12px] font-black"
+                        style={{ color: isGain ? "var(--positive)" : "var(--negative)" }}
                       >
                         {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
                       </span>
@@ -547,7 +530,7 @@ export function MobileDashboard({
       {/* ─── Asset filter pills ──────────────────────────────────────────── */}
       {assetTypes.length > 2 && (
         <div
-          className="sticky z-10 px-4 py-2 bg-background/80 border-b border-border/50"
+          className="sticky z-10 px-3 py-2 bg-background/80 border-y border-border/40"
           style={{
             top: 0,
             backdropFilter: "blur(20px)",
@@ -559,16 +542,16 @@ export function MobileDashboard({
               <button
                 key={type}
                 onClick={() => setFilterType(type)}
-                className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all relative"
+                className="relative whitespace-nowrap rounded-md px-3 py-2 text-[11px] font-black uppercase tracking-[0.04em] transition-all"
                 style={{
-                  color: filterType === type ? "var(--background)" : "var(--muted-foreground)",
+                  color: filterType === type ? "var(--primary-foreground)" : "var(--muted-foreground)",
                   opacity: filterType === type ? 1 : 0.7,
                 }}
               >
                 {filterType === type && (
                   <motion.div
                     layoutId="filterPill"
-                    className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-emerald-500"
+                    className="absolute inset-0 rounded-md bg-primary"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                   />
                 )}
@@ -592,10 +575,9 @@ export function MobileDashboard({
       {/* ─── Asset list ──────────────────────────────────────────────────── */}
       <div className="pb-32">
         {/* Count */}
-        <div className="px-4 pt-3 pb-2">
+        <div className="px-3 pt-3 pb-2">
           <span
-            className="text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: "var(--muted-foreground)", opacity: 0.4 }}
+            className="mobile-caption"
           >
             {sortedPositions.length} posiciones
           </span>
@@ -603,9 +585,9 @@ export function MobileDashboard({
 
         {sortedPositions.length === 0 ? (
           /* Empty state */
-          <div className="text-center py-16 px-8">
+          <div className="mx-3 mobile-panel px-8 py-14 text-center">
             <div
-              className="h-16 w-16 rounded-3xl flex items-center justify-center mx-auto mb-4"
+              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg"
               style={{
                 background: "oklch(0.68 0.17 192 / 0.08)",
                 border: "1px solid oklch(0.68 0.17 192 / 0.15)",

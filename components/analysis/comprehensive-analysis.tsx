@@ -413,10 +413,10 @@ export function ComprehensiveAnalysis() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         
         {/* Tipos de Activo */}
-        <div className="p-6 rounded-[32px] border border-border flex flex-col relative overflow-hidden" style={{ background: "var(--card)" }}>
+        <div className="mobile-panel p-5 md:p-6 flex flex-col relative overflow-hidden">
           <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[48px] pointer-events-none" />
           <div className="flex items-center gap-3 mb-6 relative">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
               <Wallet className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -473,11 +473,11 @@ export function ComprehensiveAnalysis() {
         </div>
 
         {/* Sectores */}
-        <div className="p-6 rounded-[32px] border border-border flex flex-col relative overflow-hidden" style={{ background: "var(--card)" }}>
+        <div className="mobile-panel p-5 md:p-6 flex flex-col relative overflow-hidden">
           <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/5 rounded-full blur-[48px] pointer-events-none" />
           <div className="flex items-center justify-between mb-8 relative">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.65 0.17 270 / 0.15)" }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "oklch(0.65 0.17 270 / 0.15)" }}>
                 <Briefcase className="w-5 h-5" style={{ color: "oklch(0.65 0.17 270)" }} />
               </div>
               <div>
@@ -505,10 +505,10 @@ export function ComprehensiveAnalysis() {
         </div>
 
         {/* Geografía */}
-        <div className="p-6 rounded-[32px] border border-border flex flex-col relative overflow-hidden" style={{ background: "var(--card)" }}>
-          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-[48px] pointer-events-none" />
+        <div className="mobile-panel p-5 md:p-6 flex flex-col relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[48px] pointer-events-none" />
           <div className="flex items-center gap-3 mb-8 relative">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.60 0.016 230 / 0.20)" }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "oklch(0.60 0.016 230 / 0.20)" }}>
               <Globe2 className="w-5 h-5" style={{ color: "oklch(0.60 0.016 230)" }} />
             </div>
             <div>
@@ -530,11 +530,11 @@ export function ComprehensiveAnalysis() {
         </div>
 
         {/* Recomendaciones Estratégicas (Insights) */}
-        <div className="p-6 rounded-[32px] border border-border lg:col-span-3 relative overflow-hidden" style={{ background: "var(--card)" }}>
+        <div className="mobile-panel p-5 md:p-6 lg:col-span-3 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[64px] pointer-events-none" />
           
           <div className="flex items-center gap-3 mb-8 relative">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
               <Lightbulb className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -549,12 +549,12 @@ export function ComprehensiveAnalysis() {
                 warning: 'text-amber-500 bg-amber-500/5 border-amber-500/20',
                 caution: 'text-red-500 bg-red-500/5 border-red-500/20',
                 tip: 'text-emerald-500 bg-emerald-500/5 border-emerald-500/20',
-                info: 'text-blue-500 bg-blue-500/5 border-blue-500/20'
+                info: 'text-primary bg-primary/5 border-primary/20'
               }
               const colorClass = colors[insight.type as keyof typeof colors] || colors.info
 
               return (
-                <div key={idx} className={`p-5 rounded-2xl border ${colorClass} backdrop-blur-xl transition-transform hover:-translate-y-1 duration-300`}>
+                <div key={idx} className={`p-4 md:p-5 rounded-lg border ${colorClass} backdrop-blur-xl transition-transform hover:-translate-y-1 duration-300`}>
                   <h4 className="text-sm font-bold mb-2.5 flex items-center gap-2">
                     {insight.type === 'tip' ? '💡' : (insight.type === 'warning' ? '⚠️' : '🚨')} {insight.title}
                   </h4>

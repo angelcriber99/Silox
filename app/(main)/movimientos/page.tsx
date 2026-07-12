@@ -94,24 +94,24 @@ export default function MovimientosPage() {
   }, [transactions, searchQuery, typeFilter, dateFrom, dateTo])
 
   return (
-    <main className="min-h-full bg-background text-foreground flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
+    <main className="mobile-screen min-h-full text-foreground flex flex-col md:bg-background">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 pb-10 space-y-5 md:space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 18px)' }}>
         
         {/* ── Page Header ────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+        <div className="mobile-panel md:bg-transparent md:border-0 md:shadow-none flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 p-4 md:p-0">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-3">
               <div
-                className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
               >
                 <History className="h-5 w-5" style={{ color: "var(--primary)" }} />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-normal" style={{ color: "var(--foreground)" }}>
                 Movimientos
               </h1>
             </div>
-            <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs md:text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
               Historial completo de operaciones y contabilidad personal.
             </p>
           </div>
@@ -123,7 +123,7 @@ export default function MovimientosPage() {
             />
             <Link 
               href="/declarar" 
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all"
               style={{
                 background: "oklch(0.68 0.17 192 / 0.10)",
                 border: "1px solid oklch(0.68 0.17 192 / 0.25)",
@@ -138,7 +138,7 @@ export default function MovimientosPage() {
 
         {/* ── Filters ──────────────────────────────────────────────── */}
         <div
-          className="flex flex-col gap-3 p-4 rounded-2xl"
+          className="mobile-panel flex flex-col gap-3 p-3 md:p-4"
           style={{ background: "var(--card)", border: "1px solid var(--border)" }}
         >
           {/* Search */}
@@ -151,7 +151,7 @@ export default function MovimientosPage() {
               placeholder="Buscar por activo o ticker..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-full h-10"
+              className="pl-10 w-full h-11 rounded-lg"
               style={{
                 background: "var(--background)",
                 border: "1px solid var(--border)",
@@ -166,7 +166,7 @@ export default function MovimientosPage() {
               <button
                 key={opt}
                 onClick={() => setTypeFilter(opt)}
-                className="flex-shrink-0 px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all"
+                className="flex-shrink-0 px-3.5 py-2 rounded-md text-xs font-black uppercase tracking-[0.04em] transition-all"
                 style={{
                   background: typeFilter === opt ? "oklch(0.68 0.17 192 / 0.12)" : "var(--muted)",
                   border: typeFilter === opt ? "1px solid oklch(0.68 0.17 192 / 0.30)" : "1px solid transparent",
@@ -178,7 +178,7 @@ export default function MovimientosPage() {
             ))}
 
             <div
-              className="flex items-center gap-2 flex-shrink-0 rounded-xl px-3 py-1.5"
+              className="flex items-center gap-2 flex-shrink-0 rounded-md px-3 py-2"
               style={{ background: "var(--muted)", border: "1px solid transparent" }}
             >
               <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Desde</span>
@@ -192,7 +192,7 @@ export default function MovimientosPage() {
             </div>
             
             <div
-              className="flex items-center gap-2 flex-shrink-0 rounded-xl px-3 py-1.5"
+              className="flex items-center gap-2 flex-shrink-0 rounded-md px-3 py-2"
               style={{ background: "var(--muted)", border: "1px solid transparent" }}
             >
               <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hasta</span>
@@ -208,7 +208,7 @@ export default function MovimientosPage() {
         </div>
 
         {/* Table Section */}
-        <div className="border border-border bg-card/40 rounded-xl overflow-hidden backdrop-blur-sm">
+        <div className="md:border md:border-border md:bg-card/40 md:rounded-xl overflow-hidden md:backdrop-blur-sm">
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -333,10 +333,10 @@ export default function MovimientosPage() {
           </div>
 
           {/* Mobile Cards View */}
-          <div className="md:hidden flex flex-col divide-y divide-zinc-800/40">
+          <div className="md:hidden flex flex-col gap-2">
             {isLoading ? (
                Array.from({ length: 4 }).map((_, i) => (
-                 <div key={i} className="p-4 flex flex-col gap-3">
+                 <div key={i} className="mobile-panel p-4 flex flex-col gap-3">
                    <div className="flex justify-between">
                      <div className="h-4 w-24 bg-muted animate-pulse rounded" />
                      <div className="h-4 w-16 bg-muted animate-pulse rounded" />
@@ -345,7 +345,7 @@ export default function MovimientosPage() {
                  </div>
                ))
             ) : filteredTransactions.length === 0 ? (
-               <div className="text-center text-muted-foreground/60 py-16">
+               <div className="mobile-panel text-center text-muted-foreground/60 py-16">
                  <div className="flex flex-col items-center gap-3">
                    <History className="h-10 w-10 text-muted-foreground/60 mb-2 opacity-50" />
                    <p className="font-medium text-muted-foreground">No se encontraron movimientos</p>
@@ -368,16 +368,16 @@ export default function MovimientosPage() {
                    : "—"
 
                  return (
-                   <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                   <div key={tx.id} className="mobile-panel flex items-center justify-between p-3.5 transition-colors active:bg-muted/40">
                      <div className="flex items-center gap-3 overflow-hidden">
-                       <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
+                       <div className={`flex-shrink-0 h-11 w-11 rounded-lg flex items-center justify-center ${
                           isCompra ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
                         }`}>
                           {isCompra ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="font-bold text-foreground text-[15px] truncate">{ticker}</span>
-                          <span className="text-xs font-medium text-muted-foreground/80 truncate">
+                          <span className="font-black text-foreground text-[15px] truncate">{ticker}</span>
+                          <span className="text-[11px] font-bold text-muted-foreground/80 truncate">
                             {isCompra ? "Compra" : "Venta"} • {date}
                             {tx.estado === "Pendiente" && (
                               <span className="ml-1.5 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
@@ -390,10 +390,10 @@ export default function MovimientosPage() {
 
                      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                         <div className="flex flex-col items-end min-w-0">
-                           <span className={`text-[14px] font-bold font-tabular leading-tight truncate max-w-[100px] xs:max-w-[130px] ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
+                           <span className={`mobile-value text-[14px] font-black leading-tight truncate max-w-[112px] ${isCompra ? "text-foreground" : "text-emerald-400"}`}>
                              {hideBalances ? "****" : `${isCompra ? "-" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
                            </span>
-                           <span className="text-[10px] font-medium text-muted-foreground/80 font-tabular mt-0.5 truncate max-w-[100px] xs:max-w-[130px]">
+                           <span className="mobile-value text-[10px] font-bold text-muted-foreground/80 mt-0.5 truncate max-w-[112px]">
                              {hideBalances ? "****" : `${formatUnits(tx.cantidad)} × ${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`}
                            </span>
                         </div>

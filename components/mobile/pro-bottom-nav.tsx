@@ -16,8 +16,8 @@ export function ProBottomNav() {
   const pathname = usePathname()
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50 md:hidden">
-      <div className="bg-card/70 backdrop-blur-2xl border border-border/50 shadow-2xl shadow-black/20 rounded-3xl px-6 py-3 flex justify-between items-center relative overflow-hidden">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-28px)] max-w-sm z-50 md:hidden">
+      <div className="relative flex items-center justify-between overflow-hidden rounded-lg border border-border/70 bg-background/90 px-3 py-2 shadow-2xl shadow-black/20 backdrop-blur-2xl">
         {/* Subtle inner glow */}
         <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-50 pointer-events-none" />
 
@@ -33,7 +33,7 @@ export function ProBottomNav() {
               {isActive && (
                 <motion.div
                   layoutId="bottom-nav-active"
-                  className="absolute inset-0 bg-primary/20 rounded-2xl"
+                  className="absolute inset-0 rounded-md bg-primary/15"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}

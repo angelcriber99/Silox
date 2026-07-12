@@ -41,8 +41,6 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   const actionOpacity = useTransform(x, [-MAX_SWIPE, -SWIPE_THRESHOLD / 2], [1, 0])
   const actionScale = useTransform(x, [-MAX_SWIPE, -SWIPE_THRESHOLD], [1, 0.8])
 
-  const pnlPercent    = p.pnl_percent ?? 0
-  const isPositive    = pnlPercent >= 0
   const change24h     = p.change_percent_24h ?? 0
   const is24hPositive = change24h >= 0
 
@@ -93,12 +91,11 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
     return (
       <Link href={`/activo/${p.activo_id}`} className="block">
         <div
-          className="flex items-center gap-3 px-4 py-2.5 transition-colors active:opacity-70"
-          style={{ borderBottom: "1px solid oklch(0.165 0.016 238 / 0.4)" }}
+          className="mx-3 mb-2 flex items-center gap-3 rounded-lg border border-border/60 bg-card/70 px-3 py-2.5 transition-colors active:opacity-70"
         >
           {/* Avatar dot */}
           <div
-            className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-[10px]"
+            className="h-8 w-8 rounded-md flex items-center justify-center flex-shrink-0 font-bold text-[10px]"
             style={{
               background: `${cfg.color.replace(")", " / 0.12)")}`,
               color: cfg.color,
@@ -132,12 +129,12 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   }
 
   return (
-    <div className="relative overflow-hidden" style={{ borderBottom: "1px solid oklch(0.72 0.18 192 / 0.06)" }}>
+    <div className="relative mx-3 mb-2 overflow-hidden rounded-lg">
       {/* Swipe-left action reveal layer */}
       <motion.div
         className="absolute right-0 top-0 bottom-0 flex items-center justify-center px-4"
         style={{
-          background: "linear-gradient(90deg, oklch(0.72 0.18 192 / 0.0), oklch(0.72 0.18 192 / 0.20))",
+          background: "linear-gradient(90deg, transparent, color-mix(in oklch, var(--primary) 18%, transparent))",
           opacity: actionOpacity,
           width: MAX_SWIPE + 20,
         }}
@@ -148,13 +145,13 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
           style={{ scale: actionScale }}
         >
           <div
-            className="h-10 w-10 rounded-2xl flex items-center justify-center"
+            className="h-10 w-10 rounded-lg flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, oklch(0.72 0.18 192), oklch(0.70 0.21 155))",
-              boxShadow: "0 4px 14px oklch(0.72 0.18 192 / 0.40)",
+              background: "var(--primary)",
+              boxShadow: "0 4px 14px color-mix(in oklch, var(--primary) 38%, transparent)",
             }}
           >
-            <Plus className="w-5 h-5" style={{ color: "oklch(0.06 0.01 240)" }} strokeWidth={3} />
+            <Plus className="w-5 h-5 text-primary-foreground" strokeWidth={3} />
           </div>
           <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--primary)" }}>
             Añadir
@@ -175,108 +172,114 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
         <Link href={isSwiped ? "#" : `/activo/${p.activo_id}`} className="block" onClick={isSwiped ? (e) => { e.preventDefault(); handleSnapBack() } : undefined}>
           <motion.div
             whileTap={isSwiped ? undefined : { scale: 0.97, opacity: 0.85 }}
-            className="px-4 py-3.5 transition-colors relative"
-            style={{ background: "var(--background)" }}
+            className="mobile-panel relative overflow-hidden px-3.5 py-3.5 transition-colors"
           >
-            <div className="flex items-center gap-3.5">
+            <div
+              className="absolute left-0 top-0 h-full w-1"
+              style={{ background: cfg.color }}
+            />
+
+            <div className="flex items-start gap-3">
               {/* Asset avatar — colored by type */}
               <div
-                className="h-11 w-11 rounded-2xl flex items-center justify-center flex-shrink-0 font-bold text-[13px]"
+                className="h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 font-extrabold text-[13px]"
                 style={{
-                  background: `color-mix(in oklch, ${cfg.color} 14%, transparent)`,
+                  background: `color-mix(in oklch, ${cfg.color} 13%, var(--card))`,
                   color: cfg.color,
-                  border: `1.5px solid color-mix(in oklch, ${cfg.color} 22%, transparent)`,
+                  border: `1px solid color-mix(in oklch, ${cfg.color} 28%, transparent)`,
                 }}
               >
                 {displayTicker.slice(0, 2)}
               </div>
 
-              {/* Name + type badge */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span
-                    className="text-[15px] font-bold tracking-tight truncate"
-                    style={{ color: "var(--foreground)" }}
-                  >
-                    {displayTicker}
-                  </span>
-                  <span
-                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md flex-shrink-0"
-                    style={{
-                      color: cfg.color,
-                      background: `color-mix(in oklch, ${cfg.color} 10%, transparent)`,
-                    }}
-                  >
-                    {cfg.label}
-                  </span>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="truncate text-[15px] font-extrabold tracking-normal"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        {displayTicker}
+                      </span>
+                      <span
+                        className="shrink-0 rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.08em]"
+                        style={{
+                          color: cfg.color,
+                          background: `color-mix(in oklch, ${cfg.color} 10%, transparent)`,
+                        }}
+                      >
+                        {cfg.label}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-[11px] font-medium text-muted-foreground">
+                      {displayName}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                    style={{ color: "var(--muted-foreground)", opacity: 0.35 }}
+                  />
                 </div>
 
-                {/* Weight bar */}
-                <div className="flex items-center gap-2 mt-1">
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="mobile-caption">Valor</p>
+                    <p
+                      className="mobile-value mt-0.5 truncate text-[17px] font-extrabold leading-none"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {hideBalances
+                        ? "••••"
+                        : p.valor_actual !== null
+                        ? formatCurrency(p.valor_actual)
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-end">
+                    <p className="mobile-caption">Hoy</p>
+                    <div
+                      className="mt-0.5 rounded px-2 py-1"
+                      style={{
+                        background: is24hPositive
+                          ? "color-mix(in oklch, var(--positive) 12%, transparent)"
+                          : "color-mix(in oklch, var(--negative) 12%, transparent)",
+                      }}
+                    >
+                      <span
+                        className="mobile-value text-[12px] font-extrabold"
+                        style={{
+                          color: is24hPositive ? "var(--positive)" : "var(--negative)",
+                        }}
+                      >
+                        {hideBalances ? "•••" : formatPercent(change24h)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3">
                   <div
-                    className="flex-1 h-1 rounded-full overflow-hidden"
-                    style={{ background: "var(--muted)" }}
+                    className="h-1.5 overflow-hidden rounded-full"
+                    style={{ background: "color-mix(in oklch, var(--muted) 72%, transparent)" }}
                   >
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${weight}%`,
-                        background: `linear-gradient(90deg, ${cfg.color}, color-mix(in oklch, ${cfg.color} 70%, oklch(0.70 0.21 155)))`,
+                        background: cfg.color,
                       }}
                     />
                   </div>
                   <span
-                    className="text-[9px] font-semibold flex-shrink-0"
-                    style={{ color: "var(--muted-foreground)", opacity: 0.55 }}
+                    className="mobile-value text-[10px] font-bold"
+                    style={{ color: "var(--muted-foreground)" }}
                   >
                     {weight.toFixed(1)}%
                   </span>
                 </div>
               </div>
-
-              {/* Value + 24h change */}
-              <div className="flex flex-col items-end flex-shrink-0 gap-1">
-                <span
-                  className="text-[15px] font-bold font-tabular leading-tight"
-                  style={{ color: "var(--foreground)" }}
-                >
-                  {hideBalances
-                    ? "••••"
-                    : p.valor_actual !== null
-                    ? formatCurrency(p.valor_actual)
-                    : "—"}
-                </span>
-
-                <div
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
-                  style={{
-                    background: is24hPositive
-                      ? "oklch(0.70 0.21 155 / 0.11)"
-                      : "oklch(0.65 0.22 22 / 0.11)",
-                  }}
-                >
-                  <span
-                    className="text-[11px] font-bold font-tabular"
-                    style={{
-                      color: is24hPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)",
-                    }}
-                  >
-                    {hideBalances ? "•••" : (
-                      <>
-                        {p.change_amount_24h !== undefined && p.change_amount_24h !== null && p.change_amount_24h !== 0
-                          ? `${p.change_amount_24h > 0 ? "+" : ""}${formatCurrency(p.change_amount_24h)} `
-                          : ""}
-                        {formatPercent(change24h)}
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              <ChevronRight
-                className="w-4 h-4 flex-shrink-0"
-                style={{ color: "var(--muted-foreground)", opacity: 0.25 }}
-              />
             </div>
           </motion.div>
         </Link>
