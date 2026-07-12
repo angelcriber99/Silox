@@ -138,20 +138,9 @@ export default function SettingsPage() {
     </button>
   )
 
-  const resolveIconColor = (iconColor?: string) => {
-    const colors: Record<string, string> = {
-      "text-blue-500": "var(--primary)",
-      "text-yellow-500": "var(--warning)",
-      "text-emerald-500": "var(--positive)",
-      "text-rose-500": "var(--negative)",
-      "text-amber-500": "var(--warning)",
-    }
-    return iconColor ? (colors[iconColor] ?? iconColor) : "var(--primary)"
-  }
-
   const SettingRow = ({ icon: Icon, title, desc, action, iconColor }: any) => (
     <div
-      className="mobile-panel flex items-center justify-between p-3.5 md:p-4 mb-2.5 transition-colors group"
+      className="flex items-center justify-between p-4 rounded-2xl mb-2.5 transition-colors group"
       style={{
         background: "var(--card)",
         border: "1px solid var(--border)",
@@ -159,14 +148,14 @@ export default function SettingsPage() {
     >
       <div className="flex gap-4 items-center">
         <div
-          className="p-2.5 rounded-lg flex-shrink-0"
+          className="p-2.5 rounded-xl flex-shrink-0"
           style={{
             background: "oklch(0.68 0.17 192 / 0.10)",
             border: "1px solid oklch(0.68 0.17 192 / 0.18)",
-            color: resolveIconColor(iconColor),
+            color: iconColor || "var(--primary)",
           }}
         >
-          <Icon className="h-[18px] w-[18px]" />
+          <Icon className="w-4.5 h-4.5" />
         </div>
         <div className="pr-4">
           <h3 className="text-[14px] font-semibold" style={{ color: "var(--foreground)" }}>{title}</h3>
@@ -179,33 +168,33 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="mobile-screen max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-5 md:gap-8 min-h-[calc(100vh-8rem)] pb-24 md:py-8 px-3 md:px-6 mb-0 md:mb-0 animate-fade-in md:bg-background"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
+      className="max-w-6xl w-full mx-auto flex flex-col md:flex-row gap-6 md:gap-8 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0 animate-fade-in"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}
     >
       
       {/* ── Sidebar ───────────────────────────────────────── */}
       <aside className="w-full md:w-[240px] shrink-0 flex flex-col">
-        <div className="mobile-panel mb-4 p-4 md:bg-transparent md:border-0 md:p-0 md:shadow-none md:mb-6">
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-1.5">
             <div
-              className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
+              className="h-9 w-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
             >
-              <Settings className="h-[18px] w-[18px]" style={{ color: "var(--primary)" }} />
+              <Settings className="h-4.5 w-4.5" style={{ color: "var(--primary)" }} />
             </div>
-            <h1 className="text-2xl font-black tracking-normal" style={{ color: "var(--foreground)" }}>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
               {t('title')}
             </h1>
           </div>
-          <p className="text-xs md:text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>Preferencias personales</p>
+          <p className="text-sm pl-12" style={{ color: "var(--muted-foreground)" }}>Preferencias personales</p>
         </div>
         
-        <nav className="mobile-panel-muted flex md:flex-col gap-1 overflow-x-auto p-1 md:p-0 md:bg-transparent md:border-0 pb-1 md:pb-0 hide-scrollbar snap-x w-full">
+        <nav className="flex md:flex-col gap-1.5 overflow-x-auto pb-4 md:pb-0 hide-scrollbar snap-x w-full">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="shrink-0 snap-start flex items-center justify-between px-3 py-2.5 md:px-3.5 md:py-3 rounded-md transition-all duration-200"
+              className="shrink-0 snap-start flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200"
               style={{
                 background: activeTab === tab.id ? "var(--card)" : "transparent",
                 border: activeTab === tab.id ? "1px solid var(--border)" : "1px solid transparent",
@@ -214,7 +203,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="p-1.5 rounded-md"
+                  className="p-1.5 rounded-lg"
                   style={{
                     background: activeTab === tab.id ? tab.accent : "transparent",
                     color: activeTab === tab.id ? tab.color : "var(--muted-foreground)",
@@ -223,7 +212,7 @@ export default function SettingsPage() {
                   <tab.icon className="w-4 h-4" />
                 </div>
                 <span
-                  className="text-[12px] md:text-[13px] font-black md:font-semibold whitespace-nowrap"
+                  className="text-[13px] font-semibold whitespace-nowrap"
                   style={{ color: activeTab === tab.id ? "var(--foreground)" : "var(--muted-foreground)" }}
                 >
                   {tab.label}
@@ -273,12 +262,12 @@ export default function SettingsPage() {
                   {/* Theme */}
                   <div className="space-y-3">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Tema de la aplicación</label>
-                    <div className="mobile-panel-muted grid grid-cols-3 gap-2 p-1.5">
+                    <div className="grid grid-cols-3 gap-3 p-1.5 bg-muted/30 rounded-2xl border border-border/40">
                       {(['light', 'dark', 'system'] as const).map((mode) => (
                         <button 
                           key={mode}
                           onClick={() => setTheme(mode)} 
-                          className={`flex items-center justify-center gap-2 rounded-md py-3 text-sm font-semibold transition-all ${theme === mode ? 'bg-background shadow-md text-foreground border border-border/50 scale-100' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground scale-95'}`}
+                          className={`flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-xl transition-all ${theme === mode ? 'bg-background shadow-md text-foreground border border-border/50 scale-100' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground scale-95'}`}
                         >
                           {mode === 'light' ? <Sun className="w-4 h-4" /> : mode === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />} 
                           <span className="hidden sm:inline capitalize">{mode === 'system' ? 'Automático' : mode === 'light' ? 'Claro' : 'Oscuro'}</span>
@@ -299,12 +288,12 @@ export default function SettingsPage() {
                   {/* Accent Color */}
                   <div className="space-y-3 pt-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Color de Acento</label>
-                    <div className="mobile-panel flex gap-4 p-4">
+                    <div className="flex gap-4 p-4 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm">
                       {(['blue', 'emerald', 'violet', 'rose', 'amber'] as const).map((color) => (
                         <button
                           key={color}
                           onClick={() => setAccentColor(color)}
-                          className={`w-12 h-12 rounded-lg border-[3px] transition-all flex items-center justify-center ${
+                          className={`w-12 h-12 rounded-full border-[3px] transition-all flex items-center justify-center ${
                             accentColor === color ? 'border-foreground scale-110 shadow-lg' : 'border-transparent hover:scale-105 opacity-80'
                           } ${
                             color === 'blue' ? 'bg-[#3b82f6]' :
@@ -325,9 +314,9 @@ export default function SettingsPage() {
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Visualización</label>
                     
                     {/* Language Selector */}
-                    <div className="mobile-panel flex items-center justify-between p-4 transition-colors mb-3">
+                    <div className="flex items-center justify-between p-4 bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors rounded-2xl mb-3">
                       <div className="flex items-center gap-4">
-                        <div className="rounded-lg bg-primary/10 p-3 text-primary">
+                        <div className={`p-3 rounded-xl bg-blue-500/10 text-blue-500`}>
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
                         </div>
                         <div>
@@ -353,14 +342,14 @@ export default function SettingsPage() {
                       action={<CustomSwitch checked={hideBalances} onChange={() => setHideBalances(!hideBalances)} />} 
                     />
                     
-                    <div className="mobile-panel flex items-center justify-between p-4 transition-colors mb-3">
+                    <div className="flex items-center justify-between p-4 bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors rounded-2xl mb-3">
                       <div className="pr-4">
                         <h3 className="text-[15px] font-semibold text-foreground/90">Densidad de las Tablas</h3>
                         <p className="text-[13px] text-muted-foreground/80 mt-0.5">Controla el espaciado en la vista de cartera.</p>
                       </div>
-                      <div className="flex bg-muted/50 p-1 rounded-lg">
-                        <button onClick={() => setTableDensity('relaxed')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-all ${tableDensity === 'relaxed' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Relajada</button>
-                        <button onClick={() => setTableDensity('compact')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-all ${tableDensity === 'compact' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Compacta</button>
+                      <div className="flex bg-muted/50 p-1 rounded-xl">
+                        <button onClick={() => setTableDensity('relaxed')} className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${tableDensity === 'relaxed' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Relajada</button>
+                        <button onClick={() => setTableDensity('compact')} className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${tableDensity === 'compact' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Compacta</button>
                       </div>
                     </div>
                   </div>
@@ -387,10 +376,10 @@ export default function SettingsPage() {
 
                 <div className="pt-6">
                   <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2 mb-3 block">Sesiones Activas</label>
-                  <div className="mobile-panel overflow-hidden">
+                  <div className="bg-card/40 backdrop-blur-md border border-border/40 rounded-2xl overflow-hidden">
                     <div className="flex items-center justify-between p-4 border-b border-border/30">
                       <div className="flex items-center gap-4">
-                        <div className="p-2.5 rounded-lg bg-background/50 border border-border/50 text-foreground">
+                        <div className="p-2.5 rounded-xl bg-background/50 border border-border/50 text-foreground">
                           <Monitor className="w-5 h-5" />
                         </div>
                         <div>
@@ -402,7 +391,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex items-center justify-between p-4 bg-muted/10">
                       <div className="flex items-center gap-4 opacity-70">
-                        <div className="p-2.5 rounded-lg bg-background/50 border border-border/50 text-foreground">
+                        <div className="p-2.5 rounded-xl bg-background/50 border border-border/50 text-foreground">
                           <Smartphone className="w-5 h-5" />
                         </div>
                         <div>
@@ -410,13 +399,13 @@ export default function SettingsPage() {
                           <p className="text-xs text-muted-foreground/80 mt-0.5">Madrid, España • Hace 2 días</p>
                         </div>
                       </div>
-                      <button onClick={() => toast.success("Sesión revocada")} className="text-xs font-semibold text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-md transition-colors">Revocar</button>
+                      <button onClick={() => toast.success("Sesión revocada")} className="text-xs font-semibold text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg transition-colors">Revocar</button>
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-6">
-                  <button className="w-full sm:w-auto px-5 py-3 rounded-lg bg-muted/40 hover:bg-muted border border-border/50 text-sm font-semibold transition-colors">
+                  <button className="w-full sm:w-auto px-5 py-3 rounded-xl bg-muted/40 hover:bg-muted border border-border/50 text-sm font-semibold transition-colors">
                     Cambiar Contraseña
                   </button>
                 </div>
@@ -466,40 +455,40 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* MyInvestor (Connected) */}
-                  <div className="mobile-panel relative overflow-hidden p-5 group" style={{ borderColor: "color-mix(in oklch, var(--positive) 32%, transparent)" }}>
+                  <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-emerald-500/30 relative overflow-hidden group shadow-sm">
                     <div className="absolute top-0 right-0 p-3">
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Sincronizado
                       </span>
                     </div>
-                    <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center mb-4 shadow-sm border border-border/20">
+                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-border/20">
                       <span className="text-xl font-bold text-slate-800">MYI</span>
                     </div>
                     <h3 className="text-lg font-bold">MyInvestor</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-4">Sincronización diaria de fondos indexados y efectivo.</p>
-                    <button className="w-full py-2.5 rounded-lg border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
+                    <button className="w-full py-2.5 rounded-xl border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
                   </div>
 
                   {/* Revolut */}
-                  <div className="mobile-panel p-5 transition-colors">
-                    <div className="w-12 h-12 rounded-lg bg-zinc-900 flex items-center justify-center mb-4 shadow-sm border border-zinc-700">
+                  <div className="p-5 rounded-2xl bg-card/30 hover:bg-card/50 backdrop-blur-md border border-border/40 transition-colors shadow-sm">
+                    <div className="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center mb-4 shadow-sm border border-zinc-700">
                       <span className="text-xl font-bold text-white">R</span>
                     </div>
                     <h3 className="text-lg font-bold">Revolut</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-4">Importa tu extracto PDF para sincronizar operaciones.</p>
-                    <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-lg bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
+                    <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
                       Subir Extracto (CSV)
                     </RevolutSync>
                   </div>
 
                   {/* DeGiro */}
-                  <div className="mobile-panel p-5 transition-colors">
-                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4 shadow-sm">
+                  <div className="p-5 rounded-2xl bg-card/30 hover:bg-card/50 backdrop-blur-md border border-border/40 transition-colors shadow-sm">
+                    <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mb-4 shadow-sm">
                       <span className="text-xl font-bold text-white">DE</span>
                     </div>
                     <h3 className="text-lg font-bold">DeGiro</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-4">Sincroniza tus ETFs y acciones europeas.</p>
-                    <button className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">Conectar</button>
+                    <button className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">Conectar</button>
                   </div>
                 </div>
               </div>
@@ -514,12 +503,12 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="mobile-panel flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between p-5">
+                  <div className="p-5 bg-card/40 backdrop-blur-md border border-border/40 rounded-2xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div>
                       <h3 className="font-bold text-foreground">Exportar Historial</h3>
                       <p className="text-sm text-muted-foreground mt-1">Descarga todas tus transacciones en formato CSV.</p>
                     </div>
-                    <button onClick={() => toast.success("Exportación iniciada")} className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-lg text-sm font-semibold transition-colors">
+                    <button onClick={() => toast.success("Exportación iniciada")} className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors">
                       <Download className="w-4 h-4" /> CSV Export
                     </button>
                   </div>
@@ -527,14 +516,14 @@ export default function SettingsPage() {
 
                 <div className="pt-8">
                   <label className="text-xs font-bold uppercase tracking-widest text-rose-500/70 ml-2 mb-3 block">Zona Peligrosa</label>
-                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between rounded-lg border border-rose-500/20 bg-rose-500/5 p-5">
+                  <div className="p-5 bg-rose-500/5 border border-rose-500/20 rounded-2xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div>
                       <h3 className="font-bold text-rose-500">Eliminar Cuenta</h3>
                       <p className="text-sm text-rose-500/70 mt-1 max-w-md">Esta acción es irreversible y borrará todos tus datos, transacciones y configuraciones.</p>
                     </div>
                     <button
                       onClick={() => setDeleteDialogOpen(true)}
-                      className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white shadow-sm hover:bg-rose-600 rounded-lg text-sm font-bold transition-colors"
+                      className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white shadow-sm hover:bg-rose-600 rounded-xl text-sm font-bold transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                       Borrar Cuenta
@@ -554,7 +543,7 @@ export default function SettingsPage() {
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500">
+            <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <DialogTitle>Borrar cuenta definitivamente</DialogTitle>
@@ -572,7 +561,7 @@ export default function SettingsPage() {
               value={deleteConfirmation}
               onChange={(event) => setDeleteConfirmation(event.target.value)}
               disabled={deletePending}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               autoComplete="off"
             />
           </div>
@@ -581,14 +570,14 @@ export default function SettingsPage() {
             <button
               onClick={() => setDeleteDialogOpen(false)}
               disabled={deletePending}
-              className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancelar
             </button>
             <button
               onClick={handleDeleteAccount}
               disabled={deletePending || deleteConfirmation !== "BORRAR"}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-rose-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {deletePending && <Loader2 className="h-4 w-4 animate-spin" />}
               Borrar definitivamente

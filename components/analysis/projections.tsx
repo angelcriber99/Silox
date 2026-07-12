@@ -98,7 +98,7 @@ export function Projections() {
 
   if (isLoading) {
     return (
-      <div className="mobile-panel w-full h-[400px] flex items-center justify-center">
+      <div className="w-full h-[400px] flex items-center justify-center bg-card/30 border border-border/50 rounded-2xl">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     )
@@ -127,7 +127,7 @@ export function Projections() {
     <div className="space-y-6">
       {/* Controls */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="mobile-panel p-4 md:p-5">
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl">
           <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
             <Wallet className="w-4 h-4 text-violet-500 flex-shrink-0" /> Capital Inicial
           </label>
@@ -139,7 +139,7 @@ export function Projections() {
           />
         </div>
         
-        <div className="mobile-panel p-4 md:p-5">
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl">
           <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
             <PiggyBank className="w-4 h-4 text-emerald-500 flex-shrink-0" /> Ahorro Mensual
           </label>
@@ -151,7 +151,7 @@ export function Projections() {
           />
         </div>
 
-        <div className="mobile-panel p-4 md:p-5 relative overflow-hidden">
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-1 bg-amber-500/20 rounded-bl-lg">
             <span className="text-[9px] font-bold text-amber-500 uppercase px-1">Opcional</span>
           </div>
@@ -167,7 +167,7 @@ export function Projections() {
           />
         </div>
 
-        <div className="mobile-panel p-4 md:p-5 relative overflow-hidden">
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-1 bg-amber-500/20 rounded-bl-lg">
             <span className="text-[9px] font-bold text-amber-500 uppercase px-1">Opcional</span>
           </div>
@@ -183,9 +183,9 @@ export function Projections() {
           />
         </div>
 
-        <div className="mobile-panel p-4 md:p-5">
+        <div className="p-4 md:p-5 bg-card/10 border border-border/30 rounded-2xl">
           <label className="text-xs md:text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-2 md:mb-3 whitespace-nowrap">
-            <TrendingUp className="w-4 h-4 text-primary flex-shrink-0" /> Rentabilidad (%)
+            <TrendingUp className="w-4 h-4 text-blue-500 flex-shrink-0" /> Rentabilidad (%)
           </label>
           <input 
             type="number" 
@@ -213,7 +213,7 @@ export function Projections() {
           return (
             <div 
               key={idx} 
-              className="mobile-panel p-4 relative overflow-hidden flex flex-col justify-between min-h-[140px]"
+              className="p-4 rounded-[24px] relative overflow-hidden flex flex-col justify-between min-h-[140px] bg-card/10 border border-border/30 shadow-sm"
             >
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-primary/80 mb-2">
@@ -236,7 +236,7 @@ export function Projections() {
                 
                 {/* Mini progress bar showing passive vs total */}
                 <div className="mt-2 h-1.5 w-full bg-muted rounded-full overflow-hidden flex">
-                  <div className="h-full bg-primary" style={{ width: `${100 - passiveRatio}%` }} />
+                  <div className="h-full bg-blue-400" style={{ width: `${100 - passiveRatio}%` }} />
                   <div className="h-full bg-emerald-400" style={{ width: `${passiveRatio}%` }} />
                 </div>
               </div>
@@ -246,12 +246,12 @@ export function Projections() {
       </div>
 
       {/* Chart */}
-      <div className="mobile-panel w-full h-[450px] p-4 md:p-6 flex flex-col">
+      <div className="w-full h-[450px] bg-card/10 border border-border/30 rounded-3xl p-4 md:p-6 flex flex-col">
         <div className="mb-4 flex flex-wrap gap-4 items-center px-2">
           <h3 className="font-bold text-foreground">Proyección a 15 Años</h3>
           <div className="flex gap-4 text-xs font-semibold ml-auto">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-primary" />
+              <div className="w-3 h-3 rounded-sm bg-blue-500" />
               <span className="text-muted-foreground">Aportado</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -300,7 +300,7 @@ export function Projections() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center text-sm font-semibold">
                             <span className="text-muted-foreground">Capital Aportado</span>
-                            <span className="text-primary font-tabular">{formatCurrency(data.contributed)}</span>
+                            <span className="text-blue-500 font-tabular">{formatCurrency(data.contributed)}</span>
                           </div>
                           <div className="flex justify-between items-center text-sm font-semibold">
                             <span className="text-muted-foreground">Interés Pasivo</span>

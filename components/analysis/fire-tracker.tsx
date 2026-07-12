@@ -71,7 +71,7 @@ export function FireTracker() {
 
   if (isLoading) {
     return (
-      <div className="mobile-panel w-full h-[400px] flex items-center justify-center">
+      <div className="w-full h-[400px] flex items-center justify-center bg-card/30 border border-border/50 rounded-2xl">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     )
@@ -85,7 +85,7 @@ export function FireTracker() {
     <div className="space-y-6">
       {/* Controls */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="mobile-panel p-5">
+        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
           <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
             <Target className="w-4 h-4 text-rose-500" /> Objetivo FIRE (€)
           </label>
@@ -97,7 +97,7 @@ export function FireTracker() {
           />
         </div>
         
-        <div className="mobile-panel p-5">
+        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
           <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
             <PiggyBank className="w-4 h-4 text-emerald-500" /> Ahorro Mensual (€)
           </label>
@@ -109,9 +109,9 @@ export function FireTracker() {
           />
         </div>
 
-        <div className="mobile-panel p-5">
+        <div className="p-5 bg-card/10 border border-border/30 rounded-2xl">
           <label className="text-sm font-semibold text-muted-foreground flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-primary" /> Rentabilidad Anual (%)
+            <TrendingUp className="w-4 h-4 text-blue-500" /> Rentabilidad Anual (%)
           </label>
           <input 
             type="number" 
@@ -124,7 +124,7 @@ export function FireTracker() {
 
       {/* Summary */}
       {finalPoint ? (
-        <div className="rounded-lg bg-primary/10 border border-primary/20 p-5 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="p-6 bg-primary/10 border border-primary/20 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-foreground">¡Objetivo a la vista!</h3>
             <p className="text-muted-foreground mt-1">
@@ -139,13 +139,13 @@ export function FireTracker() {
           </div>
         </div>
       ) : (
-        <div className="mobile-panel p-5 md:p-6 text-center">
+        <div className="p-6 bg-card/10 border border-border/30 rounded-3xl text-center">
           <p className="text-muted-foreground">Tardarás más de 50 años. Ajusta tus parámetros.</p>
         </div>
       )}
 
       {/* Chart */}
-      <div className="mobile-panel w-full h-[400px] p-5 md:p-6">
+      <div className="w-full h-[400px] bg-card/10 border border-border/30 rounded-3xl p-6">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={projectionData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
