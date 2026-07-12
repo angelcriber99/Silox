@@ -9,6 +9,7 @@ import { DevSafeguard } from "@/components/dev-safeguard";
 import { CapacitorProvider } from "@/components/providers/capacitor-provider";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import "./globals.css";
 
 const inter = Inter({
@@ -108,6 +109,7 @@ export default async function RootLayout({
             }}
           />
           <PwaRegister />
+          <SpeedInsights />
         </NextIntlClientProvider>
       </body>
     </html>
