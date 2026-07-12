@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
@@ -15,14 +15,14 @@ interface MobileAssetCardProps {
   totalPortfolioValue: number
 }
 
+// Type configuration with wealth-teal-aware palette
 const TYPE_CONFIG: Record<string, { color: string; label: string }> = {
-  "ETF":              { color: "var(--mobile-blue)",     label: "ETF"       },
-  "Fondo Indexado":   { color: "var(--mobile-positive)", label: "Fondo"     },
-  "Fondo Monetario":  { color: "var(--mobile-amber)",    label: "Monetario" },
-  "Acción":           { color: "var(--mobile-ink)",      label: "Acción"    },
-  "Crypto":           { color: "var(--mobile-negative)", label: "Crypto"    },
-  "Metal":            { color: "var(--mobile-metal)",    label: "Metal"     },
-  "Liquidez":         { color: "var(--mobile-muted)",    label: "Efectivo"  },
+  "ETF":              { color: "oklch(0.60 0.17 270)", label: "ETF"       },
+  "Fondo Indexado":   { color: "oklch(0.65 0.17 310)", label: "Fondo"     },
+  "Fondo Monetario":  { color: "oklch(0.72 0.18 192)", label: "Monetario" },
+  "Acción":           { color: "oklch(0.72 0.15 55)",  label: "Acción"    },
+  "Crypto":           { color: "oklch(0.70 0.18 30)",  label: "Crypto"    },
+  "Liquidez":         { color: "oklch(0.60 0.016 230)",label: "Efectivo"  },
 }
 
 // How many px to swipe left before the action triggers
@@ -40,10 +40,12 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   const actionOpacity = useTransform(x, [-MAX_SWIPE, -SWIPE_THRESHOLD / 2], [1, 0])
   const actionScale = useTransform(x, [-MAX_SWIPE, -SWIPE_THRESHOLD], [1, 0.8])
 
+  const pnlPercent    = p.pnl_percent ?? 0
+  const isPositive    = pnlPercent >= 0
   const change24h     = p.change_percent_24h ?? 0
   const is24hPositive = change24h >= 0
 
-  const cfg = TYPE_CONFIG[p.tipo] ?? { color: "var(--mobile-muted)", label: p.tipo }
+  const cfg = TYPE_CONFIG[p.tipo] ?? { color: "oklch(0.60 0.016 230)", label: p.tipo }
 
   // Portfolio weight (0–100)
   const weight =
@@ -56,7 +58,12 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
       ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
       : p.ticker.split(".")[0]
 
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const displayName =
+    p.nombre
+      ?.replace(/\b(fund|index|world|acc|eur|hedged|p-acc)\b/gi, "")
+      .trim() || displayTicker
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
     if (info.offset.x < -SWIPE_THRESHOLD) {
       // Snap to revealed position
       animate(x, -MAX_SWIPE, { type: "spring", stiffness: 400, damping: 30 })
@@ -80,36 +87,40 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
     openWithAsset(p)
   }
 
+  // Compact mode (unchanged)
   if (compactView) {
     return (
       <Link href={`/activo/${p.activo_id}`} className="block">
         <div
-          className="flex items-center gap-3 border-b border-[var(--mobile-line)] bg-[var(--mobile-canvas)] px-5 py-2.5 transition-colors active:bg-[var(--mobile-paper)]"
+          className="flex items-center gap-3 px-4 py-2.5 transition-colors active:opacity-70"
+          style={{ borderBottom: "1px solid oklch(0.165 0.016 238 / 0.4)" }}
         >
+          {/* Avatar dot */}
           <div
-            className="flex h-7 w-7 flex-shrink-0 items-center justify-center border font-black text-[10px]"
+            className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-[10px]"
             style={{
-              background: "var(--mobile-paper)",
+              background: `${cfg.color.replace(")", " / 0.12)")}`,
               color: cfg.color,
-              borderColor: "var(--mobile-line)",
+              border: `1px solid ${cfg.color.replace(")", " / 0.20)")}`,
             }}
           >
             {displayTicker.slice(0, 2)}
           </div>
 
           <span
-            className="flex-1 truncate text-[13px] font-black text-[var(--mobile-ink)]"
+            className="text-[13px] font-semibold flex-1 truncate"
+            style={{ color: "var(--foreground)" }}
           >
             {displayTicker}
           </span>
 
           <div className="flex flex-col items-end">
-            <span className="tabular-nums text-[13px] font-black text-[var(--mobile-ink)]">
+            <span className="text-[13px] font-bold tabular-nums" style={{ color: "var(--foreground)" }}>
               {hideBalances ? "••••" : formatCurrency(p.valor_actual ?? 0)}
             </span>
             <span
-              className="tabular-nums text-[10px] font-bold"
-              style={{ color: is24hPositive ? "var(--mobile-positive)" : "var(--mobile-negative)" }}
+              className="text-[10px] font-semibold tabular-nums"
+              style={{ color: is24hPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)" }}
             >
               {hideBalances ? "•••" : formatPercent(change24h)}
             </span>
@@ -120,11 +131,12 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   }
 
   return (
-    <div className="relative overflow-hidden border-b border-[var(--mobile-line)] bg-[var(--mobile-canvas)]">
+    <div className="relative overflow-hidden" style={{ borderBottom: "1px solid oklch(0.72 0.18 192 / 0.06)" }}>
+      {/* Swipe-left action reveal layer */}
       <motion.div
         className="absolute right-0 top-0 bottom-0 flex items-center justify-center px-4"
         style={{
-          background: "linear-gradient(90deg, transparent, color-mix(in oklch, var(--mobile-positive) 18%, transparent))",
+          background: "linear-gradient(90deg, oklch(0.72 0.18 192 / 0.0), oklch(0.72 0.18 192 / 0.20))",
           opacity: actionOpacity,
           width: MAX_SWIPE + 20,
         }}
@@ -135,20 +147,21 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
           style={{ scale: actionScale }}
         >
           <div
-            className="flex h-10 w-10 items-center justify-center"
+            className="h-10 w-10 rounded-2xl flex items-center justify-center"
             style={{
-              background: "var(--mobile-positive)",
-              boxShadow: "0 8px 18px color-mix(in oklch, var(--mobile-positive) 28%, transparent)",
+              background: "linear-gradient(135deg, oklch(0.72 0.18 192), oklch(0.70 0.21 155))",
+              boxShadow: "0 4px 14px oklch(0.72 0.18 192 / 0.40)",
             }}
           >
-            <Plus className="h-5 w-5 text-white" strokeWidth={3} />
+            <Plus className="w-5 h-5" style={{ color: "oklch(0.06 0.01 240)" }} strokeWidth={3} />
           </div>
-          <span className="text-[9px] font-black uppercase text-[var(--mobile-positive)]">
+          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--primary)" }}>
             Añadir
           </span>
         </motion.div>
       </motion.div>
 
+      {/* Card content — draggable */}
       <motion.div
         drag="x"
         dragConstraints={{ left: -MAX_SWIPE, right: 0 }}
@@ -161,60 +174,70 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
         <Link href={isSwiped ? "#" : `/activo/${p.activo_id}`} className="block" onClick={isSwiped ? (e) => { e.preventDefault(); handleSnapBack() } : undefined}>
           <motion.div
             whileTap={isSwiped ? undefined : { scale: 0.97, opacity: 0.85 }}
-            className="relative bg-[var(--mobile-canvas)] px-5 py-3.5 transition-colors active:bg-[var(--mobile-paper)]"
+            className="px-4 py-3.5 transition-colors relative"
+            style={{ background: "var(--background)" }}
           >
             <div className="flex items-center gap-3.5">
+              {/* Asset avatar — colored by type */}
               <div
-                className="flex h-11 w-11 flex-shrink-0 items-center justify-center border font-black text-[13px]"
+                className="h-11 w-11 rounded-2xl flex items-center justify-center flex-shrink-0 font-bold text-[13px]"
                 style={{
-                  background: "var(--mobile-paper)",
+                  background: `color-mix(in oklch, ${cfg.color} 14%, transparent)`,
                   color: cfg.color,
-                  borderColor: "var(--mobile-line)",
+                  border: `1.5px solid color-mix(in oklch, ${cfg.color} 22%, transparent)`,
                 }}
               >
                 {displayTicker.slice(0, 2)}
               </div>
 
+              {/* Name + type badge */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span
-                    className="truncate text-[15px] font-black text-[var(--mobile-ink)]"
+                    className="text-[15px] font-bold tracking-tight truncate"
+                    style={{ color: "var(--foreground)" }}
                   >
                     {displayTicker}
                   </span>
                   <span
-                    className="flex-shrink-0 border border-[var(--mobile-line)] bg-[var(--mobile-paper)] px-1.5 py-0.5 text-[9px] font-black uppercase"
+                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md flex-shrink-0"
                     style={{
                       color: cfg.color,
+                      background: `color-mix(in oklch, ${cfg.color} 10%, transparent)`,
                     }}
                   >
                     {cfg.label}
                   </span>
                 </div>
 
+                {/* Weight bar */}
                 <div className="flex items-center gap-2 mt-1">
                   <div
-                    className="h-1 flex-1 overflow-hidden bg-[var(--mobile-line)]"
+                    className="flex-1 h-1 rounded-full overflow-hidden"
+                    style={{ background: "var(--muted)" }}
                   >
                     <div
-                      className="h-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${weight}%`,
-                        background: cfg.color,
+                        background: `linear-gradient(90deg, ${cfg.color}, color-mix(in oklch, ${cfg.color} 70%, oklch(0.70 0.21 155)))`,
                       }}
                     />
                   </div>
                   <span
-                    className="flex-shrink-0 tabular-nums text-[9px] font-bold text-[var(--mobile-muted)]"
+                    className="text-[9px] font-semibold flex-shrink-0"
+                    style={{ color: "var(--muted-foreground)", opacity: 0.55 }}
                   >
                     {weight.toFixed(1)}%
                   </span>
                 </div>
               </div>
 
+              {/* Value + 24h change */}
               <div className="flex flex-col items-end flex-shrink-0 gap-1">
                 <span
-                  className="tabular-nums text-[15px] font-black leading-tight text-[var(--mobile-ink)]"
+                  className="text-[15px] font-bold tabular-nums leading-tight"
+                  style={{ color: "var(--foreground)" }}
                 >
                   {hideBalances
                     ? "••••"
@@ -224,16 +247,17 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
                 </span>
 
                 <div
-                  className="flex items-center gap-1 border px-2 py-0.5"
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
                   style={{
-                    background: "var(--mobile-paper)",
-                    borderColor: "var(--mobile-line)",
+                    background: is24hPositive
+                      ? "oklch(0.70 0.21 155 / 0.11)"
+                      : "oklch(0.65 0.22 22 / 0.11)",
                   }}
                 >
                   <span
-                    className="tabular-nums text-[11px] font-black"
+                    className="text-[11px] font-bold tabular-nums"
                     style={{
-                      color: is24hPositive ? "var(--mobile-positive)" : "var(--mobile-negative)",
+                      color: is24hPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)",
                     }}
                   >
                     {hideBalances ? "•••" : (
@@ -250,7 +274,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
 
               <ChevronRight
                 className="w-4 h-4 flex-shrink-0"
-                style={{ color: "var(--mobile-muted)", opacity: 0.45 }}
+                style={{ color: "var(--muted-foreground)", opacity: 0.25 }}
               />
             </div>
           </motion.div>

@@ -16,7 +16,7 @@ interface MobileBottomSheetProps {
   preselectedAsset?: EnrichedPosition | null
 }
 
-const TIPOS = ["ETF", "Fondo Indexado", "Fondo Monetario", "Acción", "Crypto", "Metal"] as const
+const TIPOS = ["ETF", "Fondo Indexado", "Fondo Monetario", "Acción", "Crypto"] as const
 const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 
@@ -152,7 +152,7 @@ export function MobileBottomSheet({
       } else {
         toast.error(data.error || "No se encontró el activo en Yahoo Finance")
       }
-    } catch {
+    } catch (err) {
       toast.error("Error al buscar el activo")
     } finally {
       setIsSearching(false)
@@ -194,8 +194,8 @@ export function MobileBottomSheet({
 
       toast.success(`${tickerClean} añadido a tu cartera exitosamente`)
       onClose()
-    } catch (err: unknown) {
-       const msg = err instanceof Error ? err.message : ""
+    } catch (err: any) {
+       const msg = err?.message || ""
        if (msg.includes("duplicate") || msg.includes("unique")) {
          toast.error("Este activo ya existe en tu cartera")
        } else {
@@ -205,7 +205,7 @@ export function MobileBottomSheet({
   }
 
   // Framer Motion Drag-to-close handler
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.y > 100 || info.velocity.y > 500) {
       onClose()
     }
@@ -215,9 +215,10 @@ export function MobileBottomSheet({
   const isCompra = tipoOp === "Compra"
   const isPending = addTx.isPending || addInvestment.isPending
 
-  const premiumInputClass = "w-full border border-[var(--mobile-line)] bg-[var(--mobile-paper)] px-4 py-4 tabular-nums text-xl font-black text-[var(--mobile-ink)] placeholder:text-[var(--mobile-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--mobile-amber)]/25 transition-all"
-  const labelClass = "mb-2 block text-[10px] font-black uppercase text-[var(--mobile-muted)]"
-  const selectClass = "w-full appearance-none border border-[var(--mobile-line)] bg-[var(--mobile-paper)] px-4 py-4 text-sm font-black text-[var(--mobile-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--mobile-amber)]/25 transition-all"
+  // Premium Input Style
+  const premiumInputClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-xl font-bold tabular-nums placeholder:text-muted-foreground/60 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+  const labelClass = "block text-[11px] font-bold text-muted-foreground/80 uppercase tracking-wider mb-2"
+  const selectClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-sm font-semibold focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
 
   return (
     <AnimatePresence>
@@ -227,7 +228,7 @@ export function MobileBottomSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-[2px] md:hidden"
+            className="md:hidden fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
             onClick={onClose}
           />
 
@@ -240,41 +241,43 @@ export function MobileBottomSheet({
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="fixed bottom-0 left-0 right-0 z-[70] flex max-h-[90vh] flex-col overflow-hidden border-t border-[var(--mobile-line)] bg-[var(--mobile-canvas)] shadow-2xl md:hidden"
+            className="md:hidden fixed bottom-0 left-0 right-0 z-[70] bg-background rounded-t-3xl border-t border-border max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
           >
+            {/* Drag Handle */}
             <div className="flex justify-center pt-4 pb-2 w-full touch-none cursor-grab active:cursor-grabbing">
-              <div className="h-1 w-12 bg-[var(--mobile-line)]" />
+              <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
             </div>
 
+            {/* Content Container (Scrollable) */}
             <div className="overflow-y-auto overflow-x-hidden flex-1 pb-[env(safe-area-inset-bottom,24px)]">
+              
+              {/* Header & Tabs */}
               <div className="px-5 pb-4">
                 <div className="flex justify-between items-center mb-5">
-                  <div>
-                    <p className="text-[10px] font-black uppercase text-[var(--mobile-muted)]">Silox</p>
-                    <h2 className="text-2xl font-black leading-none text-[var(--mobile-ink)]">Añadir operación</h2>
-                  </div>
-                  <button onClick={onClose} className="mobile-icon-button" aria-label="Cerrar">
+                  <h2 className="text-xl font-extrabold text-foreground">Añadir</h2>
+                  <button onClick={onClose} className="p-2 bg-card rounded-full text-muted-foreground active:scale-95 transition-transform">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
+                {/* Segmented Control */}
                 {(step === "select" && newAssetStep === "search") && (
-                  <div className="grid grid-cols-3 border border-[var(--mobile-line)] bg-[var(--mobile-paper)] p-1">
+                  <div className="flex p-1 bg-card rounded-xl">
                     <button 
                       onClick={() => { setActiveTab("operacion"); resetForm() }} 
-                      className={`py-2 text-[11px] font-black uppercase transition-colors ${activeTab === "operacion" ? "bg-[var(--mobile-ink)] text-[var(--mobile-canvas)]" : "text-[var(--mobile-muted)]"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "operacion" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
-                      Activos
+                      Mis Activos
                     </button>
                     <button 
                       onClick={() => { setActiveTab("nuevo"); resetForm() }} 
-                      className={`py-2 text-[11px] font-black uppercase transition-colors ${activeTab === "nuevo" ? "bg-[var(--mobile-ink)] text-[var(--mobile-canvas)]" : "text-[var(--mobile-muted)]"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "nuevo" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
-                      Nuevo
+                      Buscar Nuevo
                     </button>
                     <button 
                       onClick={() => { setActiveTab("importar"); resetForm() }} 
-                      className={`py-2 text-[11px] font-black uppercase transition-colors ${activeTab === "importar" ? "bg-[var(--mobile-ink)] text-[var(--mobile-canvas)]" : "text-[var(--mobile-muted)]"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "importar" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
                       Importar
                     </button>
@@ -287,16 +290,16 @@ export function MobileBottomSheet({
               {/* ========================================================= */}
               {activeTab === "importar" && (
                 <div className="px-5 pb-6 animate-fade-in space-y-6">
-                  <div className="flex flex-col items-center justify-center space-y-3 border border-[var(--mobile-line)] bg-[var(--mobile-paper)] p-5 text-center">
-                    <div className="mb-2 flex h-16 w-16 items-center justify-center border border-[var(--mobile-line)] text-[var(--mobile-amber)]">
+                  <div className="bg-card border border-border p-5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
+                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 mb-2">
                       <FileUp className="w-8 h-8" />
                     </div>
-                    <h3 className="text-lg font-black text-[var(--mobile-ink)]">Importar archivo</h3>
-                    <p className="text-sm text-[var(--mobile-muted)]">Sube un archivo CSV o Excel con tus transacciones de brokers como Revolut, DeGiro, etc.</p>
+                    <h3 className="font-bold text-lg text-foreground">Importar Archivo</h3>
+                    <p className="text-sm text-muted-foreground">Sube un archivo PDF o CSV con tus transacciones de brokers como Revolut, DeGiro, etc.</p>
                     
                     <div className="pt-4 w-full">
                       <RevolutSync className="w-full">
-                        <div className="flex w-full items-center justify-center gap-2 bg-[var(--mobile-ink)] py-4 font-black text-[var(--mobile-canvas)]">
+                        <div className="w-full bg-primary text-primary-foreground font-bold rounded-xl py-4 flex items-center justify-center gap-2">
                           <FileUp className="w-5 h-5" />
                           Seleccionar Documento
                         </div>
@@ -315,8 +318,8 @@ export function MobileBottomSheet({
                     <div className="space-y-3 pb-6">
                       {positions.length === 0 ? (
                          <div className="text-center py-10">
-                            <p className="text-sm text-[var(--mobile-muted)]">No tienes activos aún.</p>
-                            <button onClick={() => setActiveTab("nuevo")} className="mt-4 text-sm font-black text-[var(--mobile-amber)]">Buscar nuevo activo</button>
+                            <p className="text-muted-foreground/80 text-sm">No tienes activos aún.</p>
+                            <button onClick={() => setActiveTab("nuevo")} className="mt-4 text-blue-400 font-bold text-sm">Buscar Nuevo Activo</button>
                          </div>
                       ) : (
                         positions.map((p) => {
@@ -326,17 +329,17 @@ export function MobileBottomSheet({
                               whileTap={{ scale: 0.96 }}
                               key={p.activo_id}
                               onClick={() => handleSelectAsset(p)}
-                              className="flex w-full items-center gap-4 border border-[var(--mobile-line)] bg-[var(--mobile-paper)] p-4 text-left transition-colors active:bg-[var(--mobile-line)]/25"
+                              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border text-left active:bg-muted/50 transition-colors"
                             >
-                              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center border border-[var(--mobile-line)] bg-[var(--mobile-canvas)]">
-                                <span className="text-base font-black text-[var(--mobile-ink)]">{displayTicker.slice(0, 2)}</span>
+                              <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                <span className="text-base font-bold text-blue-400">{displayTicker.slice(0, 2)}</span>
                               </div>
                               <div className="flex-1 overflow-hidden">
-                                <p className="truncate text-base font-black text-[var(--mobile-ink)]">{displayTicker}</p>
-                                <p className="truncate text-xs text-[var(--mobile-muted)]">{p.nombre}</p>
+                                <p className="text-base font-bold text-foreground truncate">{displayTicker}</p>
+                                <p className="text-xs text-muted-foreground/80 truncate">{p.nombre}</p>
                               </div>
                               <div className="flex-shrink-0 text-right">
-                                <p className="tabular-nums text-sm font-black text-[var(--mobile-ink)]">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
+                                <p className="text-sm font-bold text-foreground tabular-nums">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
                               </div>
                             </motion.button>
                           )
@@ -347,12 +350,12 @@ export function MobileBottomSheet({
 
                   {step === "form" && selectedAsset && (
                     <div className="space-y-6 pb-6">
-                       <div className="flex items-center gap-3 border border-[var(--mobile-line)] bg-[var(--mobile-paper)] p-4">
+                       <div className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border">
                           <div className="flex-1 min-w-0">
-                             <p className="truncate text-sm font-black text-[var(--mobile-ink)]">{selectedAsset.ticker}</p>
-                             <p className="truncate text-xs text-[var(--mobile-muted)]">{selectedAsset.nombre}</p>
+                             <p className="text-sm font-bold text-foreground truncate">{selectedAsset.ticker}</p>
+                             <p className="text-xs text-muted-foreground/80 truncate">{selectedAsset.nombre}</p>
                           </div>
-                          <button onClick={() => setStep("select")} className="border border-[var(--mobile-line)] bg-[var(--mobile-canvas)] px-3 py-1.5 text-xs font-black text-[var(--mobile-ink)]">Cambiar</button>
+                          <button onClick={() => setStep("select")} className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full">Cambiar</button>
                        </div>
 
                        {/* Buy/Sell */}
@@ -362,7 +365,7 @@ export function MobileBottomSheet({
                              whileTap={{ scale: 0.95 }}
                              key={tipo}
                              onClick={() => setTipoOp(tipo)}
-                             className={`flex flex-col items-center justify-center gap-1 border py-4 transition-all ${tipoOp === tipo ? (tipo === "Compra" ? "border-[var(--mobile-positive)] bg-[var(--mobile-positive)] text-white" : "border-[var(--mobile-negative)] bg-[var(--mobile-negative)] text-white") : "border-[var(--mobile-line)] bg-[var(--mobile-paper)] text-[var(--mobile-muted)]"}`}
+                             className={`flex flex-col items-center justify-center gap-1 rounded-2xl border py-4 transition-all ${tipoOp === tipo ? (tipo === "Compra" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-rose-500/50 bg-rose-500/10 text-rose-400") : "border-border bg-card/50 text-muted-foreground/80"}`}
                            >
                               {tipo === "Compra" ? <ArrowDownRight className="h-6 w-6" /> : <ArrowUpRight className="h-6 w-6" />}
                               <span className="font-bold text-sm">{tipo}</span>
@@ -386,7 +389,7 @@ export function MobileBottomSheet({
                              </div>
                              <div>
                                <label className={labelClass}>Fecha</label>
-                               <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${premiumInputClass} !text-sm !py-3`} />
+                               <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${premiumInputClass} !text-sm !py-3 [color-scheme:dark]`} />
                              </div>
                           </div>
                        </div>
@@ -395,7 +398,7 @@ export function MobileBottomSheet({
                           whileTap={{ scale: 0.97 }}
                           onClick={handleSubmitTx}
                           disabled={isPending}
-                          className={`flex w-full flex-col items-center justify-center py-4 text-lg font-black text-white transition-opacity disabled:opacity-50 ${isCompra ? "bg-[var(--mobile-positive)]" : "bg-[var(--mobile-negative)]"}`}
+                          className={`w-full py-4 rounded-2xl text-lg font-bold flex flex-col items-center justify-center transition-opacity disabled:opacity-50 ${isCompra ? "bg-emerald-600 text-foreground" : "bg-rose-600 text-foreground"}`}
                         >
                            {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                              <>
@@ -416,26 +419,16 @@ export function MobileBottomSheet({
                 <div className="px-5">
                   {newAssetStep === "search" && (
                      <div className="space-y-6 pb-6">
-                       <p className="text-sm text-[var(--mobile-muted)]">Busca el activo por su Ticker o ISIN para añadirlo a tu cartera.</p>
+                       <p className="text-muted-foreground text-sm">Busca el activo por su Ticker o ISIN para añadirlo a tu cartera.</p>
                        <div className="space-y-4">
                           <div className="relative">
-                            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--mobile-muted)]" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/80" />
                             <input 
                               type="text" 
                               placeholder="Ej: AAPL, VWCE.DE..." 
                               value={ticker} 
                               onChange={(e) => setTicker(e.target.value.toUpperCase())} 
-                              className="w-full border border-[var(--mobile-line)] bg-[var(--mobile-paper)] py-4 pl-12 pr-4 text-lg font-black text-[var(--mobile-ink)] placeholder:font-medium placeholder:text-[var(--mobile-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--mobile-amber)]/25"
-                            />
-                          </div>
-                          <div>
-                            <label className={labelClass}>ISIN opcional</label>
-                            <input
-                              type="text"
-                              placeholder="ES0000000000"
-                              value={isin}
-                              onChange={(e) => setIsin(e.target.value.toUpperCase())}
-                              className={`${premiumInputClass} !text-base !py-3`}
+                              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 text-foreground text-lg font-bold placeholder:text-muted-foreground/60 placeholder:font-medium focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                             />
                           </div>
                           
@@ -443,7 +436,7 @@ export function MobileBottomSheet({
                             whileTap={{ scale: 0.97 }}
                             onClick={handleSearchTicker}
                             disabled={!ticker.trim() || isSearching}
-                            className="flex w-full items-center justify-center gap-2 bg-[var(--mobile-ink)] py-4 text-base font-black text-[var(--mobile-canvas)] disabled:opacity-50"
+                            className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-base font-bold disabled:opacity-50 flex items-center justify-center gap-2"
                           >
                             {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
                             Buscar Activo
@@ -454,13 +447,13 @@ export function MobileBottomSheet({
 
                   {newAssetStep === "details" && (
                      <div className="space-y-6 pb-6">
-                        <div className="flex items-center justify-between border border-[var(--mobile-line)] bg-[var(--mobile-paper)] p-4">
+                        <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex justify-between items-center">
                           <div className="flex-1 overflow-hidden pr-2">
-                             <p className="mb-1 text-xs font-black uppercase text-[var(--mobile-amber)]">Activo encontrado</p>
-                             <p className="truncate text-lg font-black leading-tight text-[var(--mobile-ink)]">{ticker}</p>
-                             <p className="truncate text-sm text-[var(--mobile-muted)]">{nombre || "—"}</p>
+                             <p className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">Activo Encontrado</p>
+                             <p className="text-foreground text-lg font-bold leading-tight truncate">{ticker}</p>
+                             <p className="text-muted-foreground text-sm truncate">{nombre || "—"}</p>
                           </div>
-                          <button onClick={() => setNewAssetStep("search")} className="flex-shrink-0 border border-[var(--mobile-line)] bg-[var(--mobile-canvas)] px-3 py-1.5 text-xs font-black text-[var(--mobile-muted)]">Editar</button>
+                          <button onClick={() => setNewAssetStep("search")} className="text-muted-foreground text-xs bg-card px-3 py-1.5 rounded-full font-semibold flex-shrink-0">Editar</button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -470,7 +463,7 @@ export function MobileBottomSheet({
                                 <select value={tipo} onChange={(e) => setTipo(e.target.value)} className={selectClass}>
                                   {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
-                                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[var(--mobile-muted)]">▼</div>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/80 text-xs">▼</div>
                               </div>
                            </div>
                            <div>
@@ -479,26 +472,16 @@ export function MobileBottomSheet({
                                 <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={selectClass}>
                                   {MONEDAS.map(m => <option key={m} value={m}>{m}</option>)}
                                 </select>
-                                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[var(--mobile-muted)]">▼</div>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/80 text-xs">▼</div>
                               </div>
                            </div>
                         </div>
 
-                        <div>
-                          <label className={labelClass}>Estrategia</label>
-                          <div className="relative">
-                            <select value={estrategia} onChange={(e) => setEstrategia(e.target.value)} className={selectClass}>
-                              {ESTRATEGIAS.map((e) => <option key={e} value={e}>{e}</option>)}
-                            </select>
-                            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[var(--mobile-muted)]">▼</div>
-                          </div>
-                        </div>
-
                         {/* Compra inicial */}
-                        <div className="border-t border-[var(--mobile-line)] pt-4">
-                          <p className="mb-4 flex items-center gap-2 font-black text-[var(--mobile-ink)]">
-                             <Plus className="h-5 w-5 text-[var(--mobile-positive)]" />
-                             Primera inversión
+                        <div className="pt-4 border-t border-border">
+                          <p className="text-foreground font-bold mb-4 flex items-center gap-2">
+                             <Plus className="h-5 w-5 text-emerald-400" />
+                             Primera Inversión
                           </p>
                           <div className="space-y-5">
                             <div>
@@ -512,7 +495,7 @@ export function MobileBottomSheet({
                             <div className="grid grid-cols-2 gap-4">
                                <div>
                                  <label className={labelClass}>Fecha</label>
-                                 <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${premiumInputClass} !text-sm !py-3`} />
+                                 <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${premiumInputClass} !text-sm !py-3 [color-scheme:dark]`} />
                                </div>
                             </div>
                           </div>
@@ -522,7 +505,7 @@ export function MobileBottomSheet({
                           whileTap={{ scale: 0.97 }}
                           onClick={handleSubmitNewAsset}
                           disabled={isPending}
-                          className="flex w-full flex-col items-center justify-center bg-[var(--mobile-positive)] py-4 text-lg font-black text-white transition-opacity disabled:opacity-50"
+                          className="w-full py-4 rounded-2xl text-lg font-bold flex flex-col items-center justify-center transition-opacity disabled:opacity-50 bg-emerald-600 text-foreground"
                         >
                            {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                              <>

@@ -98,18 +98,6 @@
   --sidebar-accent-foreground: oklch(0.11 0.015 220);
   --sidebar-border: oklch(0.88 0.015 200);
   --sidebar-ring: oklch(0.48 0.16 195);
-
-  /* Mobile editorial redesign */
-  --mobile-canvas: oklch(0.965 0.012 82);
-  --mobile-paper: oklch(0.985 0.006 84);
-  --mobile-ink: oklch(0.145 0.012 72);
-  --mobile-muted: oklch(0.46 0.018 78);
-  --mobile-line: oklch(0.82 0.026 78);
-  --mobile-amber: oklch(0.67 0.132 72);
-  --mobile-positive: oklch(0.48 0.126 150);
-  --mobile-negative: oklch(0.52 0.156 28);
-  --mobile-blue: oklch(0.46 0.116 245);
-  --mobile-metal: oklch(0.58 0.046 86);
 }
 
 .dark {
@@ -157,17 +145,6 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(0.165 0.016 238);
   --sidebar-ring: oklch(0.72 0.18 192);
-
-  --mobile-canvas: oklch(0.105 0.01 78);
-  --mobile-paper: oklch(0.15 0.012 76);
-  --mobile-ink: oklch(0.93 0.01 86);
-  --mobile-muted: oklch(0.68 0.018 80);
-  --mobile-line: oklch(0.28 0.018 76);
-  --mobile-amber: oklch(0.74 0.132 72);
-  --mobile-positive: oklch(0.67 0.15 150);
-  --mobile-negative: oklch(0.68 0.17 28);
-  --mobile-blue: oklch(0.70 0.11 245);
-  --mobile-metal: oklch(0.75 0.055 86);
 }
 
 .dark.amoled {
@@ -198,17 +175,6 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(0.14 0.008 235);
   --sidebar-ring: oklch(0.45 0.12 192);
-
-  --mobile-canvas: oklch(0.03 0.004 78);
-  --mobile-paper: oklch(0.08 0.006 76);
-  --mobile-ink: oklch(0.94 0.008 86);
-  --mobile-muted: oklch(0.64 0.016 80);
-  --mobile-line: oklch(0.20 0.01 76);
-  --mobile-amber: oklch(0.74 0.132 72);
-  --mobile-positive: oklch(0.67 0.15 150);
-  --mobile-negative: oklch(0.68 0.17 28);
-  --mobile-blue: oklch(0.70 0.11 245);
-  --mobile-metal: oklch(0.75 0.055 86);
 }
 
 /* ─────────────────────────────────────────────── */
@@ -256,6 +222,11 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  /* Number formatting */
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
 
   /* Financial display numbers */
   .font-display-number {
@@ -334,35 +305,6 @@
   /* Swipe action reveal layer */
   .swipe-action-bg {
     background: linear-gradient(90deg, oklch(0.68 0.17 192 / 0.15), oklch(0.68 0.17 192 / 0.25));
-  }
-
-  .mobile-redesign {
-    background:
-      linear-gradient(90deg, color-mix(in oklch, var(--mobile-line) 26%, transparent) 1px, transparent 1px),
-      var(--mobile-canvas);
-    background-size: 24px 24px;
-    letter-spacing: 0;
-  }
-
-  .mobile-icon-button {
-    @apply flex h-10 w-10 items-center justify-center border transition-colors active:scale-95;
-    background: var(--mobile-paper);
-    border-color: var(--mobile-line);
-    color: var(--mobile-ink);
-  }
-
-  .mobile-signal {
-    @apply inline-flex h-8 items-center gap-1.5 border px-2.5 tabular-nums text-[12px] font-black;
-    background: var(--mobile-paper);
-    border-color: var(--mobile-line);
-  }
-
-  .mobile-signal.is-positive {
-    color: var(--mobile-positive);
-  }
-
-  .mobile-signal.is-negative {
-    color: var(--mobile-negative);
   }
 }
 
