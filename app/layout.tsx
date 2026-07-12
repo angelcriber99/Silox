@@ -4,7 +4,6 @@ import { Toaster } from "sonner";
 import { PreferencesProvider } from "@/components/providers/preferences-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { PwaRegister } from "@/components/pwa-register";
 import { DevSafeguard } from "@/components/dev-safeguard";
 import { CapacitorProvider } from "@/components/providers/capacitor-provider";
 import { NextIntlClientProvider } from 'next-intl';
@@ -40,7 +39,6 @@ export const metadata: Metadata = {
   title: "Silox — Gestión Patrimonial",
   description:
     "Plataforma profesional de tracking de inversiones. Monitoriza tu cartera de fondos, ETFs y acciones en tiempo real.",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -107,7 +105,6 @@ export default async function RootLayout({
               },
             }}
           />
-          <PwaRegister />
         </NextIntlClientProvider>
       </body>
     </html>
