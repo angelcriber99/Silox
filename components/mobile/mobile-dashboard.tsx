@@ -3,7 +3,7 @@
 import { lazy, Suspense, useMemo, useState } from "react"
 import {
   Bell, Eye, EyeOff, TrendingUp, TrendingDown,
-  Wallet, FileUp, ArrowUp, ArrowDown, Plus, LineChart, Settings,
+  Wallet, FileUp, ArrowUp, ArrowDown,
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
@@ -19,7 +19,6 @@ import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { useAlerts } from "@/lib/hooks/use-alerts"
 import { usePriceAlertNotifications } from "@/components/dashboard/use-price-alert-notifications"
 import Link from "next/link"
-import { useQuickAdd } from "@/lib/stores/use-quick-add"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
@@ -71,7 +70,6 @@ export function MobileDashboard({
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [filterType, setFilterType] = useState<string>("All")
   const [scrubData, setScrubData] = useState<{ i: number; v: number; pnl: number } | null>(null)
-  const { openEmpty } = useQuickAdd()
   const t = useTranslations("Dashboard")
 
   const { data: snapshots } = useHistory()
@@ -480,46 +478,6 @@ export function MobileDashboard({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ─── Operational shortcuts ─────────────────────────────────────── */}
-      <div className="mx-3 mb-4 grid grid-cols-4 gap-2">
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={() => {
-            hapticFeedback.medium()
-            openEmpty()
-          }}
-          className="mobile-panel flex min-h-[74px] flex-col items-center justify-center gap-2 px-2 py-3 text-center"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Plus className="h-4 w-4" strokeWidth={2.8} />
-          </span>
-          <span className="text-[10px] font-black uppercase tracking-[0.05em] text-foreground">Añadir</span>
-        </motion.button>
-
-        <RevolutSync>
-          <div className="mobile-panel flex min-h-[74px] flex-col items-center justify-center gap-2 px-2 py-3 text-center active:scale-95">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-500/10 text-amber-500">
-              <FileUp className="h-4 w-4" strokeWidth={2.5} />
-            </span>
-            <span className="text-[10px] font-black uppercase tracking-[0.05em] text-foreground">Importar</span>
-          </div>
-        </RevolutSync>
-
-        <Link href="/analisis" className="mobile-panel flex min-h-[74px] flex-col items-center justify-center gap-2 px-2 py-3 text-center active:scale-95">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500">
-            <LineChart className="h-4 w-4" strokeWidth={2.5} />
-          </span>
-          <span className="text-[10px] font-black uppercase tracking-[0.05em] text-foreground">Análisis</span>
-        </Link>
-
-        <Link href="/settings" className="mobile-panel flex min-h-[74px] flex-col items-center justify-center gap-2 px-2 py-3 text-center active:scale-95">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
-            <Settings className="h-4 w-4" strokeWidth={2.5} />
-          </span>
-          <span className="text-[10px] font-black uppercase tracking-[0.05em] text-foreground">Ajustes</span>
-        </Link>
       </div>
 
       {/* ─── Live Market Movers (Top Gainers/Losers) ────────────────────── */}
