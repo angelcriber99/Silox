@@ -1,7 +1,7 @@
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
 import { fetchMarketPrices } from '@/lib/actions/market'
-import { apiError, apiSuccess } from '@/lib/api/responses'
 
 export const revalidate = 0
 
@@ -9,20 +9,16 @@ export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
     if (!process.env.CRON_SECRET) {
-      return apiError(request, 500, 'configuration_error', 'CRON_SECRET not configured')
+      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
     }
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return apiError(request, 401, 'unauthorized', 'Unauthorized')
-    }
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return apiError(request, 500, 'configuration_error', 'Missing NEXT_PUBLIC_SUPABASE_URL')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     if (!serviceKey) {
-      return apiError(request, 500, 'configuration_error', 'Missing SUPABASE_SERVICE_ROLE_KEY')
+      return NextResponse.json({ error: 'Missing SUPABASE_SERVICE_ROLE_KEY' }, { status: 500 })
     }
 
     const supabaseAdmin = createClient(
@@ -51,7 +47,7 @@ export async function GET(request: Request) {
         .from('transacciones')
         .select('*, activo:posiciones(*)')
         .eq('user_id', user.id)
-        .eq('estado', 'Pendiente')
+        .eq('estado', 'PENDIENTE')
 
       const adjustedPositions = positions.map(pos => {
         const posPending = pendingTxs?.filter(tx => tx.activo?.ticker === pos.ticker) || []
@@ -115,9 +111,9 @@ export async function GET(request: Request) {
       }
     }
 
-    return apiSuccess(request, { success: true, snapshotsSaved })
-  } catch (error: unknown) {
+    return NextResponse.json({ success: true, snapshotsSaved })
+  } catch (error: any) {
     console.error('Cron Snapshot Error:', error)
-    return apiError(request, 500, 'internal_error', error instanceof Error ? error.message : 'Cron Snapshot Error')
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
