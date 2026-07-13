@@ -1,10 +1,17 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Loader2, TrendingUp, PiggyBank, Wallet } from "lucide-react"
+
+function readStoredNumber(key: string, fallback: number): number {
+  if (typeof window === 'undefined') return fallback
+  const stored = localStorage.getItem(key)
+  const parsed = stored === null ? Number.NaN : Number(stored)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
 
 export function Projections() {
   const { positions, isLoading } = usePortfolio()
@@ -16,24 +23,10 @@ export function Projections() {
 
   // Initial state derived from portfolio, but allow user to tweak it
   const [initialCapital, setInitialCapital] = useState<number | null>(null)
-  const [monthlySaving, setMonthlySaving] = useState(800)
+  const [monthlySaving, setMonthlySaving] = useState(() => readStoredNumber('silox_proj_monthly', 800))
   const [annualReturn, setAnnualReturn] = useState(25)
-  const [futureSaving, setFutureSaving] = useState<number | ''>(300)
-  const [futureSavingYear, setFutureSavingYear] = useState<number | ''>(3)
-
-  useEffect(() => {
-    try {
-      const savedMonthly = localStorage.getItem('silox_proj_monthly');
-      const savedFuture = localStorage.getItem('silox_proj_future');
-      const savedYear = localStorage.getItem('silox_proj_year');
-      
-      if (savedMonthly) setMonthlySaving(Number(savedMonthly));
-      if (savedFuture) setFutureSaving(Number(savedFuture));
-      if (savedYear) setFutureSavingYear(Number(savedYear));
-    } catch (e) {
-      console.error("Error loading projection defaults", e);
-    }
-  }, []);
+  const [futureSaving, setFutureSaving] = useState<number | ''>(() => readStoredNumber('silox_proj_future', 300))
+  const [futureSavingYear, setFutureSavingYear] = useState<number | ''>(() => readStoredNumber('silox_proj_year', 3))
 
   const saveDefaults = () => {
     try {

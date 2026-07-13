@@ -13,12 +13,11 @@ export function TwoFactorModal() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    if (!twoFactor) {
-      setUnlocked(true)
-    } else {
-      setUnlocked(false)
-      setCode(["", "", "", "", "", ""])
-    }
+    const syncTimer = window.setTimeout(() => {
+      setUnlocked(!twoFactor)
+      if (twoFactor) setCode(["", "", "", "", "", ""])
+    }, 0)
+    return () => window.clearTimeout(syncTimer)
   }, [twoFactor])
 
   const handleInput = (index: number, value: string) => {

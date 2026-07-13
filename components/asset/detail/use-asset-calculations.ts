@@ -1,5 +1,5 @@
-import { useMemo } from "react"
-import type { EnrichedPosition, Transaccion } from '@/lib/types'
+import { useMemo, useState } from "react"
+import type { EnrichedPosition } from '@/lib/types'
 
 export interface RawTransaction {
   id: string
@@ -13,7 +13,34 @@ export interface RawTransaction {
   estado?: string
 }
 
+function buildTransactionTable(transactions: RawTransaction[], currentNativePrice: number | null) {
+  let accumulated = 0
+  return transactions.map((tx) => {
+    const qty = Number(tx.cantidad) || 0
+    const price = Number(tx.precio_unitario) || 0
+    const total = qty * price
+    const comision = Number(tx.comision) || 0
+
+    if (tx.tipo_operacion === "Compra") accumulated += total
+    else if (tx.tipo_operacion === "Venta") accumulated -= total
+
+    const pnlPerUnit = currentNativePrice !== null ? currentNativePrice - price : null
+    const pnlTotal = pnlPerUnit !== null ? pnlPerUnit * qty : null
+    const pnlPct = price > 0 && pnlPerUnit !== null ? (pnlPerUnit / price) * 100 : null
+
+    return {
+      ...tx,
+      total,
+      comision,
+      accumulated,
+      pnlTotal: tx.tipo_operacion === "Compra" ? pnlTotal : null,
+      pnlPct: tx.tipo_operacion === "Compra" ? pnlPct : null,
+    }
+  })
+}
+
 export function useAssetCalculations(position: EnrichedPosition, transactions: RawTransaction[]) {
+  const [calculationTime] = useState(() => Date.now())
   // ── Sparkline 7d ──
   const sparklineData = useMemo(() => {
     if (!position.sparkline || position.sparkline.length < 2) return null
@@ -140,7 +167,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
       ? new Date(compras.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())[0].fecha)
       : null
     const yearsInvested = firstTxDate
-      ? (Date.now() - firstTxDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+      ? (calculationTime - firstTxDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
       : 0
     const monthsInvested = Math.round(yearsInvested * 12)
     const cagr = yearsInvested > 0 && position.valor_actual && position.coste_total > 0
@@ -171,7 +198,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
       maxCompra,
       firstTxDate
     }
-  }, [transactions, position])
+  }, [transactions, position, calculationTime])
 
   // ── Donuts ──
   const operacionesDonut = useMemo(() => [
@@ -190,35 +217,10 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
   }, [position])
 
   // ── Tabla de transacciones con P&L ──
-  const txTableData = useMemo(() => {
-    let accumulated = 0
-    return transactions.map(tx => {
-      const qty = Number(tx.cantidad) || 0
-      const price = Number(tx.precio_unitario) || 0
-      const total = qty * price
-      const comision = Number(tx.comision) || 0
-
-      if (tx.tipo_operacion === "Compra") {
-        accumulated += total
-      } else if (tx.tipo_operacion === "Venta") {
-        accumulated -= total
-      }
-
-      const currentNativePrice = position.precio_actual_nativo ?? position.precio_actual
-      const pnlPerUnit = currentNativePrice !== null ? currentNativePrice - price : null
-      const pnlTotal = pnlPerUnit !== null ? pnlPerUnit * qty : null
-      const pnlPct = price > 0 && pnlPerUnit !== null ? (pnlPerUnit / price) * 100 : null
-
-      return {
-        ...tx,
-        total,
-        comision,
-        accumulated,
-        pnlTotal: tx.tipo_operacion === "Compra" ? pnlTotal : null,
-        pnlPct: tx.tipo_operacion === "Compra" ? pnlPct : null,
-      }
-    })
-  }, [transactions, position.precio_actual])
+  const txTableData = useMemo(
+    () => buildTransactionTable(transactions, position.precio_actual_nativo ?? position.precio_actual),
+    [transactions, position.precio_actual, position.precio_actual_nativo],
+  )
 
   return {
     sparklineData,

@@ -14,11 +14,9 @@ export default function PerfilPage() {
     hideBalances, compactView, accentColor, celebrationMode, zenMode, amoled,
     setHideBalances, setCompactView, setAccentColor, setCelebrationMode, setZenMode
   } = usePreferences()
-  const [mounted, setMounted] = useState(false)
   const [email, setEmail] = useState<string | null>(null)
 
   useEffect(() => {
-    setMounted(true)
     const fetchUser = async () => {
       const supabase = createClient()
       const { data } = await supabase.auth.getUser()
@@ -34,8 +32,6 @@ export default function PerfilPage() {
     await supabase.auth.signOut()
     window.location.href = "/login"
   }
-
-  if (!mounted) return null
 
   return (
     <div className="max-w-4xl mx-auto w-full px-6 py-8 space-y-8 animate-fade-in">

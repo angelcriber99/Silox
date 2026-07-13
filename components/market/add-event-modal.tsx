@@ -27,12 +27,14 @@ export function AddEventModal({ open, onOpenChange, positions, onSuccess, initia
 
   // Resetear estados cuando cambie initialData o open
   useEffect(() => {
-    if (open) {
+    if (!open) return
+    const syncTimer = window.setTimeout(() => {
       setTitulo(initialData?.titulo || "")
       setTipo(initialData?.tipo || "Interés")
       setDia(initialData?.dia_del_mes?.toString() || "1")
       setActivoId(initialData?.activo_id || "")
-    }
+    }, 0)
+    return () => window.clearTimeout(syncTimer)
   }, [open, initialData])
 
   const handleSubmit = async (e: React.FormEvent) => {

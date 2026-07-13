@@ -42,7 +42,7 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
     // Sort asc by date
     const sorted = [...txs].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
     
-    let buyLots: BuyLot[] = []
+    const buyLots: BuyLot[] = []
 
     for (const tx of sorted) {
       if (tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada") {

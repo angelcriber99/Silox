@@ -15,13 +15,11 @@ export function NotesModal() {
   const activeNote = useMemo(() => notes.find(n => n.id === activeNoteId), [notes, activeNoteId])
 
   useEffect(() => {
-    if (activeNote) {
-      setLocalTitle(activeNote.title)
-      setLocalContent(activeNote.content)
-    } else {
-      setLocalTitle("")
-      setLocalContent("")
-    }
+    const syncTimer = window.setTimeout(() => {
+      setLocalTitle(activeNote?.title ?? "")
+      setLocalContent(activeNote?.content ?? "")
+    }, 0)
+    return () => window.clearTimeout(syncTimer)
   }, [activeNoteId, activeNote?.id])
 
   useEffect(() => {

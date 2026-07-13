@@ -54,14 +54,16 @@ export function EditAssetModal({ position, open, onOpenChange }: EditAssetModalP
 
   // Reset form when position changes
   useEffect(() => {
-    if (position && open) {
+    if (!position || !open) return
+    const syncTimer = window.setTimeout(() => {
       setTicker(position.ticker || "")
       setIsin(position.isin || "")
       setNombre(position.nombre || "")
       setTipo(position.tipo || "ETF")
       setEstrategia(position.estrategia || "Satellite")
       setMoneda(position.moneda || "EUR")
-    }
+    }, 0)
+    return () => window.clearTimeout(syncTimer)
   }, [position, open])
 
   const handleClose = (v: boolean) => {

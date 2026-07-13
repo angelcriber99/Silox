@@ -76,15 +76,15 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
       "/memes/doge.gif",
       "/memes/nyan.gif",
       "/memes/catjam.gif"
-    ].map(emoji => ({
+    ].map((emoji, index) => ({
       emoji,
-      startX: `${Math.random() * 100}vw`,
-      midX: `${Math.random() * 100}vw`,
-      endX: `${Math.random() * 100}vw`,
-      startY: `${Math.random() * 100}vh`,
-      midY: `${Math.random() * 100}vh`,
-      endY: `${Math.random() * 100}vh`,
-      duration: 20 + Math.random() * 20
+      startX: `${(index * 37 + 11) % 100}vw`,
+      midX: `${(index * 61 + 23) % 100}vw`,
+      endX: `${(index * 83 + 41) % 100}vw`,
+      startY: `${(index * 29 + 17) % 100}vh`,
+      midY: `${(index * 47 + 31) % 100}vh`,
+      endY: `${(index * 71 + 53) % 100}vh`,
+      duration: 20 + ((index * 13) % 20)
     }))
   }, [])
 

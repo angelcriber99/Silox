@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef } from "react"
 import confetti from "canvas-confetti"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { usePreferences } from "@/lib/stores/use-preferences"
@@ -8,13 +8,13 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 export function Celebration() {
   const { totals } = usePortfolio()
   const { celebrationMode } = usePreferences()
-  const [hasCelebrated, setHasCelebrated] = useState(false)
+  const hasCelebrated = useRef(false)
 
   useEffect(() => {
     // Only celebrate once per session, and only if celebration mode is enabled
     // and daily PnL percent is >= 2% (a real celebration)
-    if (celebrationMode && !hasCelebrated && totals.totalPnlPercent24h >= 2) {
-      setHasCelebrated(true)
+    if (celebrationMode && !hasCelebrated.current && totals.totalPnlPercent24h >= 2) {
+      hasCelebrated.current = true
       
       const duration = 3000
       const end = Date.now() + duration
@@ -43,7 +43,7 @@ export function Celebration() {
       }
       frame()
     }
-  }, [totals.totalPnlPercent24h, celebrationMode, hasCelebrated])
+  }, [totals.totalPnlPercent24h, celebrationMode])
 
   return null
 }

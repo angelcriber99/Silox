@@ -112,9 +112,11 @@ export function SiloxInsights({
       }
     }
 
-    // Insight 5: General Tips (Select 3 random tips)
-    const shuffledTips = [...FINANCIAL_TIPS].sort(() => 0.5 - Math.random())
-    list.push(...shuffledTips.slice(0, 3))
+    // Keep tips deterministic so rendering remains pure and hydration-safe.
+    const tipOffset = positions.length % FINANCIAL_TIPS.length
+    list.push(...Array.from({ length: 3 }, (_, index) =>
+      FINANCIAL_TIPS[(tipOffset + index) % FINANCIAL_TIPS.length],
+    ))
 
     return list
   }, [positions, totals, alerts])

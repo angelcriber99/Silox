@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useAlerts } from "@/lib/hooks/use-alerts"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { Bell, BellRing, Plus, Trash2, CheckCircle2 } from "lucide-react"
@@ -32,11 +32,10 @@ export function PriceAlerts({
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState<'above' | 'below'>('above')
 
-  useEffect(() => {
-    if (open && initialTicker) {
-      setTicker(initialTicker)
-    }
-  }, [open, initialTicker])
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen && initialTicker) setTicker(initialTicker)
+    onOpenChange(nextOpen)
+  }
 
   usePriceAlertNotifications(checkNotifications ? positions : [], alerts, removeAlert)
 
@@ -57,7 +56,7 @@ export function PriceAlerts({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="bg-background border-l border-border/50 sm:max-w-md w-[90vw] p-0 flex flex-col">
         <SheetHeader className="p-6 pb-4 border-b border-border/50">
           <SheetTitle className="text-xl font-bold flex items-center gap-2">
