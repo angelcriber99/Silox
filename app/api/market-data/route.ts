@@ -2,10 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireApiUser } from '@/lib/server/api-auth';
 import { getYahooFinance } from '@/lib/server/yahoo-finance';
+import type {
+  QuoteSummaryResult,
+  TopHoldingsHolding,
+  TopHoldingsSectorWeighting,
+} from 'yahoo-finance2/modules/quoteSummary-iface';
 
 // In-memory cache to avoid hitting Yahoo Finance too often
-const cache = new Map<string, { data: any; timestamp: number }>();
+interface MarketDataResponse {
+  symbol: string;
+  name: string;
+  sectorWeightings: Record<string, number> | null;
+  topHoldings: TopHoldingsHolding[];
+  assetClass: string | null;
+  country: string | null;
+  sector: string | null;
+  geographicWeightings: Record<string, number> | null;
+}
+
+const cache = new Map<string, { data: MarketDataResponse; timestamp: number }>();
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const MAX_CACHE_ENTRIES = 250;
 
 const MarketDataSchema = z.object({
   identifier: z.string().trim().min(1).max(100),
@@ -28,9 +45,9 @@ export async function POST(request: NextRequest) {
 
     // Check cache first
     const cacheKey = `${identifier}-${isin || ''}`;
-    const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return NextResponse.json(cached.data);
+    const cached = readCache(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
     }
 
     let tickerToFetch = identifier;
@@ -42,11 +59,12 @@ export async function POST(request: NextRequest) {
     if (looksLikeISIN || looksLikeMorningstarId) {
       const searchTerm = looksLikeISIN ? isin : identifier;
       try {
-        const searchRes: any = await yahooFinance.search(searchTerm);
-        if (searchRes?.quotes?.length > 0) {
-          tickerToFetch = searchRes.quotes[0].symbol;
+        const searchRes = await yahooFinance.search(searchTerm);
+        const yahooQuote = searchRes.quotes.find((quote) => quote.isYahooFinance);
+        if (yahooQuote) {
+          tickerToFetch = yahooQuote.symbol;
         }
-      } catch (e) {
+      } catch {
         console.warn(`Search failed for ${searchTerm}, trying identifier directly`);
       }
     }
@@ -54,17 +72,17 @@ export async function POST(request: NextRequest) {
     console.log(`[market-data] Fetching Yahoo Finance for: ${tickerToFetch} (original: ${identifier})`);
 
     // Fetch quote summary - handle validation errors gracefully
-    let result: any;
+    let result: QuoteSummaryResult | null;
     try {
       result = await yahooFinance.quoteSummary(tickerToFetch, {
         modules: ['topHoldings', 'fundProfile', 'price', 'assetProfile', 'summaryProfile'],
       });
-    } catch (e: any) {
-      if (e.name === 'FailedYahooValidationError' && e.result) {
+    } catch (error: unknown) {
+      if (isYahooValidationError(error)) {
         console.warn(`[market-data] Validation error for ${tickerToFetch}, using partial result`);
-        result = e.result;
+        result = error.result;
       } else {
-        console.error(`[market-data] quoteSummary failed for ${tickerToFetch}:`, e.message);
+        console.error(`[market-data] quoteSummary failed for ${tickerToFetch}:`, getErrorMessage(error));
         result = null;
       }
     }
@@ -76,16 +94,9 @@ export async function POST(request: NextRequest) {
     const assetProfile = result?.assetProfile || result?.summaryProfile;
 
     let sectorWeightings: Record<string, number> | null = null;
-    if (topHoldings?.sectorWeightings && Array.isArray(topHoldings.sectorWeightings)) {
+    if (topHoldings?.sectorWeightings) {
       // It's a fund
-      sectorWeightings = {};
-      for (const sectorObj of topHoldings.sectorWeightings) {
-        for (const [key, value] of Object.entries(sectorObj)) {
-          if (typeof value === 'number' && value > 0) {
-            sectorWeightings[key] = value;
-          }
-        }
-      }
+      sectorWeightings = normalizeSectorWeightings(topHoldings.sectorWeightings);
     } else if (assetProfile?.sector) {
       // It's a single stock
       sectorWeightings = {};
@@ -110,18 +121,11 @@ export async function POST(request: NextRequest) {
 
       if (proxyTicker) {
         try {
-          const proxyResult: any = await yahooFinance.quoteSummary(proxyTicker, { modules: ['topHoldings'] });
-          if (proxyResult?.topHoldings?.sectorWeightings && Array.isArray(proxyResult.topHoldings.sectorWeightings)) {
-            sectorWeightings = {};
-            for (const sectorObj of proxyResult.topHoldings.sectorWeightings) {
-              for (const [key, value] of Object.entries(sectorObj)) {
-                if (typeof value === 'number' && value > 0) {
-                  sectorWeightings[key] = value;
-                }
-              }
-            }
+          const proxyResult = await yahooFinance.quoteSummary(proxyTicker, { modules: ['topHoldings'] });
+          if (proxyResult?.topHoldings?.sectorWeightings) {
+            sectorWeightings = normalizeSectorWeightings(proxyResult.topHoldings.sectorWeightings);
           }
-        } catch (e) {
+        } catch {
           console.warn(`[market-data] Failed to fetch proxy ticker ${proxyTicker} for ${identifier}`);
         }
       }
@@ -178,10 +182,7 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    let holdingsList: any[] = [];
-    if (topHoldings?.holdings && Array.isArray(topHoldings.holdings)) {
-      holdingsList = topHoldings.holdings;
-    }
+    const holdingsList = topHoldings?.holdings ?? [];
 
     const responseData = {
       symbol: tickerToFetch,
@@ -195,11 +196,53 @@ export async function POST(request: NextRequest) {
     };
 
     // Store in cache
-    cache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    writeCache(cacheKey, responseData);
 
     return NextResponse.json(responseData);
-  } catch (error: any) {
-    console.error('[market-data] API error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
+    console.error('[market-data] API error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+function normalizeSectorWeightings(
+  weightings: TopHoldingsSectorWeighting[],
+): Record<string, number> {
+  const normalized: Record<string, number> = {};
+  for (const sector of weightings) {
+    for (const [key, value] of Object.entries(sector)) {
+      if (typeof value === 'number' && value > 0) normalized[key] = value;
+    }
+  }
+  return normalized;
+}
+
+function readCache(key: string): MarketDataResponse | null {
+  const cached = cache.get(key);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp >= CACHE_TTL) {
+    cache.delete(key);
+    return null;
+  }
+  return cached.data;
+}
+
+function writeCache(key: string, data: MarketDataResponse): void {
+  if (!cache.has(key) && cache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey) cache.delete(oldestKey);
+  }
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+function isYahooValidationError(
+  error: unknown,
+): error is Error & { result: QuoteSummaryResult } {
+  if (!(error instanceof Error) || error.name !== 'FailedYahooValidationError') return false;
+  return 'result' in error && typeof error.result === 'object' && error.result !== null;
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Error interno de mercado';
 }

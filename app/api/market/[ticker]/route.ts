@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
 import { requireApiUser } from '@/lib/server/api-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import type { ChartOptions } from 'yahoo-finance2/modules/chart'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,38 +34,37 @@ export async function GET(
     }
     const { ticker, range, type } = parsed.data
 
-    const [quoteResult, chartResult] = await Promise.allSettled([
+    const shouldFetchSummary = type === 'Acción' || type === 'Stock'
+    const [quoteResult, chartResult, summaryResult] = await Promise.allSettled([
       yahooFinance.quote(ticker),
-      yahooFinance.chart(ticker, { period1: getPeriod1ForRange(range), interval: getInterval(range) })
+      yahooFinance.chart(ticker, { period1: getPeriod1ForRange(range), interval: getInterval(range) }),
+      shouldFetchSummary
+        ? yahooFinance.quoteSummary(ticker, { modules: ['summaryProfile', 'financialData'] })
+        : Promise.resolve(null),
     ])
 
-    let summaryResult: any = null
-    if (type === 'Acción' || type === 'Stock') {
-       try {
-         summaryResult = await yahooFinance.quoteSummary(ticker, { modules: ['summaryProfile', 'financialData'] })
-       } catch(e) {
-         console.error('Error fetching summary for', ticker, e)
-       }
-    }
-
-    let quote: any = null
-    if (quoteResult.status === 'fulfilled') {
-      quote = quoteResult.value
-    } else {
+    if (quoteResult.status === 'rejected') {
       console.error('Error fetching quote for', ticker, quoteResult.reason)
     }
 
-    let chartData = []
-    if (chartResult.status === 'fulfilled') {
-      const res = chartResult.value as any
-      chartData = res.quotes.map((q: any) => ({
-        date: q.date.toISOString(),
-        price: q.close || q.open,
-        volume: q.volume
-      })).filter((q: any) => q.price !== null && q.price !== undefined)
-    } else {
+    if (chartResult.status === 'rejected') {
       console.error('Error fetching chart for', ticker, chartResult.reason)
     }
+
+    if (summaryResult.status === 'rejected') {
+      console.error('Error fetching summary for', ticker, summaryResult.reason)
+    }
+
+    const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null
+    const summary = summaryResult.status === 'fulfilled' ? summaryResult.value : null
+    const chartData = chartResult.status === 'fulfilled'
+      ? chartResult.value.quotes.flatMap((point) => {
+          const price = point.close ?? point.open
+          return price == null
+            ? []
+            : [{ date: point.date.toISOString(), price, volume: point.volume }]
+        })
+      : []
 
     return NextResponse.json({
       quote: quote ? {
@@ -82,20 +82,20 @@ export async function GET(
         currency: normalizeYahooCurrency(quote.currency || 'USD'),
         averageAnalystRating: quote.averageAnalystRating || null,
       } : null,
-      summary: summaryResult ? {
-        profile: summaryResult.summaryProfile || null,
-        financials: summaryResult.financialData || null
+      summary: summary ? {
+        profile: summary.summaryProfile || null,
+        financials: summary.financialData || null
       } : null,
       chart: chartData
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Market API Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
   }
 }
 
-function getInterval(range: string): any {
+function getInterval(range: z.infer<typeof MarketRequestSchema>['range']): ChartOptions['interval'] {
   switch (range) {
     case '1d': return '5m'
     case '5d': return '15m'
@@ -107,6 +107,10 @@ function getInterval(range: string): any {
     case 'max': return '1mo'
     default: return '1d'
   }
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Error interno de mercado'
 }
 
 function formatNumber(num: number | undefined | null) {
