@@ -77,6 +77,8 @@ export async function GET(request: Request) {
   checks.push(
     await tableCheck(supabase, "imports", "Auditoría de importaciones"),
     await tableCheck(supabase, "notification_preferences", "Preferencias de notificación"),
+    await tableCheck(supabase, "budget_settings", "Presupuesto mensual"),
+    await tableCheck(supabase, "expenses", "Gastos"),
     await tableCheck(supabase, "portfolio_history", "Histórico intradía de cartera"),
     await tableCheck(supabase, "portfolio_snapshots", "Snapshots diarios"),
   )

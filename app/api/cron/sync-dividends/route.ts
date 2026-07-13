@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { authorizeCronRequest } from '@/lib/server/cron-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
@@ -8,16 +7,8 @@ import { getErrorMessage } from '@/lib/utils/errors'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const authorization = authorizeCronRequest(request)
-    if (!authorization.authorized) {
-      return NextResponse.json(
-        { error: authorization.error },
-        { status: authorization.status },
-      )
-    }
-
     const yahooFinance = getYahooFinance()
 
     const supabase = getSupabaseAdmin()

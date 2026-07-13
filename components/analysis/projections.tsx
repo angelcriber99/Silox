@@ -2,9 +2,11 @@
 
 import { useState, useMemo } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { useBudgetSettings } from "@/lib/hooks/use-budget-settings"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Loader2, TrendingUp, PiggyBank, Wallet } from "lucide-react"
+import { toast } from "sonner"
 
 function readStoredNumber(key: string, fallback: number): number {
   if (typeof window === 'undefined') return fallback
@@ -15,6 +17,7 @@ function readStoredNumber(key: string, fallback: number): number {
 
 export function Projections() {
   const { positions, isLoading } = usePortfolio()
+  const { settings: budgetSettings, isLoading: isBudgetLoading, isSaving, updateBudget } = useBudgetSettings()
   
   const currentTotal = useMemo(() => {
     if (!positions) return 0
@@ -28,7 +31,13 @@ export function Projections() {
   const [futureSaving, setFutureSaving] = useState<number | ''>(() => readStoredNumber('silox_proj_future', 300))
   const [futureSavingYear, setFutureSavingYear] = useState<number | ''>(() => readStoredNumber('silox_proj_year', 3))
 
-  const saveDefaults = () => {
+  useEffect(() => {
+    if (budgetSettings) {
+      setMonthlySaving(budgetSettings.monthly_allowance)
+    }
+  }, [budgetSettings]);
+
+  const saveDefaults = async () => {
     try {
       localStorage.setItem('silox_proj_monthly', monthlySaving.toString());
       if (futureSaving !== '') localStorage.setItem('silox_proj_future', futureSaving.toString());
@@ -36,8 +45,10 @@ export function Projections() {
       
       if (futureSavingYear !== '') localStorage.setItem('silox_proj_year', futureSavingYear.toString());
       else localStorage.removeItem('silox_proj_year');
-    } catch (e) {
-      console.error("Error saving projection defaults", e);
+      await updateBudget("monthly_allowance", monthlySaving)
+      toast.success("Valores de proyección guardados")
+    } catch (error: any) {
+      toast.error(error.message || "No se pudieron guardar los valores")
     }
   };
 
@@ -89,7 +100,7 @@ export function Projections() {
     return data
   }, [startingCapital, monthlySaving, annualReturn, futureSaving, futureSavingYear])
 
-  if (isLoading) {
+  if (isLoading || isBudgetLoading) {
     return (
       <div className="w-full h-[400px] flex items-center justify-center bg-card/30 border border-border/50 rounded-2xl">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -192,9 +203,10 @@ export function Projections() {
       <div className="flex justify-end mt-2">
         <button 
           onClick={saveDefaults}
+          disabled={isSaving}
           className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors bg-card/50 px-3 py-1.5 rounded-lg border border-border/50"
         >
-          Guardar valores por defecto
+          {isSaving ? "Guardando..." : "Guardar valores por defecto"}
         </button>
       </div>
 

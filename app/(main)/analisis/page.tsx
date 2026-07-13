@@ -14,6 +14,7 @@ const Projections = lazy(() =>
     default: mod.Projections,
   }))
 )
+
 export default function AnalysisPage() {
   const [activeTab, setActiveTab] = useState<"exhaustivo" | "proyecciones">("exhaustivo")
 
