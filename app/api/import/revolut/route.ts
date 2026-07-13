@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { apiError, apiSuccess } from '@/lib/api/responses'
 
 export const runtime = 'nodejs'
 
@@ -105,6 +105,54 @@ const SPANISH_MONTHS: Record<string, string> = {
   noviembre: '11',
   dic: '12',
   diciembre: '12',
+}
+
+async function createImportAudit(
+  supabase: any,
+  userId: string,
+  file: File,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('imports')
+    .insert({
+      user_id: userId,
+      source: 'revolut',
+      filename: file.name,
+      file_size: file.size,
+      file_type: file.type || null,
+      status: 'processing',
+    })
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    if (!['42P01', 'PGRST205', 'PGRST116'].includes(error.code)) {
+      console.warn('[revolut-import] could not create audit row:', error.message)
+    }
+    return null
+  }
+
+  return data?.id ?? null
+}
+
+async function updateImportAudit(
+  supabase: any,
+  importId: string | null,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  if (!importId) return
+
+  const { error } = await supabase
+    .from('imports')
+    .update({
+      ...payload,
+      completed_at: new Date().toISOString(),
+    })
+    .eq('id', importId)
+
+  if (error && !['42P01', 'PGRST205', 'PGRST116'].includes(error.code)) {
+    console.warn('[revolut-import] could not update audit row:', error.message)
+  }
 }
 
 function normalizeText(value: unknown): string {
@@ -793,23 +841,27 @@ function parseFixedRows(rows: string[][], userId: string): ParsedImportTransacti
 }
 
 export async function POST(request: Request) {
+  let auditSupabase: any = null
+  let importAuditId: string | null = null
+
   try {
     const supabase = await createClient()
+    auditSupabase = supabase
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError(request, 401, 'unauthorized', 'Unauthorized')
     }
 
     const formData = await request.formData()
     const file = formData.get('file') as File
 
     if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
+      return apiError(request, 400, 'bad_request', 'No file uploaded')
     }
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 413 })
+      return apiError(request, 413, 'payload_too_large', 'File size exceeds 10MB limit')
     }
 
     const lowerName = file.name.toLowerCase()
@@ -817,8 +869,10 @@ export async function POST(request: Request) {
     const isExcel = lowerName.endsWith('.xlsx')
 
     if (!isCsv && !isExcel) {
-      return NextResponse.json({ error: 'Invalid file format. CSV or XLSX allowed.' }, { status: 415 })
+      return apiError(request, 415, 'unsupported_media_type', 'Invalid file format. CSV or XLSX allowed.')
     }
+
+    importAuditId = await createImportAudit(supabase, user.id, file)
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
@@ -871,9 +925,17 @@ export async function POST(request: Request) {
           .in('id', ids)
 
         if (deleteError) {
-          return NextResponse.json({
+          await updateImportAudit(supabase, importAuditId, {
+            status: 'failed',
+            parsed_count: parsedTransactions.length,
             error: `No se pudieron limpiar movimientos internos de staking: ${deleteError.message}`,
-          }, { status: 500 })
+          })
+          return apiError(
+            request,
+            500,
+            'database_error',
+            `No se pudieron limpiar movimientos internos de staking: ${deleteError.message}`,
+          )
         }
 
         removedInternalMovements = ids.length
@@ -882,9 +944,14 @@ export async function POST(request: Request) {
     }
 
     if (parsedTransactions.length === 0) {
-      return NextResponse.json({
+      await updateImportAudit(supabase, importAuditId, {
+        status: 'completed',
+        removed_internal_movements: removedInternalMovements,
+      })
+      return apiSuccess(request, {
         success: true,
         message: 'No se encontraron operaciones de compra/venta en este archivo.',
+        importId: importAuditId,
         newTransactions: 0,
         updatedTransactions: 0,
         ignoredDuplicates: 0,
@@ -948,9 +1015,21 @@ export async function POST(request: Request) {
           .single()
 
         if (createError) {
-          return NextResponse.json({
+          await updateImportAudit(supabase, importAuditId, {
+            status: 'failed',
+            parsed_count: parsedTransactions.length,
+            imported_count: newTxCount,
+            updated_count: updatedTxCount,
+            ignored_count: ignoredCount,
+            removed_internal_movements: removedInternalMovements,
             error: `No se pudo crear el activo ${tx.ticker}: ${createError.message}`,
-          }, { status: 500 })
+          })
+          return apiError(
+            request,
+            500,
+            'database_error',
+            `No se pudo crear el activo ${tx.ticker}: ${createError.message}`,
+          )
         }
 
         if (newActivo) {
@@ -986,9 +1065,21 @@ export async function POST(request: Request) {
             .eq('user_id', user.id)
 
           if (updateError) {
-            return NextResponse.json({
+            await updateImportAudit(supabase, importAuditId, {
+              status: 'failed',
+              parsed_count: parsedTransactions.length,
+              imported_count: newTxCount,
+              updated_count: updatedTxCount,
+              ignored_count: ignoredCount,
+              removed_internal_movements: removedInternalMovements,
               error: `No se pudo actualizar el histórico de ${tx.ticker}: ${updateError.message}`,
-            }, { status: 500 })
+            })
+            return apiError(
+              request,
+              500,
+              'database_error',
+              `No se pudo actualizar el histórico de ${tx.ticker}: ${updateError.message}`,
+            )
           }
 
           matchingExisting.precio_unitario = tx.precio_unitario
@@ -1016,18 +1107,42 @@ export async function POST(request: Request) {
         .insert(toInsert)
 
       if (insertError) {
-        return NextResponse.json({ error: 'Error al insertar transacciones en la base de datos' }, { status: 500 })
+        await updateImportAudit(supabase, importAuditId, {
+          status: 'failed',
+          parsed_count: parsedTransactions.length,
+          imported_count: newTxCount,
+          updated_count: updatedTxCount,
+          ignored_count: ignoredCount,
+          removed_internal_movements: removedInternalMovements,
+          error: insertError.message,
+        })
+        return apiError(request, 500, 'database_error', 'Error al insertar transacciones en la base de datos')
       }
     }
 
     if (parsedTransactions.length > 0 && newTxCount === 0 && ignoredCount === 0) {
-      return NextResponse.json({
-        error: `Se leyeron ${parsedTransactions.length} movimientos, pero no se pudo asociar ninguno a un activo.`,
-      }, { status: 500 })
+      const error = `Se leyeron ${parsedTransactions.length} movimientos, pero no se pudo asociar ninguno a un activo.`
+      await updateImportAudit(supabase, importAuditId, {
+        status: 'failed',
+        parsed_count: parsedTransactions.length,
+        removed_internal_movements: removedInternalMovements,
+        error,
+      })
+      return apiError(request, 500, 'validation_error', error)
     }
 
-    return NextResponse.json({
+    await updateImportAudit(supabase, importAuditId, {
+      status: 'completed',
+      parsed_count: parsedTransactions.length,
+      imported_count: newTxCount,
+      updated_count: updatedTxCount,
+      ignored_count: ignoredCount,
+      removed_internal_movements: removedInternalMovements,
+    })
+
+    return apiSuccess(request, {
       success: true,
+      importId: importAuditId,
       newTransactions: newTxCount,
       updatedTransactions: updatedTxCount,
       ignoredDuplicates: ignoredCount,
@@ -1038,6 +1153,10 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Revolut Import Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    await updateImportAudit(auditSupabase, importAuditId, {
+      status: 'failed',
+      error: error.message || 'Unexpected import error',
+    })
+    return apiError(request, 500, 'internal_error', error.message || 'Unexpected import error')
   }
 }
