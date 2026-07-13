@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
 import type { EnrichedPosition, EventoRecurrente } from "@/lib/types"
@@ -21,6 +22,7 @@ import { PullToRefresh } from "@/components/layout/pull-to-refresh"
 import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state"
 
 export default function Home() {
+  const queryClient = useQueryClient()
   const { positions, totals, isLoading, error, pricesUpdatedAt, marketState, pendingTxs, refetch } = usePortfolio()
   const { data: allTransactions } = useAllTransactions()
   const { zenMode } = usePreferences()
@@ -129,7 +131,9 @@ export default function Home() {
         onOpenChange={setAddEventOpen}
         positions={positions}
         initialData={editEventData}
-        onSuccess={() => window.location.reload()}
+        onSuccess={() => {
+          void queryClient.invalidateQueries({ queryKey: ["upcoming-events"] })
+        }}
       />
       </main>
     </PullToRefresh>
