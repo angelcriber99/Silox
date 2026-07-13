@@ -28,14 +28,14 @@ interface MobileDashboardProps {
   marketState?: string
 }
 
-// ── Type color map ────────────────────────────────────────────────────────
+// ── Type color map ──────────────────────────────────────────────────
 const TYPE_COLORS: Record<string, string> = {
-  "ETF": "oklch(0.60 0.17 270)",
-  "Fondo Indexado": "oklch(0.65 0.17 310)",
-  "Fondo Monetario": "oklch(0.65 0.17 192)",
-  "Acción": "oklch(0.72 0.15 55)",
-  "Crypto": "oklch(0.70 0.18 30)",
-  "Liquidez": "oklch(0.60 0.016 230)",
+  "ETF": "#0A84FF",
+  "Fondo Indexado": "#BF5AF2",
+  "Fondo Monetario": "#32ADE6",
+  "Acción": "#FFD60A",
+  "Crypto": "#FF9F0A",
+  "Liquidez": "#98989D",
 }
 
 // ── Section header ─────────────────────────────────────────────────────────
@@ -74,6 +74,7 @@ export function MobileDashboard({
   const { hideBalances, setHideBalances } = usePreferences()
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [filterType, setFilterType] = useState<string>("All")
+  const [chartRange, setChartRange] = useState<"1W" | "1M" | "3M" | "YTD" | "1Y" | "MAX">("1M")
   const [scrubData, setScrubData] = useState<{ i: number; v: number; pnl: number } | null>(null)
   const t = useTranslations("Dashboard")
 
@@ -81,10 +82,7 @@ export function MobileDashboard({
 
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
-  const areaColor = isPositive
-    ? "oklch(0.70 0.21 155)"
-    : "oklch(0.65 0.22 22)"
-  const areaColorHex = isPositive ? "#10d98a" : "#ff4d6a"
+  const areaColorHex = isPositive ? "#30D158" : "#FF453A"
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
@@ -97,7 +95,7 @@ export function MobileDashboard({
     }
   }
 
-  // Portfolio sparkline (last 7 days)
+  // Portfolio chart data (Filtered by range)
   const portfolioSparkline = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return []
     const sorted = [...snapshots].sort(
@@ -108,17 +106,51 @@ export function MobileDashboard({
       const day = new Date(s.timestamp).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
       dailySnapshots.set(day, s)
     })
-    const last7Days = Array.from(dailySnapshots.values())
+    
+    let filtered = Array.from(dailySnapshots.values())
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      .slice(-7)
-    if (last7Days.length < 2) return []
-    const start = last7Days[0].total_value
-    return last7Days.map((s, i) => ({
+
+    if (filtered.length < 2) return []
+
+    const now = new Date()
+    const cutoff = new Date()
+    switch (chartRange) {
+      case "1W":
+        cutoff.setDate(now.getDate() - 7)
+        break
+      case "1M":
+        cutoff.setMonth(now.getMonth() - 1)
+        break
+      case "3M":
+        cutoff.setMonth(now.getMonth() - 3)
+        break
+      case "YTD":
+        cutoff.setFullYear(now.getFullYear(), 0, 1)
+        break
+      case "1Y":
+        cutoff.setFullYear(now.getFullYear() - 1)
+        break
+      case "MAX":
+        cutoff.setFullYear(2000) // All time
+        break
+    }
+
+    filtered = filtered.filter(s => new Date(s.timestamp) >= cutoff)
+    
+    // Fallback if no data in range
+    if (filtered.length < 2) {
+      filtered = Array.from(dailySnapshots.values())
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .slice(-2) // Need at least 2 points
+    }
+
+    const start = filtered[0].total_value
+    return filtered.map((s, i) => ({
       i,
       v: s.total_value,
       pnl: s.total_value - start,
     }))
-  }, [snapshots])
+  }, [snapshots, chartRange])
 
   // Sorted + filtered positions
   const sortedPositions = useMemo(() => {
@@ -201,21 +233,23 @@ export function MobileDashboard({
   return (
     <div className="flex flex-col min-h-full" style={{ background: "var(--background)" }}>
 
-      {/* ─── Sticky header ─────────────────────────────────────────────── */}
+      {/* ─── Sticky header ────────────────────────────────────── */}
       <div
-        className="sticky top-0 z-20 bg-background/90 border-b border-border/20"
+        className="sticky top-0 z-20"
         style={{
-          backdropFilter: "blur(28px) saturate(200%)",
-          WebkitBackdropFilter: "blur(28px) saturate(200%)",
+          background: "rgba(0,0,0,0.85)",
+          backdropFilter: "blur(40px) saturate(180%)",
+          WebkitBackdropFilter: "blur(40px) saturate(180%)",
+          borderBottom: "0.5px solid rgba(255,255,255,0.10)",
         }}
       >
-        {/* Subtle gradient mesh */}
+        {/* Gradient accent top-right corner */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background: isPositive
-              ? "radial-gradient(ellipse 100% 100% at 80% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 60%)"
-              : "radial-gradient(ellipse 100% 100% at 80% 0%, rgba(244, 63, 94, 0.08) 0%, transparent 60%)",
+              ? "radial-gradient(ellipse 80% 60% at 90% 0%, rgba(48,209,88,0.08) 0%, transparent 60%)"
+              : "radial-gradient(ellipse 80% 60% at 90% 0%, rgba(255,69,58,0.08) 0%, transparent 60%)",
           }}
         />
 
@@ -234,7 +268,8 @@ export function MobileDashboard({
               </span>
               {/* Market status */}
               <div
-                className={`flex items-center gap-1.5 mt-0.5 ${isMarketOpen ? "text-emerald-500" : "text-muted-foreground"}`}
+                className="flex items-center gap-1.5 mt-0.5"
+                style={{ color: isMarketOpen ? "#30D158" : "rgba(255,255,255,0.40)" }}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "animate-pulse" : ""}`}
@@ -303,8 +338,13 @@ export function MobileDashboard({
             whileTap={{ scale: 0.98 }}
           >
             <h1
-              className="font-extrabold tracking-tighter leading-none font-display-number transition-all duration-200"
-              style={{ fontSize: "clamp(42px, 12vw, 54px)", color: "var(--foreground)" }}
+              className="font-extrabold leading-none transition-all duration-200"
+              style={{
+                fontSize: "clamp(48px, 13vw, 62px)",
+                letterSpacing: "-0.04em",
+                fontVariantNumeric: "tabular-nums",
+                color: "#FFFFFF",
+              }}
             >
               <AnimatedNumber value={scrubData ? scrubData.v : totals.totalValue} format="currency" hide={hideBalances} />
             </h1>
@@ -317,15 +357,17 @@ export function MobileDashboard({
                 <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
-                    scrubData.pnl >= 0 ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
-                  }`}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
+                  style={{
+                    background: scrubData.pnl >= 0 ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
+                    color: scrubData.pnl >= 0 ? "#30D158" : "#FF453A",
+                  }}
                 >
                   {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                   <span className="text-[14px] font-bold tabular-nums">
                     {hideBalances ? "••••" : `${scrubData.pnl >= 0 ? "+" : ""}${formatCurrency(scrubData.pnl)}`}
                   </span>
-                  <span className="text-[12px] font-semibold opacity-80">vs 7d</span>
+                  <span className="text-[12px] font-semibold opacity-80">vs {chartRange}</span>
                 </motion.div>
               ) : (
                 <>
@@ -333,9 +375,11 @@ export function MobileDashboard({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
-                      isPositive ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"
-                    }`}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl"
+                    style={{
+                      background: isPositive ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
+                      color: isPositive ? "#30D158" : "#FF453A",
+                    }}
                   >
                     {isPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                     <span className="text-[14px] font-bold tabular-nums">
@@ -350,13 +394,14 @@ export function MobileDashboard({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${
-                      daily24Positive ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500"
-                    }`}
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl"
+                    style={{
+                      background: daily24Positive ? "rgba(48,209,88,0.10)" : "rgba(255,69,58,0.10)",
+                      border: `1px solid ${daily24Positive ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
+                      color: daily24Positive ? "#30D158" : "#FF453A",
+                    }}
                   >
-                    <span
-                      className="text-[11px] font-semibold opacity-70"
-                    >Hoy</span>
+                    <span className="text-[11px] font-semibold opacity-70">Hoy</span>
                     <span className="text-[13px] font-bold tabular-nums">
                       {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                     </span>
@@ -415,6 +460,23 @@ export function MobileDashboard({
         </div>
       )}
 
+      {/* ─── Chart Range Selector ────────────────────────────────────── */}
+      <div className="px-4 pb-4 flex justify-between gap-1">
+        {(["1W", "1M", "3M", "YTD", "1Y", "MAX"] as const).map(range => (
+          <button
+            key={range}
+            onClick={() => { hapticFeedback.light(); setChartRange(range); }}
+            className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+              chartRange === range
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground/60 hover:bg-muted/50"
+            }`}
+          >
+            {range}
+          </button>
+        ))}
+      </div>
+
       {/* ─── Bento Grid Metrics ────────────────────────────────────────────── */}
       <div className="px-4 py-2 mb-2">
         <div className="grid grid-cols-2 gap-3">
@@ -443,27 +505,27 @@ export function MobileDashboard({
           <div
             className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
             style={{
-              background: isPositive ? "linear-gradient(145deg, oklch(0.70 0.21 155 / 0.14), oklch(0.70 0.21 155 / 0.06))" : "linear-gradient(145deg, oklch(0.65 0.22 22 / 0.14), oklch(0.65 0.22 22 / 0.06))",
-              border: `1px solid ${isPositive ? "oklch(0.70 0.21 155 / 0.25)" : "oklch(0.65 0.22 22 / 0.25)"}`,
-              boxShadow: isPositive ? "0 8px 24px -8px oklch(0.70 0.21 155 / 0.25)" : "0 8px 24px -8px oklch(0.65 0.22 22 / 0.25)",
+              background: isPositive ? "rgba(48,209,88,0.10)" : "rgba(255,69,58,0.10)",
+              border: `1px solid ${isPositive ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
+              boxShadow: isPositive ? "0 8px 24px -8px rgba(48,209,88,0.20)" : "0 8px 24px -8px rgba(255,69,58,0.20)",
             }}
           >
             <div className="flex items-center justify-between mb-3">
               <div
                 className="p-1.5 rounded-xl"
                 style={{
-                  background: isPositive ? "oklch(0.70 0.21 155 / 0.15)" : "oklch(0.65 0.22 22 / 0.15)",
-                  color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)"
+                  background: isPositive ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
+                  color: isPositive ? "#30D158" : "#FF453A",
                 }}
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)", opacity: 0.8 }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "#30D158" : "#FF453A", opacity: 0.8 }}>
                 Ganancia
               </p>
-              <p className="text-[16px] font-extrabold tabular-nums mt-0.5" style={{ color: isPositive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)" }}>
+              <p className="text-[16px] font-extrabold tabular-nums mt-0.5" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
                 {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
               </p>
             </div>
@@ -474,18 +536,18 @@ export function MobileDashboard({
             <div
               className="flex items-center justify-between p-3 rounded-2xl"
               style={{
-                background: daily24Positive ? "oklch(0.70 0.21 155 / 0.10)" : "oklch(0.65 0.22 22 / 0.10)",
-                border: `1px solid ${daily24Positive ? "oklch(0.70 0.21 155 / 0.20)" : "oklch(0.65 0.22 22 / 0.20)"}`,
+                background: daily24Positive ? "rgba(48,209,88,0.08)" : "rgba(255,69,58,0.08)",
+                border: `1px solid ${daily24Positive ? "rgba(48,209,88,0.18)" : "rgba(255,69,58,0.18)"}`,
               }}
             >
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>Hoy</p>
-                <p className="text-[14px] font-bold tabular-nums mt.0.5" style={{ color: daily24Positive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)" }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.40)" }}>Hoy</p>
+                <p className="text-[14px] font-bold tabular-nums mt-0.5" style={{ color: daily24Positive ? "#30D158" : "#FF453A" }}>
                   {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[12px] font-bold tabular-nums" style={{ color: daily24Positive ? "oklch(0.70 0.21 155)" : "oklch(0.65 0.22 22)", opacity: 0.9 }}>
+                <p className="text-[12px] font-bold tabular-nums" style={{ color: daily24Positive ? "#30D158" : "#FF453A", opacity: 0.9 }}>
                   {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
                 </p>
               </div>
@@ -496,13 +558,16 @@ export function MobileDashboard({
 
       {/* ─── Live Market Movers (Top Gainers/Losers) ────────────────────── */}
       {movers.length > 0 && (
-        <div className="py-4 mt-2 mb-4 border-y border-border/10 bg-black/5 dark:bg-black/20">
+        <div
+          className="py-4 mt-2 mb-4"
+          style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}
+        >
           <div className="flex items-center px-4 mb-3 gap-2">
             <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "#30D158" }} />
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#30D158" }} />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.40)" }}>
               Impacto Hoy en Tiempo Real
             </p>
           </div>
@@ -515,17 +580,20 @@ export function MobileDashboard({
                   <Link key={p.activo_id} href={`/activo/${p.activo_id}`} className="snap-center shrink-0">
                     <motion.div 
                       whileTap={{ scale: 0.95 }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-[14px] transition-colors border shadow-sm ${
-                        isGain ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"
-                      }`}
+                      className="flex items-center gap-2 px-3 py-2 rounded-[14px] transition-colors border shadow-sm"
+                      style={{
+                        background: isGain ? "rgba(48,209,88,0.08)" : "rgba(255,69,58,0.08)",
+                        borderColor: isGain ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)",
+                      }}
                     >
-                      <span className="text-[12px] font-extrabold" style={{ color: "var(--foreground)" }}>
+                      <span className="text-[12px] font-extrabold" style={{ color: "#FFFFFF" }}>
                         {p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" 
                           ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
                           : p.ticker.split(".")[0]}
                       </span>
                       <span 
-                        className={`text-[12px] font-bold tabular-nums flex items-center ${isGain ? "text-emerald-500" : "text-rose-500"}`}
+                        className="text-[12px] font-bold tabular-nums flex items-center"
+                        style={{ color: isGain ? "#30D158" : "#FF453A" }}
                       >
                         {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
                       </span>
@@ -541,11 +609,13 @@ export function MobileDashboard({
       {/* ─── Asset filter pills ──────────────────────────────────────────── */}
       {assetTypes.length > 2 && (
         <div
-          className="sticky z-10 px-4 py-2 bg-background/80 border-b border-border/50"
+          className="sticky z-10 px-4 py-2"
           style={{
-            top: "calc(env(safe-area-inset-top, 0px) + 95px)",
+            top: "calc(env(safe-area-inset-top, 0px) + 80px)",
+            background: "rgba(0,0,0,0.80)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
+            borderBottom: "0.5px solid rgba(255,255,255,0.08)",
           }}
         >
           <div className="flex gap-2 overflow-x-auto hide-scrollbar">
@@ -553,29 +623,21 @@ export function MobileDashboard({
               <button
                 key={type}
                 onClick={() => setFilterType(type)}
-                className="whitespace-nowrap px-4 py-2 rounded-full text-[13px] font-semibold transition-all relative flex items-center justify-center h-9"
+                className="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-semibold transition-all relative flex items-center justify-center"
                 style={{
-                  color: filterType === type ? "var(--background)" : "var(--muted-foreground)",
-                  opacity: filterType === type ? 1 : 0.7,
+                  color: filterType === type ? "#000000" : "rgba(255,255,255,0.55)",
+                  background: filterType === type ? "#30D158" : "rgba(255,255,255,0.08)",
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
-                {filterType === type && (
-                  <motion.div
-                    layoutId="filterPill"
-                    className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-emerald-500"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                  />
-                )}
-                <span className="relative z-10">
-                  {type === "All"
-                    ? t("filter_all")
-                    : type === "Fondo Indexado" ? t("type_index_fund")
-                    : type === "Fondo Monetario" ? t("type_money_market")
-                    : type === "Acción" ? t("type_stock")
-                    : type === "Crypto" ? t("type_crypto")
-                    : type === "ETF" ? t("type_etf")
-                    : type}
-                </span>
+                {type === "All"
+                  ? t("filter_all")
+                  : type === "Fondo Indexado" ? t("type_index_fund")
+                  : type === "Fondo Monetario" ? t("type_money_market")
+                  : type === "Acción" ? t("type_stock")
+                  : type === "Crypto" ? t("type_crypto")
+                  : type === "ETF" ? t("type_etf")
+                  : type}
               </button>
             ))}
           </div>

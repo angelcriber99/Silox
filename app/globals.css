@@ -101,50 +101,56 @@
 }
 
 .dark {
-  /* Space Black — deeper, richer dark */
-  --background: oklch(0 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.08 0.01 240);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.08 0.01 240);
-  --popover-foreground: oklch(0.97 0 0);
-  /* Primary: Electric Teal — more luminous */
-  --primary: oklch(0.72 0.18 192);
-  --primary-foreground: oklch(0.06 0.01 240);
-  --secondary: oklch(0.145 0.016 238);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.145 0.016 238);
-  --muted-foreground: oklch(0.58 0.014 230);
-  --accent: oklch(0.145 0.016 238);
-  --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.62 0.22 22);
-  --border: oklch(0.165 0.016 238);
-  --input: oklch(0.165 0.016 238);
-  --ring: oklch(0.72 0.18 192);
+  /* ── iOS OLED Dark ───────────────────────────────────── */
+  --background: #000000;               /* True OLED black */
+  --foreground: #FFFFFF;
+  --card: #111111;                     /* Level-1 surfaces */
+  --card-foreground: #FFFFFF;
+  --popover: #1C1C1E;                  /* Level-2 surfaces */
+  --popover-foreground: #FFFFFF;
 
-  /* Semantic tokens — neon-enhanced */
-  --positive: oklch(0.70 0.21 155);
-  --negative: oklch(0.65 0.22 22);
-  --warning: oklch(0.78 0.17 55);
+  /* Apple Green — money, gains, actions */
+  --primary: #30D158;
+  --primary-foreground: #000000;
+
+  --secondary: #1C1C1E;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1C1C1E;
+  --muted-foreground: rgba(255,255,255,0.50);
+  --accent: #2C2C2E;
+  --accent-foreground: #FFFFFF;
+
+  /* Apple Red */
+  --destructive: #FF453A;
+  --border: rgba(255,255,255,0.08);
+  --input: #1C1C1E;
+  --ring: #30D158;
+
+  /* Semantic — financial */
+  --positive: #30D158;                 /* Apple Green */
+  --negative: #FF453A;                 /* Apple Red */
+  --warning: #FFD60A;                  /* Apple Yellow — dividends */
 
   /* Surface layers */
-  --surface-1: oklch(0.075 0.014 240);
-  --surface-2: oklch(0.105 0.015 238);
-  --surface-3: oklch(0.140 0.016 238);
+  --surface-1: #000000;
+  --surface-2: #111111;
+  --surface-3: #1C1C1E;
 
-  --chart-1: oklch(0.72 0.18 192);
-  --chart-2: oklch(0.70 0.21 155);
-  --chart-3: oklch(0.65 0.17 270);
-  --chart-4: oklch(0.78 0.17 55);
-  --chart-5: oklch(0.65 0.22 22);
-  --sidebar: oklch(0.065 0.014 240);
-  --sidebar-foreground: oklch(0.97 0 0);
-  --sidebar-primary: oklch(0.72 0.18 192);
-  --sidebar-primary-foreground: oklch(0.06 0.01 240);
-  --sidebar-accent: oklch(0.145 0.016 238);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.165 0.016 238);
-  --sidebar-ring: oklch(0.72 0.18 192);
+  /* Charts */
+  --chart-1: #30D158;
+  --chart-2: #0A84FF;
+  --chart-3: #BF5AF2;
+  --chart-4: #FFD60A;
+  --chart-5: #FF453A;
+
+  --sidebar: #000000;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #30D158;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #1C1C1E;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-ring: #30D158;
 }
 
 .dark.amoled {
@@ -194,6 +200,12 @@
   html {
     @apply font-sans bg-background;
     overscroll-behavior: none;
+  }
+  /* iOS native font stack for mobile */
+  @media (max-width: 768px) {
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    }
   }
 }
 

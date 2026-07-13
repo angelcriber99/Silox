@@ -54,7 +54,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
         <div className="flex items-center gap-2">
           <div
             className="h-6 w-6 rounded-lg flex items-center justify-center"
-            style={{ background: "oklch(0.68 0.17 192 / 0.12)" }}
+            style={{ background: "rgba(48,209,88,0.12)" }}
           >
             <Zap className="h-3.5 w-3.5" style={{ color: "var(--primary)" }} />
           </div>
@@ -66,8 +66,8 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
             className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "animate-pulse" : ""}`}
             style={{
               background: isMarketOpen
-                ? "oklch(0.65 0.19 155)"
-                : "oklch(0.50 0.01 230)",
+                ? "#30D158"
+                : "rgba(255,255,255,0.2)",
             }}
           />
         </div>
@@ -99,10 +99,10 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
         {/* Winners */}
         <div className="space-y-2.5">
           <div className="flex items-center gap-1.5 mb-3">
-            <TrendingUp className="w-3.5 h-3.5" style={{ color: "oklch(0.65 0.19 155)" }} />
+            <TrendingUp className="w-3.5 h-3.5" style={{ color: "#30D158" }} />
             <span
               className="text-[10px] font-bold uppercase tracking-widest"
-              style={{ color: "oklch(0.65 0.19 155)" }}
+              style={{ color: "#30D158" }}
             >
               {t('winners')}
             </span>
@@ -130,8 +130,8 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 <span
                   className="text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0"
                   style={{
-                    color: "oklch(0.65 0.19 155)",
-                    background: "oklch(0.65 0.19 155 / 0.10)",
+                    color: "#30D158",
+                    background: "rgba(48,209,88,0.10)",
                   }}
                 >
                   {sortBy === "percent"
@@ -150,10 +150,10 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
         {/* Losers */}
         <div className="space-y-2.5">
           <div className="flex items-center gap-1.5 mb-3">
-            <TrendingDown className="w-3.5 h-3.5" style={{ color: "oklch(0.62 0.20 20)" }} />
+            <TrendingDown className="w-3.5 h-3.5" style={{ color: "#FF453A" }} />
             <span
               className="text-[10px] font-bold uppercase tracking-widest"
-              style={{ color: "oklch(0.62 0.20 20)" }}
+              style={{ color: "#FF453A" }}
             >
               {t('losers')}
             </span>
@@ -178,8 +178,8 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 <span
                   className="text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0"
                   style={{
-                    color: "oklch(0.62 0.20 20)",
-                    background: "oklch(0.62 0.20 20 / 0.10)",
+                    color: "#FF453A",
+                    background: "rgba(255,69,58,0.10)",
                   }}
                 >
                   {sortBy === "percent"

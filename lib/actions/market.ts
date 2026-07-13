@@ -237,7 +237,6 @@ async function _fetchMarketPrices(
         changePercent24h = 0
         dailyChangePercent24h = 0
       }
-
       let sparkline: number[] = []
       if (chart?.quotes) {
         sparkline = chart.quotes

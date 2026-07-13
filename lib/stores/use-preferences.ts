@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type AccentColor = 'blue' | 'emerald' | 'violet' | 'rose' | 'amber'
+export type AccentColor = 'blue' | 'emerald' | 'violet' | 'rose' | 'amber' | 'indigo' | 'teal' | 'pink'
 export type Language = 'es' | 'en' | 'fr' | 'de'
 
 interface PreferencesState {
@@ -18,6 +18,11 @@ interface PreferencesState {
   twoFactor: boolean
   tableDensity: 'compact' | 'relaxed'
   showPnlPercentOnly: boolean
+  pushNotifs: boolean
+  emailNotifs: boolean
+  priceAlerts: boolean
+  weeklyReport: boolean
+  dividendAlerts: boolean
   setLanguage: (lang: Language) => void
   setHideBalances: (val: boolean) => void
   setCompactView: (val: boolean) => void
@@ -31,6 +36,11 @@ interface PreferencesState {
   setTwoFactor: (val: boolean) => void
   setTableDensity: (val: 'compact' | 'relaxed') => void
   setShowPnlPercentOnly: (val: boolean) => void
+  setPushNotifs: (val: boolean) => void
+  setEmailNotifs: (val: boolean) => void
+  setPriceAlerts: (val: boolean) => void
+  setWeeklyReport: (val: boolean) => void
+  setDividendAlerts: (val: boolean) => void
 }
 
 export const usePreferences = create<PreferencesState>()(
@@ -49,6 +59,11 @@ export const usePreferences = create<PreferencesState>()(
       twoFactor: false,
       tableDensity: 'compact',
       showPnlPercentOnly: false,
+      pushNotifs: true,
+      emailNotifs: true,
+      priceAlerts: true,
+      weeklyReport: false,
+      dividendAlerts: true,
       setLanguage: (lang) => set({ language: lang }),
       setHideBalances: (val) => set({ hideBalances: val }),
       setCompactView: (val) => set({ compactView: val }),
@@ -62,6 +77,11 @@ export const usePreferences = create<PreferencesState>()(
       setTwoFactor: (val) => set({ twoFactor: val }),
       setTableDensity: (val) => set({ tableDensity: val }),
       setShowPnlPercentOnly: (val) => set({ showPnlPercentOnly: val }),
+      setPushNotifs: (val) => set({ pushNotifs: val }),
+      setEmailNotifs: (val) => set({ emailNotifs: val }),
+      setPriceAlerts: (val) => set({ priceAlerts: val }),
+      setWeeklyReport: (val) => set({ weeklyReport: val }),
+      setDividendAlerts: (val) => set({ dividendAlerts: val }),
     }),
     {
       name: 'silox-preferences',
