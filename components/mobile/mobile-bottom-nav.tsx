@@ -28,23 +28,25 @@ export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
 
   return (
-    <div className="md:hidden fixed z-50 bottom-0 left-0 right-0">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 md:hidden">
       {/* Frosted glass background */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-x-0 bottom-0"
         style={{
+          height: "calc(78px + env(safe-area-inset-bottom, 0px))",
           background: "rgba(0,0,0,0.82)",
           backdropFilter: "blur(40px) saturate(180%)",
           WebkitBackdropFilter: "blur(40px) saturate(180%)",
           borderTop: "0.5px solid rgba(255,255,255,0.12)",
+          boxShadow: "0 -18px 34px rgba(0,0,0,0.28)",
         }}
       />
 
       {/* Tab row */}
       <div
-        className="relative flex items-end justify-around w-full"
+        className="pointer-events-auto relative flex w-full items-end justify-around"
         style={{
-          height: "calc(52px + env(safe-area-inset-bottom, 0px))",
+          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
