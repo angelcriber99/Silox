@@ -213,18 +213,6 @@ async function _fetchMarketPrices(
         }
       }
 
-      // Reseteo a 0 si ha cambiado de día.
-      // Si la última cotización es de ayer (o del viernes), hoy "no ha habido cambio" todavía.
-      if (latestTime) {
-        const fmt = new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', year: 'numeric', month: 'numeric', day: 'numeric' })
-        const latestTimeFormatted = fmt.format(new Date(latestTime))
-        const todayFormatted = fmt.format(new Date())
-        
-        if (latestTimeFormatted !== todayFormatted) {
-          changePercent24h = 0
-        }
-      }
-
       let sparkline: number[] = []
       if (chart?.quotes) {
         sparkline = chart.quotes
