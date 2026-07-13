@@ -9,8 +9,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { formatCurrency } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from "@/lib/types"
 import { usePriceAlertNotifications } from "@/components/dashboard/use-price-alert-notifications"
-import { usePreferences } from "@/lib/stores/use-preferences"
-import { toast } from "sonner"
 
 interface PriceAlertsProps {
   open: boolean
@@ -27,52 +25,33 @@ export function PriceAlerts({
   positions: providedPositions,
   checkNotifications = true,
 }: PriceAlertsProps) {
-  const { alerts, addAlert, removeAlert, markTriggered } = useAlerts()
+  const { alerts, addAlert, removeAlert } = useAlerts()
   const { positions: fetchedPositions } = usePortfolio({ enabled: !providedPositions })
-  const { priceAlerts } = usePreferences()
   const positions = providedPositions ?? fetchedPositions
   const [ticker, setTicker] = useState(initialTicker || "")
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState<'above' | 'below'>('above')
-  const [isAdding, setIsAdding] = useState(false)
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen && initialTicker) setTicker(initialTicker)
     onOpenChange(nextOpen)
   }
 
-  usePriceAlertNotifications(checkNotifications && priceAlerts ? positions : [], alerts, markTriggered)
+  usePriceAlertNotifications(checkNotifications ? positions : [], alerts, removeAlert)
 
-  const handleAdd = async () => {
-    const parsedTargetPrice = Number(targetPrice)
-    if (!ticker.trim()) {
-      toast.error("Introduce un ticker")
-      return
-    }
-
-    if (!Number.isFinite(parsedTargetPrice) || parsedTargetPrice <= 0) {
-      toast.error("Introduce un precio objetivo valido")
-      return
-    }
-
-    setIsAdding(true)
-    try {
-      await addAlert({
-        ticker: ticker.trim().toUpperCase(),
-        target_price: parsedTargetPrice,
-        condition
-      })
-      setTicker("")
-      setTargetPrice("")
-      toast.success("Alerta creada")
-
-      if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission()
-      }
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "No se pudo crear la alerta")
-    } finally {
-      setIsAdding(false)
+  const handleAdd = () => {
+    if (!ticker || !targetPrice) return
+    addAlert({
+      ticker: ticker.toUpperCase(),
+      target_price: parseFloat(targetPrice),
+      condition
+    })
+    setTicker("")
+    setTargetPrice("")
+    
+    // Request permission on first add
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission()
     }
   }
 
@@ -125,9 +104,9 @@ export function PriceAlerts({
                   )}
                 </div>
               </div>
-              <Button onClick={handleAdd} disabled={isAdding} className="w-full bg-violet-600 hover:bg-violet-500 text-white">
+              <Button onClick={handleAdd} className="w-full bg-violet-600 hover:bg-violet-500 text-white">
                 <Plus className="h-4 w-4 mr-2" />
-                {isAdding ? "Guardando..." : "Añadir Alerta"}
+                Añadir Alerta
               </Button>
             </div>
           </div>

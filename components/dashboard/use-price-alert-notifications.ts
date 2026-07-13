@@ -9,7 +9,7 @@ import type { PriceAlert } from "@/lib/api/alerts"
 export function usePriceAlertNotifications(
   positions: EnrichedPosition[],
   alerts: PriceAlert[],
-  markTriggered: (id: string) => Promise<unknown> | void
+  removeAlert: (id: string) => Promise<unknown> | void
 ) {
   const triggeredIdsRef = useRef(new Set<string>())
 
@@ -34,7 +34,7 @@ export function usePriceAlertNotifications(
 
       if (shouldTrigger) {
         triggeredIdsRef.current.add(alert.id)
-        markTriggered(alert.id)
+        removeAlert(alert.id)
         triggeredCount++
 
         if ("Notification" in window && Notification.permission === "granted") {
@@ -49,5 +49,5 @@ export function usePriceAlertNotifications(
     if (triggeredCount > 0) {
       toast.success(`${triggeredCount} alerta(s) de precio alcanzadas`)
     }
-  }, [positions, alerts, markTriggered])
+  }, [positions, alerts, removeAlert])
 }
