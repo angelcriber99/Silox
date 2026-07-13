@@ -8,7 +8,6 @@ import { Scale, TrendingUp, TrendingDown, ArrowLeft, Info, HelpCircle, FileText 
 import { TaxGuide } from "@/components/tax/tax-guide"
 import { TaxChat } from "@/components/tax/tax-chat"
 import { TaxPdfExport } from "@/components/tax/tax-pdf-export"
-import { TaxJsonExport } from "@/components/tax/tax-json-export"
 import Link from "next/link"
 
 export default function DeclararPage() {
@@ -139,7 +138,6 @@ export default function DeclararPage() {
           </div>
             <div className="flex items-center gap-3">
               <TaxPdfExport targetId="tax-report-content" filename={`Silox_Informe_Fiscal_${selectedYear}.pdf`} />
-              <TaxJsonExport year={selectedYear} />
               <div className="relative">
                 <select 
                   className="appearance-none font-semibold rounded-xl pl-4 pr-8 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 cursor-pointer transition-all text-sm"
