@@ -62,6 +62,10 @@ export function findOversoldAssets(transactions: Transaccion[]): ReconciliationI
 
       if (runningUnits < -0.000001) {
         const ticker = tx.activo?.ticker ?? assetId
+        // Ignore negative cash in this critical check; it's handled as a warning below
+        if (ticker.startsWith('CASH') || tx.activo?.tipo === 'Liquidez' || tx.activo?.tipo === 'Fondo Monetario') {
+          continue
+        }
         issues.push({
           id: `oversold-${assetId}`,
           severity: "critical",
