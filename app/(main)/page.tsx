@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
-import type { EnrichedPosition } from "@/lib/types"
+import type { EnrichedPosition, EventoRecurrente } from "@/lib/types"
 
 import { PortfolioSummary } from "@/components/dashboard/portfolio-summary"
 import { AllocationChart } from "@/components/dashboard/allocation-chart"
@@ -18,9 +18,10 @@ import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { PendingOrders } from "@/components/transactions/pending-orders"
 import { PullToRefresh } from "@/components/layout/pull-to-refresh"
+import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state"
 
 export default function Home() {
-  const { positions, totals, isLoading, pricesUpdatedAt, marketState, pendingTxs, refetch } = usePortfolio()
+  const { positions, totals, isLoading, error, pricesUpdatedAt, marketState, pendingTxs, refetch } = usePortfolio()
   const { data: allTransactions } = useAllTransactions()
   const { zenMode } = usePreferences()
 
@@ -28,7 +29,7 @@ export default function Home() {
   const [editAssetOpen, setEditAssetOpen] = useState(false)
   const [addEventOpen, setAddEventOpen] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<EnrichedPosition | null>(null)
-  const [editEventData, setEditEventData] = useState<any>(null)
+  const [editEventData, setEditEventData] = useState<EventoRecurrente | null>(null)
 
   const openTransactionModal = (position: EnrichedPosition) => {
     setSelectedPosition(position)
@@ -37,6 +38,10 @@ export default function Home() {
   const openEditAssetModal = (position: EnrichedPosition) => {
     setSelectedPosition(position)
     setEditAssetOpen(true)
+  }
+
+  if (error) {
+    return <DashboardErrorState onRetry={() => void refetch()} />
   }
 
   return (

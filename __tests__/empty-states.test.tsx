@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { PositionsTable } from '@/components/transactions/positions-table'
 import { AllocationChart } from '@/components/dashboard/allocation-chart'
 import { PortfolioSummary } from '@/components/dashboard/portfolio-summary'
 import { MobileDashboard } from '@/components/mobile/mobile-dashboard'
+import { DashboardErrorState } from '@/components/dashboard/dashboard-error-state'
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
 import { renderWithProviders } from '@/__tests__/test-utils'
 
@@ -77,6 +78,17 @@ describe('Empty States UI Verification', () => {
       expect(screen.getByText('Patrimonio')).toBeInTheDocument()
       expect(screen.getAllByText('Hoy').length).toBeGreaterThan(0)
       expect(container).toBeInTheDocument()
+    })
+  })
+
+  describe('DashboardErrorState', () => {
+    it('offers an accessible retry action', () => {
+      const onRetry = vi.fn()
+      renderWithProviders(<DashboardErrorState onRetry={onRetry} />)
+
+      expect(screen.getByRole('heading', { name: /no hemos podido cargar/i })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+      expect(onRetry).toHaveBeenCalledOnce()
     })
   })
 })
