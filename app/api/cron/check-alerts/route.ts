@@ -7,6 +7,13 @@ const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
 export const dynamic = 'force-dynamic'
 
+type PriceQuote = {
+  regularMarketPrice?: number
+  regularMarketDayHigh?: number
+  regularMarketDayLow?: number
+  currency?: string
+}
+
 export async function GET(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -48,7 +55,7 @@ export async function GET(request: Request) {
     await Promise.allSettled(
       uniqueTickers.map(async (ticker) => {
         try {
-          const quote = await yahooFinance.quote(ticker)
+          const quote = await yahooFinance.quote(ticker) as PriceQuote
           if (quote.regularMarketPrice) {
             pricesMap[ticker.toUpperCase()] = {
               price: quote.regularMarketPrice,

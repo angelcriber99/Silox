@@ -198,6 +198,30 @@ export interface Database {
           }
         ]
       }
+      portfolio_history: {
+        Row: {
+          id: string
+          user_id: string
+          total_value: number
+          total_invested: number
+          timestamp: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          total_value: number
+          total_invested: number
+          timestamp?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          total_value?: number
+          total_invested?: number
+          timestamp?: string
+        }
+        Relationships: []
+      }
       portfolio_snapshots: {
         Row: {
           id: string
