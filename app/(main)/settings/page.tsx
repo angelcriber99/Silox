@@ -7,8 +7,8 @@ import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import {
   Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell,
-  Volume2, Shield, Download, CreditCard, Link as LinkIcon,
-  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings,
+  Shield, Download, Link as LinkIcon,
+  Smartphone, Zap, ChevronRight, LogOut, Check, Settings,
   AlertTriangle, Loader2, Trash2
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -22,9 +22,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
+import { ImportHistory } from "@/components/transactions/import-history"
+import { ExportTransactionsCsvButton } from "@/components/transactions/export-transactions-csv-button"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -545,19 +545,19 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* MyInvestor (Connected) */}
-                  <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-emerald-500/30 relative overflow-hidden group shadow-sm">
+                  {/* MyInvestor */}
+                  <div className="p-5 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 relative overflow-hidden group shadow-sm">
                     <div className="absolute top-0 right-0 p-3">
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Sincronizado
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                        Próximamente
                       </span>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-border/20">
                       <span className="text-xl font-bold text-slate-800">MYI</span>
                     </div>
                     <h3 className="text-lg font-bold">MyInvestor</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincronización diaria de fondos indexados y efectivo.</p>
-                    <button className="w-full py-2.5 rounded-xl border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importación guiada de fondos indexados y efectivo pendiente de implementar.</p>
+                    <button disabled className="w-full py-2.5 rounded-xl border border-border/50 bg-muted/30 text-sm font-semibold text-muted-foreground opacity-70 cursor-not-allowed">No disponible</button>
                   </div>
 
                   {/* Revolut */}
@@ -566,9 +566,9 @@ export default function SettingsPage() {
                       <span className="text-xl font-bold text-white">R</span>
                     </div>
                     <h3 className="text-lg font-bold">Revolut</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa tu extracto PDF para sincronizar operaciones.</p>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa extractos CSV/XLSX con auditoría de operaciones nuevas, duplicadas y actualizadas.</p>
                     <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
-                      Subir Extracto (CSV)
+                      Subir Extracto
                     </RevolutSync>
                   </div>
 
@@ -578,10 +578,12 @@ export default function SettingsPage() {
                       <span className="text-xl font-bold text-white">DE</span>
                     </div>
                     <h3 className="text-lg font-bold">DeGiro</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincroniza tus ETFs y acciones europeas.</p>
-                    <button className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">Conectar</button>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Conector planificado para ETFs y acciones europeas.</p>
+                    <button disabled className="w-full py-2.5 rounded-xl bg-muted/40 text-muted-foreground text-sm font-semibold opacity-70 cursor-not-allowed">Próximamente</button>
                   </div>
                 </div>
+
+                <ImportHistory />
               </div>
             )}
 
@@ -599,9 +601,7 @@ export default function SettingsPage() {
                       <h3 className="font-bold text-foreground">Exportar Historial</h3>
                       <p className="text-sm text-muted-foreground mt-1">Descarga todas tus transacciones en formato CSV.</p>
                     </div>
-                    <button onClick={() => toast.success("Exportación iniciada")} className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors">
-                      <Download className="w-4 h-4" /> CSV Export
-                    </button>
+                    <ExportTransactionsCsvButton className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70" />
                   </div>
                 </div>
 

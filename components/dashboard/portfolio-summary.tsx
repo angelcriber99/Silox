@@ -16,6 +16,8 @@ import { useTranslations } from "next-intl"
 import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 import { useNotes } from "@/lib/stores/use-notes"
 import Marquee from "react-fast-marquee"
+import { reconcilePortfolio } from "@/lib/utils/reconciliation"
+import { ReconciliationAlerts } from "@/components/dashboard/reconciliation-alerts"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -71,6 +73,14 @@ export function PortfolioSummary({
       .filter(p => p.change_amount_24h && Math.abs(p.change_amount_24h) > 0.01)
       .sort((a, b) => (b.change_amount_24h || 0) - (a.change_amount_24h || 0))
   }, [positions])
+
+  const reconciliationIssues = useMemo(() => {
+    return reconcilePortfolio({
+      positions,
+      transactions: transactions as Transaccion[],
+      pendingTxs,
+    })
+  }, [positions, transactions, pendingTxs])
 
   if (loading) {
     return (
@@ -309,6 +319,8 @@ export function PortfolioSummary({
           )}
         </div>
       </div>
+
+      <ReconciliationAlerts issues={reconciliationIssues} />
 
       {/* ── Live Market Movers (scrollable) ─────────────────── */}
       {!hideBalances && movers.length > 0 && (

@@ -29,6 +29,7 @@ export default function Home() {
   const [addEventOpen, setAddEventOpen] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<EnrichedPosition | null>(null)
   const [editEventData, setEditEventData] = useState<any>(null)
+  const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
 
   const openTransactionModal = (position: EnrichedPosition) => {
     setSelectedPosition(position)
@@ -86,6 +87,7 @@ export default function Home() {
                 <div className="flex flex-col gap-5">
                   <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                   <UpcomingEvents
+                    key={eventsRefreshKey}
                     positions={positions.filter(p => p.tipo !== 'Liquidez')}
                     onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
                     onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
@@ -124,7 +126,7 @@ export default function Home() {
         onOpenChange={setAddEventOpen}
         positions={positions}
         initialData={editEventData}
-        onSuccess={() => window.location.reload()}
+        onSuccess={() => setEventsRefreshKey((key) => key + 1)}
       />
       </main>
     </PullToRefresh>

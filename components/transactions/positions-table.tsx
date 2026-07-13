@@ -26,6 +26,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { WaveTrackerModal, parseAssetNotes } from "@/components/asset/wave-tracker-modal"
 import { Waves } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface PositionsTableProps {
   positions: EnrichedPosition[]
@@ -177,6 +178,7 @@ export function PositionsTable({
   onAddTransaction,
   onEditAsset,
 }: PositionsTableProps) {
+  const queryClient = useQueryClient()
   const { hideBalances, tableDensity, showPnlPercentOnly } = usePreferences()
   const t = useTranslations('Dashboard')
   
@@ -735,8 +737,7 @@ export function PositionsTable({
       <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
       <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
       <WaveTrackerModal open={waveModalOpen} onOpenChange={setWaveModalOpen} position={waveAsset} onSuccess={() => {
-        // Trigger a refresh of the page or let SWR handle it if needed
-        window.location.reload()
+        queryClient.invalidateQueries({ queryKey: ["positions"] })
       }} />
     </Card>
   )

@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { apiError, apiSuccess } from '@/lib/api/responses'
 
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = (await createClient()) as any
   
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
-    return NextResponse.json({ error: 'No autorizado. Debes iniciar sesión primero en la app.' }, { status: 401 })
+    return apiError(request, 401, 'unauthorized', 'No autorizado. Debes iniciar sesión primero en la app.')
   }
 
   const { error } = await supabase
@@ -16,8 +16,8 @@ export async function POST() {
     .eq('user_id', user.id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return apiError(request, 500, 'database_error', error.message)
   }
 
-  return NextResponse.json({ success: true, message: 'Historial borrado con éxito. Cierra esta ventana y vuelve a la app.' })
+  return apiSuccess(request, { success: true, message: 'Historial borrado con éxito. Cierra esta ventana y vuelve a la app.' })
 }
