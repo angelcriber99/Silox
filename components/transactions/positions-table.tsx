@@ -424,7 +424,7 @@ export function PositionsTable({
               ) : (
                 filteredAndSorted.map((p) => {
                   const hasHistory = p.sparkline && p.sparkline.length > 1;
-                  const sparklineColor = hasHistory 
+                  const sparklineColor = hasHistory
                     ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
                     : "#71717a";
 
@@ -605,7 +605,7 @@ export function PositionsTable({
           ) : (
             filteredAndSorted.map((p) => {
                const hasHistory = p.sparkline && p.sparkline.length > 1;
-               const sparklineColor = hasHistory 
+               const sparklineColor = hasHistory
                  ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
                  : "#71717a";
 
