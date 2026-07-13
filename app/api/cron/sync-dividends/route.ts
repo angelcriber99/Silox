@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { authorizeCronRequest } from '@/lib/server/cron-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,14 +18,7 @@ export async function GET(request: Request) {
 
     const yahooFinance = getYahooFinance()
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: 'Supabase credentials not configured' }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = getSupabaseAdmin()
 
     // Fetch all user assets
     const { data: activos, error: activosError } = await supabase
@@ -45,16 +38,32 @@ export async function GET(request: Request) {
 
     if (txError) throw txError
 
+    const transactionsByHolding = new Map<string, typeof transacciones>()
+    const registeredDividends = new Set<string>()
+
+    for (const transaction of transacciones ?? []) {
+      const holdingKey = `${transaction.user_id}:${transaction.activo_id}`
+      const holdingTransactions = transactionsByHolding.get(holdingKey) ?? []
+      holdingTransactions.push(transaction)
+      transactionsByHolding.set(holdingKey, holdingTransactions)
+
+      if (transaction.tipo_operacion === 'Dividendo') {
+        registeredDividends.add(`${holdingKey}:${transaction.fecha.slice(0, 10)}`)
+      }
+    }
+
     // Helper: Find shares owned of an asset on or before a given date
     const getSharesAtDate = (activoId: string, userId: string, date: Date) => {
       let shares = 0
-      for (const tx of transacciones || []) {
-        if (tx.activo_id === activoId && tx.user_id === userId) {
-          const txDate = new Date(tx.fecha)
-          if (txDate <= date) {
-            if (tx.tipo_operacion === 'Compra') shares += tx.cantidad
-            if (tx.tipo_operacion === 'Venta') shares -= tx.cantidad
-          }
+      const holdingKey = `${userId}:${activoId}`
+      for (const tx of transactionsByHolding.get(holdingKey) ?? []) {
+        const txDate = new Date(tx.fecha)
+        if (txDate > date) break
+        if (tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') {
+          shares += tx.cantidad
+        }
+        if (tx.tipo_operacion === 'Venta' || tx.tipo_operacion === 'Traspaso Salida' || tx.tipo_operacion === 'Retirada') {
+          shares -= tx.cantidad
         }
       }
       return shares
@@ -63,30 +72,25 @@ export async function GET(request: Request) {
     // Helper: Check if dividend is already registered
     const hasDividend = (activoId: string, userId: string, date: Date) => {
       const dString = date.toISOString().split('T')[0]
-      for (const tx of transacciones || []) {
-        if (
-          tx.activo_id === activoId &&
-          tx.user_id === userId &&
-          tx.tipo_operacion === 'Dividendo' &&
-          tx.fecha.startsWith(dString)
-        ) {
-          return true
-        }
-      }
-      return false
+      return registeredDividends.has(`${userId}:${activoId}:${dString}`)
     }
 
     // 3. Unique tickers (only for stocks, ETFs, etc.)
     const uniqueTickers = Array.from(new Set(
       activos
-        .filter(a => a.tipo !== 'Liquidez' && a.tipo !== 'Crypto')
+        .filter(a => a.ticker !== 'CASH' && a.tipo !== 'Liquidez' && a.tipo !== 'Crypto')
         .map(a => a.ticker)
     ))
 
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - 30) // Look back 30 days
 
-    const addedDividends: any[] = []
+    const addedDividends: Array<{
+      ticker: string
+      user_id: string
+      amount: number
+      date: Date
+    }> = []
 
     // 4. Fetch Yahoo data with bounded concurrency, then write sequentially.
     const dividendResults = await mapSettledWithConcurrency(
@@ -156,6 +160,7 @@ export async function GET(request: Request) {
             if (insertError) {
               console.error(`Error inserting dividend for ${activo.id}:`, insertError)
             } else {
+              registeredDividends.add(`${activo.user_id}:${activo.id}:${divDate.toISOString().split('T')[0]}`)
               addedDividends.push({
                 ticker: baseTicker,
                 user_id: activo.user_id,
@@ -174,8 +179,9 @@ export async function GET(request: Request) {
       details: addedDividends
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Cron job error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Unknown dividend cron error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
