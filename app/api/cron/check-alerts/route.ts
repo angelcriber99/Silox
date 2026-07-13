@@ -1,32 +1,11 @@
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import YahooFinance from 'yahoo-finance2'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
-import { apiError, apiSuccess } from '@/lib/api/responses'
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
 export const dynamic = 'force-dynamic'
-
-interface PriceAlertRow {
-  id: string
-  user_id: string
-  ticker: string
-  target_price: number
-  condition: 'above' | 'below'
-  triggered: boolean
-}
-
-interface TriggeredAlert {
-  alerta: PriceAlertRow
-  currentPrice: number
-  reachedPrice: number
-  currency: string
-}
-
-interface NotificationPreferenceRow {
-  user_id: string
-  price_alerts: boolean
-}
 
 export async function GET(request: Request) {
   try {
@@ -34,7 +13,7 @@ export async function GET(request: Request) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return apiError(request, 500, 'configuration_error', 'Supabase credentials not configured')
+      return NextResponse.json({ error: 'Supabase credentials not configured' }, { status: 500 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -43,11 +22,11 @@ export async function GET(request: Request) {
     const authHeader = request.headers.get('authorization')
     
     if (!process.env.CRON_SECRET) {
-      return apiError(request, 500, 'configuration_error', 'CRON_SECRET not configured')
+      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
     }
 
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return apiError(request, 401, 'unauthorized', 'Unauthorized')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // 2. Obtener las alertas activas (no disparadas)
@@ -58,13 +37,11 @@ export async function GET(request: Request) {
 
     if (alertsError) throw alertsError
     if (!alertas || alertas.length === 0) {
-      return apiSuccess(request, { message: 'No active alerts to check', processed: 0, triggered: 0, notified: 0 })
+      return NextResponse.json({ message: 'No active alerts to check' })
     }
 
-    const typedAlerts = alertas as PriceAlertRow[]
-
     // 3. Extraer todos los tickers únicos necesarios
-    const uniqueTickers = Array.from(new Set(typedAlerts.map(a => a.ticker)))
+    const uniqueTickers = Array.from(new Set(alertas.map(a => a.ticker)))
 
     // 4. Obtener precios de Yahoo Finance (en paralelo)
     const pricesMap: Record<string, { price: number; high: number; low: number; currency: string }> = {}
@@ -87,9 +64,9 @@ export async function GET(request: Request) {
     )
 
     // 5. Comprobar alertas
-    const triggeredAlerts: TriggeredAlert[] = []
+    const triggeredAlerts = []
     
-    for (const alerta of typedAlerts) {
+    for (const alerta of alertas) {
       const current = pricesMap[alerta.ticker.toUpperCase()]
       if (!current) continue
 
@@ -115,40 +92,22 @@ export async function GET(request: Request) {
     }
 
     if (triggeredAlerts.length === 0) {
-      return apiSuccess(request, { message: 'No alerts triggered', processed: typedAlerts.length, triggered: 0, notified: 0 })
+      return NextResponse.json({ message: 'No alerts triggered' })
     }
 
-    const userIds = Array.from(new Set(triggeredAlerts.map((trigger) => trigger.alerta.user_id)))
-    const notificationPreferenceByUser = new Map<string, boolean>()
-    const { data: notificationPreferences, error: notificationError } = await supabase
-      .from('notification_preferences')
-      .select('user_id, price_alerts')
-      .in('user_id', userIds)
-
-    if (notificationError && !['42P01', 'PGRST205', 'PGRST116'].includes(notificationError.code)) {
-      throw notificationError
-    }
-
-    const typedNotificationPreferences = (notificationPreferences ?? []) as NotificationPreferenceRow[]
-    typedNotificationPreferences.forEach((preference) => {
-      notificationPreferenceByUser.set(preference.user_id, preference.price_alerts)
-    })
-
-    // 6. Marcar alertas cumplidas y enviar mensajes por Telegram si procede.
+    // 6. Enviar mensajes por Telegram y actualizar Supabase
     const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
     const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
-    let notificationsSent = 0
 
     for (const trigger of triggeredAlerts) {
-      const { error: updateError } = await supabase
+      // Eliminar de DB al dispararse
+      await supabase
         .from('alertas')
-        .update({ triggered: true })
+        .delete()
         .eq('id', trigger.alerta.id)
 
-      if (updateError) throw updateError
-
-      const shouldNotify = notificationPreferenceByUser.get(trigger.alerta.user_id) ?? true
-      if (shouldNotify && TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      // Enviar Telegram
+      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
         const accion = trigger.alerta.condition === 'above' ? '📈 SUPERADO' : '📉 CAÍDO POR DEBAJO DE'
         const emoji = trigger.alerta.condition === 'above' ? '🚀' : '🔻'
         const targetFormateado = new Intl.NumberFormat('es-ES', { style: 'currency', currency: trigger.currency }).format(trigger.alerta.target_price)
@@ -174,22 +133,19 @@ ${trigger.currentPrice !== trigger.reachedPrice ? `⚡ *¡OJO!* Tocó los ${reac
               parse_mode: 'Markdown'
             })
           })
-          notificationsSent++
         } catch (e) {
           console.error('Error sending Telegram message', e)
         }
       }
     }
 
-    return apiSuccess(request, {
-      message: `Processed ${typedAlerts.length} alerts. Triggered ${triggeredAlerts.length}.`,
-      processed: typedAlerts.length,
-      triggered: triggeredAlerts.length,
-      notified: notificationsSent,
+    return NextResponse.json({ 
+      message: `Processed ${alertas.length} alerts. Triggered ${triggeredAlerts.length}.` 
     })
 
   } catch (error: unknown) {
     console.error('Cron job error:', error)
-    return apiError(request, 500, 'internal_error', error instanceof Error ? error.message : 'Cron job error')
+    const message = error instanceof Error ? error.message : 'Cron job error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
