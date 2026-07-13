@@ -1,16 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useSyncExternalStore, type ReactNode } from "react"
 import { usePreferences, type Language } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import {
   Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell,
-  Volume2, Shield, Download, CreditCard, Link as LinkIcon,
-  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings,
+  Shield, Download, Link as LinkIcon,
+  Smartphone, Zap, ChevronRight, LogOut, Check, Settings,
   AlertTriangle, Loader2, Trash2
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
@@ -22,14 +23,87 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
+interface SettingTab {
+  id: Tab
+  label: string
+  icon: LucideIcon
+  color: string
+  accent: string
+}
+
+interface SettingRowProps {
+  icon: LucideIcon
+  title: string
+  desc: string
+  action: ReactNode
+  iconColor?: string
+}
+
+const tabs: SettingTab[] = [
+  { id: 'appearance', label: 'Apariencia', icon: Palette, color: 'oklch(0.68 0.17 192)', accent: 'oklch(0.68 0.17 192 / 0.12)' },
+  { id: 'security', label: 'Seguridad', icon: Shield, color: 'oklch(0.65 0.19 155)', accent: 'oklch(0.65 0.19 155 / 0.12)' },
+  { id: 'notifications', label: 'Notificaciones', icon: Bell, color: 'oklch(0.62 0.20 20)', accent: 'oklch(0.62 0.20 20 / 0.12)' },
+  { id: 'integrations', label: 'Integraciones', icon: LinkIcon, color: 'oklch(0.65 0.17 270)', accent: 'oklch(0.65 0.17 270 / 0.12)' },
+  { id: 'data', label: 'Datos', icon: Download, color: 'oklch(0.72 0.15 55)', accent: 'oklch(0.72 0.15 55 / 0.12)' },
+]
+
+const subscribeToClient = () => () => undefined
+
+function CustomSwitch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onChange}
+      className="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      style={{
+        background: checked
+          ? "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))"
+          : "oklch(0.28 0.01 235)",
+      }}
+    >
+      <span
+        className="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300"
+        style={{ transform: checked ? "translateX(22px)" : "translateX(2px)" }}
+      />
+    </button>
+  )
+}
+
+function SettingRow({ icon: Icon, title, desc, action, iconColor }: SettingRowProps) {
+  return (
+    <div
+      className="mb-2.5 flex items-center justify-between rounded-2xl p-4 transition-colors group"
+      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className="flex-shrink-0 rounded-xl p-2.5"
+          style={{
+            background: "oklch(0.68 0.17 192 / 0.10)",
+            border: "1px solid oklch(0.68 0.17 192 / 0.18)",
+            color: iconColor || "var(--primary)",
+          }}
+        >
+          <Icon aria-hidden="true" className="h-4.5 w-4.5" />
+        </div>
+        <div className="pr-4">
+          <h3 className="text-[14px] font-semibold text-foreground">{title}</h3>
+          <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{desc}</p>
+        </div>
+      </div>
+      <div className="shrink-0">{action}</div>
+    </div>
+  )
+}
+
 export default function SettingsPage() {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false)
   const [activeTab, setActiveTab] = useState<Tab>('appearance')
   const { theme, setTheme } = useTheme()
   const t = useTranslations('Settings')
@@ -38,15 +112,11 @@ export default function SettingsPage() {
   const { 
     language, setLanguage,
     amoled, setAmoled,
-    zenMode, setZenMode,
     accentColor, setAccentColor,
-    biometrics, setBiometrics,
     twoFactor, setTwoFactor,
     tableDensity, setTableDensity,
-    showPnlPercentOnly, setShowPnlPercentOnly,
     hideBalances, setHideBalances,
     pushNotifs, setPushNotifs,
-    emailNotifs, setEmailNotifs,
     priceAlerts, setPriceAlerts,
     weeklyReport, setWeeklyReport,
     dividendAlerts, setDividendAlerts
@@ -56,10 +126,6 @@ export default function SettingsPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [deletePending, setDeletePending] = useState(false)
 
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   if (!mounted) return null
 
@@ -71,9 +137,9 @@ export default function SettingsPage() {
 
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang)
-    document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000`
+    document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000; SameSite=Lax`
     toast.success("Idioma actualizado")
-    window.location.reload()
+    router.refresh()
   }
 
   const handleDeleteAccount = async () => {
@@ -99,65 +165,12 @@ export default function SettingsPage() {
       const supabase = createClient()
       await supabase.auth.signOut()
       window.location.href = "/login"
-    } catch (error: any) {
-      toast.error(error.message || "No se pudo borrar la cuenta")
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "No se pudo borrar la cuenta")
     } finally {
       setDeletePending(false)
     }
   }
-
-  const tabs: { id: Tab, label: string, icon: any, color: string, accent: string }[] = [
-    { id: 'appearance', label: 'Apariencia', icon: Palette, color: 'oklch(0.68 0.17 192)', accent: 'oklch(0.68 0.17 192 / 0.12)' },
-    { id: 'security', label: 'Seguridad', icon: Shield, color: 'oklch(0.65 0.19 155)', accent: 'oklch(0.65 0.19 155 / 0.12)' },
-    { id: 'notifications', label: 'Notificaciones', icon: Bell, color: 'oklch(0.62 0.20 20)', accent: 'oklch(0.62 0.20 20 / 0.12)' },
-    { id: 'integrations', label: 'Integraciones', icon: LinkIcon, color: 'oklch(0.65 0.17 270)', accent: 'oklch(0.65 0.17 270 / 0.12)' },
-    { id: 'data', label: 'Datos', icon: Download, color: 'oklch(0.72 0.15 55)', accent: 'oklch(0.72 0.15 55 / 0.12)' },
-  ]
-
-  const CustomSwitch = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
-    <button
-      onClick={onChange}
-      className="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-      style={{
-        background: checked
-          ? "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))"
-          : "oklch(0.28 0.01 235)",
-      }}
-    >
-      <span
-        className="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300"
-        style={{ transform: checked ? "translateX(22px)" : "translateX(2px)" }}
-      />
-    </button>
-  )
-
-  const SettingRow = ({ icon: Icon, title, desc, action, iconColor }: any) => (
-    <div
-      className="flex items-center justify-between p-4 rounded-2xl mb-2.5 transition-colors group"
-      style={{
-        background: "var(--card)",
-        border: "1px solid var(--border)",
-      }}
-    >
-      <div className="flex gap-4 items-center">
-        <div
-          className="p-2.5 rounded-xl flex-shrink-0"
-          style={{
-            background: "oklch(0.68 0.17 192 / 0.10)",
-            border: "1px solid oklch(0.68 0.17 192 / 0.18)",
-            color: iconColor || "var(--primary)",
-          }}
-        >
-          <Icon className="w-4.5 h-4.5" />
-        </div>
-        <div className="pr-4">
-          <h3 className="text-[14px] font-semibold" style={{ color: "var(--foreground)" }}>{title}</h3>
-          <p className="text-[12px] mt-0.5 leading-snug" style={{ color: "var(--muted-foreground)" }}>{desc}</p>
-        </div>
-      </div>
-      <div className="shrink-0">{action}</div>
-    </div>
-  )
 
   return (
     <div className="flex flex-col h-full w-full">

@@ -1,16 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Loader2, Plus, Trash2, Waves, Target, Check, RefreshCw } from "lucide-react"
-import { useTranslations } from "next-intl"
 import type { EnrichedPosition } from "@/lib/types"
-import { updateActivo } from "@/lib/api/assets"
-import { formatCurrency } from "@/lib/utils/formatters"
+import { useUpdateAsset } from "@/lib/hooks/use-transactions"
 import { toast } from "sonner"
 
 interface WaveData {
@@ -42,28 +40,17 @@ export function parseAssetNotes(notas: string | null): AssetNotesData {
         waves: Array.isArray(data.waves) ? data.waves : []
       }
     }
-  } catch (e) {
+  } catch {
     // Legacy format (just plain text)
   }
   return { text: notas, waves: [] }
 }
 
 export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: WaveTrackerModalProps) {
-  const t = useTranslations("Dashboard")
-  
-  const [loading, setLoading] = useState(false)
-  const [notesData, setNotesData] = useState<AssetNotesData>({ text: "", waves: [] })
-  
+  const updateAsset = useUpdateAsset()
+  const [notesData, setNotesData] = useState<AssetNotesData>(() => parseAssetNotes(position?.notas ?? null))
   const [newWavePrice, setNewWavePrice] = useState("")
   const [newWaveType, setNewWaveType] = useState<"BUY" | "SELL">("SELL")
-
-  useEffect(() => {
-    if (open && position) {
-      setNotesData(parseAssetNotes(position.notas))
-      setNewWavePrice("")
-      setNewWaveType("SELL")
-    }
-  }, [open, position])
 
   const handleAddWave = () => {
     const price = parseFloat(newWavePrice.replace(",", "."))
@@ -103,9 +90,8 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
 
   const handleSave = async () => {
     if (!position) return
-    setLoading(true)
     try {
-      let finalNotesData = { ...notesData }
+      const finalNotesData = { ...notesData }
       
       // Auto-add wave if user typed something but forgot to click '+'
       if (newWavePrice) {
@@ -122,20 +108,21 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
       }
 
       const notasJson = JSON.stringify(finalNotesData)
-      await updateActivo(position.activo_id, { notas: notasJson })
+      await updateAsset.mutateAsync({
+        id: position.activo_id,
+        updates: { notas: notasJson },
+      })
       toast.success("Olas y notas guardadas correctamente")
-      if (onSuccess) onSuccess()
+      onSuccess?.()
       onOpenChange(false)
-    } catch (err: any) {
-      toast.error(err.message || "Error al guardar")
-    } finally {
-      setLoading(false)
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Error al guardar")
     }
   }
 
   if (!position) return null
 
-  const currentPrice = position.precio_actual_nativo || 0
+  const currentPrice = position.precio_actual_nativo ?? 0
   const currencySymbol = position.moneda === 'USD' ? '$' : '€'
 
   return (
@@ -277,8 +264,8 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={loading} className="min-w-[120px]">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Olas"}
+          <Button onClick={handleSave} disabled={updateAsset.isPending} className="min-w-[120px]">
+            {updateAsset.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Olas"}
           </Button>
         </div>
       </DialogContent>
