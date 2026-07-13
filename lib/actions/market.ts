@@ -10,8 +10,21 @@ import {
   normalizeYahooCurrency,
   type FxRatesToEur,
 } from '@/lib/utils/currency'
+import {
+  calculateMarketPerformance,
+  isQuoteFromCurrentMarketDate,
+  type MarketSession,
+} from '@/lib/utils/market-performance'
 
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+const createYahooFinance = () => new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+let yahooFinance: ReturnType<typeof createYahooFinance> | null = null
+
+function getYahooFinance(): ReturnType<typeof createYahooFinance> {
+  if (!yahooFinance) {
+    yahooFinance = createYahooFinance()
+  }
+  return yahooFinance
+}
 
 const METAL_RATE_API_URL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json'
 
@@ -77,6 +90,7 @@ async function fetchMetalPriceInEur(ticker: string): Promise<PriceEntry | null> 
       sparkline: [price, price, price, price, price, price, price],
       currency: 'EUR',
       changePercent24h: 0,
+      dailyChangePercent24h: 0,
       originalPrice: price,
       originalCurrency: 'EUR',
       marketState: 'OPEN',
@@ -89,7 +103,7 @@ async function fetchMetalPriceInEur(ticker: string): Promise<PriceEntry | null> 
 async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
   const pairs = Object.values(FX_PAIRS)
   const results = await Promise.allSettled(
-    pairs.map((pair) => yahooFinance.quote(pair) as Promise<YahooQuote>)
+    pairs.map((pair) => getYahooFinance().quote(pair) as Promise<YahooQuote>)
   )
 
   const rates: FxRatesToEur = { EUR: 1 }
@@ -113,6 +127,7 @@ export interface PriceEntry {
   sparkline: number[]
   currency: string
   changePercent24h?: number | null
+  dailyChangePercent24h?: number | null
   originalPrice?: number | null
   originalCurrency?: string
   marketState?: string
@@ -125,7 +140,7 @@ export interface MarketPricesResult {
   marketState: string
 }
 
-function getUSMarketState(): 'REGULAR' | 'PRE' | 'POST' | 'CLOSED' {
+function getUSMarketState(): MarketSession {
   const now = new Date()
   const options = { timeZone: 'America/New_York', hour12: false }
   
@@ -169,6 +184,7 @@ async function _fetchMarketPrices(
           sparkline: [1, 1, 1, 1, 1, 1, 1],
           currency: 'EUR',
           changePercent24h: 0,
+          dailyChangePercent24h: 0,
           originalPrice: 1.0,
           originalCurrency: 'EUR',
           marketState: 'OPEN'
@@ -184,33 +200,43 @@ async function _fetchMarketPrices(
       }
 
       const [quote, chart] = await Promise.all([
-        yahooFinance.quote(ticker) as Promise<YahooQuote>,
-        yahooFinance.chart(ticker, { period1: d, interval: '1d' }).catch(() => null),
+        getYahooFinance().quote(ticker) as Promise<YahooQuote>,
+        getYahooFinance().chart(ticker, { period1: d, interval: '1d' }).catch(() => null),
       ])
 
       const originalCurrency = normalizeYahooCurrency(quote.currency)
-      let rawPrice = quote.regularMarketPrice ?? null
-      let changePercent24h = quote.regularMarketChangePercent ?? null
-      
-      const usMarketState = getUSMarketState() // Force US Market hours for global UI
-      const assetState = quote.marketState || usMarketState // Use native state for the asset logic
+      const usMarketState = getUSMarketState()
+      const quoteTimeZone = quote.exchangeTimezoneName || 'America/New_York'
+      let performance = calculateMarketPerformance(quote, usMarketState)
 
-      let latestTime = quote.regularMarketTime
-
-      if (assetState === 'PRE' || assetState === 'PREPRE') {
-        if (quote.preMarketPrice && quote.regularMarketPrice) {
-          rawPrice = quote.preMarketPrice
-          changePercent24h = ((rawPrice - quote.regularMarketPrice) / quote.regularMarketPrice) * 100
-          latestTime = quote.preMarketTime || latestTime
-        }
-      } else if (assetState === 'POST' || assetState === 'POSTPOST' || assetState === 'CLOSED') {
-        if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
-          rawPrice = quote.postMarketPrice
-          changePercent24h = ((rawPrice - quote.regularMarketPreviousClose) / quote.regularMarketPreviousClose) * 100
-          latestTime = quote.postMarketTime || latestTime
-        }
+      // Yahoo can briefly expose yesterday's extended-hours quote immediately
+      // after REGULAR -> POST. Preserve today's regular daily result in that gap.
+      if (
+        !isQuoteFromCurrentMarketDate(performance.latestTime, new Date(), quoteTimeZone) &&
+        (usMarketState === 'POST' || usMarketState === 'CLOSED') &&
+        isQuoteFromCurrentMarketDate(quote.regularMarketTime, new Date(), quoteTimeZone)
+      ) {
+        performance = calculateMarketPerformance({
+          ...quote,
+          postMarketPrice: undefined,
+          postMarketTime: undefined,
+        }, usMarketState)
       }
 
+      const rawPrice = performance.currentPrice
+      let changePercent24h = performance.sessionChangePercent
+      let dailyChangePercent24h = performance.dailyChangePercent
+
+      // Reseteo a 0 si ha cambiado de día.
+      // Si la última cotización es de ayer (o del viernes), hoy "no ha habido cambio" todavía.
+      if (!isQuoteFromCurrentMarketDate(
+        performance.latestTime,
+        new Date(),
+        quoteTimeZone,
+      )) {
+        changePercent24h = 0
+        dailyChangePercent24h = 0
+      }
       let sparkline: number[] = []
       if (chart?.quotes) {
         sparkline = chart.quotes
@@ -233,6 +259,7 @@ async function _fetchMarketPrices(
         sparkline,
         currency,
         changePercent24h,
+        dailyChangePercent24h,
         originalPrice: rawPrice,
         originalCurrency,
         marketState: usMarketState
@@ -249,12 +276,13 @@ async function _fetchMarketPrices(
     const ticker = tickers[i]
 
     if (result.status === 'fulfilled') {
-      const { price, sparkline, currency, changePercent24h, originalPrice, originalCurrency, marketState } = result.value
+      const { price, sparkline, currency, changePercent24h, dailyChangePercent24h, originalPrice, originalCurrency, marketState } = result.value
       prices[ticker] = {
         price,
         sparkline,
         currency,
         changePercent24h,
+        dailyChangePercent24h,
         originalPrice,
         originalCurrency,
         marketState
@@ -269,7 +297,7 @@ async function _fetchMarketPrices(
         globalMarketState = 'POST'
       }
     } else if (ticker) {
-      prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null }
+      prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null, dailyChangePercent24h: null }
     }
   }
 
@@ -294,7 +322,9 @@ export async function fetchMarketPrices(
 
   // Create a unique cache key based on the requested tickers
   const sortedTickers = [...tickers].sort()
-  const cacheKey = `market-prices-v2-${sortedTickers.join('-')}-${convertToEurFlag}`
+  // A session-specific key makes the percentage reset on the first refresh after
+  // PRE/REGULAR/POST transitions instead of waiting for the old 5-minute entry.
+  const cacheKey = `market-prices-v3-${getUSMarketState()}-${sortedTickers.join('-')}-${convertToEurFlag}`
   
   // Cache for 5 minutes (300 seconds)
   const getCachedPrices = unstable_cache(
@@ -312,7 +342,7 @@ export async function fetchAssetDetails(ticker: string) {
   if (!ticker || ticker === 'CASH') return null
 
   try {
-    const summary: any = await yahooFinance.quoteSummary(ticker, {
+    const summary: any = await getYahooFinance().quoteSummary(ticker, {
       modules: [
         'financialData',
         'defaultKeyStatistics',

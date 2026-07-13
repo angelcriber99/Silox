@@ -7,10 +7,11 @@ import { DailyPnlChart } from "./daily-pnl-chart"
 import { PortfolioHistoryChart } from "./portfolio-history-chart"
 import { BarChart2, Activity } from "lucide-react"
 import { useHistory } from "@/lib/hooks/use-portfolio"
-import { format, parseISO, subDays, subMonths, subYears, isAfter, startOfDay } from "date-fns"
+import { format, parseISO, subDays, subMonths, subYears, isAfter } from "date-fns"
 import { es } from "date-fns/locale"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { getMarketDateKey } from "@/lib/utils/market-performance"
 
 interface PerformanceModalProps {
   open: boolean
@@ -69,7 +70,7 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
     if (timeRange !== "1D") {
       const byDate = new Map<string, typeof sorted[0]>()
       sorted.forEach(snap => {
-        const dateStr = format(parseISO(snap.timestamp), 'yyyy-MM-dd')
+        const dateStr = getMarketDateKey(snap.timestamp)
         byDate.set(dateStr, snap) // Keeps the latest snap for each day
       })
       aggregatedSnaps = Array.from(byDate.values())
@@ -106,7 +107,10 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
     
     const now = new Date()
     let startDate = now
-    if (timeRange === "1D") startDate = startOfDay(now)
+    if (timeRange === "1D") {
+      const currentMarketDate = getMarketDateKey(now)
+      return processedData.filter((point) => getMarketDateKey(point.timestamp) === currentMarketDate)
+    }
     if (timeRange === "1W") startDate = subDays(now, 7)
     if (timeRange === "1M") startDate = subMonths(now, 1)
     if (timeRange === "1Y") startDate = subYears(now, 1)

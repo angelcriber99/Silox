@@ -174,6 +174,7 @@ export function enrichPositions(
     const precio_actual_nativo = isCashAsset ? 1.00 : (priceData?.originalPrice ?? fallbackPriceNativo)
     const original_currency = priceData?.originalCurrency ?? p.moneda
     const change_percent_24h = priceData?.changePercent24h ?? null
+    const daily_change_percent_24h = priceData?.dailyChangePercent24h ?? null
     let sparkline = priceData?.sparkline ?? []
     
     if (sparkline.length < 2 && precio_actual !== null) {
@@ -205,9 +206,15 @@ export function enrichPositions(
         : null
         
     let change_amount_24h = null
-    if (valor_actual_eur !== null && change_percent_24h !== null) {
-      const vAyer = valor_actual_eur / (1 + change_percent_24h / 100)
+    if (valor_actual_eur !== null && daily_change_percent_24h !== null) {
+      const vAyer = valor_actual_eur / (1 + daily_change_percent_24h / 100)
       change_amount_24h = valor_actual_eur - vAyer
+    }
+
+    let change_amount_24h_nativo = null
+    if (valor_actual_nativo !== null && daily_change_percent_24h !== null) {
+      const valorAnterior = valor_actual_nativo / (1 + daily_change_percent_24h / 100)
+      change_amount_24h_nativo = valor_actual_nativo - valorAnterior
     }
 
     const precio_medio = precio_medio_real
@@ -226,7 +233,9 @@ export function enrichPositions(
       precio_medio,
       sparkline,
       change_percent_24h,
+      daily_change_percent_24h,
       change_amount_24h,
+      change_amount_24h_nativo,
     }
   })
 }
@@ -248,19 +257,24 @@ export function computePortfolioTotals(
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
 
   let totalPnl24h = 0
-  let totalValorAyer = 0
+  let totalSessionPnl = 0
+  let totalSessionBaseline = 0
   
   withValues.forEach((p) => {
     const cp = p.change_percent_24h ?? 0
     const v = p.valor_actual ?? 0
     if (v > 0) {
-      const vAyer = v / (1 + cp / 100)
-      totalPnl24h += (v - vAyer)
-      totalValorAyer += vAyer
+      totalPnl24h += p.change_amount_24h ?? 0
+
+      const sessionBaseline = v / (1 + cp / 100)
+      totalSessionPnl += v - sessionBaseline
+      totalSessionBaseline += sessionBaseline
     }
   })
   
-  const totalPnlPercent24h = totalValorAyer > 0 ? (totalPnl24h / totalValorAyer) * 100 : 0
+  const totalPnlPercent24h = totalSessionBaseline > 0
+    ? (totalSessionPnl / totalSessionBaseline) * 100
+    : 0
 
   return {
     totalValue,

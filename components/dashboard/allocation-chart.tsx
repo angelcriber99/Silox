@@ -86,7 +86,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
   }
 
   const chartData = useMemo(() => {
-    const groups = new Map<string, { value: number; pnl24h: number; valorAyer: number }>()
+    const groups = new Map<string, { value: number; pnl24h: number; sessionPnl: number; sessionBaseline: number }>()
     const colors = groupBy === "tipo" ? TYPE_COLORS : STRATEGY_COLORS
 
     for (const p of positions) {
@@ -95,16 +95,17 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
       const key = groupBy === "tipo" ? p.tipo : p.estrategia
       const value = p.valor_actual ?? p.coste_total
       const cp = p.change_percent_24h ?? 0
-      
-      const vAyer = value > 0 ? value / (1 + cp / 100) : 0
-      const pnl24h = value > 0 ? value - vAyer : 0
+      const sessionBaseline = value > 0 ? value / (1 + cp / 100) : 0
+      const sessionPnl = value - sessionBaseline
+      const pnl24h = p.change_amount_24h ?? 0
 
       if (value > 0) {
-        const existing = groups.get(key) ?? { value: 0, pnl24h: 0, valorAyer: 0 }
+        const existing = groups.get(key) ?? { value: 0, pnl24h: 0, sessionPnl: 0, sessionBaseline: 0 }
         groups.set(key, {
           value: existing.value + value,
           pnl24h: existing.pnl24h + pnl24h,
-          valorAyer: existing.valorAyer + vAyer
+          sessionPnl: existing.sessionPnl + sessionPnl,
+          sessionBaseline: existing.sessionBaseline + sessionBaseline,
         })
       }
     }
@@ -118,7 +119,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
         value: groupData.value,
         color: colors[name] ?? "#71717a",
         percent: total > 0 ? (groupData.value / total) * 100 : 0,
-        pnlPercent24h: groupData.valorAyer > 0 ? (groupData.pnl24h / groupData.valorAyer) * 100 : 0,
+        pnlPercent24h: groupData.sessionBaseline > 0 ? (groupData.sessionPnl / groupData.sessionBaseline) * 100 : 0,
         pnlAmount24h: groupData.pnl24h
       }))
       .sort((a, b) => b.value - a.value)
