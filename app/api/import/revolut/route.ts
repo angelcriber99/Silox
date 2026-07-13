@@ -530,12 +530,64 @@ function isMetalAccountStatement(headers: string[]): boolean {
   )
 }
 
+function getMetalFiatValue(headers: string[], row: string[]): number {
+  const valueIdx = findIndex(headers, [
+    'valor',
+    'value',
+    'total',
+    'importeeneur',
+    'importeeneuros',
+    'valoreur',
+    'valoreuros',
+    'contravalor',
+    'contravaloreur',
+    'fiatamount',
+    'amountfiat',
+    'executedvalue',
+  ])
+
+  if (valueIdx < 0) return Number.NaN
+
+  const value = Math.abs(parseNumber(row[valueIdx]))
+  return Number.isFinite(value) && value > 0 ? value : Number.NaN
+}
+
+function getConversionTargetCurrency(description: string): string | null {
+  const normalized = normalizeOperationText(description).toUpperCase()
+  const match = normalized.match(/CONVERSION A ([A-Z]{3})/)
+  return match?.[1] ?? null
+}
+
+async function getMetalRowValueEur(
+  metalSymbol: string,
+  quantity: number,
+  feeInUnits: number,
+  operation: ImportOperation,
+  date: string,
+  headers: string[],
+  row: string[],
+  cache: Map<string, Promise<MetalRates | null>>
+): Promise<number | null> {
+  const fiatValueEur = getMetalFiatValue(headers, row)
+  if (Number.isFinite(fiatValueEur)) return fiatValueEur
+
+  const historicalUnitPriceEur = await fetchMetalUnitPriceEur(metalSymbol, date, cache)
+  if (!historicalUnitPriceEur || historicalUnitPriceEur <= 0) return null
+
+  const grossQuantity = operation === 'Compra' && Number.isFinite(feeInUnits)
+    ? quantity + feeInUnits
+    : quantity
+
+  return grossQuantity * historicalUnitPriceEur
+}
+
 async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedImportTransaction[]> {
   const headers = rows[0].map(normalizeHeader)
   const dateIdx = findIndex(headers, ['fechadefinalizacion', 'fechadeinicio', 'date', 'fecha'])
   const amountIdx = findIndex(headers, ['importe', 'amount'])
   const feeIdx = findIndex(headers, ['comision', 'commission', 'fee', 'fees'])
   const currencyIdx = findIndex(headers, ['divisa', 'currency', 'moneda'])
+  const descriptionIdx = findIndex(headers, ['descripcion', 'description'])
   const stateIdx = findIndex(headers, ['state', 'estado'])
 
   if (dateIdx < 0 || amountIdx < 0 || currencyIdx < 0) return []
@@ -552,7 +604,9 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
 
     const amount = parseNumber(row[amountIdx])
     const feeInUnits = Math.abs(parseNumber(row[feeIdx]))
-    const date = parseDate(row[dateIdx])
+    const rawDateKey = normalizeText(row[dateIdx])
+    const date = parseDate(rawDateKey)
+    const description = normalizeText(row[descriptionIdx])
     const operation: ImportOperation | null = amount > 0 ? 'Compra' : amount < 0 ? 'Venta' : null
 
     if (!date || !operation || !Number.isFinite(amount) || amount === 0) continue
@@ -565,12 +619,62 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
     if (!Number.isFinite(quantity) || quantity <= 0) continue
 
     const name = METAL_NAMES[metalSymbol] ?? metalSymbol
-    const historicalUnitPriceEur = await fetchMetalUnitPriceEur(metalSymbol, date, metalRateCache)
-    if (!historicalUnitPriceEur || historicalUnitPriceEur <= 0) continue
+    let valueEur = await getMetalRowValueEur(
+      metalSymbol,
+      quantity,
+      feeInUnits,
+      operation,
+      date,
+      headers,
+      row,
+      metalRateCache
+    )
 
-    const effectiveUnitPriceEur = operation === 'Compra'
-      ? historicalUnitPriceEur * (grossQuantity / quantity)
-      : historicalUnitPriceEur
+    const conversionTarget = getConversionTargetCurrency(description)
+    if (operation === 'Venta' && conversionTarget && METAL_SYMBOLS.has(conversionTarget)) {
+      const pairedBuyRow = rows.slice(1).find(candidate => {
+        const candidateState = normalizeText(candidate[stateIdx]).toUpperCase()
+        if (candidateState && candidateState !== 'COMPLETADO' && candidateState !== 'COMPLETED') return false
+
+        const candidateCurrency = normalizeText(candidate[currencyIdx]).toUpperCase().replace(/[^A-Z0-9]/g, '')
+        const candidateAmount = parseNumber(candidate[amountIdx])
+        const candidateRawDateKey = normalizeText(candidate[dateIdx])
+        const candidateDate = parseDate(candidateRawDateKey)
+
+        return (
+          candidate !== row &&
+          candidateCurrency === conversionTarget &&
+          (candidateRawDateKey === rawDateKey || candidateDate === date) &&
+          Number.isFinite(candidateAmount) &&
+          candidateAmount > 0
+        )
+      })
+
+      if (pairedBuyRow) {
+        const pairedFeeInUnits = Math.abs(parseNumber(pairedBuyRow[feeIdx]))
+        const pairedGrossQuantity = Math.abs(parseNumber(pairedBuyRow[amountIdx]))
+        const pairedQuantity = Number.isFinite(pairedFeeInUnits)
+          ? pairedGrossQuantity - pairedFeeInUnits
+          : pairedGrossQuantity
+        const pairedValueEur = await getMetalRowValueEur(
+          conversionTarget,
+          pairedQuantity,
+          pairedFeeInUnits,
+          'Compra',
+          date,
+          headers,
+          pairedBuyRow,
+          metalRateCache
+        )
+        if (pairedValueEur && pairedValueEur > 0) valueEur = pairedValueEur
+      }
+    }
+
+    const effectiveUnitPriceEur = valueEur && valueEur > 0
+      ? valueEur / quantity
+      : Number.NaN
+
+    if (!Number.isFinite(effectiveUnitPriceEur) || effectiveUnitPriceEur <= 0) continue
 
     parsed.push({
       user_id: userId,

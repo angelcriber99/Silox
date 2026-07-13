@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import yahooFinance from 'yahoo-finance2'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
+import { fetchMarketPrices } from '@/lib/actions/market'
 
 export const revalidate = 0
 
@@ -69,32 +69,14 @@ export async function GET(request: Request) {
       const tickers = adjustedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker)
       if (tickers.length === 0) continue
 
-      let quotes
+      let pricePayload
       try {
-        quotes = await yahooFinance.quote(tickers)
+        pricePayload = await fetchMarketPrices(tickers, true)
       } catch (e) {
         console.error(`Error fetching prices for user ${user.id}:`, e)
         continue
       }
-      
-      const priceMap: Record<string, any> = {}
-      if (Array.isArray(quotes)) {
-        // @ts-ignore
-        quotes.forEach((q: any) => { priceMap[q.symbol] = q })
-      } else if (quotes) {
-        priceMap[(quotes as any).symbol] = quotes
-      }
 
-      let eurUsdRate = 1
-      try {
-        const fx = await yahooFinance.quote('EURUSD=X')
-        // @ts-ignore
-        eurUsdRate = fx.regularMarketPrice ?? 1
-      } catch (e) {
-        console.error("Failed to fetch EURUSD in cron")
-      }
-
-      const pricePayload = { prices: priceMap, fxRate: eurUsdRate, marketState: 'REGULAR' as any }
       const enriched = enrichPositions(adjustedPositions, pricePayload)
       const totals = computePortfolioTotals(enriched)
 
