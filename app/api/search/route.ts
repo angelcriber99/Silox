@@ -25,11 +25,10 @@ export async function POST(request: Request) {
     
     const { query } = parsed.data
 
-    const searchResult = await yahooFinance.search(query) as any
-    const quotes = searchResult.quotes || []
-    const firstQuote = quotes.find((q: any) => q.isYahooFinance === true || q.symbol) || quotes[0]
+    const searchResult = await yahooFinance.search(query)
+    const firstQuote = searchResult.quotes.find((quote) => quote.isYahooFinance)
     
-    if (!firstQuote || !firstQuote.symbol) {
+    if (!firstQuote) {
       return NextResponse.json({ error: 'No se encontraron resultados' }, { status: 404 })
     }
 

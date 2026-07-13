@@ -45,10 +45,10 @@ export async function POST(request: Request) {
           let q;
           try {
             q = await yahooFinance.quoteSummary(ticker, { modules: ['calendarEvents'] })
-          } catch (err) {
+          } catch {
             // Ignorar
           }
-          let calendar = q?.calendarEvents as any
+          let calendar = q?.calendarEvents
 
           // Si no tenemos dividendDate y el ticker tiene un sufijo (ej: UNH.DE), probamos a buscar la matriz
           if (!calendar?.dividendDate && ticker.includes('.')) {
@@ -56,14 +56,13 @@ export async function POST(request: Request) {
             try {
               const qBase = await yahooFinance.quoteSummary(baseTicker, { modules: ['calendarEvents'] })
               if (qBase?.calendarEvents?.dividendDate) {
-                if (!calendar) calendar = {}
-                calendar.dividendDate = qBase.calendarEvents.dividendDate
+                calendar = qBase.calendarEvents
               }
-            } catch (err) {
+            } catch {
               // Ignorar
             }
           }
-          
+
           if (calendar?.exDividendDate) {
             events.push({
               ticker,

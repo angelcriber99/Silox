@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   try {
     const yahooFinance = getYahooFinance()
     const result = await yahooFinance.search(ticker.data, { newsCount: 10 })
-    return NextResponse.json({ news: (result as any).news || [] })
+    return NextResponse.json({ news: result.news })
   } catch (error) {
     console.error('Error fetching news:', error)
     return NextResponse.json({ error: 'Error fetching news' }, { status: 500 })

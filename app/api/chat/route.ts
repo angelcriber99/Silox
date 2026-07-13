@@ -62,7 +62,7 @@ ${contextStr}
           parts: [{ text: "Entendido. Estoy listo para ayudar al usuario con su cartera." }],
         },
         // Reconstruct the history from the user's messages
-        ...messages.slice(0, -1).map((msg: any) => ({
+        ...messages.slice(0, -1).map((msg) => ({
           role: msg.role === 'user' ? 'user' : 'model',
           parts: [{ text: msg.content }]
         }))

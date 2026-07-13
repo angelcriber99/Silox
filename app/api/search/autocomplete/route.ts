@@ -25,18 +25,16 @@ export async function POST(request: Request) {
     
     const { query } = parsed.data
 
-    const searchResult = await yahooFinance.search(query) as any
-    const quotes = searchResult.quotes || []
-    
     // Filter out quotes without symbols and limit to top 5
-    const results = quotes
-      .filter((q: any) => q.symbol)
+    const searchResult = await yahooFinance.search(query)
+    const results = searchResult.quotes
+      .filter((quote) => quote.isYahooFinance)
       .slice(0, 5)
-      .map((q: any) => ({
-        ticker: q.symbol,
-        name: q.longname || q.shortname || '',
-        exchange: q.exchDisp || '',
-        type: q.quoteType || ''
+      .map((quote) => ({
+        ticker: quote.symbol,
+        name: quote.longname || quote.shortname || '',
+        exchange: quote.exchDisp || '',
+        type: quote.quoteType || ''
       }))
 
     return NextResponse.json({ results })

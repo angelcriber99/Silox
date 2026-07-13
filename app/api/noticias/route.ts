@@ -44,15 +44,14 @@ export async function POST(request: Request) {
       })
     )
 
-    const noticias: any[] = []
-
-    newsResults.forEach((res) => {
+    const noticias = newsResults.flatMap((res) => {
       if (res.status === 'fulfilled') {
-        noticias.push(...res.value.news.map(n => ({
+        return res.value.news.map(n => ({
           ...n,
           relatedTicker: res.value.item.displayName // Nombre limpio o Ticker limpio
-        })))
+        }))
       }
+      return []
     })
 
     // Ordenar noticias por fecha (las más recientes primero)
