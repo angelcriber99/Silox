@@ -110,9 +110,10 @@ using ranked_cash duplicate
 where asset.id = duplicate.id
   and duplicate.row_number > 1;
 
--- One canonical cash asset per user. Existing rows retain their history.
+-- CASH keeps database-compatible classification. The application presents it
+-- as Liquidez based on its ticker, without widening the investment taxonomy.
 update public.activos
-set tipo = 'Liquidez', estrategia = 'Liquidez', moneda = 'EUR'
+set tipo = 'Fondo Monetario', estrategia = 'Core', moneda = 'EUR'
 where ticker = 'CASH';
 
 create unique index if not exists idx_activos_one_cash_per_user
@@ -249,7 +250,7 @@ begin
       insert into public.activos (
         user_id, ticker, nombre, tipo, estrategia, moneda
       ) values (
-        current_user_id, 'CASH', 'Efectivo', 'Liquidez', 'Liquidez', 'EUR'
+        current_user_id, 'CASH', 'Efectivo', 'Fondo Monetario', 'Core', 'EUR'
       )
       on conflict (user_id) where ticker = 'CASH' do nothing
       returning id into cash_asset_id;

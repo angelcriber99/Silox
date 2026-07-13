@@ -121,8 +121,8 @@ export async function getOrCreateCashAsset(): Promise<Activo> {
       user_id: user.id,
       ticker: 'CASH',
       nombre: 'Efectivo',
-      tipo: 'Liquidez',
-      estrategia: 'Liquidez',
+      tipo: 'Fondo Monetario',
+      estrategia: 'Core',
       moneda: 'EUR'
     }])
     .select()
