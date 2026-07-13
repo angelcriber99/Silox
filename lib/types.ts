@@ -27,8 +27,9 @@ export interface EnrichedPosition extends Posicion {
   pnl_percent: number | null // based on EUR
   precio_medio: number // in native currency
   sparkline: number[] // in EUR
-  change_percent_24h: number | null
-  change_amount_24h: number | null
+  change_percent_24h: number | null // active market-session percentage
+  daily_change_percent_24h: number | null // cumulative trading-day percentage
+  change_amount_24h: number | null // cumulative trading-day amount
   change_amount_24h_nativo?: number | null
 }
 
@@ -100,5 +101,6 @@ export interface PriceData {
   sparkline: number[]
   originalPrice?: number | null
   originalCurrency?: string
-  changePercent24h?: number | null
+  changePercent24h?: number | null // active market-session percentage
+  dailyChangePercent24h?: number | null // cumulative trading-day percentage
 }

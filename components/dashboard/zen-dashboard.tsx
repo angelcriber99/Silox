@@ -106,17 +106,9 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
       return valid.sort((a, b) => (a.change_percent_24h ?? 0) - (b.change_percent_24h ?? 0))
     }
     if (sortMode === "money") {
-      return valid.sort((a, b) => {
-        const valA = a.valor_actual ?? a.coste_total
-        const percentA = a.change_percent_24h ?? 0
-        const pnlA = valA > 0 ? valA - valA / (1 + percentA / 100) : 0
-
-        const valB = b.valor_actual ?? b.coste_total
-        const percentB = b.change_percent_24h ?? 0
-        const pnlB = valB > 0 ? valB - valB / (1 + percentB / 100) : 0
-
-        return Math.abs(pnlB) - Math.abs(pnlA)
-      })
+      return valid.sort(
+        (a, b) => Math.abs(b.change_amount_24h ?? 0) - Math.abs(a.change_amount_24h ?? 0),
+      )
     }
     
     // Default fallback

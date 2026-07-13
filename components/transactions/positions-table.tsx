@@ -503,9 +503,7 @@ export function PositionsTable({
                       </TableCell>
                       <TableCell className={`text-right hidden sm:table-cell ${cellPadding}`}>
                         <PnlDisplay 
-                          value={p.valor_actual !== null && p.change_percent_24h !== null 
-                            ? p.valor_actual - (p.valor_actual / (1 + p.change_percent_24h / 100)) 
-                            : null} 
+                          value={p.change_amount_24h}
                           type="currency" 
                         />
                       </TableCell>
@@ -674,9 +672,7 @@ export function PositionsTable({
                      <div className="flex flex-col items-end mr-4">
                        <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy</span>
                        <PnlDisplay 
-                          value={p.valor_actual !== null && p.change_percent_24h !== null 
-                            ? p.valor_actual - (p.valor_actual / (1 + p.change_percent_24h / 100)) 
-                            : null} 
+                          value={p.change_amount_24h}
                           type="currency" 
                         />
                      </div>
