@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useSyncExternalStore, type ReactNode } from "react"
+import { useState, useSyncExternalStore, type ReactNode } from "react"
 import { usePreferences, type Language } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
@@ -26,8 +26,6 @@ import {
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { ImportHistory } from "@/components/transactions/import-history"
 import { ExportTransactionsCsvButton } from "@/components/transactions/export-transactions-csv-button"
-import { useNotificationPreferences } from "@/lib/hooks/use-notification-preferences"
-import type { NotificationPreferences } from "@/lib/actions/notification-preferences"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -133,7 +131,7 @@ export default function SettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [deletePending, setDeletePending] = useState(false)
-  const { preferences: remoteNotifications, updatePreference, isSaving: notificationSaving } = useNotificationPreferences()
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -177,39 +175,7 @@ export default function SettingsPage() {
     }
   }
 
-  useEffect(() => {
-    if (!remoteNotifications) return
-    setPushNotifs(remoteNotifications.push_notifs)
-    setEmailNotifs(remoteNotifications.email_notifs)
-    setPriceAlerts(remoteNotifications.price_alerts)
-    setWeeklyReport(remoteNotifications.weekly_report)
-    setDividendAlerts(remoteNotifications.dividend_alerts)
-  }, [
-    remoteNotifications,
-    setPushNotifs,
-    setEmailNotifs,
-    setPriceAlerts,
-    setWeeklyReport,
-    setDividendAlerts,
-  ])
-
   if (!mounted) return null
-
-  const persistNotificationPreference = async <K extends keyof NotificationPreferences>(
-    key: K,
-    currentValue: boolean,
-    setLocal: (value: boolean) => void,
-  ) => {
-    const nextValue = !currentValue
-    setLocal(nextValue)
-    try {
-      await updatePreference(key, nextValue as NotificationPreferences[K])
-      toast.success("Preferencia actualizada")
-    } catch (error: unknown) {
-      setLocal(currentValue)
-      toast.error(error instanceof Error ? error.message : "No se pudo guardar la preferencia")
-    }
-  }
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -567,31 +533,23 @@ export default function SettingsPage() {
                   <SettingRow 
                     icon={Bell} title="Notificaciones Push" desc="Recibe alertas directamente en tu dispositivo."
                     iconColor="text-rose-500"
-                    action={<CustomSwitch checked={pushNotifs} onChange={() => persistNotificationPreference("push_notifs", pushNotifs, setPushNotifs)} />}
-                  />
-                  <SettingRow
-                    icon={Download} title="Notificaciones Email" desc="Recibe avisos importantes también por correo."
-                    iconColor="text-sky-500"
-                    action={<CustomSwitch checked={emailNotifs} onChange={() => persistNotificationPreference("email_notifs", emailNotifs, setEmailNotifs)} />}
+                    action={<CustomSwitch checked={pushNotifs} onChange={() => { setPushNotifs(!pushNotifs); toast.success("Preferencia actualizada") }} />} 
                   />
                   <SettingRow 
                     icon={Zap} title="Alertas de Precio" desc="Avisos cuando un activo sube o baja drásticamente."
                     iconColor="text-amber-500"
-                    action={<CustomSwitch checked={priceAlerts} onChange={() => persistNotificationPreference("price_alerts", priceAlerts, setPriceAlerts)} />}
+                    action={<CustomSwitch checked={priceAlerts} onChange={() => { setPriceAlerts(!priceAlerts); toast.success("Preferencia actualizada") }} />} 
                   />
                   <SettingRow 
                     icon={Download} title="Cobro de Dividendos" desc="Notificar cuando se reciba un dividendo de una empresa."
                     iconColor="text-emerald-500"
-                    action={<CustomSwitch checked={dividendAlerts} onChange={() => persistNotificationPreference("dividend_alerts", dividendAlerts, setDividendAlerts)} />}
+                    action={<CustomSwitch checked={dividendAlerts} onChange={() => { setDividendAlerts(!dividendAlerts); toast.success("Preferencia actualizada") }} />} 
                   />
                   <SettingRow 
                     icon={LogOut} title="Resumen Semanal" desc="Email cada domingo con el estado de tu cartera."
                     iconColor="text-blue-500"
-                    action={<CustomSwitch checked={weeklyReport} onChange={() => persistNotificationPreference("weekly_report", weeklyReport, setWeeklyReport)} />}
+                    action={<CustomSwitch checked={weeklyReport} onChange={() => { setWeeklyReport(!weeklyReport); toast.success("Preferencia actualizada") }} />} 
                   />
-                  {notificationSaving && (
-                    <p className="px-2 text-xs text-muted-foreground">Guardando preferencias...</p>
-                  )}
                 </div>
               </div>
             )}
