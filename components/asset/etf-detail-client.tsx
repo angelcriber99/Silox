@@ -16,13 +16,14 @@ import { AssetNews } from "./detail/asset-news"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { MarketStats } from "./detail/market-stats"
+import type { AssetDetails } from '@/lib/actions/market'
 
 const AssetContributionsChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetContributionsChart), { ssr: false })
 
 interface EtfDetailClientProps {
   position: EnrichedPosition
   transactions: RawTransaction[]
-  assetDetails?: any
+  assetDetails?: AssetDetails | null
 }
 
 const TIPO_BADGE_STYLES: Record<string, string> = {

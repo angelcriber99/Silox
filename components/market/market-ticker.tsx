@@ -5,6 +5,15 @@ import { useQuery } from "@tanstack/react-query"
 import type { EnrichedPosition } from '@/lib/types'
 import { Newspaper } from "lucide-react"
 import { isValidExternalUrl } from "@/lib/utils"
+import { z } from "zod"
+
+const portfolioNewsResponseSchema = z.object({
+  noticias: z.array(z.object({
+    title: z.string(),
+    link: z.string(),
+    relatedTicker: z.string(),
+  })).default([]),
+})
 
 interface MarketTickerProps {
   positions?: EnrichedPosition[]
@@ -38,8 +47,10 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
         body: JSON.stringify({ items: topItems }),
       })
       if (!res.ok) throw new Error("Error loading news")
-      const json = await res.json()
-      return (json.noticias || []).filter((n: any) => isValidExternalUrl(n.link))
+      const payload: unknown = await res.json()
+      const parsed = portfolioNewsResponseSchema.safeParse(payload)
+      if (!parsed.success) throw new Error("Invalid news response")
+      return parsed.data.noticias.filter((news) => isValidExternalUrl(news.link))
     },
     enabled: topItems.length > 0,
     staleTime: 300_000, // 5 mins
@@ -60,9 +71,9 @@ export function MarketTicker({ positions = [] }: MarketTickerProps) {
       <Marquee speed={40} gradient={false} className="overflow-hidden">
 
         {/* Render News */}
-        {newsData && newsData.map((newsItem: any, idx: number) => (
+        {newsData.map((newsItem) => (
           <a
-            key={`news-${idx}`}
+            key={`${newsItem.relatedTicker}-${newsItem.link}`}
             href={newsItem.link}
             target="_blank"
             rel="noopener noreferrer"

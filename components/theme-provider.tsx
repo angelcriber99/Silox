@@ -7,12 +7,13 @@ import { ThemeProvider as NextThemesProvider } from "next-themes"
 // caused by next-themes injecting a script tag to prevent FOUC.
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   const orig = console.error;
-  console.error = (...args: any[]) => {
+  const filteredConsoleError: typeof console.error = (...args) => {
     if (typeof args[0] === 'string' && args[0].includes('Encountered a script tag')) {
       return;
     }
     orig.apply(console, args);
   };
+  console.error = filteredConsoleError;
 }
 
 export function ThemeProvider({

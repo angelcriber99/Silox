@@ -118,7 +118,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
         </h2>
         
         <div className="space-y-4 animate-fade-in stagger-3">
-          {txTableData.length > 0 ? txTableData.map((tx: any) => {
+          {txTableData.length > 0 ? txTableData.map((tx) => {
             const isDeposit = tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Depósito' || tx.tipo_operacion === 'Ingreso'
             return (
             <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/40 backdrop-blur-sm hover:bg-muted/50 transition-colors">

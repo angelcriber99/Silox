@@ -280,7 +280,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.pnlAmount24h >= 0 ? '#10b981' : '#f43f5e'} 
-                      radius={entry.pnlAmount24h >= 0 ? [0, 4, 4, 0] as any : [4, 0, 0, 4] as any}
+                      radius={4}
                       className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
                     />
                   ))}

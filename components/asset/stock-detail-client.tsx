@@ -16,11 +16,12 @@ import { AssetNews } from "./detail/asset-news"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { StockExtendedStats } from "./detail/stock-extended-stats"
+import type { AssetDetails } from '@/lib/actions/market'
 
 interface StockDetailClientProps {
   position: EnrichedPosition
   transactions: RawTransaction[]
-  assetDetails?: any
+  assetDetails?: AssetDetails | null
 }
 
 const TIPO_BADGE_STYLES: Record<string, string> = {

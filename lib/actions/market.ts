@@ -331,11 +331,32 @@ export async function fetchMarketPrices(
   return getCachedPrices()
 }
 
-export async function fetchAssetDetails(ticker: string) {
+export interface AssetDetails {
+  currentPrice?: number
+  targetMeanPrice?: number
+  recommendationKey?: string
+  analystStrongBuy?: number
+  analystBuy?: number
+  analystHold?: number
+  analystSell?: number
+  analystStrongSell?: number
+  forwardPE?: number
+  trailingPE?: number
+  dividendYield?: number
+  profitMargins?: number
+  returnOnEquity?: number
+  fiftyTwoWeekHigh?: number
+  fiftyTwoWeekLow?: number
+  twoHundredDayAverage?: number
+  marketCap?: number
+  volume?: number
+}
+
+export async function fetchAssetDetails(ticker: string): Promise<AssetDetails | null> {
   if (!ticker || ticker === 'CASH') return null
 
   try {
-    const summary: any = await getYahooFinance().quoteSummary(ticker, {
+    const summary = await getYahooFinance().quoteSummary(ticker, {
       modules: [
         'financialData',
         'defaultKeyStatistics',
@@ -344,30 +365,30 @@ export async function fetchAssetDetails(ticker: string) {
       ]
     })
     
-    const fd = summary.financialData || {}
-    const ks = summary.defaultKeyStatistics || {}
-    const sd = summary.summaryDetail || {}
-    const rt = summary.recommendationTrend?.trend?.[0] || {}
+    const fd = summary.financialData
+    const ks = summary.defaultKeyStatistics
+    const sd = summary.summaryDetail
+    const rt = summary.recommendationTrend?.trend?.[0]
 
     return {
-      currentPrice: fd.currentPrice,
-      targetMeanPrice: fd.targetMeanPrice,
-      recommendationKey: fd.recommendationKey,
-      analystStrongBuy: rt.strongBuy,
-      analystBuy: rt.buy,
-      analystHold: rt.hold,
-      analystSell: rt.sell,
-      analystStrongSell: rt.strongSell,
-      forwardPE: ks.forwardPE,
-      trailingPE: sd.trailingPE,
-      dividendYield: sd.dividendYield,
-      profitMargins: fd.profitMargins,
-      returnOnEquity: fd.returnOnEquity,
-      fiftyTwoWeekHigh: sd.fiftyTwoWeekHigh,
-      fiftyTwoWeekLow: sd.fiftyTwoWeekLow,
-      twoHundredDayAverage: sd.twoHundredDayAverage,
-      marketCap: sd.marketCap,
-      volume: sd.volume
+      currentPrice: fd?.currentPrice,
+      targetMeanPrice: fd?.targetMeanPrice,
+      recommendationKey: fd?.recommendationKey,
+      analystStrongBuy: rt?.strongBuy,
+      analystBuy: rt?.buy,
+      analystHold: rt?.hold,
+      analystSell: rt?.sell,
+      analystStrongSell: rt?.strongSell,
+      forwardPE: ks?.forwardPE,
+      trailingPE: sd?.trailingPE,
+      dividendYield: sd?.dividendYield,
+      profitMargins: fd?.profitMargins,
+      returnOnEquity: fd?.returnOnEquity,
+      fiftyTwoWeekHigh: sd?.fiftyTwoWeekHigh,
+      fiftyTwoWeekLow: sd?.fiftyTwoWeekLow,
+      twoHundredDayAverage: sd?.twoHundredDayAverage,
+      marketCap: sd?.marketCap,
+      volume: sd?.volume
     }
   } catch (error) {
     console.error(`Error fetching asset details for ${ticker}:`, error)

@@ -16,6 +16,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAddInvestment } from "@/lib/hooks/use-transactions"
 import { formatCurrency } from "@/lib/utils/formatters"
+import { z } from "zod"
+
+const autocompleteResponseSchema = z.object({
+  results: z.array(z.object({
+    ticker: z.string(),
+    name: z.string(),
+    exchange: z.string(),
+    type: z.string(),
+  })).default([]),
+})
+
+type AutocompleteResult = z.infer<typeof autocompleteResponseSchema>['results'][number]
 
 interface AddAssetModalProps {
   open: boolean
@@ -64,7 +76,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   )
 
   // Autocomplete state
-  const [autocompleteResults, setAutocompleteResults] = useState<any[]>([])
+  const [autocompleteResults, setAutocompleteResults] = useState<AutocompleteResult[]>([])
   const [showAutocomplete, setShowAutocomplete] = useState(false)
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false)
   const autocompleteTimeout = useRef<NodeJS.Timeout | null>(null)
@@ -90,9 +102,10 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: value.trim() }),
         })
-        const data = await res.json()
-        if (res.ok && data.results) {
-          setAutocompleteResults(data.results)
+        const payload: unknown = await res.json()
+        const parsed = autocompleteResponseSchema.safeParse(payload)
+        if (res.ok && parsed.success) {
+          setAutocompleteResults(parsed.data.results)
         } else {
           setAutocompleteResults([])
         }
@@ -104,7 +117,7 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
     }, 500)
   }
 
-  const selectAutocomplete = (res: any) => {
+  const selectAutocomplete = (res: AutocompleteResult) => {
     setTicker(res.ticker)
     setNombre(res.name)
     
@@ -294,9 +307,9 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
                           <Loader2 className="w-3 h-3 animate-spin" /> Buscando...
                         </div>
                       )}
-                      {!isAutocompleteLoading && autocompleteResults.map((res: any, idx: number) => (
+                      {!isAutocompleteLoading && autocompleteResults.map((res) => (
                         <button
-                          key={idx}
+                          key={`${res.ticker}-${res.exchange}`}
                           type="button"
                           onClick={() => selectAutocomplete(res)}
                           className="text-left px-3 py-2 hover:bg-muted/50 focus:bg-muted/50 border-b border-border/50 last:border-0 transition-colors"

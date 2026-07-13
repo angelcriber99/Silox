@@ -20,7 +20,7 @@ import Marquee from "react-fast-marquee"
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
   positions?: EnrichedPosition[]
-  transactions?: any[]
+  transactions?: Transaccion[]
   pendingTxs?: Transaccion[]
   loading?: boolean
 }

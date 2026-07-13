@@ -21,38 +21,40 @@ interface Message {
 interface AiChatDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  portfolioContext: any
+  portfolioContext: unknown
   initialMessage?: string
 }
 
+function isMessage(value: unknown): value is Message {
+  if (typeof value !== 'object' || value === null) return false
+  const candidate = value as Record<string, unknown>
+  return typeof candidate.id === 'string'
+    && (candidate.role === 'user' || candidate.role === 'assistant')
+    && typeof candidate.content === 'string'
+}
+
 export function AiChatDialog({ open, onOpenChange, portfolioContext, initialMessage }: AiChatDialogProps) {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('silox-ai-chat')
+      if (saved) {
+        try {
+          const parsed: unknown = JSON.parse(saved)
+          if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(isMessage)) return parsed
+        } catch {
+          localStorage.removeItem('silox-ai-chat')
+        }
+      }
+    }
+
+    return open && initialMessage
+      ? [{ id: '1', role: 'assistant', content: initialMessage }]
+      : []
+  })
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Load history on mount or set initial message
-  useEffect(() => {
-    if (messages.length > 0) return
-
-    const saved = localStorage.getItem('silox-ai-chat')
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        if (parsed.length > 0) {
-          setMessages(parsed)
-          return
-        }
-      } catch (e) {}
-    }
-
-    if (open && initialMessage) {
-      setMessages([
-        { id: '1', role: 'assistant', content: initialMessage }
-      ])
-    }
-  }, [open, initialMessage]) // deliberately excluded messages.length to avoid infinite loops
 
   // Save history on change
   useEffect(() => {

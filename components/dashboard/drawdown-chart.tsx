@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { useHistory } from "@/lib/hooks/use-portfolio"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import type { TooltipContentProps } from "recharts"
 import { formatPercent } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
@@ -49,10 +50,10 @@ export function DrawdownChart() {
     )
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipContentProps) => {
     if (active && payload && payload.length) {
-      const value = payload[0].value
-      const formattedDate = format(parseISO(label), "d MMM yyyy", { locale: es })
+      const value = Number(payload[0].value ?? 0)
+      const formattedDate = format(parseISO(String(label)), "d MMM yyyy", { locale: es })
       
       return (
         <div className="bg-card/90 border border-border p-4 rounded-xl shadow-xl backdrop-blur-md min-w-[150px]">
@@ -91,7 +92,7 @@ export function DrawdownChart() {
             minTickGap={30}
           />
           <YAxis hide domain={['dataMin - 2', 0]} />
-          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+          <Tooltip content={CustomTooltip} cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
           <Area 
             type="monotone" 
             dataKey="drawdown" 

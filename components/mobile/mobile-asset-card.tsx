@@ -63,7 +63,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
       ?.replace(/\b(fund|index|world|acc|eur|hedged|p-acc)\b/gi, "")
       .trim() || displayTicker
 
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.x < -SWIPE_THRESHOLD) {
       // Snap to revealed position
       animate(x, -MAX_SWIPE, { type: "spring", stiffness: 400, damping: 30 })

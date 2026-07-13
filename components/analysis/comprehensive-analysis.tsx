@@ -20,7 +20,16 @@ const COLORS = [
 const marketDataCache: Record<string, FundHoldingsResponse | null> = {}
 const fetchedMarketDataIds = new Set<string>()
 
-function DistributionRow({ item, totalValue, index }: { item: any, totalValue: number, index: number }) {
+interface DistributionAsset {
+  name: string
+  value: number
+}
+
+interface DistributionItem extends DistributionAsset {
+  assets?: DistributionAsset[]
+}
+
+function DistributionRow({ item, totalValue, index }: { item: DistributionItem, totalValue: number, index: number }) {
   const [expanded, setExpanded] = useState(false);
   const weight = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
 
@@ -51,13 +60,13 @@ function DistributionRow({ item, totalValue, index }: { item: any, totalValue: n
       
       {expanded && item.assets && (
         <div className="mt-3 pl-4 flex flex-col gap-2 border-l-2 border-border/50 animate-in fade-in slide-in-from-top-2 duration-200">
-          {item.assets.map((a: any, i: number) => {
-            const assetWeight = a.value / totalValue * 100;
+          {item.assets.map((asset) => {
+            const assetWeight = totalValue > 0 ? asset.value / totalValue * 100 : 0;
             return (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <span className="font-medium text-muted-foreground truncate max-w-[140px]" title={a.name}>{a.name}</span>
+              <div key={`${asset.name}-${asset.value}`} className="flex items-center justify-between text-xs">
+                <span className="font-medium text-muted-foreground truncate max-w-[140px]" title={asset.name}>{asset.name}</span>
                 <span className="tabular-nums text-muted-foreground whitespace-nowrap ml-2 flex items-center gap-2">
-                  {formatCurrency(a.value)}
+                  {formatCurrency(asset.value)}
                   <span className="text-foreground font-semibold w-8 text-right">{assetWeight.toFixed(1)}%</span>
                 </span>
               </div>

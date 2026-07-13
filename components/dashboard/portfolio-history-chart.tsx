@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts"
+import type { TooltipContentProps } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
@@ -42,7 +43,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
   const spanMs = lastDate.getTime() - firstDate.getTime()
   const isOneDay = spanMs <= 24 * 60 * 60 * 1000
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipContentProps) => {
     useEffect(() => {
       if (active && payload && payload.length) {
         onHoverChange?.(payload[0].payload)
@@ -57,7 +58,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     if (active && payload && payload.length) {
       const data = payload[0].payload as ChartDataPoint
       const isPositive = data.totalPnl >= 0
-      const dateObj = parseISO(label)
+      const dateObj = parseISO(String(label))
       const formattedDate = format(dateObj, "d MMM yyyy, HH:mm", { locale: es })
       
       return (
@@ -141,7 +142,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             domain={[yMin, yMax]} 
           />
           <Tooltip 
-            content={<CustomTooltip />} 
+            content={CustomTooltip}
             cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: hideTooltipContent ? '0' : '4 4', strokeOpacity: 0.5 }} 
           />
           {/* Invested reference line */}

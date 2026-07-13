@@ -81,14 +81,14 @@ export function MonthlyChart({ transactions, year }: MonthlyChartProps) {
                 <div className="bg-card/95 backdrop-blur-xl border border-white/10 p-4 rounded-xl shadow-2xl min-w-[200px]">
                   <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-3 pb-2 border-b border-white/10">{label} {year}</p>
                   <div className="space-y-3">
-                    {payload.map((entry: any, index: number) => (
+                    {payload.map((entry, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                           <span className="text-sm font-medium text-foreground">{entry.name}</span>
                         </div>
                         <span className="text-sm font-bold tabular-nums" style={{ color: entry.color }}>
-                          {formatCurrency(entry.value)}
+                          {formatCurrency(Number(entry.value ?? 0))}
                         </span>
                       </div>
                     ))}

@@ -10,6 +10,7 @@ import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
+import type { MouseHandlerDataParam } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
@@ -420,10 +421,11 @@ export function MobileDashboard({
             <AreaChart 
               data={portfolioSparkline} 
               margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
-              onMouseMove={(e: unknown) => {
-                const event = e as any;
-                if (event.activePayload && event.activePayload.length > 0) {
-                  const newScrub = event.activePayload[0].payload;
+              onMouseMove={(event: MouseHandlerDataParam) => {
+                const index = Number(event.activeTooltipIndex)
+                if (event.isTooltipActive && Number.isInteger(index)) {
+                  const newScrub = portfolioSparkline[index]
+                  if (!newScrub) return
                   setScrubData(prev => {
                     if (prev?.i !== newScrub.i) hapticFeedback.light();
                     return newScrub;

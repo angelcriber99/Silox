@@ -76,7 +76,7 @@ export async function fetchPrices(
       }
     }
     return { prices, fxRates: data.fxRates, marketState: data.marketState }
-  } catch (err: any) {
-    throw new Error(err.message || 'Error obteniendo precios')
+  } catch (error: unknown) {
+    throw new Error(error instanceof Error ? error.message : 'Error obteniendo precios')
   }
 }

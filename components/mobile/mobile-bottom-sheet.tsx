@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence, PanInfo } from "framer-motion"
 import { X, ArrowUpRight, ArrowDownRight, Loader2, Search, Plus, FileUp } from "lucide-react"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
@@ -17,7 +17,6 @@ interface MobileBottomSheetProps {
 }
 
 const TIPOS = ["ETF", "Fondo Indexado", "Fondo Monetario", "Acción", "Crypto"] as const
-const ESTRATEGIAS = ["Core", "Satellite"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 
 export function MobileBottomSheet({
@@ -50,7 +49,7 @@ export function MobileBottomSheet({
   const addTx = useAddTransaction()
   const addInvestment = useAddInvestment()
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     // Reset Tab 1
     setSelectedAsset(null)
     setStep("select")
@@ -68,30 +67,34 @@ export function MobileBottomSheet({
     setTipo("ETF")
     setEstrategia("Satellite")
     setMoneda("EUR")
-  }
+  }, [])
 
   // Lock body scroll when sheet is open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      // Reset state if needed when opening
-      if (step !== "select" && !selectedAsset) resetForm()
     } else {
       document.body.style.overflow = ''
-      // Small delay before resetting so animation finishes
-      setTimeout(resetForm, 300)
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
 
+  useEffect(() => {
+    if (open) return
+    const resetTimer = window.setTimeout(resetForm, 300)
+    return () => window.clearTimeout(resetTimer)
+  }, [open, resetForm])
+
   // Auto-select asset if preselectedAsset changes while sheet opens
   useEffect(() => {
-    if (open && preselectedAsset) {
+    if (!open || !preselectedAsset) return
+    const selectTimer = window.setTimeout(() => {
       setActiveTab("operacion")
       setSelectedAsset(preselectedAsset)
       setStep("form")
       if (preselectedAsset.precio_actual) setPrecio(preselectedAsset.precio_actual.toFixed(2))
-    }
+    }, 0)
+    return () => window.clearTimeout(selectTimer)
   }, [open, preselectedAsset])
 
   // ==============================
@@ -194,8 +197,8 @@ export function MobileBottomSheet({
 
       toast.success(`${tickerClean} añadido a tu cartera exitosamente`)
       onClose()
-    } catch (err: any) {
-       const msg = err?.message || ""
+    } catch (error: unknown) {
+       const msg = error instanceof Error ? error.message : ""
        if (msg.includes("duplicate") || msg.includes("unique")) {
          toast.error("Este activo ya existe en tu cartera")
        } else {

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner"
 import type { Transaccion, EnrichedPosition } from "@/lib/types"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
+import type { CellValue, Worksheet } from 'exceljs'
 
 // Lazy import to avoid loading exceljs unnecessarily on first render
 const exportToExcel = async (
@@ -45,10 +46,10 @@ const exportToExcel = async (
     headerHeight: theme === 'numbers' ? 32 : 24
   }
 
-  const applyHeaderStyle = (ws: any, bgColor: string, columnCount: number) => {
+  const applyHeaderStyle = (ws: Worksheet, bgColor: string, columnCount: number) => {
     const row = ws.getRow(1)
     row.height = colors.headerHeight
-    row.eachCell((cell: any) => {
+    row.eachCell((cell) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } }
       cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: theme === 'numbers' ? 12 : 11 }
       cell.alignment = { horizontal: 'center', vertical: 'middle' }
@@ -99,7 +100,7 @@ const exportToExcel = async (
   
   wsSummary.addRow([]).height = 15
 
-  const addMetric = (label: string, value: any, format: string, color?: string) => {
+  const addMetric = (label: string, value: CellValue, format: string, color?: string) => {
     const row = wsSummary.addRow(['', label, value])
     row.height = 24
     row.getCell('metrica').font = { bold: true, size: 12 }
@@ -427,7 +428,16 @@ const exportToExcel = async (
 
   applyHeaderStyle(wsEvol, colors.evolHeader, 6)
 
-  const monthlyData: Record<string, any> = {}
+  interface MonthlyEvolution {
+    mes: string
+    comprado: number
+    vendido: number
+    dividendos: number
+    comisiones: number
+    flujo: number
+  }
+
+  const monthlyData: Record<string, MonthlyEvolution> = {}
   
   filteredTxs.forEach(tx => {
     const d = new Date(tx.fecha)
@@ -454,16 +464,16 @@ const exportToExcel = async (
     monthlyData[monthKey].flujo -= tx.comision
   })
 
-  const sortedMonths = Object.values(monthlyData).sort((a: any, b: any) => a.mes.localeCompare(b.mes))
+  const sortedMonths = Object.values(monthlyData).sort((a, b) => a.mes.localeCompare(b.mes))
   
   let evolRowIdx = 2
-  sortedMonths.forEach((data: any) => {
+  sortedMonths.forEach((data) => {
     const row = wsEvol.addRow(data)
     
     // Formula for Flujo Neto: Vendido + Dividendos - Comprado - Comisiones
     row.getCell('flujo').value = { formula: `C${evolRowIdx}+D${evolRowIdx}-B${evolRowIdx}-E${evolRowIdx}`, result: data.flujo }
 
-    if (evolRowIdx % 2 !== 0) row.eachCell((cell: any) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
+    if (evolRowIdx % 2 !== 0) row.eachCell((cell) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
     
     ;['comprado', 'vendido', 'dividendos', 'comisiones', 'flujo'].forEach(key => {
       row.getCell(key).numFmt = '#,##0.00" €"'

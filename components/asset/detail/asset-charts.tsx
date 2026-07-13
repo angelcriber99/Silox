@@ -8,8 +8,26 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { DollarSign, History, PiggyBank } from "lucide-react"
 import { formatCurrency } from "@/lib/utils/formatters"
+import type { EnrichedPosition } from '@/lib/types'
+import type { useAssetCalculations } from './use-asset-calculations'
 
-export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
+type AssetCalculations = ReturnType<typeof useAssetCalculations>
+
+interface AssetCapitalDonutProps {
+  capitalDonut: AssetCalculations['capitalDonut']
+  position: EnrichedPosition
+  stats: AssetCalculations['stats']
+}
+
+interface AssetEvolutionChartProps {
+  evolutionData: AssetCalculations['evolutionData']
+}
+
+interface AssetContributionsChartProps {
+  monthlyContributionsData: AssetCalculations['monthlyContributionsData']
+}
+
+export function AssetCapitalDonut({ capitalDonut, position, stats }: AssetCapitalDonutProps) {
   return (
     <Card className="bg-card border-border backdrop-blur-sm animate-fade-in stagger-2">
       <CardHeader>
@@ -25,8 +43,8 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
         <div className="h-[200px] w-[200px] relative">
           <PieChart width={200} height={200}>
             <Pie data={capitalDonut} innerRadius={65} outerRadius={90} paddingAngle={4} dataKey="value" stroke="none" cornerRadius={8}>
-              {capitalDonut.map((entry: any, i: number) => (
-                <Cell key={i} fill={entry.color} className="hover:opacity-80 transition-opacity cursor-pointer outline-none" />
+              {capitalDonut.map((entry) => (
+                <Cell key={entry.name} fill={entry.color} className="hover:opacity-80 transition-opacity cursor-pointer outline-none" />
               ))}
             </Pie>
             <Tooltip content={({ active, payload }) => {
@@ -78,7 +96,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: any) {
   )
 }
 
-export function AssetEvolutionChart({ evolutionData }: any) {
+export function AssetEvolutionChart({ evolutionData }: AssetEvolutionChartProps) {
   if (!evolutionData || evolutionData.length === 0) return null
   
   return (
@@ -161,7 +179,7 @@ export function AssetEvolutionChart({ evolutionData }: any) {
   )
 }
 
-export function AssetContributionsChart({ monthlyContributionsData }: any) {
+export function AssetContributionsChart({ monthlyContributionsData }: AssetContributionsChartProps) {
   return (
     <Card className="lg:col-span-2 bg-card border-border backdrop-blur-sm">
       <CardHeader>

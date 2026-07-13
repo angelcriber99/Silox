@@ -11,14 +11,16 @@ import { CryptoDetailClient } from "@/components/asset/crypto-detail-client"
 import { EtfDetailClient } from "@/components/asset/etf-detail-client"
 import { LiquidityDetailClient } from "@/components/asset/liquidity-detail-client"
 import type { EnrichedPosition } from '@/lib/types'
+import type { RawTransaction } from '@/components/asset/detail/use-asset-calculations'
+import type { AssetDetails } from '@/lib/actions/market'
 
 export default function ActivoPage() {
   const params = useParams()
-  const id = params.id as string
+  const id = typeof params.id === 'string' ? params.id : ''
 
   const [position, setPosition] = useState<EnrichedPosition | null>(null)
-  const [assetDetails, setAssetDetails] = useState<any>(null)
-  const [transactions, setTransactions] = useState<any[]>([])
+  const [assetDetails, setAssetDetails] = useState<AssetDetails | null>(null)
+  const [transactions, setTransactions] = useState<RawTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -48,15 +50,16 @@ export default function ActivoPage() {
         }
 
         // Fetch transactions
-        const { data: txs } = await supabase
+        const { data: txs, error: transactionsError } = await supabase
           .from('transacciones')
           .select('*')
           .eq('activo_id', id)
           .order('fecha', { ascending: true })
 
+        if (transactionsError) throw transactionsError
         setTransactions(txs || [])
-      } catch (err: any) {
-        setError(err.message)
+      } catch (error: unknown) {
+        setError(error instanceof Error ? error.message : 'Error al cargar el activo')
       } finally {
         setLoading(false)
       }
