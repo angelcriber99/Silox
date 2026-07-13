@@ -6,6 +6,8 @@ import {
   getTransactionCandidates,
 } from '@/lib/domain/imports/transaction-index'
 import type { RevolutImportSuccess } from '@/lib/domain/imports/revolut-response'
+import { serverLogger } from '@/lib/server/logger'
+import { getErrorMessage } from '@/lib/utils/errors'
 
 export const runtime = 'nodejs'
 
@@ -984,8 +986,8 @@ export async function POST(request: Request) {
     return NextResponse.json(response)
 
   } catch (error: unknown) {
-    console.error('Revolut Import Error:', error)
-    const message = error instanceof Error ? error.message : 'Error inesperado al importar el archivo'
+    serverLogger.error('revolut.import.failed', error)
+    const message = getErrorMessage(error, 'Error inesperado al importar el archivo')
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireApiUser } from '@/lib/server/api-auth';
 import { getYahooFinance } from '@/lib/server/yahoo-finance';
+import { getErrorMessage } from '@/lib/utils/errors';
 import type {
   QuoteSummaryResult,
   TopHoldingsHolding,
@@ -241,8 +242,4 @@ function isYahooValidationError(
 ): error is Error & { result: QuoteSummaryResult } {
   if (!(error instanceof Error) || error.name !== 'FailedYahooValidationError') return false;
   return 'result' in error && typeof error.result === 'object' && error.result !== null;
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Error interno de mercado';
 }

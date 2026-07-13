@@ -4,6 +4,8 @@ import { authorizeCronRequest } from '@/lib/server/cron-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { serverLogger } from '@/lib/server/logger'
+import { getErrorMessage } from '@/lib/utils/errors'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,7 +47,7 @@ export async function GET(request: Request) {
 
     quoteResults.forEach((result, index) => {
       if (result.status === 'rejected') {
-        console.error(`Failed to fetch price for ${uniqueTickers[index]}`, result.reason)
+        serverLogger.warn('alerts.quote.failed', { ticker: uniqueTickers[index] }, result.reason)
         return
       }
       const { ticker, quote } = result.value
@@ -128,7 +130,7 @@ ${trigger.currentPrice !== trigger.reachedPrice ? `⚡ *¡OJO!* Tocó los ${reac
         } catch (error) {
           notificationDelivered = false
           notificationsFailed += 1
-          console.error('Error sending Telegram message', error)
+          serverLogger.warn('alerts.telegram.failed', { alertId: trigger.alerta.id }, error)
         }
       }
 
@@ -148,8 +150,8 @@ ${trigger.currentPrice !== trigger.reachedPrice ? `⚡ *¡OJO!* Tocó los ${reac
     })
 
   } catch (error: unknown) {
-    console.error('Cron job error:', error)
-    const message = error instanceof Error ? error.message : 'Unknown alert cron error'
+    serverLogger.error('alerts.cron.failed', error)
+    const message = getErrorMessage(error, 'Unknown alert cron error')
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

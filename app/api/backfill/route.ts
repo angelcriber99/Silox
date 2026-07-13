@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import type { Database } from '@/lib/database.types'
+import { serverLogger } from '@/lib/server/logger'
+import { getErrorMessage } from '@/lib/utils/errors'
 
 type HistoricalPoint = {
   date: Date
@@ -77,7 +79,7 @@ export async function POST() {
       if (result.status === 'fulfilled') {
         historicalData[ticker] = result.value.quotes
       } else {
-        console.error(`Error fetching history for ${ticker}:`, result.reason)
+        serverLogger.warn('portfolio.backfill.quote.failed', { ticker }, result.reason)
         historicalData[ticker] = []
       }
     })
@@ -208,7 +210,8 @@ export async function POST() {
     })
 
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Error reconstruyendo el historial'
+    serverLogger.error('portfolio.backfill.failed', error, { userId: user.id })
+    const message = getErrorMessage(error, 'Error reconstruyendo el historial')
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

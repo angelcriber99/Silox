@@ -3,6 +3,8 @@ import { authorizeCronRequest } from '@/lib/server/cron-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { serverLogger } from '@/lib/server/logger'
+import { getErrorMessage } from '@/lib/utils/errors'
 
 export const dynamic = 'force-dynamic'
 
@@ -112,7 +114,7 @@ export async function GET(request: Request) {
 
     for (const result of dividendResults) {
       if (result.status === 'rejected') {
-        console.error('Error fetching historical dividends:', result.reason)
+        serverLogger.warn('dividends.history.failed', {}, result.reason)
         continue
       }
 
@@ -158,7 +160,7 @@ export async function GET(request: Request) {
               })
 
             if (insertError) {
-              console.error(`Error inserting dividend for ${activo.id}:`, insertError)
+              serverLogger.warn('dividends.insert.failed', { assetId: activo.id }, insertError)
             } else {
               registeredDividends.add(`${activo.user_id}:${activo.id}:${divDate.toISOString().split('T')[0]}`)
               addedDividends.push({
@@ -180,8 +182,8 @@ export async function GET(request: Request) {
     })
 
   } catch (error: unknown) {
-    console.error('Cron job error:', error)
-    const message = error instanceof Error ? error.message : 'Unknown dividend cron error'
+    serverLogger.error('dividends.cron.failed', error)
+    const message = getErrorMessage(error, 'Unknown dividend cron error')
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

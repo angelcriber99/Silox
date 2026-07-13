@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
 import { requireApiUser } from '@/lib/server/api-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { getErrorMessage } from '@/lib/utils/errors'
 import type { ChartOptions } from 'yahoo-finance2/modules/chart'
 
 export const dynamic = 'force-dynamic'
@@ -107,10 +108,6 @@ function getInterval(range: z.infer<typeof MarketRequestSchema>['range']): Chart
     case 'max': return '1mo'
     default: return '1d'
   }
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Error interno de mercado'
 }
 
 function formatNumber(num: number | undefined | null) {

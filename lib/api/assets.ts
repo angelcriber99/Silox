@@ -1,34 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
-
-function displayAssetType<T extends { tipo: string; sector?: string | null; ticker?: string | null }>(asset: T): T {
-  const isMetal =
-    asset.sector === 'Metales' ||
-    asset.ticker === 'XAGUSD=X' ||
-    asset.ticker === 'XAGEUR=X' ||
-    asset.ticker === 'XAUUSD=X' ||
-    asset.ticker === 'XAUEUR=X' ||
-    asset.ticker === 'XPDUSD=X' ||
-    asset.ticker === 'XPDEUR=X' ||
-    asset.ticker === 'XPTUSD=X' ||
-    asset.ticker === 'XPTEUR=X' ||
-    asset.ticker === 'SI=F' ||
-    asset.ticker === 'GC=F' ||
-    asset.ticker === 'PA=F' ||
-    asset.ticker === 'PL=F'
-
-  return isMetal ? ({ ...asset, tipo: 'Metal' } as T) : asset
-}
-
-function toDatabaseAssetPayload<T extends { tipo?: string; sector?: string; geografia?: string }>(asset: T): T {
-  if (asset.tipo !== 'Metal') return asset
-  return {
-    ...asset,
-    tipo: 'Crypto',
-    sector: asset.sector || 'Metales',
-    geografia: asset.geografia || 'Global',
-  } as T
-}
+import { CASH_ASSET_DEFAULTS, displayAssetType, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
   const supabase = createClient()
@@ -119,14 +91,7 @@ export async function getOrCreateCashAsset(): Promise<Activo> {
   // Si no existe, lo creamos
   const { data: newAsset, error: insertError } = await supabase
     .from('activos')
-    .insert([{
-      user_id: user.id,
-      ticker: 'CASH',
-      nombre: 'Efectivo',
-      tipo: 'Fondo Monetario',
-      estrategia: 'Core',
-      moneda: 'EUR'
-    }])
+    .insert([{ user_id: user.id, ...CASH_ASSET_DEFAULTS }])
     .select()
     .single()
 
