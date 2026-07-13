@@ -202,8 +202,6 @@ async function _fetchMarketPrices(
           rawPrice = quote.preMarketPrice
           changePercent24h = ((rawPrice - quote.regularMarketPrice) / quote.regularMarketPrice) * 100
           latestTime = quote.preMarketTime || latestTime
-        } else {
-          changePercent24h = 0
         }
       } else if (assetState === 'POST' || assetState === 'POSTPOST' || assetState === 'CLOSED') {
         if (quote.postMarketPrice && quote.regularMarketPreviousClose) {
