@@ -8,10 +8,11 @@ export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
     .order('fecha', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(limit)
+    .overrideTypes<Transaccion[], { merge: false }>()
 
   if (error) throw new Error(`Error cargando transacciones: ${error.message}`)
 
-  return (data as any) as Transaccion[]
+  return data
 }
 
 export async function fetchPendingTransactions(): Promise<Transaccion[]> {
@@ -20,10 +21,11 @@ export async function fetchPendingTransactions(): Promise<Transaccion[]> {
     .select('*, activo:activos(ticker, nombre, tipo, moneda)')
     .eq('estado', 'Pendiente')
     .order('created_at', { ascending: false })
+    .overrideTypes<Transaccion[], { merge: false }>()
 
   if (error) throw new Error(`Error cargando transacciones pendientes: ${error.message}`)
 
-  return (data as any) as Transaccion[]
+  return data
 }
 
 export async function fetchTransactions(limitCount = 100): Promise<Transaccion[]> {
@@ -33,10 +35,11 @@ export async function fetchTransactions(limitCount = 100): Promise<Transaccion[]
     .order('fecha', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(limitCount)
+    .overrideTypes<Transaccion[], { merge: false }>()
 
   if (error) throw new Error(`Error cargando transacciones: ${error.message}`)
 
-  return (data as any) as Transaccion[]
+  return data
 }
 
 export async function fetchAllTransactionsForTax(): Promise<Transaccion[]> {
@@ -47,10 +50,11 @@ export async function fetchAllTransactionsForTax(): Promise<Transaccion[]> {
       activo:activos(*)
     `)
     .order('fecha', { ascending: true })
+    .overrideTypes<Transaccion[], { merge: false }>()
 
   if (error) throw new Error(`Error obteniendo transacciones fiscales: ${error.message}`)
   
-  return (data as any) as Transaccion[]
+  return data
 }
 
 export async function insertTransaccion(tx: {
@@ -71,9 +75,10 @@ export async function insertTransaccion(tx: {
     .insert([{ ...tx, user_id: user.id }])
     .select()
     .single()
+    .overrideTypes<Transaccion, { merge: false }>()
 
   if (error) throw new Error(`Error registrando transacción: ${error.message}`)
-  return (data as any) as Transaccion
+  return data
 }
 
 export async function updateTransaccion(id: string, updates: {
@@ -91,9 +96,10 @@ export async function updateTransaccion(id: string, updates: {
     .eq('id', id)
     .select()
     .single()
+    .overrideTypes<Transaccion, { merge: false }>()
 
   if (error) throw new Error(`Error actualizando transacción: ${error.message}`)
-  return (data as any) as Transaccion
+  return data
 }
 
 export async function deleteTransaccion(id: string): Promise<void> {

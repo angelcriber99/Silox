@@ -74,7 +74,7 @@ export async function getOrCreateCashAssetAction(): Promise<Activo> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('No estás autenticado')
 
-  const { data: existing } = await supabase
+  const { data: existing, error: searchError } = await supabase
     .from('activos')
     .select('*')
     .eq('user_id', user.id)
@@ -82,6 +82,7 @@ export async function getOrCreateCashAssetAction(): Promise<Activo> {
     .limit(1)
     .maybeSingle()
 
+  if (searchError) throw new Error(`Error buscando Efectivo: ${searchError.message}`)
   if (existing) return existing
 
   const { data: newAsset, error: insertError } = await supabase

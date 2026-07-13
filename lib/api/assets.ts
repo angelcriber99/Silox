@@ -108,9 +108,11 @@ export async function getOrCreateCashAsset(): Promise<Activo> {
     .from('activos')
     .select('*')
     .eq('user_id', user.id)
-    .eq('tipo', 'Liquidez')
+    .eq('ticker', 'CASH')
     .limit(1)
-    .single()
+    .maybeSingle()
+
+  if (searchError) throw new Error(`Error buscando Efectivo: ${searchError.message}`)
 
   if (existing) return existing
 
@@ -278,7 +280,7 @@ export function computePortfolioTotals(
 }
 
 export async function savePortfolioHistory(totalValue: number, totalInvested: number): Promise<void> {
-  const supabase = createClient() as any
+  const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
@@ -309,7 +311,7 @@ export async function savePortfolioHistory(totalValue: number, totalInvested: nu
 }
 
 export async function fetchHistory(): Promise<{ timestamp: string, total_value: number, total_invested: number }[]> {
-  const supabase = createClient() as any
+  const supabase = createClient()
   const { data, error } = await supabase
     .from('portfolio_history')
     .select('timestamp, total_value, total_invested')
