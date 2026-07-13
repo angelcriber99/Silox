@@ -104,20 +104,3 @@ export interface PriceData {
   changePercent24h?: number | null // active market-session percentage
   dailyChangePercent24h?: number | null // cumulative trading-day percentage
 }
-
-export interface ImportAudit {
-  id: string
-  source: string
-  filename: string
-  file_size: number
-  file_type: string | null
-  status: 'processing' | 'completed' | 'failed'
-  parsed_count: number
-  imported_count: number
-  updated_count: number
-  ignored_count: number
-  removed_internal_movements: number
-  error: string | null
-  created_at: string
-  completed_at: string | null
-}

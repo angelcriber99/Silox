@@ -12,15 +12,6 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
-
-interface ImportPreviewTransaction {
-  ticker: string
-  tipo_operacion: string
-  cantidad: number
-  precio_unitario: number
-  fecha: string
-}
 
 interface RevolutSyncProps {
   children: React.ReactNode
@@ -29,19 +20,14 @@ interface RevolutSyncProps {
 
 export function RevolutSync({ children, className }: RevolutSyncProps) {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const [importSummary, setImportSummary] = useState<{
-    isOpen: boolean
-    imported: ImportPreviewTransaction[]
-    ignored: ImportPreviewTransaction[]
-    updatedTransactions: number
-    importId: string | null
+    isOpen: boolean;
+    imported: any[];
+    ignored: any[];
   }>({
     isOpen: false,
     imported: [],
-    ignored: [],
-    updatedTransactions: 0,
-    importId: null,
+    ignored: []
   })
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,20 +43,14 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
         body: formData,
       }).then(async (res) => {
         const data = await res.json()
-        if (!res.ok) {
-          const suffix = data.requestId ? ` (${data.requestId})` : ''
-          throw new Error(`${data.error || 'Error al procesar el archivo'}${suffix}`)
-        }
+        if (!res.ok) throw new Error(data.error || 'Error al procesar el archivo')
         
         setImportSummary({
           isOpen: true,
           imported: data.imported || [],
-          ignored: data.ignored || [],
-          updatedTransactions: data.updatedTransactions || 0,
-          importId: data.importId || null,
+          ignored: data.ignored || []
         })
         
-        queryClient.invalidateQueries({ queryKey: ["imports"] })
         router.refresh()
         return data
       }),
@@ -80,10 +60,7 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
           const removed = data.removedInternalMovements
             ? ` ${data.removedInternalMovements} movimientos internos de staking limpiados.`
             : ''
-          const updated = data.updatedTransactions
-            ? ` ${data.updatedTransactions} históricos actualizados.`
-            : ''
-          return `¡Listo! ${data.newTransactions} nuevos importados. (${data.ignoredDuplicates} ignorados por duplicidad).${updated}${removed}`
+          return `¡Listo! ${data.newTransactions} nuevos importados. (${data.ignoredDuplicates} ignorados por duplicidad).${removed}`
         },
         error: (err) => err.message || 'Ocurrió un error al procesar el archivo.'
       }
@@ -111,7 +88,6 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
             <DialogTitle>Resumen de Importación</DialogTitle>
             <DialogDescription>
               Resultados de la sincronización de tu extracto
-              {importSummary.importId ? ` · ID ${importSummary.importId.slice(0, 8)}` : ''}
             </DialogDescription>
           </DialogHeader>
           
@@ -121,7 +97,7 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
                 <div>
                   <h4 className="text-sm font-semibold flex items-center gap-2 mb-3 text-emerald-500">
                     <Check className="w-4 h-4" /> 
-                    Sincronizadas ({importSummary.imported.length})
+                    Nuevas Sincronizadas ({importSummary.imported.length})
                   </h4>
                   <div className="space-y-2">
                     {importSummary.imported.map((tx, i) => (
@@ -139,12 +115,6 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {importSummary.updatedTransactions > 0 && (
-                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-500">
-                  {importSummary.updatedTransactions} operaciones de metales se actualizaron con precios históricos recalculados.
                 </div>
               )}
 
