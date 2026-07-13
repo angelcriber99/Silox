@@ -1,13 +1,6 @@
-import { NextResponse } from 'next/server'
-import type { CellValue } from 'exceljs'
 import { createClient } from '@/lib/supabase/server'
-import {
-  buildTransactionGroups,
-  getTransactionCandidates,
-} from '@/lib/domain/imports/transaction-index'
-import type { RevolutImportSuccess } from '@/lib/domain/imports/revolut-response'
-import { serverLogger } from '@/lib/server/logger'
-import { getErrorMessage } from '@/lib/utils/errors'
+import { apiError, apiSuccess } from '@/lib/api/responses'
+import type { CellValue } from 'exceljs'
 
 export const runtime = 'nodejs'
 
@@ -27,6 +20,8 @@ interface ParsedImportTransaction {
   fecha: string
   comision: number
 }
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
 
 const CRYPTO_SYMBOLS = new Set([
   '1INCH', 'AAVE', 'ADA', 'ALGO', 'ATOM', 'AVAX', 'BCH', 'BNB', 'BONK', 'BTC',
@@ -113,6 +108,54 @@ const SPANISH_MONTHS: Record<string, string> = {
   noviembre: '11',
   dic: '12',
   diciembre: '12',
+}
+
+async function createImportAudit(
+  supabase: SupabaseServerClient,
+  userId: string,
+  file: File,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('imports')
+    .insert({
+      user_id: userId,
+      source: 'revolut',
+      filename: file.name,
+      file_size: file.size,
+      file_type: file.type || null,
+      status: 'processing',
+    })
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    if (!['42P01', 'PGRST205', 'PGRST116'].includes(error.code)) {
+      console.warn('[revolut-import] could not create audit row:', error.message)
+    }
+    return null
+  }
+
+  return data?.id ?? null
+}
+
+async function updateImportAudit(
+  supabase: SupabaseServerClient | null,
+  importId: string | null,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  if (!supabase || !importId) return
+
+  const { error } = await supabase
+    .from('imports')
+    .update({
+      ...payload,
+      completed_at: new Date().toISOString(),
+    })
+    .eq('id', importId)
+
+  if (error && !['42P01', 'PGRST205', 'PGRST116'].includes(error.code)) {
+    console.warn('[revolut-import] could not update audit row:', error.message)
+  }
 }
 
 function normalizeText(value: unknown): string {
@@ -541,12 +584,64 @@ function isMetalAccountStatement(headers: string[]): boolean {
   )
 }
 
+function getMetalFiatValue(headers: string[], row: string[]): number {
+  const valueIdx = findIndex(headers, [
+    'valor',
+    'value',
+    'total',
+    'importeeneur',
+    'importeeneuros',
+    'valoreur',
+    'valoreuros',
+    'contravalor',
+    'contravaloreur',
+    'fiatamount',
+    'amountfiat',
+    'executedvalue',
+  ])
+
+  if (valueIdx < 0) return Number.NaN
+
+  const value = Math.abs(parseNumber(row[valueIdx]))
+  return Number.isFinite(value) && value > 0 ? value : Number.NaN
+}
+
+function getConversionTargetCurrency(description: string): string | null {
+  const normalized = normalizeOperationText(description).toUpperCase()
+  const match = normalized.match(/CONVERSION A ([A-Z]{3})/)
+  return match?.[1] ?? null
+}
+
+async function getMetalRowValueEur(
+  metalSymbol: string,
+  quantity: number,
+  feeInUnits: number,
+  operation: ImportOperation,
+  date: string,
+  headers: string[],
+  row: string[],
+  cache: Map<string, Promise<MetalRates | null>>
+): Promise<number | null> {
+  const fiatValueEur = getMetalFiatValue(headers, row)
+  if (Number.isFinite(fiatValueEur)) return fiatValueEur
+
+  const historicalUnitPriceEur = await fetchMetalUnitPriceEur(metalSymbol, date, cache)
+  if (!historicalUnitPriceEur || historicalUnitPriceEur <= 0) return null
+
+  const grossQuantity = operation === 'Compra' && Number.isFinite(feeInUnits)
+    ? quantity + feeInUnits
+    : quantity
+
+  return grossQuantity * historicalUnitPriceEur
+}
+
 async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedImportTransaction[]> {
   const headers = rows[0].map(normalizeHeader)
   const dateIdx = findIndex(headers, ['fechadefinalizacion', 'fechadeinicio', 'date', 'fecha'])
   const amountIdx = findIndex(headers, ['importe', 'amount'])
   const feeIdx = findIndex(headers, ['comision', 'commission', 'fee', 'fees'])
   const currencyIdx = findIndex(headers, ['divisa', 'currency', 'moneda'])
+  const descriptionIdx = findIndex(headers, ['descripcion', 'description'])
   const stateIdx = findIndex(headers, ['state', 'estado'])
 
   if (dateIdx < 0 || amountIdx < 0 || currencyIdx < 0) return []
@@ -563,7 +658,9 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
 
     const amount = parseNumber(row[amountIdx])
     const feeInUnits = Math.abs(parseNumber(row[feeIdx]))
-    const date = parseDate(row[dateIdx])
+    const rawDateKey = normalizeText(row[dateIdx])
+    const date = parseDate(rawDateKey)
+    const description = normalizeText(row[descriptionIdx])
     const operation: ImportOperation | null = amount > 0 ? 'Compra' : amount < 0 ? 'Venta' : null
 
     if (!date || !operation || !Number.isFinite(amount) || amount === 0) continue
@@ -576,12 +673,62 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
     if (!Number.isFinite(quantity) || quantity <= 0) continue
 
     const name = METAL_NAMES[metalSymbol] ?? metalSymbol
-    const historicalUnitPriceEur = await fetchMetalUnitPriceEur(metalSymbol, date, metalRateCache)
-    if (!historicalUnitPriceEur || historicalUnitPriceEur <= 0) continue
+    let valueEur = await getMetalRowValueEur(
+      metalSymbol,
+      quantity,
+      feeInUnits,
+      operation,
+      date,
+      headers,
+      row,
+      metalRateCache
+    )
 
-    const effectiveUnitPriceEur = operation === 'Compra'
-      ? historicalUnitPriceEur * (grossQuantity / quantity)
-      : historicalUnitPriceEur
+    const conversionTarget = getConversionTargetCurrency(description)
+    if (operation === 'Venta' && conversionTarget && METAL_SYMBOLS.has(conversionTarget)) {
+      const pairedBuyRow = rows.slice(1).find(candidate => {
+        const candidateState = normalizeText(candidate[stateIdx]).toUpperCase()
+        if (candidateState && candidateState !== 'COMPLETADO' && candidateState !== 'COMPLETED') return false
+
+        const candidateCurrency = normalizeText(candidate[currencyIdx]).toUpperCase().replace(/[^A-Z0-9]/g, '')
+        const candidateAmount = parseNumber(candidate[amountIdx])
+        const candidateRawDateKey = normalizeText(candidate[dateIdx])
+        const candidateDate = parseDate(candidateRawDateKey)
+
+        return (
+          candidate !== row &&
+          candidateCurrency === conversionTarget &&
+          (candidateRawDateKey === rawDateKey || candidateDate === date) &&
+          Number.isFinite(candidateAmount) &&
+          candidateAmount > 0
+        )
+      })
+
+      if (pairedBuyRow) {
+        const pairedFeeInUnits = Math.abs(parseNumber(pairedBuyRow[feeIdx]))
+        const pairedGrossQuantity = Math.abs(parseNumber(pairedBuyRow[amountIdx]))
+        const pairedQuantity = Number.isFinite(pairedFeeInUnits)
+          ? pairedGrossQuantity - pairedFeeInUnits
+          : pairedGrossQuantity
+        const pairedValueEur = await getMetalRowValueEur(
+          conversionTarget,
+          pairedQuantity,
+          pairedFeeInUnits,
+          'Compra',
+          date,
+          headers,
+          pairedBuyRow,
+          metalRateCache
+        )
+        if (pairedValueEur && pairedValueEur > 0) valueEur = pairedValueEur
+      }
+    }
+
+    const effectiveUnitPriceEur = valueEur && valueEur > 0
+      ? valueEur / quantity
+      : Number.NaN
+
+    if (!Number.isFinite(effectiveUnitPriceEur) || effectiveUnitPriceEur <= 0) continue
 
     parsed.push({
       user_id: userId,
@@ -700,23 +847,27 @@ function parseFixedRows(rows: string[][], userId: string): ParsedImportTransacti
 }
 
 export async function POST(request: Request) {
+  let auditSupabase: SupabaseServerClient | null = null
+  let importAuditId: string | null = null
+
   try {
     const supabase = await createClient()
+    auditSupabase = supabase
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError(request, 401, 'unauthorized', 'Unauthorized')
     }
 
     const formData = await request.formData()
-    const file = formData.get('file')
+    const file = formData.get('file') as File
 
-    if (!(file instanceof File) || file.size === 0) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
+    if (!file) {
+      return apiError(request, 400, 'bad_request', 'No file uploaded')
     }
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 413 })
+      return apiError(request, 413, 'payload_too_large', 'File size exceeds 10MB limit')
     }
 
     const lowerName = file.name.toLowerCase()
@@ -724,8 +875,10 @@ export async function POST(request: Request) {
     const isExcel = lowerName.endsWith('.xlsx')
 
     if (!isCsv && !isExcel) {
-      return NextResponse.json({ error: 'Invalid file format. CSV or XLSX allowed.' }, { status: 415 })
+      return apiError(request, 415, 'unsupported_media_type', 'Invalid file format. CSV or XLSX allowed.')
     }
+
+    importAuditId = await createImportAudit(supabase, user.id, file)
 
     const arrayBuffer = await file.arrayBuffer()
     const rows = isExcel
@@ -735,52 +888,35 @@ export async function POST(request: Request) {
     const parsedTransactions = await parseRows(rows, user.id)
     const internalCryptoMovements = parseInternalCryptoMovements(rows, user.id)
 
-    const { data: loadedAssets, error: assetsError } = await supabase
+    let { data: activos } = await supabase
       .from('activos')
       .select('id, ticker, tipo, sector, moneda')
       .eq('user_id', user.id)
 
-    if (assetsError) throw assetsError
-    let activos = loadedAssets
-
-    const { data: loadedTransactions, error: transactionsError } = await supabase
+    let { data: existingTransactions } = await supabase
       .from('transacciones')
       .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha')
       .eq('user_id', user.id)
-
-    if (transactionsError) throw transactionsError
-    let existingTransactions = loadedTransactions
-
-    const assetsByTicker = new Map<string, NonNullable<typeof activos>[number]>()
-    for (const asset of activos ?? []) {
-      if (!assetsByTicker.has(asset.ticker)) assetsByTicker.set(asset.ticker, asset)
-    }
-
-    let transactionGroups = buildTransactionGroups(existingTransactions ?? [])
 
     let removedInternalMovements = 0
     if (internalCryptoMovements.length > 0 && activos && existingTransactions) {
       const idsToDelete = new Set<string>()
 
       for (const movement of internalCryptoMovements) {
-        const existingActivo = assetsByTicker.get(movement.ticker)
-          ?? (movement.tipoActivo === 'Crypto'
-            ? assetsByTicker.get(movement.rawTicker)
-            : undefined)
+        const existingActivo = activos.find(a =>
+          a.ticker === movement.ticker ||
+          (movement.tipoActivo === 'Crypto' && a.ticker === movement.rawTicker)
+        )
         if (!existingActivo) continue
 
-        const candidates = getTransactionCandidates(
-          transactionGroups,
-          existingActivo.id,
-          movement.tipo_operacion,
-          movement.fecha,
-        )
-
-        for (const existing of candidates) {
+        for (const existing of existingTransactions) {
+          const isSameActivo = existing.activo_id === existingActivo.id
+          const isSameType = existing.tipo_operacion === movement.tipo_operacion
           const isSameQty = Math.abs(existing.cantidad - movement.cantidad) < 0.00000001
           const isSamePrice = Math.abs(existing.precio_unitario - movement.precio_unitario) < 0.01
+          const isSameDate = existing.fecha === movement.fecha
 
-          if (isSameQty && isSamePrice) {
+          if (isSameActivo && isSameType && isSameQty && isSamePrice && isSameDate) {
             idsToDelete.add(existing.id)
           }
         }
@@ -794,29 +930,40 @@ export async function POST(request: Request) {
           .in('id', ids)
 
         if (deleteError) {
-          return NextResponse.json({
+          await updateImportAudit(supabase, importAuditId, {
+            status: 'failed',
+            parsed_count: parsedTransactions.length,
             error: `No se pudieron limpiar movimientos internos de staking: ${deleteError.message}`,
-          }, { status: 500 })
+          })
+          return apiError(
+            request,
+            500,
+            'database_error',
+            `No se pudieron limpiar movimientos internos de staking: ${deleteError.message}`,
+          )
         }
 
         removedInternalMovements = ids.length
         existingTransactions = existingTransactions.filter(tx => !idsToDelete.has(tx.id))
-        transactionGroups = buildTransactionGroups(existingTransactions)
       }
     }
 
     if (parsedTransactions.length === 0) {
-      const response: RevolutImportSuccess = {
+      await updateImportAudit(supabase, importAuditId, {
+        status: 'completed',
+        removed_internal_movements: removedInternalMovements,
+      })
+      return apiSuccess(request, {
         success: true,
         message: 'No se encontraron operaciones de compra/venta en este archivo.',
+        importId: importAuditId,
         newTransactions: 0,
         updatedTransactions: 0,
         ignoredDuplicates: 0,
         removedInternalMovements,
         imported: [],
         ignored: [],
-      }
-      return NextResponse.json(response)
+      })
     }
 
     let newTxCount = 0
@@ -828,22 +975,17 @@ export async function POST(request: Request) {
 
     for (const tx of parsedTransactions) {
       let activo_id = null
-      const candidateTickers = [tx.ticker]
-      if (tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') {
-        candidateTickers.push(tx.rawTicker)
-      }
-      if (tx.tipoActivo === 'Metal') {
-        candidateTickers.push(...getLegacyMetalTickers(tx.rawTicker))
-      }
-      const existingActivo = candidateTickers
-        .map((ticker) => assetsByTicker.get(ticker))
-        .find((asset) => asset !== undefined)
+      const existingActivo = activos?.find(a =>
+        a.ticker === tx.ticker ||
+        ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && a.ticker === tx.rawTicker) ||
+        (tx.tipoActivo === 'Metal' && getLegacyMetalTickers(tx.rawTicker).includes(a.ticker))
+      )
 
       if (existingActivo) {
         activo_id = existingActivo.id
         const dbTipo = getDatabaseAssetType(tx.tipoActivo)
         if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== dbTipo || existingActivo.sector !== getAssetSector(tx.tipoActivo) || existingActivo.moneda !== tx.moneda)) {
-          const { error: updateAssetError } = await supabase
+          await supabase
             .from('activos')
             .update({
               ticker: tx.ticker,
@@ -855,17 +997,10 @@ export async function POST(request: Request) {
             })
             .eq('id', existingActivo.id)
 
-          if (updateAssetError) {
-            return NextResponse.json({
-              error: `No se pudo actualizar el activo ${tx.ticker}: ${updateAssetError.message}`,
-            }, { status: 500 })
-          }
-
           existingActivo.ticker = tx.ticker
           existingActivo.tipo = dbTipo
           existingActivo.sector = getAssetSector(tx.tipoActivo)
           existingActivo.moneda = tx.moneda
-          assetsByTicker.set(tx.ticker, existingActivo)
         }
       } else {
         const dbTipo = getDatabaseAssetType(tx.tipoActivo)
@@ -885,29 +1020,38 @@ export async function POST(request: Request) {
           .single()
 
         if (createError) {
-          return NextResponse.json({
+          await updateImportAudit(supabase, importAuditId, {
+            status: 'failed',
+            parsed_count: parsedTransactions.length,
+            imported_count: newTxCount,
+            updated_count: updatedTxCount,
+            ignored_count: ignoredCount,
+            removed_internal_movements: removedInternalMovements,
             error: `No se pudo crear el activo ${tx.ticker}: ${createError.message}`,
-          }, { status: 500 })
+          })
+          return apiError(
+            request,
+            500,
+            'database_error',
+            `No se pudo crear el activo ${tx.ticker}: ${createError.message}`,
+          )
         }
 
         if (newActivo) {
           activo_id = newActivo.id
           if (!activos) activos = []
           activos.push(newActivo)
-          assetsByTicker.set(newActivo.ticker, newActivo)
         }
       }
 
       if (!activo_id) continue
 
-      const matchingExisting = getTransactionCandidates(
-          transactionGroups,
-          activo_id,
-          tx.tipo_operacion,
-          tx.fecha,
-        ).find(existing => {
+      const matchingExisting = existingTransactions?.find(existing => {
+        const isSameActivo = existing.activo_id === activo_id
+        const isSameType = existing.tipo_operacion === tx.tipo_operacion
         const isSameQty = Math.abs(existing.cantidad - tx.cantidad) < 0.00000001
-        return isSameQty
+        const isSameDate = existing.fecha === tx.fecha
+        return isSameActivo && isSameType && isSameQty && isSameDate
       })
 
       if (matchingExisting && tx.tipoActivo === 'Metal') {
@@ -926,9 +1070,21 @@ export async function POST(request: Request) {
             .eq('user_id', user.id)
 
           if (updateError) {
-            return NextResponse.json({
+            await updateImportAudit(supabase, importAuditId, {
+              status: 'failed',
+              parsed_count: parsedTransactions.length,
+              imported_count: newTxCount,
+              updated_count: updatedTxCount,
+              ignored_count: ignoredCount,
+              removed_internal_movements: removedInternalMovements,
               error: `No se pudo actualizar el histórico de ${tx.ticker}: ${updateError.message}`,
-            }, { status: 500 })
+            })
+            return apiError(
+              request,
+              500,
+              'database_error',
+              `No se pudo actualizar el histórico de ${tx.ticker}: ${updateError.message}`,
+            )
           }
 
           matchingExisting.precio_unitario = tx.precio_unitario
@@ -943,16 +1099,8 @@ export async function POST(request: Request) {
         ignoredCount++
         ignored.push(tx)
       } else {
-        toInsert.push({
-          user_id: tx.user_id,
-          activo_id,
-          tipo_operacion: tx.tipo_operacion,
-          cantidad: tx.cantidad,
-          precio_unitario: tx.precio_unitario,
-          fecha: tx.fecha,
-          comision: tx.comision,
-          estado: 'Completada',
-        })
+        const { ticker, rawTicker, nombre, tipoActivo, moneda, ...dbTx } = tx
+        toInsert.push({ ...dbTx, activo_id, estado: 'Completada' })
         imported.push(tx)
         newTxCount++
       }
@@ -964,30 +1112,56 @@ export async function POST(request: Request) {
         .insert(toInsert)
 
       if (insertError) {
-        return NextResponse.json({ error: 'Error al insertar transacciones en la base de datos' }, { status: 500 })
+        await updateImportAudit(supabase, importAuditId, {
+          status: 'failed',
+          parsed_count: parsedTransactions.length,
+          imported_count: newTxCount,
+          updated_count: updatedTxCount,
+          ignored_count: ignoredCount,
+          removed_internal_movements: removedInternalMovements,
+          error: insertError.message,
+        })
+        return apiError(request, 500, 'database_error', 'Error al insertar transacciones en la base de datos')
       }
     }
 
     if (parsedTransactions.length > 0 && newTxCount === 0 && ignoredCount === 0) {
-      return NextResponse.json({
-        error: `Se leyeron ${parsedTransactions.length} movimientos, pero no se pudo asociar ninguno a un activo.`,
-      }, { status: 500 })
+      const error = `Se leyeron ${parsedTransactions.length} movimientos, pero no se pudo asociar ninguno a un activo.`
+      await updateImportAudit(supabase, importAuditId, {
+        status: 'failed',
+        parsed_count: parsedTransactions.length,
+        removed_internal_movements: removedInternalMovements,
+        error,
+      })
+      return apiError(request, 500, 'validation_error', error)
     }
 
-    const response: RevolutImportSuccess = {
+    await updateImportAudit(supabase, importAuditId, {
+      status: 'completed',
+      parsed_count: parsedTransactions.length,
+      imported_count: newTxCount,
+      updated_count: updatedTxCount,
+      ignored_count: ignoredCount,
+      removed_internal_movements: removedInternalMovements,
+    })
+
+    return apiSuccess(request, {
       success: true,
+      importId: importAuditId,
       newTransactions: newTxCount,
       updatedTransactions: updatedTxCount,
       ignoredDuplicates: ignoredCount,
       removedInternalMovements,
       imported,
       ignored,
-    }
-    return NextResponse.json(response)
+    })
 
   } catch (error: unknown) {
-    serverLogger.error('revolut.import.failed', error)
-    const message = getErrorMessage(error, 'Error inesperado al importar el archivo')
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('Revolut Import Error:', error)
+    await updateImportAudit(auditSupabase, importAuditId, {
+      status: 'failed',
+      error: error instanceof Error ? error.message : 'Unexpected import error',
+    })
+    return apiError(request, 500, 'internal_error', error instanceof Error ? error.message : 'Unexpected import error')
   }
 }

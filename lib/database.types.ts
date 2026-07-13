@@ -336,6 +336,107 @@ export interface Database {
           }
         ]
       }
+      notification_preferences: {
+        Row: {
+          user_id: string
+          push_notifs: boolean
+          email_notifs: boolean
+          price_alerts: boolean
+          weekly_report: boolean
+          dividend_alerts: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          push_notifs?: boolean
+          email_notifs?: boolean
+          price_alerts?: boolean
+          weekly_report?: boolean
+          dividend_alerts?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          push_notifs?: boolean
+          email_notifs?: boolean
+          price_alerts?: boolean
+          weekly_report?: boolean
+          dividend_alerts?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      imports: {
+        Row: {
+          id: string
+          user_id: string
+          source: string
+          filename: string
+          file_size: number
+          file_type: string | null
+          status: 'processing' | 'completed' | 'failed'
+          parsed_count: number
+          imported_count: number
+          updated_count: number
+          ignored_count: number
+          removed_internal_movements: number
+          error: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          source: string
+          filename: string
+          file_size: number
+          file_type?: string | null
+          status: 'processing' | 'completed' | 'failed'
+          parsed_count?: number
+          imported_count?: number
+          updated_count?: number
+          ignored_count?: number
+          removed_internal_movements?: number
+          error?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          source?: string
+          filename?: string
+          file_size?: number
+          file_type?: string | null
+          status?: 'processing' | 'completed' | 'failed'
+          parsed_count?: number
+          imported_count?: number
+          updated_count?: number
+          ignored_count?: number
+          removed_internal_movements?: number
+          error?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imports_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       budget_settings: {
         Row: {
           id: string

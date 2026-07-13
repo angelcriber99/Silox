@@ -1,22 +1,35 @@
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
-import { authorizeCronRequest } from '@/lib/server/cron-auth'
-import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { fetchMarketPrices } from '@/lib/actions/market'
+import { apiError, apiSuccess } from '@/lib/api/responses'
 
 export const revalidate = 0
 
 export async function GET(request: Request) {
   try {
-    const authorization = authorizeCronRequest(request)
-    if (!authorization.authorized) {
-      return NextResponse.json(
-        { error: authorization.error },
-        { status: authorization.status },
-      )
+    const authHeader = request.headers.get('authorization')
+    if (!process.env.CRON_SECRET) {
+      return apiError(request, 500, 'configuration_error', 'CRON_SECRET not configured')
     }
 
-    const supabaseAdmin = getSupabaseAdmin()
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return apiError(request, 401, 'unauthorized', 'Unauthorized')
+    }
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      return apiError(request, 500, 'configuration_error', 'Missing NEXT_PUBLIC_SUPABASE_URL')
+    }
+
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceKey) {
+      return apiError(request, 500, 'configuration_error', 'Missing SUPABASE_SERVICE_ROLE_KEY')
+    }
+
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      serviceKey,
+      { auth: { persistSession: false } }
+    )
 
     const { data: users, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
     
@@ -24,30 +37,51 @@ export async function GET(request: Request) {
       throw new Error(`Failed to fetch users: ${usersError?.message}`)
     }
 
-    const { data: allPositions, error: positionsError } = await supabaseAdmin
-      .from('posiciones')
-      .select('*')
-
-    if (positionsError) throw positionsError
-
-    const tickers = Array.from(new Set(
-      (allPositions ?? [])
-        .filter((position) => position.unidades > 0)
-        .map((position) => position.ticker),
-    ))
-    const pricePayload = tickers.length > 0
-      ? await fetchMarketPrices(tickers, true)
-      : { prices: {}, fxRates: {} }
-
     let snapshotsSaved = 0
 
     for (const user of users.users) {
-      const positions = (allPositions ?? []).filter(
-        (position) => position.user_id === user.id,
-      )
-      if (positions.length === 0) continue
+      const { data: positions } = await supabaseAdmin
+        .from('posiciones')
+        .select('*')
+        .eq('user_id', user.id)
 
-      const enriched = enrichPositions(positions, pricePayload)
+      if (!positions || positions.length === 0) continue
+
+      const { data: pendingTxs } = await supabaseAdmin
+        .from('transacciones')
+        .select('*, activo:posiciones(*)')
+        .eq('user_id', user.id)
+        .eq('estado', 'Pendiente')
+
+      const adjustedPositions = positions.map(pos => {
+        const posPending = pendingTxs?.filter(tx => tx.activo?.ticker === pos.ticker) || []
+        let newUnidades = pos.unidades
+        let newCoste = pos.coste_total
+        
+        for (const tx of posPending) {
+          if (tx.tipo_operacion === 'Compra') {
+            newUnidades -= tx.cantidad
+            newCoste -= (tx.cantidad * tx.precio_unitario)
+          } else if (tx.tipo_operacion === 'Venta') {
+            newUnidades += tx.cantidad
+            newCoste += (tx.cantidad * tx.precio_unitario)
+          }
+        }
+        return { ...pos, unidades: newUnidades, coste_total: newCoste }
+      })
+
+      const tickers = adjustedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker)
+      if (tickers.length === 0) continue
+
+      let pricePayload
+      try {
+        pricePayload = await fetchMarketPrices(tickers, true)
+      } catch (e) {
+        console.error(`Error fetching prices for user ${user.id}:`, e)
+        continue
+      }
+
+      const enriched = enrichPositions(adjustedPositions, pricePayload)
       const totals = computePortfolioTotals(enriched)
 
       if (totals.totalValue > 0) {
@@ -81,10 +115,9 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, snapshotsSaved })
+    return apiSuccess(request, { success: true, snapshotsSaved })
   } catch (error: unknown) {
     console.error('Cron Snapshot Error:', error)
-    const message = error instanceof Error ? error.message : 'Unknown snapshot error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(request, 500, 'internal_error', error instanceof Error ? error.message : 'Cron Snapshot Error')
   }
 }

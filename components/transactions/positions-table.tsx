@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect, useRef, type CSSProperties } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,9 +13,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell, Wallet, PiggyBank } from "lucide-react"
+import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell, Wallet, PiggyBank } from "lucide-react"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatUnits, formatPnl } from "@/lib/utils/formatters"
+import { Sparkline } from "@/components/asset/sparkline"
 import { AddAssetModal } from "@/components/asset/add-asset-modal"
 import { HelpGuideModal } from "@/components/dashboard/help-guide-modal"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
@@ -25,6 +26,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { WaveTrackerModal, parseAssetNotes } from "@/components/asset/wave-tracker-modal"
 import { Waves } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface PositionsTableProps {
   positions: EnrichedPosition[]
@@ -33,13 +35,13 @@ interface PositionsTableProps {
   onEditAsset: (position: EnrichedPosition) => void
 }
 
-const TIPO_BADGE_STYLES: Record<string, CSSProperties> = {
-  ETF: { background: "rgba(10,132,255,0.12)", color: "#0A84FF" },
-  "Fondo Indexado": { background: "rgba(191,90,242,0.12)", color: "#BF5AF2" },
-  "Fondo Monetario": { background: "rgba(50,173,230,0.12)", color: "#32ADE6" },
-  Acción: { background: "rgba(255,214,10,0.12)", color: "#FFD60A" },
-  Crypto: { background: "rgba(255,159,10,0.12)", color: "#FF9F0A" },
-  Metal: { background: "rgba(152,152,157,0.12)", color: "#98989D" },
+const TIPO_BADGE_STYLES: Record<string, { bg: string; color: string }> = {
+  ETF: { bg: "rgba(10,132,255,0.12)", color: "#0A84FF" },
+  "Fondo Indexado": { bg: "rgba(191,90,242,0.12)", color: "#BF5AF2" },
+  "Fondo Monetario": { bg: "rgba(50,173,230,0.12)", color: "#32ADE6" },
+  Acción: { bg: "rgba(255,214,10,0.12)", color: "#FFD60A" },
+  Crypto: { bg: "rgba(255,159,10,0.12)", color: "#FF9F0A" },
+  Metal: { bg: "rgba(152,152,157,0.12)", color: "#98989D" },
 }
 
 const FILTER_OPTIONS = [
@@ -52,61 +54,20 @@ const FILTER_OPTIONS = [
   "Metal",
 ] as const
 
-const TYPE_TRANSLATION_KEYS = {
+const translateType = (type: string, t: (key: string) => string) => {
+  const map: Record<string, string> = {
     "ETF": "type_etf",
     "Fondo Indexado": "type_index_fund",
     "Fondo Monetario": "type_money_market",
     "Acción": "type_stock",
     "Crypto": "type_crypto",
     "Metal": "type_metal",
-} as const
-
-type AssetTypeTranslationKey = typeof TYPE_TRANSLATION_KEYS[keyof typeof TYPE_TRANSLATION_KEYS]
-
-function translateType(type: string, translate: (key: AssetTypeTranslationKey) => string): string {
-  const key = TYPE_TRANSLATION_KEYS[type as keyof typeof TYPE_TRANSLATION_KEYS]
-  return key ? translate(key) : type
+  }
+  return map[type] ? t(map[type]) : type
 }
 
 type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent" | "change_percent_24h"
 type SortDir = "asc" | "desc"
-
-interface SortableHeaderProps {
-  label: string
-  sortKeyName: SortKey
-  activeSortKey: SortKey
-  sortDir: SortDir
-  onSort: (key: SortKey) => void
-  className?: string
-}
-
-function SortableHeader({
-  label,
-  sortKeyName,
-  activeSortKey,
-  sortDir,
-  onSort,
-  className = "",
-}: SortableHeaderProps) {
-  const isActive = activeSortKey === sortKeyName
-  return (
-    <TableHead className={`text-muted-foreground/80 ${className}`}>
-      <button
-        type="button"
-        className="inline-flex items-center gap-1 transition-colors hover:text-foreground/80"
-        onClick={() => onSort(sortKeyName)}
-        aria-label={`${label}: ordenar ${isActive && sortDir === "asc" ? "descendente" : "ascendente"}`}
-      >
-        {label}
-        <ArrowUpDown
-          aria-hidden="true"
-          className="h-3 w-3"
-          style={{ color: isActive ? "var(--primary)" : undefined, opacity: isActive ? 1 : 0.4 }}
-        />
-      </button>
-    </TableHead>
-  )
-}
 
 function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
   const { hideBalances } = usePreferences()
@@ -217,6 +178,7 @@ export function PositionsTable({
   onAddTransaction,
   onEditAsset,
 }: PositionsTableProps) {
+  const queryClient = useQueryClient()
   const { hideBalances, tableDensity, showPnlPercentOnly } = usePreferences()
   const t = useTranslations('Dashboard')
   
@@ -267,12 +229,35 @@ export function PositionsTable({
       const cmp = typeof av === "string" ? av.localeCompare(bv as string) : (av as number) - (bv as number)
       return sortDir === "asc" ? cmp : -cmp
     })
-  }, [positions, filter, searchQuery, sortKey, sortDir, t])
+  }, [positions, filter, searchQuery, sortKey, sortDir])
 
   const typesWithData = useMemo(() => {
     const types = new Set(positions.filter(p => p.tipo !== 'Fondo Monetario').map((p) => p.tipo))
     return types
   }, [positions])
+
+  const sortableHeader = ({
+    label,
+    sortKeyName,
+    className = "",
+  }: {
+    label: string
+    sortKeyName: SortKey
+    className?: string
+  }) => (
+    <TableHead
+      className={`text-muted-foreground/80 cursor-pointer select-none hover:text-foreground/80 transition-colors duration-200 ${className}`}
+      onClick={() => toggleSort(sortKeyName)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        <ArrowUpDown
+          className="h-3 w-3"
+          style={{ color: sortKey === sortKeyName ? "var(--primary)" : undefined, opacity: sortKey === sortKeyName ? 1 : 0.4 }}
+        />
+      </span>
+    </TableHead>
+  )
 
   const liquidezAmount = useMemo(() => {
     return positions
@@ -393,16 +378,16 @@ export function PositionsTable({
           <Table className="w-full">
             <TableHeader className="bg-muted/40">
               <TableRow className="border-border/50 hover:bg-transparent">
-                <SortableHeader label={t('symbol')} sortKeyName="ticker" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                {sortableHeader({ label: t('symbol'), sortKeyName: "ticker" })}
                 <TableHead className="text-muted-foreground/80 hidden md:table-cell">{t('name')}</TableHead>
-                <SortableHeader label={t('dist_type')} sortKeyName="tipo" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-                <SortableHeader label={t('units')} sortKeyName="unidades" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="text-right" />
+                {sortableHeader({ label: t('dist_type'), sortKeyName: "tipo" })}
+                {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right" })}
                 <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">{t('purchase_price')}</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">{t('current_price')}</TableHead>
-                <SortableHeader label={t('value')} sortKeyName="valor_actual" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="text-right whitespace-nowrap min-w-[120px]" />
-                <SortableHeader label={t('today')} sortKeyName="change_percent_24h" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="text-right hidden sm:table-cell" />
-                {!showPnlPercentOnly && <SortableHeader label="P&L" sortKeyName="pnl" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="text-right" />}
-                <SortableHeader label="P&L %" sortKeyName="pnl_percent" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}`} />
+                {sortableHeader({ label: t('value'), sortKeyName: "valor_actual", className: "text-right whitespace-nowrap min-w-[120px]" })}
+                {sortableHeader({ label: t('today'), sortKeyName: "change_percent_24h", className: "text-right hidden sm:table-cell" })}
+                {!showPnlPercentOnly && sortableHeader({ label: "P&L", sortKeyName: "pnl", className: "text-right" })}
+                {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}` })}
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
               </TableRow>
             </TableHeader>
@@ -438,6 +423,11 @@ export function PositionsTable({
                 </TableRow>
               ) : (
                 filteredAndSorted.map((p) => {
+                  const hasHistory = p.sparkline && p.sparkline.length > 1;
+                  const sparklineColor = hasHistory 
+                    ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
+                    : "#71717a";
+
                   const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
                     ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
                     : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
@@ -614,6 +604,11 @@ export function PositionsTable({
             </div>
           ) : (
             filteredAndSorted.map((p) => {
+               const hasHistory = p.sparkline && p.sparkline.length > 1;
+               const sparklineColor = hasHistory 
+                 ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
+                 : "#71717a";
+
                const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
                  ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
                  : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
@@ -634,8 +629,9 @@ export function PositionsTable({
                      </Link>
                      <Badge
                         variant="outline"
-                        className="h-5 border-none px-2 py-0 text-[10px]"
-                        style={TIPO_BADGE_STYLES[p.tipo] || { background: "rgba(161,161,170,0.1)", color: "#a1a1aa" }}
+                        className={`text-[10px] px-2 py-0 h-5 ${
+                          TIPO_BADGE_STYLES[p.tipo] ?? "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
+                        }`}
                       >
                         {translateType(p.tipo, t)}
                       </Badge>
@@ -740,9 +736,9 @@ export function PositionsTable({
       <AddAssetModal open={addAssetOpen} onOpenChange={setAddAssetOpen} />
       <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
       <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
-      {waveModalOpen && (
-        <WaveTrackerModal open onOpenChange={setWaveModalOpen} position={waveAsset} />
-      )}
+      <WaveTrackerModal open={waveModalOpen} onOpenChange={setWaveModalOpen} position={waveAsset} onSuccess={() => {
+        queryClient.invalidateQueries({ queryKey: ["positions"] })
+      }} />
     </Card>
   )
 }

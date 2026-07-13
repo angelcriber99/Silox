@@ -1,29 +1,56 @@
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import YahooFinance from 'yahoo-finance2'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
-import { authorizeCronRequest } from '@/lib/server/cron-auth'
-import { getYahooFinance } from '@/lib/server/yahoo-finance'
-import { mapSettledWithConcurrency } from '@/lib/utils/async'
-import { getSupabaseAdmin } from '@/lib/supabase/admin'
-import { serverLogger } from '@/lib/server/logger'
-import { getErrorMessage } from '@/lib/utils/errors'
+import { apiError, apiSuccess } from '@/lib/api/responses'
+
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
 export const dynamic = 'force-dynamic'
 
+interface PriceAlertRow {
+  id: string
+  user_id: string
+  ticker: string
+  target_price: number
+  condition: 'above' | 'below'
+  triggered: boolean
+}
+
+interface TriggeredAlert {
+  alerta: PriceAlertRow
+  currentPrice: number
+  reachedPrice: number
+  currency: string
+}
+
+interface NotificationPreferenceRow {
+  user_id: string
+  price_alerts: boolean
+}
+
 export async function GET(request: Request) {
   try {
-    const authorization = authorizeCronRequest(request)
-    if (!authorization.authorized) {
-      return NextResponse.json(
-        { error: authorization.error },
-        { status: authorization.status },
-      )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return apiError(request, 500, 'configuration_error', 'Supabase credentials not configured')
     }
 
-    const yahooFinance = getYahooFinance()
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const supabase = getSupabaseAdmin()
+    // 1. Verificar seguridad del cron (Vercel Cron Secret u otra clave)
+    const authHeader = request.headers.get('authorization')
+    
+    if (!process.env.CRON_SECRET) {
+      return apiError(request, 500, 'configuration_error', 'CRON_SECRET not configured')
+    }
 
-    // Obtener las alertas activas (no disparadas)
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return apiError(request, 401, 'unauthorized', 'Unauthorized')
+    }
+
+    // 2. Obtener las alertas activas (no disparadas)
     const { data: alertas, error: alertsError } = await supabase
       .from('alertas')
       .select('*')
@@ -31,39 +58,38 @@ export async function GET(request: Request) {
 
     if (alertsError) throw alertsError
     if (!alertas || alertas.length === 0) {
-      return NextResponse.json({ message: 'No active alerts to check' })
+      return apiSuccess(request, { message: 'No active alerts to check', processed: 0, triggered: 0, notified: 0 })
     }
 
+    const typedAlerts = alertas as PriceAlertRow[]
+
     // 3. Extraer todos los tickers únicos necesarios
-    const uniqueTickers = Array.from(new Set(alertas.map(a => a.ticker)))
+    const uniqueTickers = Array.from(new Set(typedAlerts.map(a => a.ticker)))
 
     // 4. Obtener precios de Yahoo Finance (en paralelo)
     const pricesMap: Record<string, { price: number; high: number; low: number; currency: string }> = {}
-    const quoteResults = await mapSettledWithConcurrency(
-      uniqueTickers,
-      8,
-      async (ticker) => ({ ticker, quote: await yahooFinance.quote(ticker) }),
+    await Promise.allSettled(
+      uniqueTickers.map(async (ticker) => {
+        try {
+          const quote = await yahooFinance.quote(ticker)
+          if (quote.regularMarketPrice) {
+            pricesMap[ticker.toUpperCase()] = {
+              price: quote.regularMarketPrice,
+              high: quote.regularMarketDayHigh || quote.regularMarketPrice,
+              low: quote.regularMarketDayLow || quote.regularMarketPrice,
+              currency: normalizeYahooCurrency(quote.currency || 'USD')
+            }
+          }
+        } catch (e) {
+          console.error(`Failed to fetch price for ${ticker}`, e)
+        }
+      })
     )
 
-    quoteResults.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        serverLogger.warn('alerts.quote.failed', { ticker: uniqueTickers[index] }, result.reason)
-        return
-      }
-      const { ticker, quote } = result.value
-      if (quote.regularMarketPrice == null) return
-      pricesMap[ticker.toUpperCase()] = {
-        price: quote.regularMarketPrice,
-        high: quote.regularMarketDayHigh ?? quote.regularMarketPrice,
-        low: quote.regularMarketDayLow ?? quote.regularMarketPrice,
-        currency: normalizeYahooCurrency(quote.currency || 'USD'),
-      }
-    })
-
     // 5. Comprobar alertas
-    const triggeredAlerts = []
+    const triggeredAlerts: TriggeredAlert[] = []
     
-    for (const alerta of alertas) {
+    for (const alerta of typedAlerts) {
       const current = pricesMap[alerta.ticker.toUpperCase()]
       if (!current) continue
 
@@ -89,18 +115,40 @@ export async function GET(request: Request) {
     }
 
     if (triggeredAlerts.length === 0) {
-      return NextResponse.json({ message: 'No alerts triggered' })
+      return apiSuccess(request, { message: 'No alerts triggered', processed: typedAlerts.length, triggered: 0, notified: 0 })
     }
 
-    // 6. Enviar mensajes por Telegram y actualizar Supabase
+    const userIds = Array.from(new Set(triggeredAlerts.map((trigger) => trigger.alerta.user_id)))
+    const notificationPreferenceByUser = new Map<string, boolean>()
+    const { data: notificationPreferences, error: notificationError } = await supabase
+      .from('notification_preferences')
+      .select('user_id, price_alerts')
+      .in('user_id', userIds)
+
+    if (notificationError && !['42P01', 'PGRST205', 'PGRST116'].includes(notificationError.code)) {
+      throw notificationError
+    }
+
+    const typedNotificationPreferences = (notificationPreferences ?? []) as NotificationPreferenceRow[]
+    typedNotificationPreferences.forEach((preference) => {
+      notificationPreferenceByUser.set(preference.user_id, preference.price_alerts)
+    })
+
+    // 6. Marcar alertas cumplidas y enviar mensajes por Telegram si procede.
     const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
     const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
+    let notificationsSent = 0
 
-    let notificationsFailed = 0
     for (const trigger of triggeredAlerts) {
-      let notificationDelivered = true
-      // Enviar Telegram
-      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      const { error: updateError } = await supabase
+        .from('alertas')
+        .update({ triggered: true })
+        .eq('id', trigger.alerta.id)
+
+      if (updateError) throw updateError
+
+      const shouldNotify = notificationPreferenceByUser.get(trigger.alerta.user_id) ?? true
+      if (shouldNotify && TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
         const accion = trigger.alerta.condition === 'above' ? '📈 SUPERADO' : '📉 CAÍDO POR DEBAJO DE'
         const emoji = trigger.alerta.condition === 'above' ? '🚀' : '🔻'
         const targetFormateado = new Intl.NumberFormat('es-ES', { style: 'currency', currency: trigger.currency }).format(trigger.alerta.target_price)
@@ -117,7 +165,7 @@ El activo *${trigger.alerta.ticker}* ha ${accion} tu objetivo.
 ${trigger.currentPrice !== trigger.reachedPrice ? `⚡ *¡OJO!* Tocó los ${reachedFormateado} hoy, pero ahora ha rebotado a ${currentFormateado}.` : ''}
 `
         try {
-          const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -126,32 +174,22 @@ ${trigger.currentPrice !== trigger.reachedPrice ? `⚡ *¡OJO!* Tocó los ${reac
               parse_mode: 'Markdown'
             })
           })
-          if (!response.ok) throw new Error(`Telegram returned ${response.status}`)
-        } catch (error) {
-          notificationDelivered = false
-          notificationsFailed += 1
-          serverLogger.warn('alerts.telegram.failed', { alertId: trigger.alerta.id }, error)
+          notificationsSent++
+        } catch (e) {
+          console.error('Error sending Telegram message', e)
         }
       }
-
-      if (!notificationDelivered) continue
-
-      const { error: deleteError } = await supabase
-        .from('alertas')
-        .delete()
-        .eq('id', trigger.alerta.id)
-
-      if (deleteError) throw deleteError
     }
 
-    return NextResponse.json({ 
-      message: `Processed ${alertas.length} alerts. Triggered ${triggeredAlerts.length}.`,
-      notificationsFailed,
+    return apiSuccess(request, {
+      message: `Processed ${typedAlerts.length} alerts. Triggered ${triggeredAlerts.length}.`,
+      processed: typedAlerts.length,
+      triggered: triggeredAlerts.length,
+      notified: notificationsSent,
     })
 
   } catch (error: unknown) {
-    serverLogger.error('alerts.cron.failed', error)
-    const message = getErrorMessage(error, 'Unknown alert cron error')
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('Cron job error:', error)
+    return apiError(request, 500, 'internal_error', error instanceof Error ? error.message : 'Cron job error')
   }
 }

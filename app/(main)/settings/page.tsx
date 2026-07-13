@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useSyncExternalStore, type ReactNode } from "react"
+import { useState, useEffect, useSyncExternalStore, type ReactNode } from "react"
 import { usePreferences, type Language } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
@@ -24,6 +24,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
+import { ImportHistory } from "@/components/transactions/import-history"
+import { ExportTransactionsCsvButton } from "@/components/transactions/export-transactions-csv-button"
+import { useNotificationPreferences } from "@/lib/hooks/use-notification-preferences"
+import type { NotificationPreferences } from "@/lib/actions/notification-preferences"
+import { SystemHealthPanel } from "@/components/settings/system-health-panel"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -112,11 +117,15 @@ export default function SettingsPage() {
   const { 
     language, setLanguage,
     amoled, setAmoled,
+    zenMode, setZenMode,
     accentColor, setAccentColor,
+    biometrics, setBiometrics,
     twoFactor, setTwoFactor,
     tableDensity, setTableDensity,
+    showPnlPercentOnly, setShowPnlPercentOnly,
     hideBalances, setHideBalances,
     pushNotifs, setPushNotifs,
+    emailNotifs, setEmailNotifs,
     priceAlerts, setPriceAlerts,
     weeklyReport, setWeeklyReport,
     dividendAlerts, setDividendAlerts
@@ -125,10 +134,7 @@ export default function SettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [deletePending, setDeletePending] = useState(false)
-
-
-  if (!mounted) return null
-
+  const { preferences: remoteNotifications, updatePreference, isSaving: notificationSaving } = useNotificationPreferences()
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -169,6 +175,40 @@ export default function SettingsPage() {
       toast.error(error instanceof Error ? error.message : "No se pudo borrar la cuenta")
     } finally {
       setDeletePending(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!remoteNotifications) return
+    setPushNotifs(remoteNotifications.push_notifs)
+    setEmailNotifs(remoteNotifications.email_notifs)
+    setPriceAlerts(remoteNotifications.price_alerts)
+    setWeeklyReport(remoteNotifications.weekly_report)
+    setDividendAlerts(remoteNotifications.dividend_alerts)
+  }, [
+    remoteNotifications,
+    setPushNotifs,
+    setEmailNotifs,
+    setPriceAlerts,
+    setWeeklyReport,
+    setDividendAlerts,
+  ])
+
+  if (!mounted) return null
+
+  const persistNotificationPreference = async <K extends keyof NotificationPreferences>(
+    key: K,
+    currentValue: boolean,
+    setLocal: (value: boolean) => void,
+  ) => {
+    const nextValue = !currentValue
+    setLocal(nextValue)
+    try {
+      await updatePreference(key, nextValue as NotificationPreferences[K])
+      toast.success("Preferencia actualizada")
+    } catch (error: unknown) {
+      setLocal(currentValue)
+      toast.error(error instanceof Error ? error.message : "No se pudo guardar la preferencia")
     }
   }
 
@@ -528,23 +568,31 @@ export default function SettingsPage() {
                   <SettingRow 
                     icon={Bell} title="Notificaciones Push" desc="Recibe alertas directamente en tu dispositivo."
                     iconColor="text-rose-500"
-                    action={<CustomSwitch checked={pushNotifs} onChange={() => { setPushNotifs(!pushNotifs); toast.success("Preferencia actualizada") }} />} 
+                    action={<CustomSwitch checked={pushNotifs} onChange={() => persistNotificationPreference("push_notifs", pushNotifs, setPushNotifs)} />}
+                  />
+                  <SettingRow
+                    icon={Download} title="Notificaciones Email" desc="Recibe avisos importantes también por correo."
+                    iconColor="text-sky-500"
+                    action={<CustomSwitch checked={emailNotifs} onChange={() => persistNotificationPreference("email_notifs", emailNotifs, setEmailNotifs)} />}
                   />
                   <SettingRow 
                     icon={Zap} title="Alertas de Precio" desc="Avisos cuando un activo sube o baja drásticamente."
                     iconColor="text-amber-500"
-                    action={<CustomSwitch checked={priceAlerts} onChange={() => { setPriceAlerts(!priceAlerts); toast.success("Preferencia actualizada") }} />} 
+                    action={<CustomSwitch checked={priceAlerts} onChange={() => persistNotificationPreference("price_alerts", priceAlerts, setPriceAlerts)} />}
                   />
                   <SettingRow 
                     icon={Download} title="Cobro de Dividendos" desc="Notificar cuando se reciba un dividendo de una empresa."
                     iconColor="text-emerald-500"
-                    action={<CustomSwitch checked={dividendAlerts} onChange={() => { setDividendAlerts(!dividendAlerts); toast.success("Preferencia actualizada") }} />} 
+                    action={<CustomSwitch checked={dividendAlerts} onChange={() => persistNotificationPreference("dividend_alerts", dividendAlerts, setDividendAlerts)} />}
                   />
                   <SettingRow 
                     icon={LogOut} title="Resumen Semanal" desc="Email cada domingo con el estado de tu cartera."
                     iconColor="text-blue-500"
-                    action={<CustomSwitch checked={weeklyReport} onChange={() => { setWeeklyReport(!weeklyReport); toast.success("Preferencia actualizada") }} />} 
+                    action={<CustomSwitch checked={weeklyReport} onChange={() => persistNotificationPreference("weekly_report", weeklyReport, setWeeklyReport)} />}
                   />
+                  {notificationSaving && (
+                    <p className="px-2 text-xs text-muted-foreground">Guardando preferencias...</p>
+                  )}
                 </div>
               </div>
             )}
@@ -558,19 +606,19 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* MyInvestor (Connected) */}
-                  <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-emerald-500/30 relative overflow-hidden group shadow-sm">
+                  {/* MyInvestor */}
+                  <div className="p-5 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 relative overflow-hidden group shadow-sm">
                     <div className="absolute top-0 right-0 p-3">
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Sincronizado
+                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                        Próximamente
                       </span>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-border/20">
                       <span className="text-xl font-bold text-slate-800">MYI</span>
                     </div>
                     <h3 className="text-lg font-bold">MyInvestor</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincronización diaria de fondos indexados y efectivo.</p>
-                    <button className="w-full py-2.5 rounded-xl border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importación guiada de fondos indexados y efectivo pendiente de implementar.</p>
+                    <button disabled className="w-full py-2.5 rounded-xl border border-border/50 bg-muted/30 text-sm font-semibold text-muted-foreground opacity-70 cursor-not-allowed">No disponible</button>
                   </div>
 
                   {/* Revolut */}
@@ -579,9 +627,9 @@ export default function SettingsPage() {
                       <span className="text-xl font-bold text-white">R</span>
                     </div>
                     <h3 className="text-lg font-bold">Revolut</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa tu extracto PDF para sincronizar operaciones.</p>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa extractos CSV/XLSX con auditoría de operaciones nuevas, duplicadas y actualizadas.</p>
                     <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
-                      Subir Extracto (CSV)
+                      Subir Extracto
                     </RevolutSync>
                   </div>
 
@@ -591,10 +639,12 @@ export default function SettingsPage() {
                       <span className="text-xl font-bold text-white">DE</span>
                     </div>
                     <h3 className="text-lg font-bold">DeGiro</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincroniza tus ETFs y acciones europeas.</p>
-                    <button className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">Conectar</button>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Conector planificado para ETFs y acciones europeas.</p>
+                    <button disabled className="w-full py-2.5 rounded-xl bg-muted/40 text-muted-foreground text-sm font-semibold opacity-70 cursor-not-allowed">Próximamente</button>
                   </div>
                 </div>
+
+                <ImportHistory />
               </div>
             )}
 
@@ -612,10 +662,10 @@ export default function SettingsPage() {
                       <h3 className="font-bold text-foreground">Exportar Historial</h3>
                       <p className="text-sm text-muted-foreground mt-1">Descarga todas tus transacciones en formato CSV.</p>
                     </div>
-                    <button onClick={() => toast.success("Exportación iniciada")} className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors">
-                      <Download className="w-4 h-4" /> CSV Export
-                    </button>
+                    <ExportTransactionsCsvButton className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70" />
                   </div>
+
+                  <SystemHealthPanel />
                 </div>
 
                 <div className="pt-8">
