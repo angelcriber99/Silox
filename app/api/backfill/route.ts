@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import YahooFinance from 'yahoo-finance2'
-
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 export async function GET() {
   const supabase = await createClient()
@@ -13,6 +11,7 @@ export async function GET() {
   }
 
   try {
+    const yahooFinance = getYahooFinance()
     // 1. Obtener transacciones y activos
     const { data: transacciones } = await supabase
       .from('transacciones')

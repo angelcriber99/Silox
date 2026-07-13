@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
-import YahooFinance from 'yahoo-finance2'
 import { z } from 'zod'
-
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+import { requireApiUser } from '@/lib/server/api-auth'
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 const SearchSchema = z.object({
-  query: z.string().min(1).max(100)
+  query: z.string().trim().min(1).max(100)
 })
 
 export async function POST(request: Request) {
+  const auth = await requireApiUser()
+  if (!auth.ok) return auth.response
+
   try {
+    const yahooFinance = getYahooFinance()
     const body = await request.json()
     
     const parsed = SearchSchema.safeParse(body)

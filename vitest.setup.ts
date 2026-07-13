@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
+vi.mock('server-only', () => ({}))
+
 // Mock matchMedia for recharts or responsive hooks
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

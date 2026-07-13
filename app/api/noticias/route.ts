@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server'
-import YahooFinance from 'yahoo-finance2'
-import { GoogleGenerativeAI } from "@google/generative-ai"
 import { z } from 'zod'
-
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
+import { requireApiUser } from '@/lib/server/api-auth'
+import { getGeminiClient } from '@/lib/server/gemini'
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 const NoticiasSchema = z.object({
   items: z.array(z.object({
-    query: z.string().min(1).max(50),
-    displayName: z.string().min(1).max(50)
+    query: z.string().trim().min(1).max(50),
+    displayName: z.string().trim().min(1).max(50)
   })).min(1).max(20),
 })
 
 export async function POST(request: Request) {
+  const auth = await requireApiUser()
+  if (!auth.ok) return auth.response
+
   try {
+    const yahooFinance = getYahooFinance()
     const body = await request.json()
     
     const parsed = NoticiasSchema.safeParse(body)
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
     // Traducir títulos con Gemini de forma masiva
     if (noticias.length > 0 && process.env.GEMINI_API_KEY) {
       try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+        const model = getGeminiClient().getGenerativeModel({ model: "gemini-2.5-flash" })
         const titlesToTranslate = noticias.map((n, i) => `${i}: ${n.title}`).join('\n')
         const prompt = `Traduce los siguientes titulares de noticias financieras del inglés al español neutro. Mantén el tono periodístico.
 Devuelve ÚNICAMENTE los títulos traducidos, línea por línea, respetando el número inicial y los dos puntos. No añadas nada más.

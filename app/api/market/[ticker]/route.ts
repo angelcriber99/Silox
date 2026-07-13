@@ -1,24 +1,37 @@
 import { NextResponse } from 'next/server'
-import YahooFinance from 'yahoo-finance2'
+import { z } from 'zod'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
-
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+import { requireApiUser } from '@/lib/server/api-auth'
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 export const dynamic = 'force-dynamic'
+
+const MarketRequestSchema = z.object({
+  ticker: z.string().trim().min(1).max(40),
+  range: z.enum(['1d', '5d', '1mo', '6mo', 'ytd', '1y', '5y', 'max']),
+  type: z.string().trim().max(30),
+})
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ ticker: string }> }
 ) {
-  try {
-    const { ticker } = await params
-    if (!ticker) {
-      return NextResponse.json({ error: 'Ticker is required' }, { status: 400 })
-    }
+  const auth = await requireApiUser()
+  if (!auth.ok) return auth.response
 
+  try {
+    const yahooFinance = getYahooFinance()
+    const routeParams = await params
     const { searchParams } = new URL(request.url)
-    const range = searchParams.get('range') || '1mo'
-    const type = searchParams.get('type') || ''
+    const parsed = MarketRequestSchema.safeParse({
+      ticker: routeParams.ticker,
+      range: searchParams.get('range') || '1mo',
+      type: searchParams.get('type') || '',
+    })
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Parámetros de mercado inválidos' }, { status: 400 })
+    }
+    const { ticker, range, type } = parsed.data
 
     const [quoteResult, chartResult] = await Promise.allSettled([
       yahooFinance.quote(ticker),

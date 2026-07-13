@@ -2,7 +2,6 @@
 
 import { unstable_cache } from 'next/cache'
 
-import YahooFinance from 'yahoo-finance2'
 import {
   convertSeriesToEur,
   convertToEur,
@@ -15,16 +14,7 @@ import {
   isQuoteFromCurrentMarketDate,
   type MarketSession,
 } from '@/lib/utils/market-performance'
-
-const createYahooFinance = () => new YahooFinance({ suppressNotices: ['yahooSurvey'] })
-let yahooFinance: ReturnType<typeof createYahooFinance> | null = null
-
-function getYahooFinance(): ReturnType<typeof createYahooFinance> {
-  if (!yahooFinance) {
-    yahooFinance = createYahooFinance()
-  }
-  return yahooFinance
-}
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 const METAL_RATE_API_URL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json'
 

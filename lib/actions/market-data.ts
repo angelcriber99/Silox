@@ -1,9 +1,5 @@
 "use server"
 
-import YahooFinance from 'yahoo-finance2';
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
-
-
 // Tipos extraídos de la doc de yahoo-finance2
 export interface SectorWeightings {
   realestate?: number;

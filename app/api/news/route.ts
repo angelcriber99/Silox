@@ -1,18 +1,24 @@
 import { NextResponse } from 'next/server'
-import YahooFinance from 'yahoo-finance2'
+import { z } from 'zod'
+import { requireApiUser } from '@/lib/server/api-auth'
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
+const NewsQuerySchema = z.string().trim().min(1).max(30)
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const ticker = searchParams.get('ticker')
+  const auth = await requireApiUser()
+  if (!auth.ok) return auth.response
 
-  if (!ticker) {
+  const { searchParams } = new URL(request.url)
+  const ticker = NewsQuerySchema.safeParse(searchParams.get('ticker'))
+
+  if (!ticker.success) {
     return NextResponse.json({ error: 'Ticker is required' }, { status: 400 })
   }
 
   try {
-    const result = await yahooFinance.search(ticker, { newsCount: 10 })
+    const yahooFinance = getYahooFinance()
+    const result = await yahooFinance.search(ticker.data, { newsCount: 10 })
     return NextResponse.json({ news: (result as any).news || [] })
   } catch (error) {
     console.error('Error fetching news:', error)

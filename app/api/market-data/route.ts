@@ -1,20 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import YahooFinance from 'yahoo-finance2';
-
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+import { z } from 'zod';
+import { requireApiUser } from '@/lib/server/api-auth';
+import { getYahooFinance } from '@/lib/server/yahoo-finance';
 
 // In-memory cache to avoid hitting Yahoo Finance too often
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { identifier, isin, name } = body;
+const MarketDataSchema = z.object({
+  identifier: z.string().trim().min(1).max(100),
+  isin: z.string().trim().max(32).nullish(),
+  name: z.string().trim().max(200).nullish(),
+});
 
-    if (!identifier) {
-      return NextResponse.json({ error: 'identifier is required' }, { status: 400 });
+export async function POST(request: NextRequest) {
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+
+  try {
+    const yahooFinance = getYahooFinance();
+    const body = await request.json();
+    const parsed = MarketDataSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Datos de entrada inválidos' }, { status: 400 });
     }
+    const { identifier, isin, name } = parsed.data;
 
     // Check cache first
     const cacheKey = `${identifier}-${isin || ''}`;

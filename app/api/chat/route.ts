@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from "@google/generative-ai"
 import { z } from 'zod'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
+import { requireApiUser } from '@/lib/server/api-auth'
+import { getGeminiClient } from '@/lib/server/gemini'
 
 const ChatSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'model']),
-    content: z.string().max(2000)
-  })).max(50),
-  portfolioContext: z.any()
+    content: z.string().trim().min(1).max(2000)
+  })).min(1).max(50),
+  portfolioContext: z.unknown()
 })
 
 export async function POST(request: Request) {
+  const auth = await requireApiUser()
+  if (!auth.ok) return auth.response
+
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 })
   }
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
 
     const { messages, portfolioContext } = parsed.data
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    const model = getGeminiClient().getGenerativeModel({ model: "gemini-2.0-flash" })
 
     const contextStr = JSON.stringify(portfolioContext, null, 2)
     if (contextStr.length > 50000) {

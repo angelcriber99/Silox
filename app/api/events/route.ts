@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server'
-import YahooFinance from 'yahoo-finance2'
 import { z } from 'zod'
+import { requireApiUser } from '@/lib/server/api-auth'
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 export const dynamic = 'force-dynamic'
 
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
-
 const EventsSchema = z.object({
-  tickers: z.array(z.string().min(1).max(20)).max(100).optional().default([]),
+  tickers: z.array(z.string().trim().min(1).max(30)).max(100).optional().default([]),
 })
 
 export async function POST(request: Request) {
+  const auth = await requireApiUser()
+  if (!auth.ok) return auth.response
+
   try {
+    const yahooFinance = getYahooFinance()
     const body = await request.json()
     
     const parsed = EventsSchema.safeParse(body)
