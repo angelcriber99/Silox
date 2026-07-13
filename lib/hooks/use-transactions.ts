@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { insertActivoAction, updateActivoAction } from '@/lib/actions/assets'
-import { insertTransaccionAction, updateTransaccionAction, deleteTransaccionAction } from '@/lib/actions/transactions'
+import { createFundTransferAction, insertTransaccionAction, updateTransaccionAction, deleteTransaccionAction } from '@/lib/actions/transactions'
 import { fetchTransacciones, fetchAllTransactionsForTax } from '@/lib/api/transactions'
 
 export function useTransactions(limit = 15) {
@@ -27,6 +27,7 @@ export function useAddTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["positions"] })
       queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: ["pending-transactions"] })
     },
   })
 }
@@ -35,11 +36,12 @@ export function useUpdateTransaction() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: unknown }) =>
       updateTransaccionAction(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["positions"] })
       queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: ["pending-transactions"] })
     },
   })
 }
@@ -52,6 +54,20 @@ export function useDeleteTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["positions"] })
       queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: ["pending-transactions"] })
+    },
+  })
+}
+
+export function useFundTransfer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: createFundTransferAction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["positions"] })
+      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: ["pending-transactions"] })
     },
   })
 }
@@ -72,7 +88,7 @@ export function useUpdateAsset() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: Parameters<typeof updateActivoAction>[1] }) =>
       updateActivoAction(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["positions"] })
@@ -89,8 +105,8 @@ export function useAddInvestment() {
       activo,
       transaccion,
     }: {
-      activo: any
-      transaccion: any
+      activo: Parameters<typeof insertActivoAction>[0]
+      transaccion: Record<string, unknown>
     }) => {
       // 1. Insertar el activo
       const newActivo = await insertActivoAction(activo)

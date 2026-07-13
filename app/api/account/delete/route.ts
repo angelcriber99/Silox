@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
 
@@ -29,18 +29,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Confirmación inválida' }, { status: 400 })
     }
 
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-
-    if (!serviceKey || !supabaseUrl) {
-      return NextResponse.json({ error: 'Faltan credenciales administrativas de Supabase' }, { status: 500 })
-    }
-
-    const supabaseAdmin = createSupabaseAdmin(
-      supabaseUrl,
-      serviceKey,
-      { auth: { persistSession: false } }
-    )
+    const supabaseAdmin = getSupabaseAdmin()
 
     for (const table of USER_DATA_TABLES) {
       const { error } = await supabaseAdmin

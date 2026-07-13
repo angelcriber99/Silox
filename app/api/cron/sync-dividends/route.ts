@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import YahooFinance from 'yahoo-finance2'
+import { authorizeCronRequest } from '@/lib/server/cron-auth'
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
@@ -8,6 +9,14 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
+    const authorization = authorizeCronRequest(request)
+    if (!authorization.authorized) {
+      return NextResponse.json(
+        { error: authorization.error },
+        { status: authorization.status },
+      )
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -17,14 +26,7 @@ export async function GET(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 1. Check authorization (Vercel Cron Secret)
-    const authHeader = request.headers.get('authorization')
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      // Opcional: Descomentar para forzar seguridad estricta del cron
-      // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // 2. Fetch all user assets
+    // Fetch all user assets
     const { data: activos, error: activosError } = await supabase
       .from('activos')
       .select('id, ticker, user_id, moneda, tipo')

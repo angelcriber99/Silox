@@ -41,38 +41,13 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     refetch: refetchPending,
   } = usePendingTransactions({ enabled })
 
-  const adjustedPositions = useMemo(() => {
-    if (!positions) return []
-    const pending = pendingTxs ?? []
-    
-    return positions.map(pos => {
-      const posPending = pending.filter(tx => tx.activo?.ticker === pos.ticker)
-      if (posPending.length === 0) return pos
-      
-      let newUnidades = pos.unidades
-      let newCoste = pos.coste_total
-      
-      for (const tx of posPending) {
-        if (tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') {
-          newUnidades -= tx.cantidad
-          newCoste -= (tx.cantidad * tx.precio_unitario)
-        } else if (tx.tipo_operacion === 'Venta' || tx.tipo_operacion === 'Traspaso Salida') {
-          newUnidades += tx.cantidad
-          newCoste += (tx.cantidad * tx.precio_unitario)
-        }
-      }
-      
-      return {
-        ...pos,
-        unidades: newUnidades,
-        coste_total: newCoste
-      }
-    })
-  }, [positions, pendingTxs])
+  // The posiciones view is the confirmed accounting source of truth. Pending
+  // orders are fetched separately for projected balances and UI badges.
+  const confirmedPositions = useMemo(() => positions ?? [], [positions])
 
   const tickers = useMemo(
-    () => adjustedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker),
-    [adjustedPositions]
+    () => confirmedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker),
+    [confirmedPositions]
   )
 
   const {
@@ -83,10 +58,9 @@ export function usePortfolio(options?: { enabled?: boolean }) {
   } = usePrices(tickers, { enabled })
 
   const enriched: EnrichedPosition[] = useMemo(() => {
-    if (!adjustedPositions) return []
-    const enrichedList = enrichPositions(adjustedPositions, pricePayload ?? { prices: {} })
+    const enrichedList = enrichPositions(confirmedPositions, pricePayload ?? { prices: {} })
     return enrichedList
-  }, [adjustedPositions, pricePayload])
+  }, [confirmedPositions, pricePayload])
 
   const totals: PortfolioTotals = useMemo(
     () => computePortfolioTotals(enriched),

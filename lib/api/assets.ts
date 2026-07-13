@@ -38,18 +38,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   if (errorPos) throw new Error(`Error cargando posiciones: ${errorPos.message}`)
 
-  const { data: activos, error: errorAct } = await supabase
-    .from('activos')
-    .select('id, notas')
-
-  if (errorAct) throw new Error(`Error cargando activos (notas): ${errorAct.message}`)
-
-  const notasMap = new Map(activos.map(a => [a.id, a.notas]))
-
-  return (posiciones ?? []).map(p => displayAssetType({
-    ...p,
-    notas: notasMap.get(p.activo_id) ?? null
-  }))
+  return (posiciones ?? []).map(displayAssetType)
 }
 
 export async function fetchActivos(): Promise<Activo[]> {

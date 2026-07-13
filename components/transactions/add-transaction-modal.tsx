@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAddTransaction } from "@/lib/hooks/use-transactions"
-import { getOrCreateCashAssetAction } from "@/lib/actions/assets"
 import { formatCurrency } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 
@@ -31,8 +30,6 @@ interface AddTransactionModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
-
-type TipoOperacion = "Compra" | "Venta" | "Dividendo" | "Traspaso Salida" | "Traspaso Entrada"
 
 const inputClass =
   "bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
@@ -108,7 +105,7 @@ export function AddTransactionModal({
     }
 
     try {
-      const createdTx = await addTransaction.mutateAsync({
+      await addTransaction.mutateAsync({
         activo_id: position.activo_id,
         tipo_operacion: tipoOperacion,
         estado: estado,
@@ -121,46 +118,10 @@ export function AddTransactionModal({
         retencion_destino: retencionDestinoNum,
         fecha,
         notas: notas.trim() || undefined,
+        use_efectivo: useEfectivo && position.tipo !== "Liquidez",
       })
 
       const total = cantidadNum * precioNum
-
-      // Cash transaction
-      if (useEfectivo && position.tipo !== "Liquidez") {
-        try {
-          const cashAsset = await getOrCreateCashAssetAction()
-          
-          let cashTipoOperacion: TipoOperacion = "Compra"
-          let cashAmount = total
-          
-          if (tipoOperacion === "Compra") {
-            cashTipoOperacion = "Venta"
-            cashAmount = total + comisionNum
-          } else if (tipoOperacion === "Venta") {
-            cashTipoOperacion = "Compra"
-            cashAmount = total - retencionOrigenNum - retencionDestinoNum - comisionNum
-          } else if (tipoOperacion === "Dividendo") {
-            cashTipoOperacion = "Compra"
-            cashAmount = precioNum - retencionOrigenNum - retencionDestinoNum - comisionNum
-          }
-
-          if (cashAmount > 0 && createdTx?.id) {
-            await addTransaction.mutateAsync({
-              activo_id: cashAsset.id,
-              tipo_operacion: cashTipoOperacion,
-              estado: estado,
-              cantidad: cashAmount,
-              precio_unitario: 1,
-              comision: 0,
-              fecha,
-              notas: `[Auto-Cash:${createdTx.id}] Auto-liquidez de ${tipoOperacion} ${position.ticker}`,
-            })
-          }
-        } catch (e) {
-          console.error("Error updating cash asset", e)
-          toast.error("Aviso: No se pudo actualizar el Efectivo de forma automática.")
-        }
-      }
 
       toast.success(
         `${tipoOperacion} registrada — ${position.ticker}`,
@@ -228,7 +189,6 @@ export function AddTransactionModal({
               const active = tipoOperacion === tipo
               const isBuy = tipo === "Compra"
               const isSell = tipo === "Venta"
-              const isDiv = tipo === "Dividendo"
               return (
                 <button
                   key={tipo}

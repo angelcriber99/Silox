@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Loader2, ArrowUpRight, ArrowDownRight, Edit2 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -31,8 +31,6 @@ interface EditTransactionModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-type TipoOperacion = "Compra" | "Venta" | "Dividendo"
-
 const inputClass =
   "bg-background border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
 
@@ -42,38 +40,20 @@ export function EditTransactionModal({
   onOpenChange,
 }: EditTransactionModalProps) {
   const [tipoOperacion, setTipoOperacion] = useState<
-    "Compra" | "Venta" | "Dividendo" | "Traspaso Salida" | "Traspaso Entrada"
-  >("Compra")
-  const [estado, setEstado] = useState<"Completada" | "Pendiente">("Completada")
-  const [cantidad, setCantidad] = useState("")
-  const [precioUnitario, setPrecioUnitario] = useState("")
-  const [precioMoneda, setPrecioMoneda] = useState<string>("EUR")
-  const [comision, setComision] = useState("")
-  const [comisionMoneda, setComisionMoneda] = useState<string>("EUR")
-  const [fecha, setFecha] = useState("")
-  const [notas, setNotas] = useState("")
-  const [retencionOrigen, setRetencionOrigen] = useState("")
-  const [retencionDestino, setRetencionDestino] = useState("")
+    "Compra" | "Venta" | "Dividendo" | "Traspaso Salida" | "Traspaso Entrada" | "Retirada"
+  >(transaction?.tipo_operacion ?? "Compra")
+  const [estado, setEstado] = useState<"Completada" | "Pendiente">(transaction?.estado ?? "Completada")
+  const [cantidad, setCantidad] = useState(transaction?.cantidad.toString() ?? "")
+  const [precioUnitario, setPrecioUnitario] = useState(transaction?.precio_unitario.toString() ?? "")
+  const [precioMoneda, setPrecioMoneda] = useState<string>(transaction?.activo?.moneda ?? "EUR")
+  const [comision, setComision] = useState(transaction && transaction.comision > 0 ? transaction.comision.toString() : "")
+  const [comisionMoneda, setComisionMoneda] = useState<string>(transaction?.activo?.moneda ?? "EUR")
+  const [fecha, setFecha] = useState(transaction?.fecha.split("T")[0] ?? "")
+  const [notas, setNotas] = useState(transaction?.notas ?? "")
+  const [retencionOrigen, setRetencionOrigen] = useState(transaction?.retencion_origen && transaction.retencion_origen > 0 ? transaction.retencion_origen.toString() : "")
+  const [retencionDestino, setRetencionDestino] = useState(transaction?.retencion_destino && transaction.retencion_destino > 0 ? transaction.retencion_destino.toString() : "")
 
   const updateTransaction = useUpdateTransaction()
-
-  useEffect(() => {
-    if (transaction && open) {
-      setTipoOperacion(transaction.tipo_operacion)
-      setEstado(transaction.estado || "Completada")
-      setCantidad(transaction.cantidad.toString())
-      setPrecioUnitario(transaction.precio_unitario.toString())
-      setPrecioMoneda(transaction.activo?.moneda || "EUR")
-      setComision(transaction.comision > 0 ? transaction.comision.toString() : "")
-      setComisionMoneda(transaction.activo?.moneda || "EUR")
-      setRetencionOrigen(transaction.retencion_origen && transaction.retencion_origen > 0 ? transaction.retencion_origen.toString() : "")
-      setRetencionDestino(transaction.retencion_destino && transaction.retencion_destino > 0 ? transaction.retencion_destino.toString() : "")
-      // format date to YYYY-MM-DD
-      const dateStr = transaction.fecha.split("T")[0]
-      setFecha(dateStr)
-      setNotas(transaction.notas || "")
-    }
-  }, [transaction, open])
 
   const handleClose = (v: boolean) => {
     onOpenChange(v)
@@ -136,7 +116,6 @@ export function EditTransactionModal({
   const totalEstimado = cantidadNum * precioNum
 
   const isCompra = tipoOperacion === "Compra"
-  const isVenta = tipoOperacion === "Venta"
   const isDividendo = tipoOperacion === "Dividendo"
 
   return (
@@ -174,7 +153,6 @@ export function EditTransactionModal({
               const active = tipoOperacion === tipo
               const isBuy = tipo === "Compra"
               const isSell = tipo === "Venta"
-              const isDiv = tipo === "Dividendo"
               return (
                 <button
                   key={tipo}

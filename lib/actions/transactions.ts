@@ -1,251 +1,207 @@
 "use server"
 
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { TransaccionSchema } from '@/lib/validations/schemas'
 import type { Transaccion } from '@/lib/types'
 import { fetchMarketPrices } from '@/lib/actions/market'
+import { calculateCashMovement } from '@/lib/domain/transactions/cash-movement'
+
+const TransactionMutationSchema = TransaccionSchema.extend({
+  use_efectivo: z.boolean().optional(),
+})
+
+type TransactionMutation = z.infer<typeof TransactionMutationSchema>
+type FxRates = Record<string, number>
+
+interface StoredTransaction {
+  id: string
+  activo_id: string
+  tipo_operacion: Transaccion['tipo_operacion']
+  cantidad: number
+  precio_unitario: number
+  comision: number
+  retencion_origen: number | null
+  retencion_destino: number | null
+  estado: 'Completada' | 'Pendiente' | null
+  fecha: string
+  notas: string | null
+}
+
+function convertCurrency(
+  amount: number,
+  sourceCurrency: string | undefined,
+  targetCurrency: string,
+  fxRates: FxRates,
+) {
+  if (!sourceCurrency || sourceCurrency === targetCurrency) return amount
+  if (sourceCurrency === 'EUR') return amount * (fxRates[targetCurrency] ?? 1)
+  if (targetCurrency === 'EUR') return amount / (fxRates[sourceCurrency] ?? 1)
+
+  const amountInEur = amount / (fxRates[sourceCurrency] ?? 1)
+  return amountInEur * (fxRates[targetCurrency] ?? 1)
+}
+
+async function prepareMonetaryValues(
+  input: Partial<TransactionMutation>,
+  assetCurrency: string,
+  fallbackNotes: string | null = null,
+) {
+  const convertsPrice = input.precio_unitario !== undefined
+    && input.precio_moneda !== undefined
+    && input.precio_moneda !== assetCurrency
+  const convertsCommission = input.comision !== undefined
+    && input.comision_moneda !== undefined
+    && input.comision_moneda !== assetCurrency
+  const fxRates = convertsPrice || convertsCommission
+    ? (await fetchMarketPrices([], true)).fxRates ?? {}
+    : {}
+  const notes: string[] = []
+
+  const price = input.precio_unitario === undefined
+    ? undefined
+    : convertCurrency(
+        input.precio_unitario,
+        input.precio_moneda,
+        assetCurrency,
+        fxRates,
+      )
+  if (convertsPrice && input.precio_unitario !== undefined) {
+    notes.push(`(Precio orig: ${input.precio_unitario.toFixed(2)} ${input.precio_moneda})`)
+  }
+
+  const commission = input.comision === undefined
+    ? undefined
+    : convertCurrency(
+        input.comision,
+        input.comision_moneda,
+        assetCurrency,
+        fxRates,
+      )
+  if (convertsCommission && input.comision !== undefined) {
+    notes.push(`(Comisión orig: ${input.comision.toFixed(2)} ${input.comision_moneda})`)
+  }
+
+  const baseNotes = input.notas ?? fallbackNotes ?? ''
+  const conversionNotes = notes.join(' | ')
+
+  return {
+    price,
+    commission,
+    notes: [baseNotes, conversionNotes].filter(Boolean).join(' '),
+  }
+}
+
+async function getOwnedAssetCurrency(assetId: string, userId: string) {
+  const supabase = await createClient()
+  const { data: asset, error } = await supabase
+    .from('activos')
+    .select('id, moneda')
+    .eq('id', assetId)
+    .eq('user_id', userId)
+    .single()
+
+  if (error || !asset) throw new Error('Activo no encontrado o no autorizado')
+  return asset.moneda as string
+}
+
+function getCashMovement(transaction: {
+  tipo_operacion: string
+  cantidad: number
+  precio_unitario: number
+  comision: number
+  retencion_origen?: number | null
+  retencion_destino?: number | null
+}) {
+  return calculateCashMovement({
+    operation: transaction.tipo_operacion,
+    quantity: transaction.cantidad,
+    unitPrice: transaction.precio_unitario,
+    commission: transaction.comision,
+    withholdingOrigin: transaction.retencion_origen ?? 0,
+    withholdingDestination: transaction.retencion_destino ?? 0,
+  })
+}
 
 export async function insertTransaccionAction(formData: unknown): Promise<Transaccion> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('No estás autenticado')
 
-  const validatedData = TransaccionSchema.parse(formData)
-
-  // Verify asset ownership
-  const { data: asset, error: assetError } = await supabase
-    .from('activos')
-    .select('id, moneda')
-    .eq('id', validatedData.activo_id)
-    .eq('user_id', user.id)
-    .single()
-
-  if (assetError || !asset) throw new Error('Activo no encontrado o no autorizado')
-
-  let finalComision = validatedData.comision
-  let comisionNote = ''
-  
-  let finalPrecio = validatedData.precio_unitario
-  let precioNote = ''
-  
-  if (validatedData.precio_moneda && validatedData.precio_moneda !== asset.moneda && validatedData.precio_unitario > 0) {
-    try {
-      const marketData = await fetchMarketPrices([`EUR${asset.moneda}=X`, `${asset.moneda}EUR=X`], true)
-      let fxRate = 1
-      if (validatedData.precio_moneda === 'EUR') {
-        fxRate = marketData.fxRates?.[asset.moneda] || 1
-      } else if (asset.moneda === 'EUR') {
-        fxRate = marketData.fxRates?.[validatedData.precio_moneda] ? (1 / marketData.fxRates[validatedData.precio_moneda]) : 1
-      }
-      
-      finalPrecio = validatedData.precio_unitario * fxRate
-      precioNote = ` (Precio orig: ${validatedData.precio_unitario.toFixed(2)} ${validatedData.precio_moneda})`
-    } catch (e) {
-      console.error("Failed to convert precio:", e)
-    }
+  const validated = TransactionMutationSchema.parse(formData)
+  const assetCurrency = await getOwnedAssetCurrency(validated.activo_id, user.id)
+  const monetary = await prepareMonetaryValues(validated, assetCurrency)
+  const transaction = {
+    activo_id: validated.activo_id,
+    tipo_operacion: validated.tipo_operacion,
+    cantidad: validated.cantidad,
+    precio_unitario: monetary.price ?? validated.precio_unitario,
+    comision: monetary.commission ?? validated.comision,
+    retencion_origen: validated.retencion_origen ?? 0,
+    retencion_destino: validated.retencion_destino ?? 0,
+    estado: validated.estado ?? 'Completada',
+    fecha: validated.fecha,
+    notas: monetary.notes || null,
   }
+  const cash = validated.use_efectivo ? getCashMovement(transaction) : null
 
-  if (validatedData.comision_moneda && validatedData.comision_moneda !== asset.moneda && validatedData.comision > 0) {
-    try {
-      const marketData = await fetchMarketPrices([`EUR${asset.moneda}=X`, `${asset.moneda}EUR=X`], true)
-      // We want to convert from comision_moneda to asset.moneda
-      let fxRate = 1
-      if (validatedData.comision_moneda === 'EUR') {
-        fxRate = marketData.fxRates?.[asset.moneda] || 1
-      } else if (asset.moneda === 'EUR') {
-        fxRate = marketData.fxRates?.[validatedData.comision_moneda] ? (1 / marketData.fxRates[validatedData.comision_moneda]) : 1
-      }
-      
-      finalComision = validatedData.comision * fxRate
-      comisionNote = ` (Comisión orig: ${validatedData.comision.toFixed(2)} ${validatedData.comision_moneda})`
-    } catch (e) {
-      console.error("Failed to convert commission:", e)
-      // fallback to un-converted if FX fails, though rare
-    }
-  }
-  
-  let finalRetencionOrigen = validatedData.retencion_origen || 0
-  let finalRetencionDestino = validatedData.retencion_destino || 0
-  
-  const insertData = { 
-    ...validatedData, 
-    user_id: user.id, 
-    comision: finalComision, 
-    precio_unitario: finalPrecio,
-    retencion_origen: finalRetencionOrigen,
-    retencion_destino: finalRetencionDestino
-  }
-  delete (insertData as any).comision_moneda
-  delete (insertData as any).precio_moneda
-  
-  const combinedNotes = [precioNote, comisionNote].filter(Boolean).join(' | ')
-  if (combinedNotes) {
-    insertData.notas = (insertData.notas ? insertData.notas + " " + combinedNotes : combinedNotes.trim())
-  }
-
-  const { data, error } = await supabase
-    .from('transacciones')
-    .insert([insertData as any])
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_transaction_with_cash', {
+    p_transaction: transaction,
+    p_cash_operation: cash?.operation ?? null,
+    p_cash_amount: cash?.amount ?? null,
+  })
 
   if (error) throw new Error(`Error registrando transacción: ${error.message}`)
-  return data as any
+  return data as Transaccion
 }
 
-export async function updateTransaccionAction(id: string, formData: unknown): Promise<Transaccion> {
+export async function updateTransaccionAction(
+  id: string,
+  formData: unknown,
+): Promise<Transaccion> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('No estás autenticado')
 
-  const validatedData = TransaccionSchema.partial().parse(formData)
-  
-  const updateData = { ...validatedData }
-
-  if (validatedData.comision !== undefined && validatedData.comision_moneda) {
-    // Verify asset ownership again to get moneda
-    const { data: asset } = await supabase
-      .from('activos')
-      .select('moneda')
-      .eq('id', validatedData.activo_id || id) // need asset id, wait we don't have it unless we query transaccion
-      .single()
-
-    // Actually, to get the asset currency we need the transaction's asset
-    const { data: trx } = await supabase
-      .from('transacciones')
-      .select('activo:activos(moneda), notas')
-      .eq('id', id)
-      .single()
-
-    const assetMoneda = (trx?.activo as any)?.[0]?.moneda || (trx?.activo as any)?.moneda || 'EUR'
-    let comisionNote = ''
-    
-    if (validatedData.comision_moneda !== assetMoneda && validatedData.comision > 0) {
-      try {
-        const marketData = await fetchMarketPrices([`EUR${assetMoneda}=X`, `${assetMoneda}EUR=X`], true)
-        let fxRate = 1
-        if (validatedData.comision_moneda === 'EUR') {
-          fxRate = marketData.fxRates?.[assetMoneda] || 1
-        } else if (assetMoneda === 'EUR') {
-          fxRate = marketData.fxRates?.[validatedData.comision_moneda] ? (1 / marketData.fxRates[validatedData.comision_moneda]) : 1
-        }
-        
-        updateData.comision = validatedData.comision * fxRate
-        comisionNote = ` (Comisión orig. modif: ${validatedData.comision.toFixed(2)} ${validatedData.comision_moneda})`
-      } catch (e) {
-        console.error("Failed to convert commission on update:", e)
-      }
-    }
-    
-    let precioNote = ''
-    if (validatedData.precio_moneda && validatedData.precio_moneda !== assetMoneda && validatedData.precio_unitario !== undefined && validatedData.precio_unitario > 0) {
-      try {
-        const marketData = await fetchMarketPrices([`EUR${assetMoneda}=X`, `${assetMoneda}EUR=X`], true)
-        let fxRate = 1
-        if (validatedData.precio_moneda === 'EUR') {
-          fxRate = marketData.fxRates?.[assetMoneda] || 1
-        } else if (assetMoneda === 'EUR') {
-          fxRate = marketData.fxRates?.[validatedData.precio_moneda] ? (1 / marketData.fxRates[validatedData.precio_moneda]) : 1
-        }
-        
-        updateData.precio_unitario = validatedData.precio_unitario * fxRate
-        precioNote = ` (Precio orig. modif: ${validatedData.precio_unitario.toFixed(2)} ${validatedData.precio_moneda})`
-      } catch (e) {
-        console.error("Failed to convert precio on update:", e)
-      }
-    }
-    
-    const combinedNotes = [precioNote, comisionNote].filter(Boolean).join(' | ')
-    if (combinedNotes) {
-      updateData.notas = (validatedData.notas || trx?.notas || '') + (trx?.notas ? " " : "") + combinedNotes
-    }
-  }
-
-  delete (updateData as any).comision_moneda
-  delete (updateData as any).precio_moneda
-
-  const { data, error } = await supabase
+  const validated = TransactionMutationSchema.partial().parse(formData)
+  const { data: currentData, error: currentError } = await supabase
     .from('transacciones')
-    .update(updateData as any)
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, estado, fecha, notas')
     .eq('id', id)
     .eq('user_id', user.id)
-    .select()
+    .is('linked_transaction_id', null)
     .single()
+
+  if (currentError || !currentData) {
+    throw new Error('Transacción no encontrada o no autorizada')
+  }
+  const current = currentData as StoredTransaction
+  const assetId = validated.activo_id ?? current.activo_id
+  const assetCurrency = await getOwnedAssetCurrency(assetId, user.id)
+  const monetary = await prepareMonetaryValues(validated, assetCurrency, current.notas)
+  const transaction = {
+    activo_id: assetId,
+    tipo_operacion: validated.tipo_operacion ?? current.tipo_operacion,
+    cantidad: validated.cantidad ?? current.cantidad,
+    precio_unitario: monetary.price ?? current.precio_unitario,
+    comision: monetary.commission ?? current.comision,
+    retencion_origen: validated.retencion_origen ?? current.retencion_origen ?? 0,
+    retencion_destino: validated.retencion_destino ?? current.retencion_destino ?? 0,
+    estado: validated.estado ?? current.estado ?? 'Completada',
+    fecha: validated.fecha ?? current.fecha,
+    notas: monetary.notes || null,
+  }
+  const cash = getCashMovement(transaction)
+
+  const { data, error } = await supabase.rpc('update_transaction_with_cash', {
+    p_transaction_id: id,
+    p_transaction: transaction,
+    p_cash_operation: cash?.operation ?? null,
+    p_cash_amount: cash?.amount ?? null,
+  })
 
   if (error) throw new Error(`Error actualizando transacción: ${error.message}`)
-
-  // Sync cash transaction
-  let { data: cashTx } = await supabase
-    .from('transacciones')
-    .select('id, notas')
-    .eq('user_id', user.id)
-    .like('notas', `%[Auto-Cash:${id}]%`)
-    .single()
-
-  // Fallback for older auto-cash transactions created before the ID tagging
-  if (!cashTx) {
-    // Get the ticker to match the exact old note format
-    const { data: oldTx } = await supabase
-      .from('transacciones')
-      .select('activo:activos(ticker), tipo_operacion, fecha')
-      .eq('id', id)
-      .single()
-      
-    if (oldTx) {
-      const ticker = (oldTx.activo as any)?.ticker || (oldTx.activo as any)?.[0]?.ticker
-      const oldNoteFormat = `Auto-liquidez de ${oldTx.tipo_operacion} ${ticker}`
-      
-      const { data: oldCashTx, error: err } = await supabase
-        .from('transacciones')
-        .select('id, notas')
-        .eq('user_id', user.id)
-        .eq('notas', oldNoteFormat)
-        .eq('fecha', oldTx.fecha)
-        .limit(1)
-        
-      if (oldCashTx && oldCashTx.length > 0) {
-        cashTx = oldCashTx[0]
-      }
-    }
-  }
-
-  if (cashTx) {
-    let cashAmount = 0
-    let cashTipo = "Compra"
-    const total = (updateData.cantidad || data.cantidad || 0) * (updateData.precio_unitario || data.precio_unitario || 0)
-    const comisionNum = updateData.comision || data.comision || 0
-    
-    if (updateData.tipo_operacion === "Compra") {
-      cashTipo = "Venta"
-      cashAmount = total + comisionNum
-    } else if (updateData.tipo_operacion === "Venta") {
-      cashTipo = "Compra"
-      const retencionOrigen = updateData.retencion_origen ?? (data as any).retencion_origen ?? 0
-      const retencionDestino = updateData.retencion_destino ?? (data as any).retencion_destino ?? 0
-      cashAmount = total - retencionOrigen - retencionDestino - comisionNum
-    } else if (updateData.tipo_operacion === "Dividendo") {
-      cashTipo = "Compra"
-      cashAmount = (updateData.precio_unitario || (data as any).precio_unitario || 0) - (updateData.retencion_origen || (data as any).retencion_origen || 0) - (updateData.retencion_destino || (data as any).retencion_destino || 0) - comisionNum
-    }
-
-    if (cashAmount > 0) {
-      const currentNotas = cashTx.notas || ""
-      const newNotas = currentNotas.includes(`[Auto-Cash:${id}]`) 
-        ? currentNotas 
-        : `[Auto-Cash:${id}] ${currentNotas}`.trim()
-
-      await supabase.from('transacciones').update({
-        tipo_operacion: cashTipo,
-        cantidad: cashAmount,
-        fecha: updateData.fecha || data.fecha,
-        notas: newNotas
-      }).eq('id', cashTx.id)
-    } else {
-      await supabase.from('transacciones').delete().eq('id', cashTx.id)
-    }
-  }
-
-  return data as any
+  return data as Transaccion
 }
 
 export async function deleteTransaccionAction(id: string): Promise<void> {
@@ -258,36 +214,44 @@ export async function deleteTransaccionAction(id: string): Promise<void> {
     .delete()
     .eq('id', id)
     .eq('user_id', user.id)
+    .is('linked_transaction_id', null)
 
   if (error) throw new Error(`Error eliminando transacción: ${error.message}`)
+}
 
-  // Delete associated cash transaction
-  const { data: cashTx } = await supabase
-    .from('transacciones')
-    .select('id')
-    .eq('user_id', user.id)
-    .like('notas', `%[Auto-Cash:${id}]%`)
-    .single()
+const TransferLegSchema = TransaccionSchema.pick({
+  activo_id: true,
+  tipo_operacion: true,
+  cantidad: true,
+  precio_unitario: true,
+  comision: true,
+  fecha: true,
+  notas: true,
+})
 
-  if (cashTx) {
-    await supabase.from('transacciones').delete().eq('id', cashTx.id)
-  } else {
-    // Fallback delete
-    const { data: oldTx } = await supabase
-      .from('transacciones')
-      .select('activo:activos(ticker), tipo_operacion, fecha')
-      .eq('id', id)
-      .single()
-      
-    if (oldTx) {
-      const ticker = (oldTx.activo as any)?.ticker || (oldTx.activo as any)?.[0]?.ticker
-      const oldNoteFormat = `Auto-liquidez de ${oldTx.tipo_operacion} ${ticker}`
-      await supabase
-        .from('transacciones')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('notas', oldNoteFormat)
-        .eq('fecha', oldTx.fecha)
-    }
+const FundTransferSchema = z.object({
+  source: TransferLegSchema.extend({
+    tipo_operacion: z.literal('Traspaso Salida'),
+  }),
+  destination: TransferLegSchema.extend({
+    tipo_operacion: z.literal('Traspaso Entrada'),
+  }),
+})
+
+export async function createFundTransferAction(formData: unknown): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No estás autenticado')
+
+  const transfer = FundTransferSchema.parse(formData)
+  if (transfer.source.activo_id === transfer.destination.activo_id) {
+    throw new Error('El activo de origen y destino deben ser diferentes')
   }
+
+  const { error } = await supabase.rpc('create_fund_transfer', {
+    p_source_transaction: transfer.source,
+    p_destination_transaction: transfer.destination,
+  })
+
+  if (error) throw new Error(`Error registrando el traspaso: ${error.message}`)
 }

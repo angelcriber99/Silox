@@ -16,8 +16,7 @@ import { Button } from "@/components/ui/button"
 import type { Transaccion } from "@/lib/types"
 import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { deleteTransaccion, updateTransaccion } from "@/lib/api/transactions"
-import { useQueryClient } from "@tanstack/react-query"
+import { useDeleteTransaction, useUpdateTransaction } from "@/lib/hooks/use-transactions"
 import { toast } from "sonner"
 import {
   DropdownMenu,
@@ -32,7 +31,8 @@ interface PendingOrdersProps {
 
 export function PendingOrders({ transactions }: PendingOrdersProps) {
   const { hideBalances } = usePreferences()
-  const queryClient = useQueryClient()
+  const deleteTransaction = useDeleteTransaction()
+  const updateTransaction = useUpdateTransaction()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   if (!transactions || transactions.length === 0) {
@@ -42,12 +42,7 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
   const handleDelete = async (id: string) => {
     try {
       setDeletingId(id)
-      await deleteTransaccion(id)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["pending-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["posiciones"] }),
-        queryClient.invalidateQueries({ queryKey: ["recent-transactions"] })
-      ])
+      await deleteTransaction.mutateAsync(id)
       toast.success("Operación rechazada y eliminada")
     } catch (error) {
       toast.error("Error al cancelar la operación")
@@ -60,12 +55,7 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
   const handleComplete = async (id: string) => {
     try {
       setDeletingId(id) // use same loading state indicator
-      await updateTransaccion(id, { estado: "Completada" })
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["pending-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["posiciones"] }),
-        queryClient.invalidateQueries({ queryKey: ["recent-transactions"] })
-      ])
+      await updateTransaction.mutateAsync({ id, updates: { estado: "Completada" } })
       toast.success("Operación completada correctamente")
     } catch (error) {
       toast.error("Error al completar la operación")

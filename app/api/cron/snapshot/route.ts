@@ -1,31 +1,22 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import yahooFinance from 'yahoo-finance2'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
+import { authorizeCronRequest } from '@/lib/server/cron-auth'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { fetchMarketPrices } from '@/lib/actions/market'
 
 export const revalidate = 0
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!process.env.CRON_SECRET) {
-      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
+    const authorization = authorizeCronRequest(request)
+    if (!authorization.authorized) {
+      return NextResponse.json(
+        { error: authorization.error },
+        { status: authorization.status },
+      )
     }
 
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!serviceKey) {
-      return NextResponse.json({ error: 'Missing SUPABASE_SERVICE_ROLE_KEY' }, { status: 500 })
-    }
-
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      serviceKey,
-      { auth: { persistSession: false } }
-    )
+    const supabaseAdmin = getSupabaseAdmin()
 
     const { data: users, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
     
@@ -33,69 +24,30 @@ export async function GET(request: Request) {
       throw new Error(`Failed to fetch users: ${usersError?.message}`)
     }
 
+    const { data: allPositions, error: positionsError } = await supabaseAdmin
+      .from('posiciones')
+      .select('*')
+
+    if (positionsError) throw positionsError
+
+    const tickers = Array.from(new Set(
+      (allPositions ?? [])
+        .filter((position) => position.unidades > 0)
+        .map((position) => position.ticker),
+    ))
+    const pricePayload = tickers.length > 0
+      ? await fetchMarketPrices(tickers, true)
+      : { prices: {}, fxRates: {} }
+
     let snapshotsSaved = 0
 
     for (const user of users.users) {
-      const { data: positions } = await supabaseAdmin
-        .from('posiciones')
-        .select('*')
-        .eq('user_id', user.id)
+      const positions = (allPositions ?? []).filter(
+        (position) => position.user_id === user.id,
+      )
+      if (positions.length === 0) continue
 
-      if (!positions || positions.length === 0) continue
-
-      const { data: pendingTxs } = await supabaseAdmin
-        .from('transacciones')
-        .select('*, activo:posiciones(*)')
-        .eq('user_id', user.id)
-        .eq('estado', 'PENDIENTE')
-
-      const adjustedPositions = positions.map(pos => {
-        const posPending = pendingTxs?.filter(tx => tx.activo?.ticker === pos.ticker) || []
-        let newUnidades = pos.unidades
-        let newCoste = pos.coste_total
-        
-        for (const tx of posPending) {
-          if (tx.tipo_operacion === 'Compra') {
-            newUnidades -= tx.cantidad
-            newCoste -= (tx.cantidad * tx.precio_unitario)
-          } else if (tx.tipo_operacion === 'Venta') {
-            newUnidades += tx.cantidad
-            newCoste += (tx.cantidad * tx.precio_unitario)
-          }
-        }
-        return { ...pos, unidades: newUnidades, coste_total: newCoste }
-      })
-
-      const tickers = adjustedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker)
-      if (tickers.length === 0) continue
-
-      let quotes
-      try {
-        quotes = await yahooFinance.quote(tickers)
-      } catch (e) {
-        console.error(`Error fetching prices for user ${user.id}:`, e)
-        continue
-      }
-      
-      const priceMap: Record<string, any> = {}
-      if (Array.isArray(quotes)) {
-        // @ts-ignore
-        quotes.forEach((q: any) => { priceMap[q.symbol] = q })
-      } else if (quotes) {
-        priceMap[(quotes as any).symbol] = quotes
-      }
-
-      let eurUsdRate = 1
-      try {
-        const fx = await yahooFinance.quote('EURUSD=X')
-        // @ts-ignore
-        eurUsdRate = fx.regularMarketPrice ?? 1
-      } catch (e) {
-        console.error("Failed to fetch EURUSD in cron")
-      }
-
-      const pricePayload = { prices: priceMap, fxRate: eurUsdRate, marketState: 'REGULAR' as any }
-      const enriched = enrichPositions(adjustedPositions, pricePayload)
+      const enriched = enrichPositions(positions, pricePayload)
       const totals = computePortfolioTotals(enriched)
 
       if (totals.totalValue > 0) {
@@ -130,8 +82,9 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ success: true, snapshotsSaved })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Cron Snapshot Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Unknown snapshot error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

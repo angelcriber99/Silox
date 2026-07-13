@@ -517,6 +517,7 @@ export default function MovimientosPage() {
       </div>
 
       <EditTransactionModal
+        key={`${selectedTx?.id ?? 'none'}-${editModalOpen}`}
         transaction={selectedTx}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}

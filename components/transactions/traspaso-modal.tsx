@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAddTransaction } from "@/lib/hooks/use-transactions"
+import { useFundTransfer } from "@/lib/hooks/use-transactions"
 import { usePositions } from "@/lib/hooks/use-portfolio"
 import type { EnrichedPosition } from '@/lib/types'
 
@@ -40,7 +40,7 @@ export function TraspasoModal({
   onOpenChange,
 }: TraspasoModalProps) {
   const { data: positions } = usePositions()
-  const addTransaction = useAddTransaction()
+  const createTransfer = useFundTransfer()
 
   const [destinoId, setDestinoId] = useState<string>("")
   const [cantidadOrigen, setCantidadOrigen] = useState("")
@@ -64,7 +64,7 @@ export function TraspasoModal({
   }
 
   const handleClose = (v: boolean) => {
-    if (!v && !addTransaction.isPending) resetForm()
+    if (!v && !createTransfer.isPending) resetForm()
     onOpenChange(v)
   }
 
@@ -105,34 +105,32 @@ export function TraspasoModal({
     const nombreDestino = targetPosition?.nombre || targetPosition?.ticker || "Destino"
 
     try {
-      // 1. Traspaso Salida (Venta simulada)
-      await addTransaction.mutateAsync({
-        activo_id: origen.activo_id,
-        tipo_operacion: "Traspaso Salida",
-        cantidad: qtyOrigen,
-        precio_unitario: valTraspaso / qtyOrigen,
-        comision: 0,
-        fecha,
-        estado: "Completada",
-        notas: `Traspaso hacia ${nombreDestino}`,
-      })
-
-      // 2. Traspaso Entrada (Compra simulada)
-      await addTransaction.mutateAsync({
-        activo_id: destinoId,
-        tipo_operacion: "Traspaso Entrada",
-        cantidad: qtyDestino,
-        precio_unitario: valTraspaso / qtyDestino,
-        comision: 0,
-        fecha,
-        estado: "Completada",
-        notas: `Traspaso desde ${origen.nombre || origen.ticker}`,
+      await createTransfer.mutateAsync({
+        source: {
+          activo_id: origen.activo_id,
+          tipo_operacion: "Traspaso Salida",
+          cantidad: qtyOrigen,
+          precio_unitario: valTraspaso / qtyOrigen,
+          comision: 0,
+          fecha,
+          notas: `Traspaso hacia ${nombreDestino}`,
+        },
+        destination: {
+          activo_id: destinoId,
+          tipo_operacion: "Traspaso Entrada",
+          cantidad: qtyDestino,
+          precio_unitario: valTraspaso / qtyDestino,
+          comision: 0,
+          fecha,
+          notas: `Traspaso desde ${origen.nombre || origen.ticker}`,
+        },
       })
 
       toast.success("Traspaso completado")
       handleClose(false)
-    } catch (error: any) {
-      toast.error(error.message || "Error al realizar el traspaso")
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al realizar el traspaso"
+      toast.error(message)
     }
   }
 
@@ -263,10 +261,10 @@ export function TraspasoModal({
             </Button>
             <Button
               type="submit"
-              disabled={addTransaction.isPending || !destinoId}
+              disabled={createTransfer.isPending || !destinoId}
               className="bg-blue-500 hover:bg-blue-600 text-white"
             >
-              {addTransaction.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {createTransfer.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Confirmar
             </Button>
           </DialogFooter>

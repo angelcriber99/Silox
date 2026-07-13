@@ -12,7 +12,7 @@ export const ActivoSchema = z.object({
 
 export const TransaccionSchema = z.object({
   activo_id: z.string().uuid("ID de activo inválido"),
-  tipo_operacion: z.enum(["Compra", "Venta", "Dividendo", "Traspaso Salida", "Traspaso Entrada"]),
+  tipo_operacion: z.enum(["Compra", "Venta", "Dividendo", "Traspaso Salida", "Traspaso Entrada", "Retirada"]),
   cantidad: z.number().nonnegative("La cantidad no puede ser negativa"),
   precio_unitario: z.number().nonnegative("El precio no puede ser negativo"),
   comision: z.number().nonnegative("La comisión no puede ser negativa").default(0),

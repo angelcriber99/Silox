@@ -66,6 +66,7 @@ export interface Database {
       }
       posiciones: {
         Row: {
+          user_id: string
           activo_id: string
           ticker: string
           isin: string | null
@@ -75,6 +76,7 @@ export interface Database {
           moneda: string
           sector: string
           geografia: string
+          notas: string | null
           unidades: number
           coste_total: number
           comisiones_total: number
@@ -82,6 +84,7 @@ export interface Database {
           ultima_operacion: string | null
         }
         Insert: {
+          user_id: string
           activo_id: string
           ticker: string
           isin?: string | null
@@ -91,6 +94,7 @@ export interface Database {
           moneda: string
           sector?: string
           geografia?: string
+          notas?: string | null
           unidades?: number
           coste_total?: number
           comisiones_total?: number
@@ -98,6 +102,7 @@ export interface Database {
           ultima_operacion?: string | null
         }
         Update: {
+          user_id?: string
           activo_id?: string
           ticker?: string
           isin?: string | null
@@ -107,6 +112,7 @@ export interface Database {
           moneda?: string
           sector?: string
           geografia?: string
+          notas?: string | null
           unidades?: number
           coste_total?: number
           comisiones_total?: number
@@ -135,6 +141,9 @@ export interface Database {
           notas: string | null
           created_at: string
           estado: string
+          linked_transaction_id: string | null
+          retencion_origen: number | null
+          retencion_destino: number | null
         }
         Insert: {
           id?: string
@@ -148,6 +157,9 @@ export interface Database {
           notas?: string | null
           created_at?: string
           estado?: string
+          linked_transaction_id?: string | null
+          retencion_origen?: number | null
+          retencion_destino?: number | null
         }
         Update: {
           id?: string
@@ -161,6 +173,9 @@ export interface Database {
           notas?: string | null
           created_at?: string
           estado?: string
+          linked_transaction_id?: string | null
+          retencion_origen?: number | null
+          retencion_destino?: number | null
         }
         Relationships: [
           {
@@ -174,8 +189,38 @@ export interface Database {
             columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transacciones_linked_transaction_id_fkey"
+            columns: ["linked_transaction_id"]
+            referencedRelation: "transacciones"
+            referencedColumns: ["id"]
           }
         ]
+      }
+      portfolio_history: {
+        Row: {
+          id: string
+          user_id: string
+          total_value: number
+          total_invested: number
+          timestamp: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          total_value: number
+          total_invested: number
+          timestamp?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          total_value?: number
+          total_invested?: number
+          timestamp?: string
+        }
+        Relationships: []
       }
       portfolio_snapshots: {
         Row: {
@@ -370,7 +415,30 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_transaction_with_cash: {
+        Args: {
+          p_transaction: Json
+          p_cash_operation?: string | null
+          p_cash_amount?: number | null
+        }
+        Returns: Database['public']['Tables']['transacciones']['Row']
+      }
+      update_transaction_with_cash: {
+        Args: {
+          p_transaction_id: string
+          p_transaction: Json
+          p_cash_operation?: string | null
+          p_cash_amount?: number | null
+        }
+        Returns: Database['public']['Tables']['transacciones']['Row']
+      }
+      create_fund_transfer: {
+        Args: {
+          p_source_transaction: Json
+          p_destination_transaction: Json
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
