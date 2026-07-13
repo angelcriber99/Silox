@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import {
+  buildTransactionGroups,
+  getTransactionCandidates,
+} from '@/lib/domain/imports/transaction-index'
 
 export const runtime = 'nodejs'
 
@@ -735,25 +739,36 @@ export async function POST(request: Request) {
       .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha')
       .eq('user_id', user.id)
 
+    const assetsByTicker = new Map<string, NonNullable<typeof activos>[number]>()
+    for (const asset of activos ?? []) {
+      if (!assetsByTicker.has(asset.ticker)) assetsByTicker.set(asset.ticker, asset)
+    }
+
+    let transactionGroups = buildTransactionGroups(existingTransactions ?? [])
+
     let removedInternalMovements = 0
     if (internalCryptoMovements.length > 0 && activos && existingTransactions) {
       const idsToDelete = new Set<string>()
 
       for (const movement of internalCryptoMovements) {
-        const existingActivo = activos.find(a =>
-          a.ticker === movement.ticker ||
-          (movement.tipoActivo === 'Crypto' && a.ticker === movement.rawTicker)
-        )
+        const existingActivo = assetsByTicker.get(movement.ticker)
+          ?? (movement.tipoActivo === 'Crypto'
+            ? assetsByTicker.get(movement.rawTicker)
+            : undefined)
         if (!existingActivo) continue
 
-        for (const existing of existingTransactions) {
-          const isSameActivo = existing.activo_id === existingActivo.id
-          const isSameType = existing.tipo_operacion === movement.tipo_operacion
+        const candidates = getTransactionCandidates(
+          transactionGroups,
+          existingActivo.id,
+          movement.tipo_operacion,
+          movement.fecha,
+        )
+
+        for (const existing of candidates) {
           const isSameQty = Math.abs(existing.cantidad - movement.cantidad) < 0.00000001
           const isSamePrice = Math.abs(existing.precio_unitario - movement.precio_unitario) < 0.01
-          const isSameDate = existing.fecha === movement.fecha
 
-          if (isSameActivo && isSameType && isSameQty && isSamePrice && isSameDate) {
+          if (isSameQty && isSamePrice) {
             idsToDelete.add(existing.id)
           }
         }
@@ -774,6 +789,7 @@ export async function POST(request: Request) {
 
         removedInternalMovements = ids.length
         existingTransactions = existingTransactions.filter(tx => !idsToDelete.has(tx.id))
+        transactionGroups = buildTransactionGroups(existingTransactions)
       }
     }
 
@@ -799,11 +815,16 @@ export async function POST(request: Request) {
 
     for (const tx of parsedTransactions) {
       let activo_id = null
-      let existingActivo = activos?.find(a =>
-        a.ticker === tx.ticker ||
-        ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && a.ticker === tx.rawTicker) ||
-        (tx.tipoActivo === 'Metal' && getLegacyMetalTickers(tx.rawTicker).includes(a.ticker))
-      )
+      const candidateTickers = [tx.ticker]
+      if (tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') {
+        candidateTickers.push(tx.rawTicker)
+      }
+      if (tx.tipoActivo === 'Metal') {
+        candidateTickers.push(...getLegacyMetalTickers(tx.rawTicker))
+      }
+      let existingActivo = candidateTickers
+        .map((ticker) => assetsByTicker.get(ticker))
+        .find((asset) => asset !== undefined)
 
       if (existingActivo) {
         activo_id = existingActivo.id
@@ -825,6 +846,7 @@ export async function POST(request: Request) {
           existingActivo.tipo = dbTipo
           existingActivo.sector = getAssetSector(tx.tipoActivo)
           existingActivo.moneda = tx.moneda
+          assetsByTicker.set(tx.ticker, existingActivo)
         }
       } else {
         const dbTipo = getDatabaseAssetType(tx.tipoActivo)
@@ -853,17 +875,20 @@ export async function POST(request: Request) {
           activo_id = newActivo.id
           if (!activos) activos = []
           activos.push(newActivo)
+          assetsByTicker.set(newActivo.ticker, newActivo)
         }
       }
 
       if (!activo_id) continue
 
-      const matchingExisting = existingTransactions?.find(existing => {
-        const isSameActivo = existing.activo_id === activo_id
-        const isSameType = existing.tipo_operacion === tx.tipo_operacion
+      const matchingExisting = getTransactionCandidates(
+          transactionGroups,
+          activo_id,
+          tx.tipo_operacion,
+          tx.fecha,
+        ).find(existing => {
         const isSameQty = Math.abs(existing.cantidad - tx.cantidad) < 0.00000001
-        const isSameDate = existing.fecha === tx.fecha
-        return isSameActivo && isSameType && isSameQty && isSameDate
+        return isSameQty
       })
 
       if (matchingExisting && tx.tipoActivo === 'Metal') {
