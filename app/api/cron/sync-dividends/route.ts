@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import YahooFinance from 'yahoo-finance2'
+import { apiError, apiSuccess } from '@/lib/api/responses'
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
@@ -12,16 +12,19 @@ export async function GET(request: Request) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: 'Supabase credentials not configured' }, { status: 500 })
+      return apiError(request, 500, 'configuration_error', 'Supabase credentials not configured')
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // 1. Check authorization (Vercel Cron Secret)
     const authHeader = request.headers.get('authorization')
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      // Opcional: Descomentar para forzar seguridad estricta del cron
-      // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!process.env.CRON_SECRET) {
+      return apiError(request, 500, 'configuration_error', 'CRON_SECRET not configured')
+    }
+
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return apiError(request, 401, 'unauthorized', 'Unauthorized')
     }
 
     // 2. Fetch all user assets
@@ -31,7 +34,7 @@ export async function GET(request: Request) {
 
     if (activosError) throw activosError
     if (!activos || activos.length === 0) {
-      return NextResponse.json({ message: 'No assets found' })
+      return apiSuccess(request, { message: 'No assets found', dividendsAdded: 0, details: [] })
     }
 
     // Fetch all transactions to compute holdings and check if dividend exists
@@ -153,7 +156,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({ 
+    return apiSuccess(request, {
       message: 'Sync complete', 
       dividendsAdded: addedDividends.length,
       details: addedDividends
@@ -161,6 +164,6 @@ export async function GET(request: Request) {
 
   } catch (error: any) {
     console.error('Cron job error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return apiError(request, 500, 'internal_error', error.message || 'Cron job error')
   }
 }

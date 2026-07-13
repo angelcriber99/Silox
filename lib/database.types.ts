@@ -177,6 +177,37 @@ export interface Database {
           }
         ]
       }
+      portfolio_history: {
+        Row: {
+          id: string
+          user_id: string
+          timestamp: string
+          total_value: number
+          total_invested: number
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          timestamp?: string
+          total_value: number
+          total_invested: number
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          timestamp?: string
+          total_value?: number
+          total_invested?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_history_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       portfolio_snapshots: {
         Row: {
           id: string

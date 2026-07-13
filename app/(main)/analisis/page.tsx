@@ -14,7 +14,6 @@ const Projections = lazy(() =>
     default: mod.Projections,
   }))
 )
-
 export default function AnalysisPage() {
   const [activeTab, setActiveTab] = useState<"exhaustivo" | "proyecciones">("exhaustivo")
 
@@ -35,7 +34,7 @@ export default function AnalysisPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`
                     relative flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg flex-1 transition-colors whitespace-nowrap min-w-[120px]
                     ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground/80 hover:bg-muted/50"}
@@ -71,7 +70,7 @@ export default function AnalysisPage() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`
                       relative flex-1 py-2 text-sm font-semibold rounded-lg transition-colors
                       ${isActive ? "text-foreground" : "text-muted-foreground"}

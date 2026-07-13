@@ -27,6 +27,7 @@ import { ImportHistory } from "@/components/transactions/import-history"
 import { ExportTransactionsCsvButton } from "@/components/transactions/export-transactions-csv-button"
 import { useNotificationPreferences } from "@/lib/hooks/use-notification-preferences"
 import type { NotificationPreferences } from "@/lib/actions/notification-preferences"
+import { SystemHealthPanel } from "@/components/settings/system-health-panel"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -646,6 +647,8 @@ export default function SettingsPage() {
                     </div>
                     <ExportTransactionsCsvButton className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70" />
                   </div>
+
+                  <SystemHealthPanel />
                 </div>
 
                 <div className="pt-8">
