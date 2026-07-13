@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
+import type { CellValue } from 'exceljs'
 import { createClient } from '@/lib/supabase/server'
 import {
   buildTransactionGroups,
   getTransactionCandidates,
 } from '@/lib/domain/imports/transaction-index'
+import type { RevolutImportSuccess } from '@/lib/domain/imports/revolut-response'
 
 export const runtime = 'nodejs'
 
@@ -215,26 +217,29 @@ function parseCsv(text: string): string[][] {
   return rows
 }
 
-function cellToString(value: any): string {
+function cellToString(value: CellValue): string {
   if (value instanceof Date) return value.toISOString()
-  if (value?.text) return String(value.text)
-  if (value?.result !== undefined) return cellToString(value.result)
-  if (value?.richText) return value.richText.map((part: any) => part.text).join('')
-  if (value?.hyperlink && value?.text) return String(value.text)
+  if (typeof value === 'object' && value !== null) {
+    if ('richText' in value) return value.richText.map((part) => part.text).join('')
+    if ('result' in value && value.result !== undefined) return cellToString(value.result)
+    if ('text' in value) return value.text
+    if ('error' in value) return value.error
+  }
   return normalizeText(value)
 }
 
-async function parseWorkbook(buffer: Buffer): Promise<string[][]> {
+async function parseWorkbook(buffer: ArrayBuffer): Promise<string[][]> {
   const ExcelJS = (await import('exceljs')).default
   const workbook = new ExcelJS.Workbook()
-  await workbook.xlsx.load(buffer as any)
+  await workbook.xlsx.load(buffer)
 
   const sheet = workbook.worksheets[0]
   if (!sheet) return []
 
   const rows: string[][] = []
   sheet.eachRow((row) => {
-    const values = row.values as any[]
+    const values = row.values
+    if (!Array.isArray(values)) return
     const cells = values.slice(1).map(cellToString)
     if (cells.some(Boolean)) rows.push(cells)
   })
@@ -701,9 +706,9 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData()
-    const file = formData.get('file') as File
+    const file = formData.get('file')
 
-    if (!file) {
+    if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
 
@@ -721,23 +726,28 @@ export async function POST(request: Request) {
     }
 
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
     const rows = isExcel
-      ? await parseWorkbook(buffer)
-      : parseCsv(buffer.toString('utf-8'))
+      ? await parseWorkbook(arrayBuffer)
+      : parseCsv(new TextDecoder().decode(arrayBuffer))
 
     const parsedTransactions = await parseRows(rows, user.id)
     const internalCryptoMovements = parseInternalCryptoMovements(rows, user.id)
 
-    let { data: activos } = await supabase
+    const { data: loadedAssets, error: assetsError } = await supabase
       .from('activos')
       .select('id, ticker, tipo, sector, moneda')
       .eq('user_id', user.id)
 
-    let { data: existingTransactions } = await supabase
+    if (assetsError) throw assetsError
+    let activos = loadedAssets
+
+    const { data: loadedTransactions, error: transactionsError } = await supabase
       .from('transacciones')
       .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha')
       .eq('user_id', user.id)
+
+    if (transactionsError) throw transactionsError
+    let existingTransactions = loadedTransactions
 
     const assetsByTicker = new Map<string, NonNullable<typeof activos>[number]>()
     for (const asset of activos ?? []) {
@@ -794,7 +804,7 @@ export async function POST(request: Request) {
     }
 
     if (parsedTransactions.length === 0) {
-      return NextResponse.json({
+      const response: RevolutImportSuccess = {
         success: true,
         message: 'No se encontraron operaciones de compra/venta en este archivo.',
         newTransactions: 0,
@@ -803,7 +813,8 @@ export async function POST(request: Request) {
         removedInternalMovements,
         imported: [],
         ignored: [],
-      })
+      }
+      return NextResponse.json(response)
     }
 
     let newTxCount = 0
@@ -822,7 +833,7 @@ export async function POST(request: Request) {
       if (tx.tipoActivo === 'Metal') {
         candidateTickers.push(...getLegacyMetalTickers(tx.rawTicker))
       }
-      let existingActivo = candidateTickers
+      const existingActivo = candidateTickers
         .map((ticker) => assetsByTicker.get(ticker))
         .find((asset) => asset !== undefined)
 
@@ -830,7 +841,7 @@ export async function POST(request: Request) {
         activo_id = existingActivo.id
         const dbTipo = getDatabaseAssetType(tx.tipoActivo)
         if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== dbTipo || existingActivo.sector !== getAssetSector(tx.tipoActivo) || existingActivo.moneda !== tx.moneda)) {
-          await supabase
+          const { error: updateAssetError } = await supabase
             .from('activos')
             .update({
               ticker: tx.ticker,
@@ -841,6 +852,12 @@ export async function POST(request: Request) {
               geografia: getAssetGeography(tx.tipoActivo),
             })
             .eq('id', existingActivo.id)
+
+          if (updateAssetError) {
+            return NextResponse.json({
+              error: `No se pudo actualizar el activo ${tx.ticker}: ${updateAssetError.message}`,
+            }, { status: 500 })
+          }
 
           existingActivo.ticker = tx.ticker
           existingActivo.tipo = dbTipo
@@ -924,8 +941,16 @@ export async function POST(request: Request) {
         ignoredCount++
         ignored.push(tx)
       } else {
-        const { ticker, rawTicker, nombre, tipoActivo, moneda, ...dbTx } = tx
-        toInsert.push({ ...dbTx, activo_id, estado: 'Completada' })
+        toInsert.push({
+          user_id: tx.user_id,
+          activo_id,
+          tipo_operacion: tx.tipo_operacion,
+          cantidad: tx.cantidad,
+          precio_unitario: tx.precio_unitario,
+          fecha: tx.fecha,
+          comision: tx.comision,
+          estado: 'Completada',
+        })
         imported.push(tx)
         newTxCount++
       }
@@ -947,7 +972,7 @@ export async function POST(request: Request) {
       }, { status: 500 })
     }
 
-    return NextResponse.json({
+    const response: RevolutImportSuccess = {
       success: true,
       newTransactions: newTxCount,
       updatedTransactions: updatedTxCount,
@@ -955,10 +980,12 @@ export async function POST(request: Request) {
       removedInternalMovements,
       imported,
       ignored,
-    })
+    }
+    return NextResponse.json(response)
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Revolut Import Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Error inesperado al importar el archivo'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

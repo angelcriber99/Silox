@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
+import {
+  apiErrorSchema,
+  revolutImportSuccessSchema,
+  type RevolutImportTransaction,
+} from "@/lib/domain/imports/revolut-response"
 
 interface RevolutSyncProps {
   children: React.ReactNode
@@ -22,8 +27,8 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
   const router = useRouter()
   const [importSummary, setImportSummary] = useState<{
     isOpen: boolean;
-    imported: any[];
-    ignored: any[];
+    imported: RevolutImportTransaction[];
+    ignored: RevolutImportTransaction[];
   }>({
     isOpen: false,
     imported: [],
@@ -42,13 +47,22 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
         method: 'POST',
         body: formData,
       }).then(async (res) => {
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Error al procesar el archivo')
+        const payload: unknown = await res.json()
+        if (!res.ok) {
+          const parsedError = apiErrorSchema.safeParse(payload)
+          throw new Error(parsedError.success ? parsedError.data.error : 'Error al procesar el archivo')
+        }
+
+        const parsedResponse = revolutImportSuccessSchema.safeParse(payload)
+        if (!parsedResponse.success) {
+          throw new Error('El servidor devolviÃ³ una respuesta de importaciÃ³n no vÃ¡lida')
+        }
+        const data = parsedResponse.data
         
         setImportSummary({
           isOpen: true,
-          imported: data.imported || [],
-          ignored: data.ignored || []
+          imported: data.imported,
+          ignored: data.ignored,
         })
         
         router.refresh()
@@ -100,8 +114,8 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
                     Nuevas Sincronizadas ({importSummary.imported.length})
                   </h4>
                   <div className="space-y-2">
-                    {importSummary.imported.map((tx, i) => (
-                      <div key={i} className="flex justify-between items-center text-sm p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    {importSummary.imported.map((tx) => (
+                      <div key={`${tx.ticker}-${tx.tipo_operacion}-${tx.fecha}-${tx.cantidad}`} className="flex justify-between items-center text-sm p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{tx.ticker}</span>
                           <Badge variant="outline" className="text-[10px] h-4 leading-none px-1 border-emerald-500/30">
@@ -125,8 +139,8 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
                     Ignoradas por duplicidad ({importSummary.ignored.length})
                   </h4>
                   <div className="space-y-2">
-                    {importSummary.ignored.map((tx, i) => (
-                      <div key={i} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/50 border border-border/50 opacity-60">
+                    {importSummary.ignored.map((tx) => (
+                      <div key={`${tx.ticker}-${tx.tipo_operacion}-${tx.fecha}-${tx.cantidad}`} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/50 border border-border/50 opacity-60">
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{tx.ticker}</span>
                         </div>
