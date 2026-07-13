@@ -3,9 +3,13 @@ CREATE TABLE IF NOT EXISTS public.budget_settings (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   monthly_allowance numeric(10,2) NOT NULL DEFAULT 500.00,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   UNIQUE(user_id)
 );
+
+ALTER TABLE public.budget_settings
+  ADD COLUMN IF NOT EXISTS created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL;
 
 -- Create expenses table
 CREATE TABLE IF NOT EXISTS public.expenses (
