@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { mapSettledWithConcurrency } from '@/lib/utils/async'
 
 export async function GET() {
   const supabase = await createClient()
@@ -50,15 +51,24 @@ export async function GET() {
       tickers.push('EURUSD=X')
     }
 
-    for (const ticker of tickers) {
-      try {
+    const historyResults = await mapSettledWithConcurrency(
+      tickers,
+      6,
+      async (ticker) => {
         const result = await yahooFinance.chart(ticker, { period1: period1, interval: '1d' })
-        historicalData[ticker] = result.quotes || []
-      } catch (e) {
-        console.error(`Error fetching history for ${ticker}:`, e)
+        return { ticker, quotes: result.quotes || [] }
+      },
+    )
+
+    historyResults.forEach((result, index) => {
+      const ticker = tickers[index]
+      if (result.status === 'fulfilled') {
+        historicalData[ticker] = result.value.quotes
+      } else {
+        console.error(`Error fetching history for ${ticker}:`, result.reason)
         historicalData[ticker] = []
       }
-    }
+    })
 
     const snapshotsToInsert = []
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { authorizeCronRequest } from '@/lib/server/cron-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { mapSettledWithConcurrency } from '@/lib/utils/async'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,19 +88,31 @@ export async function GET(request: Request) {
 
     const addedDividends: any[] = []
 
-    // 4. Check each ticker for recent dividends
-    for (const baseTicker of uniqueTickers) {
-      const tickerToCheck = baseTicker.includes('.') ? baseTicker.split('.')[0] : baseTicker
+    // 4. Fetch Yahoo data with bounded concurrency, then write sequentially.
+    const dividendResults = await mapSettledWithConcurrency(
+      uniqueTickers,
+      6,
+      async (baseTicker) => {
+        const tickerToCheck = baseTicker.includes('.') ? baseTicker.split('.')[0] : baseTicker
+        try {
+          const historicalDivs = await yahooFinance.historical(tickerToCheck, {
+            period1: startDate,
+            events: 'dividends'
+          })
+          return { baseTicker, historicalDivs }
+        } catch (error) {
+          throw new Error(`Error fetching dividends for ${tickerToCheck}`, { cause: error })
+        }
+      },
+    )
 
-      let historicalDivs: any[] = []
-      try {
-        historicalDivs = await yahooFinance.historical(tickerToCheck, {
-          period1: startDate,
-          events: 'dividends'
-        })
-      } catch (err) {
-        console.error(`Error fetching historical dividends for ${tickerToCheck}:`, err)
+    for (const result of dividendResults) {
+      if (result.status === 'rejected') {
+        console.error('Error fetching historical dividends:', result.reason)
+        continue
       }
+
+      const { baseTicker, historicalDivs } = result.value
 
       if (!historicalDivs || historicalDivs.length === 0) continue
 

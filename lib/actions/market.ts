@@ -14,6 +14,7 @@ import {
   isQuoteFromCurrentMarketDate,
   type MarketSession,
 } from '@/lib/utils/market-performance'
+import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 const METAL_RATE_API_URL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json'
@@ -165,8 +166,10 @@ async function _fetchMarketPrices(
 
   const fxRates = convertToEurFlag ? await fetchFxRatesToEur() : undefined
 
-  const results = await Promise.allSettled(
-    tickers.map(async (ticker: string) => {
+  const results = await mapSettledWithConcurrency(
+    tickers,
+    8,
+    async (ticker: string) => {
       if (ticker === 'CASH') {
         return {
           ticker,
@@ -254,7 +257,7 @@ async function _fetchMarketPrices(
         originalCurrency,
         marketState: usMarketState
       }
-    })
+    },
   )
 
   const prices: Record<string, PriceEntry> = {}

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { normalizeYahooCurrency } from '@/lib/utils/currency'
 import { authorizeCronRequest } from '@/lib/server/cron-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { mapSettledWithConcurrency } from '@/lib/utils/async'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,8 +44,10 @@ export async function GET(request: Request) {
 
     // 4. Obtener precios de Yahoo Finance (en paralelo)
     const pricesMap: Record<string, { price: number; high: number; low: number; currency: string }> = {}
-    await Promise.allSettled(
-      uniqueTickers.map(async (ticker) => {
+    await mapSettledWithConcurrency(
+      uniqueTickers,
+      8,
+      async (ticker) => {
         try {
           const quote = await yahooFinance.quote(ticker) as any
           if (quote.regularMarketPrice) {
@@ -58,7 +61,7 @@ export async function GET(request: Request) {
         } catch (e) {
           console.error(`Failed to fetch price for ${ticker}`, e)
         }
-      })
+      },
     )
 
     // 5. Comprobar alertas

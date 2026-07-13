@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireApiUser } from '@/lib/server/api-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { mapSettledWithConcurrency } from '@/lib/utils/async'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,8 +38,10 @@ export async function POST(request: Request) {
       type: string
     }> = []
 
-    const results = await Promise.allSettled(
-      tickers.map(async (ticker: string) => {
+    await mapSettledWithConcurrency(
+      tickers,
+      6,
+      async (ticker: string) => {
           let q;
           try {
             q = await yahooFinance.quoteSummary(ticker, { modules: ['calendarEvents'] })
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
               type: 'Pago Dividendo'
             })
           }
-      })
+      },
     )
 
     return NextResponse.json({ events })
