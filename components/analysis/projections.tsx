@@ -2,15 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
-import { useBudgetSettings } from "@/lib/hooks/use-budget-settings"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Loader2, TrendingUp, PiggyBank, Wallet } from "lucide-react"
-import { toast } from "sonner"
 
 export function Projections() {
   const { positions, isLoading } = usePortfolio()
-  const { settings: budgetSettings, isLoading: isBudgetLoading, isSaving, updateBudget } = useBudgetSettings()
   
   const currentTotal = useMemo(() => {
     if (!positions) return 0
@@ -38,13 +35,7 @@ export function Projections() {
     }
   }, []);
 
-  useEffect(() => {
-    if (budgetSettings) {
-      setMonthlySaving(budgetSettings.monthly_allowance)
-    }
-  }, [budgetSettings]);
-
-  const saveDefaults = async () => {
+  const saveDefaults = () => {
     try {
       localStorage.setItem('silox_proj_monthly', monthlySaving.toString());
       if (futureSaving !== '') localStorage.setItem('silox_proj_future', futureSaving.toString());
@@ -52,10 +43,8 @@ export function Projections() {
       
       if (futureSavingYear !== '') localStorage.setItem('silox_proj_year', futureSavingYear.toString());
       else localStorage.removeItem('silox_proj_year');
-      await updateBudget("monthly_allowance", monthlySaving)
-      toast.success("Valores de proyección guardados")
-    } catch (error: any) {
-      toast.error(error.message || "No se pudieron guardar los valores")
+    } catch (e) {
+      console.error("Error saving projection defaults", e);
     }
   };
 
@@ -107,7 +96,7 @@ export function Projections() {
     return data
   }, [startingCapital, monthlySaving, annualReturn, futureSaving, futureSavingYear])
 
-  if (isLoading || isBudgetLoading) {
+  if (isLoading) {
     return (
       <div className="w-full h-[400px] flex items-center justify-center bg-card/30 border border-border/50 rounded-2xl">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -210,10 +199,9 @@ export function Projections() {
       <div className="flex justify-end mt-2">
         <button 
           onClick={saveDefaults}
-          disabled={isSaving}
           className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors bg-card/50 px-3 py-1.5 rounded-lg border border-border/50"
         >
-          {isSaving ? "Guardando..." : "Guardar valores por defecto"}
+          Guardar valores por defecto
         </button>
       </div>
 
