@@ -9,12 +9,7 @@ interface ReconciliationAlertsProps {
 
 export function ReconciliationAlerts({ issues }: ReconciliationAlertsProps) {
   if (issues.length === 0) {
-    return (
-      <div className="mx-6 mb-5 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-500">
-        <CheckCircle2 className="h-4 w-4 shrink-0" />
-        No se han detectado inconsistencias básicas en liquidez, pendientes o ventas.
-      </div>
-    )
+    return null
   }
 
   return (
