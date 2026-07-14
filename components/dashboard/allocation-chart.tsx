@@ -130,16 +130,16 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
   const hasData = chartData.data.length > 0
 
   return (
-    <div className="relative w-full h-full" style={{ perspective: "1000px" }}>
+    <div className="relative w-full" style={{ perspective: "1000px" }}>
       <motion.div
-        className="w-full h-full absolute inset-0"
+        className="w-full relative"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* Front Face */}
         <Card 
-          className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
+          className="w-full bg-card/40 border-border/40 backdrop-blur-md flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
         >
           <CardHeader className="pb-2">
