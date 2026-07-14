@@ -99,7 +99,7 @@ export function PortfolioSummary({
   }
   if (variant === 'sidebar') {
     return (
-      <div className="flex flex-col gap-4 p-4 relative overflow-hidden bg-background">
+      <div className="flex flex-col gap-4 p-4 relative bg-background shrink-0">
         <div className="flex flex-col items-center z-10 py-6">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center justify-center gap-1.5 opacity-80">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
@@ -157,13 +157,22 @@ export function PortfolioSummary({
           </div>
         )}
 
-        <button
-          onClick={() => setChartsOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-sm font-semibold shadow-sm mt-1"
-        >
-          <BarChart2 className="w-4 h-4" />
-          Análisis Avanzado
-        </button>
+        <div className="flex gap-2 w-full mt-1">
+          <button
+            onClick={() => useNotes.getState().setIsOpen(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[13px] font-semibold shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
+            Plan Estratégico
+          </button>
+          <button
+            onClick={() => setChartsOpen(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-[13px] font-semibold shadow-sm"
+          >
+            <BarChart2 className="w-4 h-4" />
+            Análisis
+          </button>
+        </div>
         
         <WithdrawCashModal
           open={withdrawModalOpen}
