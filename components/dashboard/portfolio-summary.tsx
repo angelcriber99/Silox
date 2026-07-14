@@ -98,42 +98,42 @@ export function PortfolioSummary({
   if (variant === 'sidebar') {
     return (
       <div className="flex flex-col gap-4 p-4 relative overflow-hidden bg-background">
-        <div className="flex flex-col items-center z-10 py-2">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1 flex items-center justify-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+        <div className="flex flex-col items-center z-10 py-6">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center justify-center gap-1.5 opacity-80">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
             Valor del Portfolio
           </p>
-          <div className="text-3xl font-bold tracking-tight leading-none mb-3 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
+          <div className="text-4xl lg:text-5xl font-bold tracking-tight leading-none mb-6 bg-gradient-to-br from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent text-center drop-shadow-sm">
             <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 p-2 rounded-xl bg-card/50 border border-border/50 w-full">
-            <div className="flex items-center justify-center gap-1" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
-              {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span className="text-xs font-bold tabular-nums">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/60 backdrop-blur-md border border-border/50 shadow-sm w-full max-w-[320px]">
+            <div className="flex items-center justify-center gap-1.5" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
+              {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              <span className="text-sm font-bold tabular-nums">
                 {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
               </span>
             </div>
-            <span className="w-px h-3 bg-border/60" />
-            <div className="flex items-center gap-1 text-[11px] font-medium" style={{ color: daily24Positive ? "rgba(48,209,88,0.9)" : "rgba(255,69,58,0.9)" }}>
+            <span className="w-px h-4 bg-border/60" />
+            <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: daily24Positive ? "rgba(48,209,88,0.9)" : "rgba(255,69,58,0.9)" }}>
               <span className="text-muted-foreground font-normal">Hoy</span>
-              <span className="font-semibold tabular-nums">
+              <span className="font-bold tabular-nums">
                 {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 flex flex-col gap-1 rounded-xl bg-card/40 border border-border/40">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Invertido</span>
-            <p className="text-sm font-bold tabular-nums text-foreground">
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          <div className="p-4 flex flex-col gap-1.5 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 hover:bg-card/60 transition-colors">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Invertido</span>
+            <p className="text-base font-bold tabular-nums text-foreground">
               <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
             </p>
           </div>
-          <div className="p-3 flex flex-col gap-1 rounded-xl bg-card/40 border border-border/40">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">Rentabilidad</span>
-            <p className="text-sm font-bold tabular-nums" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
+          <div className="p-4 flex flex-col gap-1.5 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 hover:bg-card/60 transition-colors">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Rentabilidad</span>
+            <p className="text-base font-bold tabular-nums" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
               <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
             </p>
           </div>

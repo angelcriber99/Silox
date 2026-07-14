@@ -68,7 +68,9 @@ export default function Home() {
           <div className="flex-1 flex flex-row overflow-hidden bg-background">
             
             {/* ── Left Sidebar (Dashboard Control Panel) ── */}
-            <div className="w-[340px] flex-shrink-0 flex flex-col border-r border-border/20 overflow-y-auto custom-scrollbar bg-card/5">
+            <div className="w-[420px] flex-shrink-0 flex flex-col border-r border-border/20 overflow-y-auto custom-scrollbar bg-background relative">
+              {/* Subtle gradient background for the premium feel */}
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
               <PortfolioSummary
                 totals={totals}
                 positions={positions}

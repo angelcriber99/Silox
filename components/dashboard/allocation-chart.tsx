@@ -301,14 +301,14 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-6 py-2 w-full">
-            <div className="relative w-[160px] aspect-square flex-shrink-0 group">
+            <div className="relative w-[220px] aspect-square flex-shrink-0 group mt-4">
               <div className="absolute inset-0 z-10">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={chartData.data}
-                      innerRadius={60}
-                      outerRadius={80}
+                      innerRadius={80}
+                      outerRadius={105}
                       paddingAngle={4}
                       dataKey="value"
                       stroke="none"
@@ -353,9 +353,9 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
               </div>
               {/* Center label */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-500 group-hover:scale-105 z-0">
-                <div className="text-center">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-0.5">Total</p>
-                  <p className="text-lg font-bold tabular-nums text-foreground drop-shadow-md leading-none">
+                <div className="text-center flex flex-col items-center">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-1 opacity-70">Total</p>
+                  <p className="text-2xl font-bold tabular-nums text-foreground drop-shadow-md leading-none bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
                     {hideBalances ? "****" : formatCurrency(totals.totalValue > 0 ? totals.totalValue : chartData.total)}
                   </p>
                 </div>
