@@ -105,7 +105,7 @@ export default function Home() {
 
               {/* Row 2: Positions Table */}
               <PositionsTable
-                positions={positions.filter(p => p.tipo !== 'Liquidez')}
+                positions={positions}
                 loading={isLoading}
                 onAddTransaction={openTransactionModal}
                 onEditAsset={openEditAssetModal}
