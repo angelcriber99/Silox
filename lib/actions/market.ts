@@ -163,11 +163,38 @@ function getMarketState(timeZone: string): MarketSession {
   }
 }
 
+// In-memory cache for the server action to prevent Yahoo rate limits
+// while bypassing Next.js unstable_cache completely.
+interface ActionCacheEntry {
+  data: MarketPricesResult
+  expiresAt: number
+}
+const actionCache = new Map<string, ActionCacheEntry>()
+const ACTION_CACHE_TTL = 60_000
+
 export async function fetchMarketPricesDirect(
   tickers: string[],
   convertToEurFlag: boolean = false
 ): Promise<MarketPricesResult> {
-  return _fetchMarketPrices(tickers, convertToEurFlag)
+  const cacheKey = `${tickers.slice().sort().join(',')}:${convertToEurFlag}`
+  
+  const cached = actionCache.get(cacheKey)
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.data
+  }
+
+  const data = await _fetchMarketPrices(tickers, convertToEurFlag)
+  
+  // Cleanup old entries
+  if (actionCache.size > 200) {
+    const now = Date.now()
+    for (const [k, v] of actionCache) {
+      if (now > v.expiresAt) actionCache.delete(k)
+    }
+  }
+  
+  actionCache.set(cacheKey, { data, expiresAt: Date.now() + ACTION_CACHE_TTL })
+  return data
 }
 
 async function _fetchMarketPrices(
@@ -321,22 +348,9 @@ export async function fetchMarketPrices(
 
   // Create a unique cache key based on the requested tickers
   const sortedTickers = [...tickers].sort()
-  // A session-specific key makes the percentage reset on the first refresh after
-  // PRE/REGULAR/POST transitions instead of waiting for the old entry.
-  // Time bucket forces actual revalidation since unstable_cache can be sticky.
-  const timeBucket = Math.floor(Date.now() / 60000)
-  const cacheKey = `market-prices-v4-${timeBucket}-${getMarketState('America/New_York')}-${sortedTickers.join('-')}-${convertToEurFlag}`
-  
-  // Cache for 60 seconds (reduced from 300s for more real-time updates)
-  const getCachedPrices = unstable_cache(
-    async () => {
-      return _fetchMarketPrices(sortedTickers, convertToEurFlag)
-    },
-    [cacheKey],
-    { revalidate: 60, tags: ['market-prices'] }
-  )
-
-  return getCachedPrices()
+  // We no longer use unstable_cache because it is highly unreliable on Vercel.
+  // Instead, we use fetchMarketPricesDirect which has a reliable in-memory 60s cache.
+  return fetchMarketPricesDirect(sortedTickers, convertToEurFlag)
 }
 
 export interface AssetDetails {
