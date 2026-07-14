@@ -300,7 +300,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:gap-12 gap-6 py-2 w-full">
+          <div className="flex flex-col items-center justify-center gap-6 py-2 w-full">
             <div className="relative w-[160px] aspect-square flex-shrink-0 group">
               <div className="absolute inset-0 z-10">
                 <ResponsiveContainer width="100%" height="100%">
@@ -363,7 +363,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
             </div>
 
             {/* Legend */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 w-full max-w-2xl">
+            <div className="flex flex-col gap-y-2 w-full max-w-2xl">
               {chartData.data.map((d) => (
                 <div 
                   key={d.name} 
