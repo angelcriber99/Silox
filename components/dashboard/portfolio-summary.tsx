@@ -109,24 +109,21 @@ export function PortfolioSummary({
             <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/60 backdrop-blur-md border border-border/50 shadow-sm w-full max-w-[320px]">
-            <div className="flex items-center justify-center gap-1.5" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
-              {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              <span className="text-sm font-bold tabular-nums">
-                {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+          <div className="flex flex-col items-center gap-1.5 mt-2">
+            <div className="flex items-center gap-1.5" style={{ color: daily24Positive ? "#30D158" : "#FF453A" }}>
+              {daily24Positive ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+              <span className="text-xl font-bold tabular-nums tracking-tight drop-shadow-sm">
+                {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
               </span>
-              <span className="text-xs opacity-80 font-medium">
-                ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent).replace('+', '')})
+              <span className="text-sm font-semibold opacity-90">
+                ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h).replace('+', '')})
               </span>
             </div>
-            <span className="w-px h-4 bg-border/60" />
-            <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: daily24Positive ? "rgba(48,209,88,0.9)" : "rgba(255,69,58,0.9)" }}>
-              <span className="text-muted-foreground font-normal">Hoy</span>
-              <span className="font-bold tabular-nums">
-                {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
-              </span>
-              <span className="opacity-80">
-                ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h).replace('+', '')})
+            
+            <div className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground/80 mt-1">
+              <span className="uppercase tracking-widest text-[10px]">Total Histórico</span>
+              <span className="tabular-nums font-semibold" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
+                {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
               </span>
             </div>
           </div>
@@ -178,6 +175,8 @@ export function PortfolioSummary({
           open={withdrawModalOpen}
           onOpenChange={setWithdrawModalOpen}
           cashAssetId={cashAssetId || ""}
+          sourceAssetType={positions.find(p => p.activo_id === cashAssetId)?.tipo}
+          liquidezAssetId={liquidezPos?.activo_id}
         />
 
         <PerformanceModal
@@ -449,6 +448,8 @@ export function PortfolioSummary({
         open={withdrawModalOpen}
         onOpenChange={setWithdrawModalOpen}
         cashAssetId={cashAssetId || ""}
+        sourceAssetType={positions.find(p => p.activo_id === cashAssetId)?.tipo}
+        liquidezAssetId={liquidezPos?.activo_id}
       />
     </div>
   )

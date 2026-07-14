@@ -10,7 +10,7 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import { motion, AnimatePresence } from "framer-motion"
 import { RefreshCw, Eye, EyeOff, PieChart as PieChartIcon, BarChart3, Wallet, Activity } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
+
 import { CategoryDrilldownModal } from "@/components/dashboard/category-drilldown-modal"
 import { useHistory } from "@/lib/hooks/use-portfolio"
 import { PortfolioHistoryChart } from "./portfolio-history-chart"

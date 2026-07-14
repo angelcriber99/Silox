@@ -20,6 +20,8 @@ interface WithdrawCashModalProps {
   cashAssetId: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  sourceAssetType?: string
+  liquidezAssetId?: string
 }
 
 const inputClass =
@@ -29,11 +31,14 @@ export function WithdrawCashModal({
   cashAssetId,
   open,
   onOpenChange,
+  sourceAssetType,
+  liquidezAssetId,
 }: WithdrawCashModalProps) {
   const [cantidad, setCantidad] = useState("")
   const [fecha, setFecha] = useState(
     () => new Date().toISOString().split("T")[0]
   )
+  const [transferToLiquidez, setTransferToLiquidez] = useState(true)
   const addTransaction = useAddTransaction()
 
   const resetForm = () => {
@@ -65,13 +70,29 @@ export function WithdrawCashModal({
         precio_unitario: 1, // Cash price is always 1
         comision: 0,
         fecha,
-        notas: "Retirada de efectivo",
+        notas: transferToLiquidez && sourceAssetType === 'Fondo Monetario' 
+          ? "Traspaso a Liquidez" 
+          : "Retirada de efectivo",
       })
+
+      if (transferToLiquidez && sourceAssetType === 'Fondo Monetario' && liquidezAssetId) {
+        await addTransaction.mutateAsync({
+          activo_id: liquidezAssetId,
+          tipo_operacion: "Ingreso",
+          cantidad: cantidadNum,
+          precio_unitario: 1, // Cash price is always 1
+          comision: 0,
+          fecha,
+          notas: "Traspaso desde Fondo Monetario",
+        })
+      }
 
       toast.success(
         "Retirada registrada",
         {
-          description: `Has retirado ${cantidadNum.toFixed(2)} € de la cartera`,
+          description: transferToLiquidez && sourceAssetType === 'Fondo Monetario'
+            ? `Se han transferido ${cantidadNum.toFixed(2)} € a Liquidez`
+            : `Has retirado ${cantidadNum.toFixed(2)} € de la cartera`,
         }
       )
 
@@ -123,6 +144,25 @@ export function WithdrawCashModal({
               disabled={addTransaction.isPending}
             />
           </div>
+
+          {sourceAssetType === 'Fondo Monetario' && liquidezAssetId && (
+            <div className="flex items-center space-x-2 pt-2">
+              <input
+                type="checkbox"
+                id="transferToLiquidez"
+                checked={transferToLiquidez}
+                onChange={(e) => setTransferToLiquidez(e.target.checked)}
+                className="w-4 h-4 rounded border-border bg-background accent-primary cursor-pointer"
+                disabled={addTransaction.isPending}
+              />
+              <Label
+                htmlFor="transferToLiquidez"
+                className="text-sm text-foreground/80 cursor-pointer"
+              >
+                Transferir a Liquidez (efectivo)
+              </Label>
+            </div>
+          )}
 
           <DialogFooter className="gap-2 pt-2">
             <Button
