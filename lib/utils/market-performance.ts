@@ -57,8 +57,8 @@ export function calculateMarketPerformance(
 
     return {
       currentPrice,
-      sessionChangePercent: percentChange(currentPrice, sessionBaseline) ?? quote.preMarketChangePercent ?? null,
-      dailyChangePercent: quote.preMarketChangePercent ?? percentChange(currentPrice, quote.regularMarketPrice) ?? null,
+      sessionChangePercent: percentChange(currentPrice, sessionBaseline) ?? null,
+      dailyChangePercent: percentChange(currentPrice, quote.regularMarketPrice) ?? null,
       latestTime: quote.preMarketTime ?? quote.regularMarketTime,
     }
   }
@@ -68,8 +68,8 @@ export function calculateMarketPerformance(
 
     return {
       currentPrice,
-      sessionChangePercent: percentChange(currentPrice, quote.regularMarketPrice) ?? quote.postMarketChangePercent ?? null,
-      dailyChangePercent: quote.postMarketChangePercent ?? percentChange(currentPrice, quote.regularMarketPrice) ?? null,
+      sessionChangePercent: percentChange(currentPrice, quote.regularMarketPrice) ?? null,
+      dailyChangePercent: percentChange(currentPrice, quote.regularMarketPrice) ?? null,
       latestTime: quote.postMarketTime ?? quote.regularMarketTime,
     }
   }
