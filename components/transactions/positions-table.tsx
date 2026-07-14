@@ -271,73 +271,37 @@ export function PositionsTable({
 
   return (
     <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden">
-      <CardHeader className="p-4 md:p-6 pb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Layers className="h-4 w-4" />
-            <span>{t('positions')}</span>
-          </CardTitle>
+      <CardHeader className="p-4 md:p-6 pb-4 flex flex-col gap-5 border-b border-border/20">
+        {/* TOP ROW: Title, Badges, Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <CardTitle className="text-base font-medium text-foreground flex items-center gap-2">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              <span>{t('positions')}</span>
+            </CardTitle>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
-              <Wallet className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Liquidez:</span>
-              <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
-            </div>
-            {fondoMonetarioAmount > 0 && (
-              <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
-                <PiggyBank className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">F. Monetario:</span>
-                <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(fondoMonetarioAmount)}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
+                <Wallet className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">Liquidez:</span>
+                <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
               </div>
-            )}
-          </div>
-
-          {/* Filters & Search */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground/80" />
-              <Input
-                placeholder={t('search_asset')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-xs bg-background border-border w-full sm:w-[160px] lg:w-[200px] text-foreground focus-visible:ring-primary/30"
-              />
-            </div>
-
-            {/* Filter tabs */}
-            <div className="flex gap-1 flex-wrap">
-              {FILTER_OPTIONS.map((opt) => {
-                const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
-                const disabled =
-                  opt !== "Todos" && !typesWithData.has(opt)
-                return (
-                  <button
-                    key={opt}
-                    onClick={() => !disabled && setFilter(optText)}
-                    disabled={disabled}
-                    className={`px-3 py-1 text-xs rounded-lg font-medium transition-all duration-200 ${
-                      filter === opt
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : disabled
-                          ? "text-muted-foreground/40 cursor-not-allowed"
-                          : "text-muted-foreground/80 hover:text-foreground/80 hover:bg-muted"
-                    }`}
-                  >
-                    {optText}
-                  </button>
-                )
-              })}
+              {fondoMonetarioAmount > 0 && (
+                <div className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-card/60 border border-border/40 text-[13px] font-medium shadow-sm hidden sm:flex">
+                  <PiggyBank className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-muted-foreground">F. Monetario:</span>
+                  <span className="font-semibold text-foreground">{hideBalances ? "••••" : formatCurrency(fondoMonetarioAmount)}</span>
+                </div>
+              )}
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setHelpOpen(true)}
-              className="bg-transparent border-border text-muted-foreground hover:text-foreground transition-colors duration-200"
+              className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
               title="Guía de uso"
             >
               <BookOpen className="h-4 w-4" />
@@ -347,7 +311,7 @@ export function PositionsTable({
                 size="sm"
                 variant="outline"
                 onClick={() => setAlertsOpen(true)}
-                className="bg-transparent border-border text-muted-foreground hover:text-foreground transition-colors duration-200"
+                className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
               >
                 <Bell className="h-4 w-4 mr-2" />
                 {t('alerts')}
@@ -359,14 +323,51 @@ export function PositionsTable({
             <Button
               size="sm"
               onClick={() => setAddAssetOpen(true)}
-              className="transition-colors duration-200 text-white"
+              className="transition-colors duration-200 text-white shadow-sm"
               style={{
                 background: "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))",
               }}
             >
-              <Plus className="mr-2 h-3.5 w-3.5" />
+              <Plus className="mr-2 h-4 w-4" />
               {t('add_asset')}
             </Button>
+          </div>
+        </div>
+
+        {/* BOTTOM ROW: Filters & Search */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="relative w-full sm:w-auto">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/60" />
+            <Input
+              placeholder={t('search_asset')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-xs sm:text-sm bg-muted/30 border-border/50 w-full sm:w-[220px] rounded-full text-foreground focus-visible:ring-primary/30 focus-visible:bg-background transition-all"
+            />
+          </div>
+
+          <div className="flex gap-1.5 flex-wrap">
+            {FILTER_OPTIONS.map((opt) => {
+              const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
+              const disabled =
+                opt !== "Todos" && !typesWithData.has(opt)
+              return (
+                <button
+                  key={opt}
+                  onClick={() => !disabled && setFilter(optText)}
+                  disabled={disabled}
+                  className={`px-3.5 py-1.5 text-[13px] rounded-full font-medium transition-all duration-200 border ${
+                    filter === opt
+                      ? "bg-primary text-primary-foreground shadow-sm border-primary"
+                      : disabled
+                        ? "text-muted-foreground/30 border-transparent cursor-not-allowed"
+                        : "bg-transparent text-muted-foreground/80 border-border/50 hover:text-foreground hover:bg-muted/50 hover:border-border"
+                  }`}
+                >
+                  {optText}
+                </button>
+              )
+            })}
           </div>
         </div>
       </CardHeader>
