@@ -4,6 +4,7 @@ import { normalizeYahooCurrency } from '@/lib/utils/currency'
 import { requireApiUser } from '@/lib/server/api-auth'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { getErrorMessage } from '@/lib/utils/errors'
+import { fetchMetalChartInEur } from '@/lib/actions/market'
 import type { ChartOptions } from 'yahoo-finance2/modules/chart'
 
 export const dynamic = 'force-dynamic'
@@ -34,6 +35,16 @@ export async function GET(
       return NextResponse.json({ error: 'Parámetros de mercado inválidos' }, { status: 400 })
     }
     const { ticker, range, type } = parsed.data
+
+    const metalChart = await fetchMetalChartInEur(ticker, range)
+    if (metalChart !== null) {
+      return NextResponse.json({
+        quote: null,
+        summary: null,
+        chart: metalChart,
+        currency: 'EUR',
+      })
+    }
 
     const shouldFetchSummary = type === 'Acción' || type === 'Stock'
     const [quoteResult, chartResult, summaryResult] = await Promise.allSettled([

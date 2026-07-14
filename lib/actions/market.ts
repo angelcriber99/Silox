@@ -1,6 +1,6 @@
 "use server"
 
-import { unstable_cache, unstable_noStore } from 'next/cache'
+import { unstable_noStore } from 'next/cache'
 
 import {
   convertSeriesToEur,
@@ -11,14 +11,25 @@ import {
 } from '@/lib/utils/currency'
 import {
   extractMarketPerformance,
-  type MarketSession,
+  type ChartMeta,
+  type ChartQuote,
 } from '@/lib/utils/market-performance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
+import {
+  buildMetalChartPoints,
+  buildMetalPriceMetrics,
+  getMetalChartDateKeys,
+  type MetalChartPoint,
+  type MetalChartRange,
+  type MetalRateCode,
+  type MetalRateSnapshot,
+} from '@/lib/utils/metal-market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
-const METAL_RATE_API_URL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json'
+const METAL_RATE_API_BASE = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api'
+const METAL_HISTORY_DAYS = 6
 
-const METAL_TICKER_CODES: Record<string, 'xag' | 'xau' | 'xpd' | 'xpt'> = {
+const METAL_TICKER_CODES: Record<string, MetalRateCode> = {
   'SI=F': 'xag',
   'XAG': 'xag',
   'XAGUSD=X': 'xag',
@@ -54,41 +65,103 @@ interface YahooQuote {
 }
 
 interface MetalRatesResponse {
-  eur?: Partial<Record<'xag' | 'xau' | 'xpd' | 'xpt', number>>
+  date?: string
+  eur?: Partial<Record<MetalRateCode, number>>
 }
 
-function getMetalCode(ticker: string): 'xag' | 'xau' | 'xpd' | 'xpt' | null {
+function getMetalCode(ticker: string): MetalRateCode | null {
   return METAL_TICKER_CODES[ticker.toUpperCase()] ?? null
 }
 
-async function fetchMetalPriceInEur(ticker: string): Promise<PriceEntry | null> {
+function getPreviousDateKeys(date: string, count: number): string[] {
+  const cursor = new Date(`${date}T00:00:00Z`)
+  if (Number.isNaN(cursor.getTime())) return []
+
+  return Array.from({ length: count }, (_, index) => {
+    const value = new Date(cursor)
+    value.setUTCDate(value.getUTCDate() - index - 1)
+    return value.toISOString().slice(0, 10)
+  })
+}
+
+async function fetchMetalRates(date: 'latest' | string): Promise<MetalRateSnapshot | null> {
+  const urls = [
+    `${METAL_RATE_API_BASE}@${date}/v1/currencies/eur.json`,
+    `https://${date}.currency-api.pages.dev/v1/currencies/eur.json`,
+  ]
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        next: { revalidate: date === 'latest' ? 300 : 86_400 },
+      })
+      if (!response.ok) continue
+
+      const data = await response.json() as MetalRatesResponse
+      if (!data.date || !data.eur) continue
+
+      return { date: data.date, rates: data.eur }
+    } catch {
+      // Try the documented fallback host before giving up.
+    }
+  }
+
+  return null
+}
+
+interface MetalMarketHistory {
+  latest: MetalRateSnapshot
+  history: MetalRateSnapshot[]
+}
+
+async function fetchMetalMarketHistory(): Promise<MetalMarketHistory | null> {
+  const latest = await fetchMetalRates('latest')
+  if (!latest) return null
+
+  const history = (await Promise.all(
+    getPreviousDateKeys(latest.date, METAL_HISTORY_DAYS).map(fetchMetalRates),
+  )).filter((snapshot): snapshot is MetalRateSnapshot => snapshot != null)
+
+  return { latest, history }
+}
+
+export async function fetchMetalChartInEur(
+  ticker: string,
+  range: MetalChartRange,
+): Promise<MetalChartPoint[] | null> {
   const metalCode = getMetalCode(ticker)
   if (!metalCode) return null
 
-  try {
-    const response = await fetch(METAL_RATE_API_URL, {
-      next: { revalidate: 300 },
-    })
-    if (!response.ok) return null
+  const latest = await fetchMetalRates('latest')
+  if (!latest) return null
 
-    const data = await response.json() as MetalRatesResponse
-    const unitsPerEur = data.eur?.[metalCode]
-    if (!unitsPerEur || unitsPerEur <= 0) return null
+  const dates = getMetalChartDateKeys(latest.date, range)
+    .filter((date) => date !== latest.date)
+  const history = (await Promise.all(dates.map(fetchMetalRates)))
+    .filter((snapshot): snapshot is MetalRateSnapshot => snapshot != null)
 
-    const price = 1 / unitsPerEur
+  return buildMetalChartPoints(metalCode, [...history, latest])
+}
 
-    return {
-      price,
-      sparkline: [price, price, price, price, price, price, price],
-      currency: 'EUR',
-      changePercent24h: 0,
-      dailyChangePercent24h: 0,
-      originalPrice: price,
-      originalCurrency: 'EUR',
-      marketState: 'OPEN',
-    }
-  } catch {
-    return null
+function getMetalPriceEntry(
+  ticker: string,
+  market: MetalMarketHistory,
+): PriceEntry | null {
+  const metalCode = getMetalCode(ticker)
+  if (!metalCode) return null
+
+  const metrics = buildMetalPriceMetrics(metalCode, market.latest, market.history)
+  if (!metrics) return null
+
+  return {
+    price: metrics.price,
+    sparkline: metrics.sparkline,
+    currency: 'EUR',
+    changePercent24h: metrics.changePercent,
+    dailyChangePercent24h: metrics.changePercent,
+    originalPrice: metrics.price,
+    originalCurrency: 'EUR',
+    marketState: 'OPEN',
   }
 }
 
@@ -182,6 +255,9 @@ async function _fetchMarketPrices(
   d.setDate(d.getDate() - 7)
 
   const fxRates = convertToEurFlag ? await fetchFxRatesToEur() : undefined
+  const metalMarketPromise = tickers.some((ticker) => getMetalCode(ticker) != null)
+    ? fetchMetalMarketHistory()
+    : Promise.resolve(null)
 
   const results = await mapSettledWithConcurrency(
     tickers,
@@ -201,7 +277,8 @@ async function _fetchMarketPrices(
         }
       }
 
-      const metalPrice = await fetchMetalPriceInEur(ticker)
+      const metalMarket = await metalMarketPromise
+      const metalPrice = metalMarket ? getMetalPriceEntry(ticker, metalMarket) : null
       if (metalPrice) {
         return {
           ticker,
@@ -219,14 +296,14 @@ async function _fetchMarketPrices(
       }
 
       const meta = chart1m.meta
-      const quotes = (chart1m.quotes as any) || []
+      const quotes = (chart1m.quotes as ChartQuote[]) || []
       
       const originalCurrency = normalizeYahooCurrency(meta.currency || 'USD')
-      const performance = extractMarketPerformance(meta as any, quotes)
+      const performance = extractMarketPerformance(meta as ChartMeta, quotes)
 
       const rawPrice = performance.currentPrice
-      let changePercent24h = performance.sessionChangePercent
-      let dailyChangePercent24h = performance.dailyChangePercent
+      const changePercent24h = performance.sessionChangePercent
+      const dailyChangePercent24h = performance.dailyChangePercent
       let sparkline: number[] = []
       if (chart1d?.quotes) {
         sparkline = chart1d.quotes
@@ -259,7 +336,6 @@ async function _fetchMarketPrices(
 
   const prices: Record<string, PriceEntry> = {}
   let globalMarketState = 'CLOSED'
-  let hasOpenMarket = false
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i]
@@ -283,7 +359,6 @@ async function _fetchMarketPrices(
       } else if (marketState === 'POST' && globalMarketState !== 'PRE') {
         globalMarketState = 'POST'
       } else if (marketState === 'REGULAR' && globalMarketState !== 'PRE' && globalMarketState !== 'POST') {
-        hasOpenMarket = true
         globalMarketState = 'REGULAR'
       }
     } else if (ticker) {

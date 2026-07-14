@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const { quote, chart, quoteSummary, search } = vi.hoisted(() => ({
+const { quote, chart, quoteSummary, search, fetchMetalChartInEur } = vi.hoisted(() => ({
   quote: vi.fn(),
   chart: vi.fn(),
   quoteSummary: vi.fn(),
   search: vi.fn(),
+  fetchMetalChartInEur: vi.fn(),
 }))
 
 vi.mock('@/lib/server/api-auth', () => ({
@@ -16,12 +17,17 @@ vi.mock('@/lib/server/yahoo-finance', () => ({
   getYahooFinance: () => ({ quote, chart, quoteSummary, search }),
 }))
 
+vi.mock('@/lib/actions/market', () => ({
+  fetchMetalChartInEur,
+}))
+
 import { GET as getTickerMarket } from '@/app/api/market/[ticker]/route'
 import { POST as getMarketData } from '@/app/api/market-data/route'
 
 describe('market API routes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    fetchMetalChartInEur.mockResolvedValue(null)
   })
 
   it('combina cotización, gráfico y resumen sin perder precios de valor cero', async () => {
@@ -76,6 +82,25 @@ describe('market API routes', () => {
     expect(body.chart).toEqual([])
     expect(body.summary).toBeNull()
     expect(quoteSummary).not.toHaveBeenCalled()
+  })
+
+  it('sirve el gráfico de metales en EUR sin consultar Yahoo', async () => {
+    fetchMetalChartInEur.mockResolvedValue([
+      { date: '2026-07-13T00:00:00.000Z', price: 1096.1 },
+      { date: '2026-07-14T00:00:00.000Z', price: 1105.13 },
+    ])
+
+    const response = await getTickerMarket(
+      new Request('http://localhost/api/market/PA%3DF?range=1mo'),
+      { params: Promise.resolve({ ticker: 'PA=F' }) },
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.currency).toBe('EUR')
+    expect(body.chart).toHaveLength(2)
+    expect(quote).not.toHaveBeenCalled()
+    expect(chart).not.toHaveBeenCalled()
   })
 
   it('resuelve un ISIN a ticker Yahoo y reutiliza la respuesta almacenada', async () => {
