@@ -271,12 +271,12 @@ export function PositionsTable({
   }, [positions])
 
   return (
-    <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden">
-      <CardHeader className="p-4 md:p-5 pb-4 flex flex-col gap-4 border-b border-border/20">
+    <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden w-full">
+      <CardHeader className="p-4 md:p-5 pb-4 flex flex-col w-full gap-4 border-b border-border/20">
         {/* TOP ROW: Title, Badges, Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
-            <CardTitle className="text-base md:text-lg font-medium text-foreground flex items-center gap-2">
+            <CardTitle className="text-base md:text-lg font-medium text-foreground flex items-center gap-2 shrink-0">
               <Layers className="h-4 w-4 text-muted-foreground" />
               <span className="tracking-tight">{t('positions')}</span>
             </CardTitle>
@@ -334,8 +334,8 @@ export function PositionsTable({
         </div>
 
         {/* BOTTOM ROW: Filters & Search */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="relative w-full sm:w-auto group">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
+          <div className="relative w-full sm:w-auto group shrink-0">
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
             <Input
               placeholder={t('search_asset')}
