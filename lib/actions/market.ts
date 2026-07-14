@@ -131,26 +131,34 @@ export interface MarketPricesResult {
   marketState: string
 }
 
-function getUSMarketState(): MarketSession {
+function getMarketState(timeZone: string): MarketSession {
   const now = new Date()
-  const options = { timeZone: 'America/New_York', hour12: false }
+  const options = { timeZone, hour12: false }
   
-  const nyDateString = now.toLocaleString('en-US', options)
-  const nyDate = new Date(nyDateString)
+  const localDateString = now.toLocaleString('en-US', options)
+  const localDate = new Date(localDateString)
   
-  const day = nyDate.getDay() // 0 = Sunday, 1 = Monday...
+  const day = localDate.getDay() // 0 = Sunday, 1 = Monday...
   if (day === 0 || day === 6) return 'CLOSED'
 
-  const hours = nyDate.getHours()
-  const minutes = nyDate.getMinutes()
+  const hours = localDate.getHours()
+  const minutes = localDate.getMinutes()
   
-  const time = hours * 100 + minutes // e.g. 9:30 AM -> 930
+  const time = hours * 100 + minutes 
   
-  if (time < 400) return 'CLOSED'
-  if (time >= 400 && time < 930) return 'PRE'
-  if (time >= 930 && time < 1600) return 'REGULAR'
-  if (time >= 1600 && time < 2000) return 'POST'
-  return 'CLOSED'
+  const isUS = timeZone.includes('America/')
+  
+  if (isUS) {
+    if (time < 400) return 'CLOSED'
+    if (time >= 400 && time < 930) return 'PRE'
+    if (time >= 930 && time < 1600) return 'REGULAR'
+    if (time >= 1600 && time < 2000) return 'POST'
+    return 'CLOSED'
+  } else {
+    // For EU/Asia, default open hours roughly 09:00 - 17:30 local time
+    if (time >= 900 && time < 1730) return 'REGULAR'
+    return 'CLOSED'
+  }
 }
 
 async function _fetchMarketPrices(
@@ -198,38 +206,27 @@ async function _fetchMarketPrices(
       ])
 
       const originalCurrency = normalizeYahooCurrency(quote.currency)
-      const usMarketState = getUSMarketState()
       const quoteTimeZone = quote.exchangeTimezoneName || 'America/New_York'
-      let performance = calculateMarketPerformance(quote, usMarketState)
+      const marketState = getMarketState(quoteTimeZone)
+      let performance = calculateMarketPerformance(quote, marketState)
 
       // Yahoo can briefly expose yesterday's extended-hours quote immediately
       // after REGULAR -> POST. Preserve today's regular daily result in that gap.
       if (
         !isQuoteFromCurrentMarketDate(performance.latestTime, new Date(), quoteTimeZone) &&
-        (usMarketState === 'POST' || usMarketState === 'CLOSED') &&
+        (marketState === 'POST' || marketState === 'CLOSED') &&
         isQuoteFromCurrentMarketDate(quote.regularMarketTime, new Date(), quoteTimeZone)
       ) {
         performance = calculateMarketPerformance({
           ...quote,
           postMarketPrice: undefined,
           postMarketTime: undefined,
-        }, usMarketState)
+        }, marketState)
       }
 
       const rawPrice = performance.currentPrice
       let changePercent24h = performance.sessionChangePercent
       let dailyChangePercent24h = performance.dailyChangePercent
-
-      // Reseteo a 0 si ha cambiado de día.
-      // Si la última cotización es de ayer (o del viernes), hoy "no ha habido cambio" todavía.
-      if (!isQuoteFromCurrentMarketDate(
-        performance.latestTime,
-        new Date(),
-        quoteTimeZone,
-      )) {
-        changePercent24h = 0
-        dailyChangePercent24h = 0
-      }
       let sparkline: number[] = []
       if (chart?.quotes) {
         sparkline = chart.quotes

@@ -7,7 +7,7 @@ import {
   FileUp, ArrowUp, ArrowDown,
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
 import type { MouseHandlerDataParam } from "recharts"
@@ -366,7 +366,7 @@ export function MobileDashboard({
                 >
                   {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                   <span className="text-[14px] font-bold tabular-nums">
-                    {hideBalances ? "••••" : `${scrubData.pnl >= 0 ? "+" : ""}${formatCurrency(scrubData.pnl)}`}
+                    {hideBalances ? "••••" : formatPnl(scrubData.pnl)}
                   </span>
                   <span className="text-[12px] font-semibold opacity-80">vs {chartRange}</span>
                 </motion.div>
@@ -384,7 +384,7 @@ export function MobileDashboard({
                   >
                     {isPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                     <span className="text-[14px] font-bold tabular-nums">
-                      {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+                      {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
                     </span>
                     <span className="text-[12px] font-semibold opacity-80">
                       ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
@@ -528,7 +528,7 @@ export function MobileDashboard({
                 Ganancia
               </p>
               <p className="text-[16px] font-extrabold tabular-nums mt-0.5" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
-                {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+                {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
               </p>
             </div>
           </div>

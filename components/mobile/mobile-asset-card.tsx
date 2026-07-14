@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import type { EnrichedPosition } from "@/lib/types"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useQuickAdd } from "@/lib/stores/use-quick-add"
 import { ChevronRight, Plus } from "lucide-react"
@@ -261,7 +261,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
                     {hideBalances ? "•••" : (
                       <>
                         {p.change_amount_24h !== undefined && p.change_amount_24h !== null && p.change_amount_24h !== 0
-                          ? `${p.change_amount_24h > 0 ? "+" : ""}${formatCurrency(p.change_amount_24h)} `
+                          ? `${formatPnl(p.change_amount_24h)} `
                           : ""}
                         {formatPercent(change24h)}
                       </>

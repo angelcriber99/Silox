@@ -20,7 +20,9 @@ export default function DeclararPage() {
   // Calulate FIFO events
   const taxEvents = useMemo(() => {
     if (!allTransactions) return []
-    return calculateFIFO(allTransactions)
+    return calculateFIFO(allTransactions).filter(e => 
+      e.ticker !== 'CASH' && !e.ticker.startsWith('CASH_') && e.tipoActivo !== 'Liquidez'
+    )
   }, [allTransactions])
 
   // Get available years
