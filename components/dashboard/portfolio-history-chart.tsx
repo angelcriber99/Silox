@@ -92,10 +92,9 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
     return null
   }
 
-  // The floating labels were removed to achieve a cleaner, more professional look.
   // The X-axis already handles date labels, and the interactive tooltip provides exact values.
   return (
-    <div className="w-full h-[320px]">
+    <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart 
           data={chartData} 

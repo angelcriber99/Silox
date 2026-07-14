@@ -139,7 +139,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
       >
         {/* Front Face */}
         <Card 
-          className="w-full bg-card/40 border-border/40 backdrop-blur-md flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
+          className={`w-full bg-card/40 border-border/40 backdrop-blur-md flex flex-col overflow-visible shadow-sm hover:shadow-md transition-shadow ${isFlipped ? "pointer-events-none" : "pointer-events-auto"}`}
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
         >
           <CardHeader className="pb-2">
@@ -418,7 +418,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
 
     {/* Back Face */}
     <Card 
-      className="absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col pointer-events-auto overflow-visible shadow-sm hover:shadow-md transition-shadow"
+      className={`absolute inset-0 bg-card/40 border-border/40 backdrop-blur-md h-full flex flex-col overflow-visible shadow-sm hover:shadow-md transition-shadow ${!isFlipped ? "pointer-events-none" : "pointer-events-auto"}`}
       style={{ 
         backfaceVisibility: "hidden", 
         WebkitBackfaceVisibility: "hidden",
