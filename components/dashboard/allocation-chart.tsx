@@ -130,7 +130,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
   const hasData = chartData.data.length > 0
 
   return (
-    <div className="relative w-full h-full min-h-[420px]" style={{ perspective: "1000px" }}>
+    <div className="relative w-full h-full" style={{ perspective: "1000px" }}>
       <motion.div
         className="w-full h-full absolute inset-0"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
@@ -167,7 +167,18 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                   <BarChart3 className="w-4 h-4" />
                 </button>
               </CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                {!hideBalances && hasData && viewMode === "composition" && (
+                  <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted/30 border border-border/40">
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Hoy</span>
+                    <span className={`text-xs font-bold ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {formatPnl(totals.totalPnl24h)}
+                    </span>
+                    <span className={`text-[10px] font-medium opacity-80 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      ({formatPercent(totals.totalPnlPercent24h).replace('+', '')})
+                    </span>
+                  </div>
+                )}
                 <div className="flex gap-1 rounded-lg bg-muted p-0.5">
                   <button
                     onClick={() => setViewMode("composition")}
@@ -289,15 +300,15 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex flex-row flex-wrap items-center justify-center lg:gap-16 gap-8 py-4 w-full">
-            <div className="relative w-[280px] aspect-square flex-shrink-0 group">
+          <div className="flex flex-col sm:flex-row items-center justify-center lg:gap-12 gap-6 py-2 w-full">
+            <div className="relative w-[160px] aspect-square flex-shrink-0 group">
               <div className="absolute inset-0 z-10">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={chartData.data}
-                      innerRadius={90}
-                      outerRadius={120}
+                      innerRadius={60}
+                      outerRadius={80}
                       paddingAngle={4}
                       dataKey="value"
                       stroke="none"
@@ -341,32 +352,22 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                 </ResponsiveContainer>
               </div>
               {/* Center label */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-500 group-hover:scale-110 z-0">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-500 group-hover:scale-105 z-0">
                 <div className="text-center">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Total</p>
-                  <p className="text-2xl font-bold tabular-nums text-foreground drop-shadow-md">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-0.5">Total</p>
+                  <p className="text-lg font-bold tabular-nums text-foreground drop-shadow-md leading-none">
                     {hideBalances ? "****" : formatCurrency(totals.totalValue > 0 ? totals.totalValue : chartData.total)}
                   </p>
-                  {!hideBalances && (
-                    <div className="flex flex-col items-center mt-1">
-                      <p className={`text-sm font-bold ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {totals.totalPnl24h > 0 ? '+' : ''}{formatCurrency(totals.totalPnl24h)}
-                      </p>
-                      <p className={`text-[10px] font-medium mt-0.5 opacity-80 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {totals.totalPnlPercent24h > 0 ? '+' : ''}{formatPercent(totals.totalPnlPercent24h).replace('+', '')} hoy
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
 
             {/* Legend */}
-            <div className="space-y-4 w-full sm:w-[320px] max-w-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 w-full max-w-2xl">
               {chartData.data.map((d) => (
                 <div 
                   key={d.name} 
-                  className="flex items-center gap-4 group cursor-pointer hover:bg-muted/30 p-2 -mx-2 rounded-lg transition-colors"
+                  className="flex items-center gap-3 group cursor-pointer hover:bg-muted/30 p-2 -mx-2 rounded-lg transition-colors"
                   onClick={() => {
                     setDrilldownCategoryName(d.name)
                     setDrilldownOriginalName(d.originalName)
@@ -374,43 +375,37 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
                   }}
                 >
                   <div
-                    className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+                    className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm"
                     style={{ backgroundColor: d.color }}
                   />
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="text-base font-medium text-foreground/90 group-hover:text-foreground transition-colors truncate leading-tight">
+                    <p className="text-sm font-medium text-foreground/90 group-hover:text-foreground transition-colors truncate leading-tight">
                       {d.name}
                     </p>
                     <div className="flex flex-col gap-0.5 mt-0.5 justify-center">
                       <div className="flex items-center gap-1.5">
-                        <p className={`text-xs font-bold ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          <span className="text-[10px] uppercase opacity-70 mr-1 font-semibold">Hoy:</span>
-                          {d.pnlAmount24h > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.pnlAmount24h)}
+                        <p className={`text-[11px] font-bold ${d.pnlAmount24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {hideBalances ? "****" : formatPnl(d.pnlAmount24h)}
                         </p>
                         <p className={`text-[10px] font-medium opacity-80 ${d.pnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          ({d.pnlPercent24h > 0 ? '+' : ''}{formatPercent(d.pnlPercent24h).replace('+', '')})
+                          ({formatPercent(d.pnlPercent24h)})
                         </p>
                       </div>
-                      {marketState === 'CLOSED' && (
-                        <p className="text-[9px] font-medium opacity-50 uppercase tracking-wide">
-                          MERCADO CERRADO
-                        </p>
-                      )}
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0 flex items-center">
                     <div className="flex flex-col items-end">
-                      <p className="text-base font-bold tabular-nums text-foreground">
+                      <p className="text-sm font-bold tabular-nums text-foreground">
                         {hideBalances ? "****" : formatCurrency(d.value)}
                       </p>
+                      <p className="text-[10px] font-medium tabular-nums text-muted-foreground mt-0.5">
+                        {d.percent.toFixed(1)}%
+                      </p>
                       {d.originalName === 'Liquidez' && pendingCashEur > 0 && !hideBalances && (
-                        <p className="text-[10px] font-medium tabular-nums text-amber-400 mt-0.5">
+                        <p className="text-[9px] font-medium tabular-nums text-amber-400 mt-0.5">
                           -{formatCurrency(pendingCashEur)} en uso
                         </p>
                       )}
-                      <p className="text-xs font-medium tabular-nums text-muted-foreground mt-0.5">
-                        {d.percent.toFixed(1)}%
-                      </p>
                     </div>
                   </div>
                 </div>
