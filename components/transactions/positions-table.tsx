@@ -376,7 +376,7 @@ export function PositionsTable({
           <Table className="w-full">
             <TableHeader className="bg-muted/40">
               <TableRow className="border-border/50 hover:bg-transparent">
-                {sortableHeader({ label: t('symbol'), sortKeyName: "ticker" })}
+                {sortableHeader({ label: t('symbol'), sortKeyName: "ticker", className: "pl-4 sm:pl-6" })}
                 <TableHead className="text-muted-foreground/80 hidden md:table-cell">{t('name')}</TableHead>
                 {sortableHeader({ label: t('dist_type'), sortKeyName: "tipo" })}
                 {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right" })}
@@ -447,7 +447,7 @@ export function PositionsTable({
                       }`}
                       style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(245 158 11), 0 0 20px rgba(245, 158, 11, 0.4)" } : undefined}
                     >
-                      <TableCell className={`font-medium text-foreground tabular-nums ${cellPadding}`}>
+                      <TableCell className={`font-medium text-foreground tabular-nums pl-4 sm:pl-6 ${cellPadding}`}>
                         <Link href={`/activo/${p.activo_id}`} className="flex items-center gap-3 hover:text-amber-500 transition-colors">
                           <AssetLogo 
                             ticker={p.ticker} 

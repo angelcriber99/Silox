@@ -120,7 +120,10 @@ export function PortfolioSummary({
             <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: daily24Positive ? "rgba(48,209,88,0.9)" : "rgba(255,69,58,0.9)" }}>
               <span className="text-muted-foreground font-normal">Hoy</span>
               <span className="font-bold tabular-nums">
-                {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+                {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
+              </span>
+              <span className="opacity-80">
+                ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h).replace('+', '')})
               </span>
             </div>
           </div>

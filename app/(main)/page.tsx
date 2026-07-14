@@ -68,7 +68,7 @@ export default function Home() {
           <div className="flex-1 flex flex-row overflow-hidden bg-background">
             
             {/* ── Left Sidebar (Dashboard Control Panel) ── */}
-            <div className="w-[420px] flex-shrink-0 flex flex-col border-r border-border/20 overflow-y-auto custom-scrollbar bg-background relative">
+            <div className="w-[360px] xl:w-[380px] flex-shrink-0 flex flex-col border-r border-border/20 overflow-y-auto custom-scrollbar bg-background relative">
               {/* Subtle gradient background for the premium feel */}
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
               <PortfolioSummary
@@ -99,7 +99,7 @@ export default function Home() {
             </div>
 
             {/* ── Main Content (Positions Table) ── */}
-            <div className="flex-1 flex flex-col min-w-0 p-4 lg:p-6 overflow-hidden relative">
+            <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-5 lg:px-6 overflow-hidden relative">
               <div className="flex-1 flex flex-col bg-card rounded-xl border border-border/30 shadow-sm overflow-hidden">
                 <div className="flex-shrink-0">
                   <PendingOrders transactions={pendingTxs} />
