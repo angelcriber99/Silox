@@ -250,7 +250,9 @@ async function _fetchMarketPrices(
 
       // Fallback for Vercel/Yahoo edge cases where preMarketPrice is omitted
       // despite marketState being PRE. We fetch a 1-day 1-minute chart.
-      if (marketState === 'PRE' && !quote.preMarketPrice) {
+      // We ALSO do this if marketState is REGULAR but regularMarketPrice equals previousClose (Yahoo 15m delay bug)
+      const isDelayedAtOpen = marketState === 'REGULAR' && !quote.preMarketPrice && quote.regularMarketPrice === quote.regularMarketPreviousClose
+      if ((marketState === 'PRE' && !quote.preMarketPrice) || isDelayedAtOpen) {
         try {
           const preChart = await getYahooFinance().chart(ticker, { 
             period1: new Date(Date.now() - 24 * 60 * 60 * 1000), 

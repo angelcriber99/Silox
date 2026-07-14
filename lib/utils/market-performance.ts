@@ -76,7 +76,15 @@ export function calculateMarketPerformance(
   }
 
   if (session === 'REGULAR') {
-    const isRegularQuoteStale = quote.regularMarketTime && !isQuoteFromCurrentMarketDate(quote.regularMarketTime, new Date(), timeZone)
+    const isDelayedAtOpen = 
+      quote.regularMarketPrice === quote.regularMarketPreviousClose && 
+      quote.preMarketPrice != null && 
+      quote.preMarketPrice !== quote.regularMarketPreviousClose;
+
+    const isRegularQuoteStale = 
+      (quote.regularMarketTime && !isQuoteFromCurrentMarketDate(quote.regularMarketTime, new Date(), timeZone)) ||
+      isDelayedAtOpen;
+
     const currentPrice = (isRegularQuoteStale ? quote.preMarketPrice : quote.regularMarketPrice) ?? quote.regularMarketPrice ?? null
 
     const changePercent = isRegularQuoteStale
