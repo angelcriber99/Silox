@@ -61,7 +61,7 @@ export default function Home() {
       </div>
 
       {/* ── Desktop ─────────────────────────────────────────────────── */}
-      <div className="hidden md:flex md:flex-col md:flex-1 h-screen overflow-hidden">
+      <div className="hidden md:flex md:flex-col fixed inset-0 z-0 bg-background overflow-hidden">
         {zenMode ? (
           <ZenDashboard positions={positions} marketState={marketState} />
         ) : (
