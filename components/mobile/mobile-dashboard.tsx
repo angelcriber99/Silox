@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react"
 import {
   Bell, Eye, EyeOff, TrendingUp, TrendingDown,
-  ChevronRight, Activity, Wallet, BarChart2,
-  FileUp, ArrowUp, ArrowDown,
+  Wallet, FileUp, ArrowUp, ArrowDown, Zap,
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
@@ -14,12 +13,11 @@ import type { MouseHandlerDataParam } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
-import { usePortfolio, useHistory } from "@/lib/hooks/use-portfolio"
+import { useHistory } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
-import Marquee from "react-fast-marquee"
 import Link from "next/link"
 
 interface MobileDashboardProps {
@@ -29,34 +27,39 @@ interface MobileDashboardProps {
   marketState?: string
 }
 
-// ── Type color map ──────────────────────────────────────────────────
+// ── Type color map ─────────────────────────────────────────────────────────
 const TYPE_COLORS: Record<string, string> = {
-  "ETF": "#0A84FF",
-  "Fondo Indexado": "#BF5AF2",
+  "ETF":             "#0A84FF",
+  "Fondo Indexado":  "#BF5AF2",
   "Fondo Monetario": "#32ADE6",
-  "Acción": "#FFD60A",
-  "Crypto": "#FF9F0A",
-  "Liquidez": "#98989D",
+  "Acción":          "#FFD60A",
+  "Crypto":          "#FF9F0A",
+  "Liquidez":        "#98989D",
 }
 
 // ── Section header ─────────────────────────────────────────────────────────
-function SectionHeader({ label, count }: { label: string; count: number }) {
+function SectionHeader({ label, count, color }: { label: string; count: number; color?: string }) {
   return (
-    <div
-      className="flex items-center justify-between px-4 py-2 border-y border-border/10"
-    >
+    <div className="flex items-center justify-between px-4 pt-5 pb-2">
+      <div className="flex items-center gap-2">
+        {color && (
+          <div
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: color }}
+          />
+        )}
+        <span
+          className="text-[11px] font-bold uppercase tracking-[0.16em]"
+          style={{ color: "rgba(255,255,255,0.35)" }}
+        >
+          {label}
+        </span>
+      </div>
       <span
-        className="text-[10px] font-bold uppercase tracking-[0.18em]"
-        style={{ color: "var(--muted-foreground)", opacity: 0.5 }}
-      >
-        {label}
-      </span>
-      <span
-        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+        className="text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums"
         style={{
-          color: "var(--muted-foreground)",
-          background: "var(--muted)",
-          opacity: 0.7,
+          color: "rgba(255,255,255,0.40)",
+          background: "rgba(255,255,255,0.07)",
         }}
       >
         {count}
@@ -81,9 +84,9 @@ export function MobileDashboard({
 
   const { data: snapshots } = useHistory()
 
-  const isPositive = totals.totalPnl >= 0
+  const isPositive     = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
-  const areaColorHex = isPositive ? "#30D158" : "#FF453A"
+  const areaColorHex   = isPositive ? "#30D158" : "#FF453A"
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
@@ -96,7 +99,7 @@ export function MobileDashboard({
     }
   }
 
-  // Portfolio chart data (Filtered by range)
+  // Portfolio chart data
   const portfolioSparkline = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return []
     const sorted = [...snapshots].sort(
@@ -107,7 +110,7 @@ export function MobileDashboard({
       const day = new Date(s.timestamp).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
       dailySnapshots.set(day, s)
     })
-    
+
     let filtered = Array.from(dailySnapshots.values())
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 
@@ -116,33 +119,20 @@ export function MobileDashboard({
     const now = new Date()
     const cutoff = new Date()
     switch (chartRange) {
-      case "1W":
-        cutoff.setDate(now.getDate() - 7)
-        break
-      case "1M":
-        cutoff.setMonth(now.getMonth() - 1)
-        break
-      case "3M":
-        cutoff.setMonth(now.getMonth() - 3)
-        break
-      case "YTD":
-        cutoff.setFullYear(now.getFullYear(), 0, 1)
-        break
-      case "1Y":
-        cutoff.setFullYear(now.getFullYear() - 1)
-        break
-      case "MAX":
-        cutoff.setFullYear(2000) // All time
-        break
+      case "1W": cutoff.setDate(now.getDate() - 7); break
+      case "1M": cutoff.setMonth(now.getMonth() - 1); break
+      case "3M": cutoff.setMonth(now.getMonth() - 3); break
+      case "YTD": cutoff.setFullYear(now.getFullYear(), 0, 1); break
+      case "1Y": cutoff.setFullYear(now.getFullYear() - 1); break
+      case "MAX": cutoff.setFullYear(2000); break
     }
 
     filtered = filtered.filter(s => new Date(s.timestamp) >= cutoff)
-    
-    // Fallback if no data in range
+
     if (filtered.length < 2) {
       filtered = Array.from(dailySnapshots.values())
         .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-        .slice(-2) // Need at least 2 points
+        .slice(-2)
     }
 
     const start = filtered[0].total_value
@@ -185,46 +175,36 @@ export function MobileDashboard({
 
   const totalPortfolioValue = totals.totalValue
 
-  const bestPerformer = useMemo(() => {
-    const c = positions.filter(p => typeof p.change_percent_24h === "number" && p.unidades > 0)
-    if (!c.length) return null
-    return c.reduce((a, b) => (a.change_percent_24h! > b.change_percent_24h! ? a : b))
-  }, [positions])
-
-  const worstPerformer = useMemo(() => {
-    const c = positions.filter(p => typeof p.change_percent_24h === "number" && p.unidades > 0 && p.change_percent_24h! < 0)
-    if (!c.length) return null
-    return c.reduce((a, b) => (a.change_percent_24h! < b.change_percent_24h! ? a : b))
-  }, [positions])
-
-  // Movers calculation for real-time impact
   const movers = useMemo(() => {
     return [...positions]
       .filter(p => p.change_amount_24h && Math.abs(p.change_amount_24h) > 0.01)
-      .sort((a, b) => (b.change_amount_24h || 0) - (a.change_amount_24h || 0))
+      .sort((a, b) => Math.abs(b.change_amount_24h || 0) - Math.abs(a.change_amount_24h || 0))
+      .slice(0, 8)
   }, [positions])
 
-  // ── Loading skeleton ───────────────────────────────────────────────────
+  // ── Loading skeleton ─────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="px-4 pt-6 pb-32 space-y-4">
+      <div className="px-4 pt-6 pb-32 space-y-5">
         <div className="flex justify-between items-center">
-          <div className="h-4 w-24 rounded-lg animate-pulse" style={{ background: "var(--muted)" }} />
+          <div className="space-y-1.5">
+            <div className="h-3 w-20 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.08)" }} />
+            <div className="h-12 w-48 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div className="h-4 w-32 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.05)" }} />
+          </div>
           <div className="flex gap-2">
-            <div className="h-9 w-9 rounded-full animate-pulse" style={{ background: "var(--muted)" }} />
-            <div className="h-9 w-9 rounded-full animate-pulse" style={{ background: "var(--muted)" }} />
+            <div className="h-10 w-10 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <div className="h-10 w-10 rounded-full animate-pulse" style={{ background: "rgba(255,255,255,0.07)" }} />
           </div>
         </div>
-        <div className="h-14 w-56 rounded-xl animate-pulse" style={{ background: "var(--muted)" }} />
-        <div className="h-5 w-36 rounded-lg animate-pulse" style={{ background: "var(--muted)", opacity: 0.6 }} />
-        <div className="h-28 w-full rounded-2xl animate-pulse" style={{ background: "var(--muted)", opacity: 0.4 }} />
-        <div className="flex gap-2 overflow-hidden">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-16 w-28 rounded-2xl animate-pulse flex-shrink-0" style={{ background: "var(--muted)", opacity: 0.4 }} />
+        <div className="h-[160px] w-full rounded-3xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.05)" }} />
           ))}
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-[70px] w-full rounded-2xl animate-pulse" style={{ background: "var(--muted)", opacity: 0.3 }} />
+          <div key={i} className="h-[76px] w-full rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
         ))}
       </div>
     )
@@ -234,63 +214,174 @@ export function MobileDashboard({
   return (
     <div className="flex flex-col min-h-full" style={{ background: "var(--background)" }}>
 
-      {/* ─── Sticky header ────────────────────────────────────── */}
+      {/* ─── Sticky header ────────────────────────────────────────────── */}
       <div
         className="sticky top-0 z-20"
         style={{
-          background: "rgba(0,0,0,0.85)",
-          backdropFilter: "blur(40px) saturate(180%)",
-          WebkitBackdropFilter: "blur(40px) saturate(180%)",
-          borderBottom: "0.5px solid rgba(255,255,255,0.10)",
+          background: "rgba(8,8,10,0.90)",
+          backdropFilter: "blur(40px) saturate(200%)",
+          WebkitBackdropFilter: "blur(40px) saturate(200%)",
+          borderBottom: "0.5px solid rgba(255,255,255,0.08)",
         }}
       >
-        {/* Gradient accent top-right corner */}
+        {/* Dynamic color accent */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background: isPositive
-              ? "radial-gradient(ellipse 80% 60% at 90% 0%, rgba(48,209,88,0.08) 0%, transparent 60%)"
-              : "radial-gradient(ellipse 80% 60% at 90% 0%, rgba(255,69,58,0.08) 0%, transparent 60%)",
+              ? "radial-gradient(ellipse 70% 80% at 90% 0%, rgba(48,209,88,0.07) 0%, transparent 70%)"
+              : "radial-gradient(ellipse 70% 80% at 90% 0%, rgba(255,69,58,0.07) 0%, transparent 70%)",
           }}
         />
 
         <div
-          className="px-5 pb-4 relative"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+          className="px-5 pb-5 relative"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
         >
-          {/* Top row */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex flex-col">
-              <span
-                className="text-[11px] font-bold uppercase tracking-[0.18em]"
-                style={{ color: "var(--muted-foreground)", opacity: 0.6 }}
-              >
-                Patrimonio
-              </span>
-              {/* Market status */}
-              <div
-                className="flex items-center gap-1.5 mt-0.5"
-                style={{ color: isMarketOpen ? "#30D158" : "rgba(255,255,255,0.40)" }}
-              >
+          {/* Top row: label + actions */}
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${isMarketOpen ? "animate-pulse" : ""}`}
-                  style={{ background: "currentcolor" }}
-                />
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
-                  {getMarketLabel()}
+                  className="text-[11px] font-bold uppercase tracking-[0.18em]"
+                  style={{ color: "rgba(255,255,255,0.40)" }}
+                >
+                  Patrimonio total
                 </span>
+                {/* Market status pill */}
+                <div
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full"
+                  style={{
+                    background: isMarketOpen ? "rgba(48,209,88,0.12)" : "rgba(255,255,255,0.06)",
+                    border: `0.5px solid ${isMarketOpen ? "rgba(48,209,88,0.30)" : "rgba(255,255,255,0.10)"}`,
+                  }}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isMarketOpen ? "animate-pulse" : ""}`}
+                    style={{ background: isMarketOpen ? "#30D158" : "rgba(255,255,255,0.30)" }}
+                  />
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: isMarketOpen ? "#30D158" : "rgba(255,255,255,0.35)" }}
+                  >
+                    {getMarketLabel()}
+                  </span>
+                </div>
               </div>
+
+              {/* Main value */}
+              <motion.div
+                className="cursor-pointer select-none"
+                onDoubleClick={() => { hapticFeedback.medium(); setHideBalances(!hideBalances) }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <h1
+                  className="font-extrabold leading-none"
+                  style={{
+                    fontSize: "clamp(40px, 11vw, 56px)",
+                    letterSpacing: "-0.04em",
+                    fontVariantNumeric: "tabular-nums",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  <AnimatedNumber
+                    value={scrubData ? scrubData.v : totals.totalValue}
+                    format="currency"
+                    hide={hideBalances}
+                  />
+                </h1>
+              </motion.div>
+
+              {/* PnL row */}
+              {totals.totalCost > 0 && !scrubData && (
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {/* Total PnL */}
+                  <div
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+                    style={{
+                      background: isPositive ? "rgba(48,209,88,0.13)" : "rgba(255,69,58,0.13)",
+                      border: `0.5px solid ${isPositive ? "rgba(48,209,88,0.25)" : "rgba(255,69,58,0.25)"}`,
+                    }}
+                  >
+                    {isPositive
+                      ? <ArrowUp className="w-3 h-3" style={{ color: "#30D158" }} />
+                      : <ArrowDown className="w-3 h-3" style={{ color: "#FF453A" }} />}
+                    <span
+                      className="text-[13px] font-bold tabular-nums"
+                      style={{ color: isPositive ? "#30D158" : "#FF453A" }}
+                    >
+                      {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
+                    </span>
+                    <span
+                      className="text-[11px] font-semibold"
+                      style={{ color: isPositive ? "rgba(48,209,88,0.75)" : "rgba(255,69,58,0.75)" }}
+                    >
+                      {hideBalances ? "" : `(${formatPercent(totals.totalPnlPercent)})`}
+                    </span>
+                  </div>
+
+                  {/* 24h badge */}
+                  <div
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                    style={{
+                      background: daily24Positive ? "rgba(48,209,88,0.08)" : "rgba(255,69,58,0.08)",
+                      border: `0.5px solid ${daily24Positive ? "rgba(48,209,88,0.18)" : "rgba(255,69,58,0.18)"}`,
+                    }}
+                  >
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider"
+                      style={{ color: "rgba(255,255,255,0.35)" }}
+                    >
+                      Hoy
+                    </span>
+                    <span
+                      className="text-[12px] font-bold tabular-nums"
+                      style={{ color: daily24Positive ? "#30D158" : "#FF453A" }}
+                    >
+                      {hideBalances
+                        ? "•••"
+                        : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
+                    </span>
+                    <span
+                      className="text-[11px] font-semibold"
+                      style={{ color: daily24Positive ? "rgba(48,209,88,0.70)" : "rgba(255,69,58,0.70)" }}
+                    >
+                      {hideBalances ? "" : formatPercent(totals.totalPnlPercent24h)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Scrub overlay */}
+              {scrubData && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full mt-2 w-fit"
+                  style={{
+                    background: scrubData.pnl >= 0 ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
+                    border: `0.5px solid ${scrubData.pnl >= 0 ? "rgba(48,209,88,0.30)" : "rgba(255,69,58,0.30)"}`,
+                    color: scrubData.pnl >= 0 ? "#30D158" : "#FF453A",
+                  }}
+                >
+                  {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                  <span className="text-[13px] font-bold tabular-nums">
+                    {hideBalances ? "••••" : formatPnl(scrubData.pnl)}
+                  </span>
+                  <span className="text-[10px] font-semibold opacity-70">vs {chartRange}</span>
+                </motion.div>
+              )}
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0 mt-1">
               <RevolutSync>
                 <div
-                  className="h-9 w-9 rounded-full flex items-center justify-center transition-colors"
+                  className="h-10 w-10 rounded-full flex items-center justify-center"
                   style={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    color: "var(--muted-foreground)",
+                    background: "rgba(255,255,255,0.07)",
+                    border: "0.5px solid rgba(255,255,255,0.10)",
+                    color: "rgba(255,255,255,0.55)",
                   }}
                 >
                   <FileUp className="w-4 h-4" />
@@ -298,13 +389,13 @@ export function MobileDashboard({
               </RevolutSync>
 
               <motion.button
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.90 }}
                 onClick={() => { hapticFeedback.light(); setAlertsOpen(true) }}
-                className="h-9 w-9 rounded-full flex items-center justify-center transition-colors"
+                className="h-10 w-10 rounded-full flex items-center justify-center"
                 style={{
-                  background: "var(--card)",
-                  border: "1px solid var(--border)",
-                  color: "var(--muted-foreground)",
+                  background: "rgba(255,255,255,0.07)",
+                  border: "0.5px solid rgba(255,255,255,0.10)",
+                  color: "rgba(255,255,255,0.55)",
                 }}
                 aria-label="Alertas de precio"
               >
@@ -312,124 +403,39 @@ export function MobileDashboard({
               </motion.button>
 
               <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => {
-                  hapticFeedback.light()
-                  setHideBalances(!hideBalances)
+                whileTap={{ scale: 0.90 }}
+                onClick={() => { hapticFeedback.light(); setHideBalances(!hideBalances) }}
+                className="h-10 w-10 rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: hideBalances ? "rgba(48,209,88,0.12)" : "rgba(255,255,255,0.07)",
+                  border: hideBalances ? "0.5px solid rgba(48,209,88,0.30)" : "0.5px solid rgba(255,255,255,0.10)",
+                  color: hideBalances ? "#30D158" : "rgba(255,255,255,0.55)",
                 }}
-                className={`h-9 w-9 rounded-full flex items-center justify-center transition-all border ${
-                  hideBalances 
-                    ? "bg-primary/15 border-primary/30 text-primary" 
-                    : "bg-card border-border text-muted-foreground"
-                }`}
                 aria-label={hideBalances ? "Mostrar balances" : "Ocultar balances"}
               >
                 {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </motion.button>
             </div>
           </div>
-
-          {/* Main KPI — portfolio value (Scrubbable + double-tap to toggle incognito) */}
-          <motion.div
-            className="mb-1 cursor-pointer select-none"
-            onDoubleClick={() => {
-              hapticFeedback.medium()
-              setHideBalances(!hideBalances)
-            }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <h1
-              className="font-extrabold leading-none transition-all duration-200"
-              style={{
-                fontSize: "clamp(48px, 13vw, 62px)",
-                letterSpacing: "-0.04em",
-                fontVariantNumeric: "tabular-nums",
-                color: "#FFFFFF",
-              }}
-            >
-              <AnimatedNumber value={scrubData ? scrubData.v : totals.totalValue} format="currency" hide={hideBalances} />
-            </h1>
-          </motion.div>
-
-          {/* PnL badges */}
-          {totals.totalCost > 0 && (
-            <div className="flex items-center gap-2 flex-wrap min-h-[28px]">
-              {scrubData ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
-                  style={{
-                    background: scrubData.pnl >= 0 ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
-                    color: scrubData.pnl >= 0 ? "#30D158" : "#FF453A",
-                  }}
-                >
-                  {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                  <span className="text-[14px] font-bold tabular-nums">
-                    {hideBalances ? "••••" : formatPnl(scrubData.pnl)}
-                  </span>
-                  <span className="text-[12px] font-semibold opacity-80">vs {chartRange}</span>
-                </motion.div>
-              ) : (
-                <>
-                  {/* Total PnL */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl"
-                    style={{
-                      background: isPositive ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
-                      color: isPositive ? "#30D158" : "#FF453A",
-                    }}
-                  >
-                    {isPositive ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                    <span className="text-[14px] font-bold tabular-nums">
-                      {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
-                    </span>
-                    <span className="text-[12px] font-semibold opacity-80">
-                      ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
-                    </span>
-                  </motion.div>
-
-                  {/* 24h badge */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-xl"
-                    style={{
-                      background: daily24Positive ? "rgba(48,209,88,0.10)" : "rgba(255,69,58,0.10)",
-                      border: `1px solid ${daily24Positive ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
-                      color: daily24Positive ? "#30D158" : "#FF453A",
-                    }}
-                  >
-                    <span className="text-[11px] font-semibold opacity-70">Hoy</span>
-                    <span className="text-[13px] font-bold tabular-nums">
-                      {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
-                    </span>
-                  </motion.div>
-                </>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* ─── Sparkline chart ─────────────────────────────────────────────── */}
+      {/* ─── Sparkline chart ───────────────────────────────────────────── */}
       {portfolioSparkline.length > 1 && (
-        <div className="h-[120px] w-full relative -mt-4 mb-2">
+        <div className="h-[160px] w-full relative" style={{ marginTop: -2 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart 
-              data={portfolioSparkline} 
-              margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
+            <AreaChart
+              data={portfolioSparkline}
+              margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
               onMouseMove={(event: MouseHandlerDataParam) => {
                 const index = Number(event.activeTooltipIndex)
                 if (event.isTooltipActive && Number.isInteger(index)) {
                   const newScrub = portfolioSparkline[index]
                   if (!newScrub) return
                   setScrubData(prev => {
-                    if (prev?.i !== newScrub.i) hapticFeedback.light();
-                    return newScrub;
-                  });
+                    if (prev?.i !== newScrub.i) hapticFeedback.light()
+                    return newScrub
+                  })
                 }
               }}
               onMouseLeave={() => setScrubData(null)}
@@ -437,21 +443,21 @@ export function MobileDashboard({
             >
               <defs>
                 <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={areaColorHex} stopOpacity={0.5} />
-                  <stop offset="60%" stopColor={areaColorHex} stopOpacity={0.1} />
+                  <stop offset="0%"   stopColor={areaColorHex} stopOpacity={0.45} />
+                  <stop offset="65%"  stopColor={areaColorHex} stopOpacity={0.08} />
                   <stop offset="100%" stopColor={areaColorHex} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <YAxis hide domain={["dataMin - 300", "dataMax + 300"]} />
               <Tooltip
-                content={() => null} // We use the hero section to show data instead
+                content={() => null}
                 cursor={{ stroke: areaColorHex, strokeWidth: 1.5, strokeDasharray: "4 4" }}
               />
               <Area
                 type="monotone"
                 dataKey="v"
                 stroke={areaColorHex}
-                strokeWidth={3}
+                strokeWidth={2.5}
                 fill="url(#mobileGrad)"
                 isAnimationActive
                 animationDuration={700}
@@ -462,226 +468,230 @@ export function MobileDashboard({
         </div>
       )}
 
-      {/* ─── Chart Range Selector ────────────────────────────────────── */}
-      <div className="px-4 pb-4 flex justify-between gap-1">
+      {/* ─── Chart Range Selector ─────────────────────────────────────── */}
+      <div className="px-4 pb-5 pt-2 flex gap-1">
         {(["1W", "1M", "3M", "YTD", "1Y", "MAX"] as const).map(range => (
           <button
             key={range}
-            onClick={() => { hapticFeedback.light(); setChartRange(range); }}
-            className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-              chartRange === range
-                ? "bg-primary/20 text-primary"
-                : "text-muted-foreground/60 hover:bg-muted/50"
-            }`}
+            onClick={() => { hapticFeedback.light(); setChartRange(range) }}
+            className="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all relative overflow-hidden"
+            style={{
+              color: chartRange === range ? "#FFFFFF" : "rgba(255,255,255,0.30)",
+              background: chartRange === range ? "rgba(255,255,255,0.12)" : "transparent",
+            }}
           >
             {range}
           </button>
         ))}
       </div>
 
-      {/* ─── Bento Grid Metrics ────────────────────────────────────────────── */}
-      <div className="px-4 py-2 mb-2">
-        <div className="grid grid-cols-2 gap-3">
-          {/* Box 1: Invested */}
+      {/* ─── Metric Cards (3-column bento) ─────────────────────────── */}
+      <div className="px-4 pb-5">
+        <div className="grid grid-cols-3 gap-3">
+          {/* Invested */}
           <div
-            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden bg-card border border-border/50 shadow-sm"
+            className="flex flex-col justify-between p-4 rounded-2xl"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+            }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div
-                className="p-1.5 rounded-xl bg-primary/10 text-primary"
-              >
-                <Wallet className="w-4 h-4" />
-              </div>
-            </div>
+            <Wallet className="w-4 h-4 mb-3" style={{ color: "rgba(255,255,255,0.40)" }} />
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)", opacity: 0.7 }}>
-                Invertido
-              </p>
-              <p className="text-[16px] font-extrabold tabular-nums mt-0.5" style={{ color: "var(--foreground)" }}>
+              <p
+                className="text-[17px] font-extrabold tabular-nums leading-tight"
+                style={{ color: "#FFFFFF", letterSpacing: "-0.03em" }}
+              >
                 {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
+              </p>
+              <p
+                className="text-[9px] font-bold uppercase tracking-wider mt-1"
+                style={{ color: "rgba(255,255,255,0.30)" }}
+              >
+                Invertido
               </p>
             </div>
           </div>
 
-          {/* Box 2: Total PnL (Dynamic Color) */}
+          {/* Total gain */}
           <div
-            className="flex flex-col justify-between p-4 rounded-[24px] relative overflow-hidden"
+            className="flex flex-col justify-between p-4 rounded-2xl"
             style={{
-              background: isPositive ? "rgba(48,209,88,0.10)" : "rgba(255,69,58,0.10)",
-              border: `1px solid ${isPositive ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
-              boxShadow: isPositive ? "0 8px 24px -8px rgba(48,209,88,0.20)" : "0 8px 24px -8px rgba(255,69,58,0.20)",
+              background: isPositive ? "rgba(48,209,88,0.09)" : "rgba(255,69,58,0.09)",
+              border: `0.5px solid ${isPositive ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
             }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div
-                className="p-1.5 rounded-xl"
-                style={{
-                  background: isPositive ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
-                  color: isPositive ? "#30D158" : "#FF453A",
-                }}
-              >
-                {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              </div>
-            </div>
+            {isPositive
+              ? <TrendingUp className="w-4 h-4 mb-3" style={{ color: "#30D158" }} />
+              : <TrendingDown className="w-4 h-4 mb-3" style={{ color: "#FF453A" }} />}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isPositive ? "#30D158" : "#FF453A", opacity: 0.8 }}>
-                Ganancia
-              </p>
-              <p className="text-[16px] font-extrabold tabular-nums mt-0.5" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
+              <p
+                className="text-[17px] font-extrabold tabular-nums leading-tight"
+                style={{ color: isPositive ? "#30D158" : "#FF453A", letterSpacing: "-0.03em" }}
+              >
                 {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
+              </p>
+              <p
+                className="text-[9px] font-bold uppercase tracking-wider mt-1"
+                style={{ color: isPositive ? "rgba(48,209,88,0.55)" : "rgba(255,69,58,0.55)" }}
+              >
+                Ganancia
               </p>
             </div>
           </div>
-          
-          {/* Box 3: 24h */}
-          <div className="col-span-2">
-            <div
-              className="flex items-center justify-between p-3 rounded-2xl"
-              style={{
-                background: daily24Positive ? "rgba(48,209,88,0.08)" : "rgba(255,69,58,0.08)",
-                border: `1px solid ${daily24Positive ? "rgba(48,209,88,0.18)" : "rgba(255,69,58,0.18)"}`,
-              }}
-            >
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.40)" }}>Hoy</p>
-                <p className="text-[14px] font-bold tabular-nums mt-0.5" style={{ color: daily24Positive ? "#30D158" : "#FF453A" }}>
-                  {hideBalances ? "•••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-[12px] font-bold tabular-nums" style={{ color: daily24Positive ? "#30D158" : "#FF453A", opacity: 0.9 }}>
-                  {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
-                </p>
-              </div>
+
+          {/* 24h */}
+          <div
+            className="flex flex-col justify-between p-4 rounded-2xl"
+            style={{
+              background: daily24Positive ? "rgba(48,209,88,0.07)" : "rgba(255,69,58,0.07)",
+              border: `0.5px solid ${daily24Positive ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)"}`,
+            }}
+          >
+            <Zap className="w-4 h-4 mb-3" style={{ color: daily24Positive ? "rgba(48,209,88,0.60)" : "rgba(255,69,58,0.60)" }} />
+            <div>
+              <p
+                className="text-[17px] font-extrabold tabular-nums leading-tight"
+                style={{ color: daily24Positive ? "#30D158" : "#FF453A", letterSpacing: "-0.03em" }}
+              >
+                {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+              </p>
+              <p
+                className="text-[9px] font-bold uppercase tracking-wider mt-1"
+                style={{ color: daily24Positive ? "rgba(48,209,88,0.55)" : "rgba(255,69,58,0.55)" }}
+              >
+                Hoy
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── Live Market Movers (Top Gainers/Losers) ────────────────────── */}
+      {/* ─── Live Market Movers ───────────────────────────────────────── */}
       {movers.length > 0 && (
         <div
-          className="py-4 mt-2 mb-4"
-          style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}
+          className="pb-5"
+          style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
         >
-          <div className="flex items-center px-4 mb-3 gap-2">
+          <div className="flex items-center px-4 pt-4 mb-3 gap-2">
             <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "#30D158" }} />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: "#30D158" }} />
               <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#30D158" }} />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.40)" }}>
-              Impacto Hoy en Tiempo Real
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(255,255,255,0.35)" }}>
+              Impacto hoy
             </p>
           </div>
-          
-          <div className="w-full relative">
-            <div className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory px-4 pb-2 pt-1 gap-3 scroll-smooth">
-              {movers.map(p => {
-                const isGain = (p.change_amount_24h || 0) >= 0;
-                return (
-                  <Link key={p.activo_id} href={`/activo/${p.activo_id}`} className="snap-center shrink-0">
-                    <motion.div 
-                      whileTap={{ scale: 0.95 }}
-                      className="flex items-center gap-2 px-3 py-2 rounded-[14px] transition-colors border shadow-sm"
-                      style={{
-                        background: isGain ? "rgba(48,209,88,0.08)" : "rgba(255,69,58,0.08)",
-                        borderColor: isGain ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)",
-                      }}
+
+          <div className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory px-4 pb-1 gap-2.5 scroll-smooth">
+            {movers.map(p => {
+              const isGain = (p.change_amount_24h || 0) >= 0
+              const ticker = p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
+                ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
+                : p.ticker.split(".")[0]
+              return (
+                <Link key={p.activo_id} href={`/activo/${p.activo_id}`} className="snap-center shrink-0">
+                  <motion.div
+                    whileTap={{ scale: 0.94 }}
+                    className="flex flex-col gap-0.5 px-3.5 py-2.5 rounded-2xl"
+                    style={{
+                      background: isGain ? "rgba(48,209,88,0.09)" : "rgba(255,69,58,0.09)",
+                      border: `0.5px solid ${isGain ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
+                      minWidth: 90,
+                    }}
+                  >
+                    <span className="text-[13px] font-extrabold" style={{ color: "#FFFFFF" }}>
+                      {ticker}
+                    </span>
+                    <span
+                      className="text-[12px] font-bold tabular-nums"
+                      style={{ color: isGain ? "#30D158" : "#FF453A" }}
                     >
-                      <span className="text-[12px] font-extrabold" style={{ color: "#FFFFFF" }}>
-                        {p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" 
-                          ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
-                          : p.ticker.split(".")[0]}
-                      </span>
-                      <span 
-                        className="text-[12px] font-bold tabular-nums flex items-center"
-                        style={{ color: isGain ? "#30D158" : "#FF453A" }}
-                      >
-                        {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
-                      </span>
-                    </motion.div>
-                  </Link>
-                )
-              })}
-            </div>
+                      {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
+                    </span>
+                    <span
+                      className="text-[10px] font-semibold tabular-nums"
+                      style={{ color: isGain ? "rgba(48,209,88,0.65)" : "rgba(255,69,58,0.65)" }}
+                    >
+                      {hideBalances ? "•••" : formatPercent(p.change_percent_24h ?? 0)}
+                    </span>
+                  </motion.div>
+                </Link>
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* ─── Asset filter pills ──────────────────────────────────────────── */}
+      {/* ─── Asset filter pills ───────────────────────────────────────── */}
       {assetTypes.length > 2 && (
         <div
-          className="sticky z-10 px-4 py-2"
+          className="sticky z-10 px-4 py-3"
           style={{
-            top: "calc(env(safe-area-inset-top, 0px) + 80px)",
-            background: "rgba(0,0,0,0.80)",
+            top: "calc(env(safe-area-inset-top, 0px) + 72px)",
+            background: "rgba(8,8,10,0.85)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderBottom: "0.5px solid rgba(255,255,255,0.08)",
+            borderBottom: "0.5px solid rgba(255,255,255,0.06)",
           }}
         >
           <div className="flex gap-2 overflow-x-auto hide-scrollbar">
-            {assetTypes.map(type => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-semibold transition-all relative flex items-center justify-center"
-                style={{
-                  color: filterType === type ? "#000000" : "rgba(255,255,255,0.55)",
-                  background: filterType === type ? "#30D158" : "rgba(255,255,255,0.08)",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {type === "All"
-                  ? t("filter_all")
-                  : type === "Fondo Indexado" ? t("type_index_fund")
-                  : type === "Fondo Monetario" ? t("type_money_market")
-                  : type === "Acción" ? t("type_stock")
-                  : type === "Crypto" ? t("type_crypto")
-                  : type === "ETF" ? t("type_etf")
-                  : type}
-              </button>
-            ))}
+            {assetTypes.map(type => {
+              const isSelected = filterType === type
+              const typeColor = TYPE_COLORS[type] || "#98989D"
+              const label = type === "All" ? t("filter_all")
+                : type === "Fondo Indexado" ? t("type_index_fund")
+                : type === "Fondo Monetario" ? t("type_money_market")
+                : type === "Acción" ? t("type_stock")
+                : type === "Crypto" ? t("type_crypto")
+                : type === "ETF" ? t("type_etf")
+                : type
+
+              return (
+                <button
+                  key={type}
+                  onClick={() => { hapticFeedback.light(); setFilterType(type) }}
+                  className="whitespace-nowrap px-4 py-1.5 rounded-full text-[12px] font-semibold transition-all flex-shrink-0"
+                  style={{
+                    color: isSelected ? "#000000" : "rgba(255,255,255,0.45)",
+                    background: isSelected
+                      ? (type === "All" ? "#FFFFFF" : typeColor)
+                      : "rgba(255,255,255,0.07)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* ─── Asset list ──────────────────────────────────────────────────── */}
-      <div className="pb-32">
-        {/* Count */}
-        <div className="px-4 pt-3 pb-2">
-          <span
-            className="text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: "var(--muted-foreground)", opacity: 0.4 }}
-          >
-            {sortedPositions.length} posiciones
-          </span>
-        </div>
-
+      {/* ─── Asset list ──────────────────────────────────────────────── */}
+      <div className="pb-36 pt-2">
         {sortedPositions.length === 0 ? (
-          /* Empty state */
-          <div className="text-center py-16 px-8">
+          <div className="text-center py-20 px-8">
             <div
               className="h-16 w-16 rounded-3xl flex items-center justify-center mx-auto mb-4"
               style={{
-                background: "oklch(0.68 0.17 192 / 0.08)",
-                border: "1px solid oklch(0.68 0.17 192 / 0.15)",
+                background: "rgba(255,255,255,0.04)",
+                border: "0.5px solid rgba(255,255,255,0.08)",
               }}
             >
-              <Wallet className="w-8 h-8" style={{ color: "var(--primary)", opacity: 0.6 }} />
+              <Wallet className="w-8 h-8" style={{ color: "rgba(255,255,255,0.25)" }} />
             </div>
-            <p className="text-sm font-semibold" style={{ color: "var(--muted-foreground)", opacity: 0.8 }}>
+            <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.45)" }}>
               Sin posiciones abiertas
             </p>
-            <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)", opacity: 0.5 }}>
+            <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
               Pulsa el botón + para añadir tu primera posición
             </p>
           </div>
         ) : grouped ? (
-          /* Grouped by type */
           <div>
             {Array.from(grouped.entries()).map(([type, items]) => (
-              <div key={type} className="mb-2">
+              <div key={type}>
                 <SectionHeader
                   label={
                     type === "Fondo Indexado" ? t("type_index_fund")
@@ -692,14 +702,15 @@ export function MobileDashboard({
                     : type
                   }
                   count={items.length}
+                  color={TYPE_COLORS[type]}
                 />
                 <div>
                   {items.map((p, i) => (
                     <motion.div
                       key={p.activo_id}
-                      initial={{ opacity: 0, y: 4 }}
+                      initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03, duration: 0.25 }}
+                      transition={{ delay: i * 0.04, duration: 0.28 }}
                     >
                       <MobileAssetCard
                         position={p}
@@ -712,14 +723,13 @@ export function MobileDashboard({
             ))}
           </div>
         ) : (
-          /* Flat filtered list */
           <div>
             {sortedPositions.map((p, i) => (
               <motion.div
                 key={p.activo_id}
-                initial={{ opacity: 0, y: 4 }}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03, duration: 0.25 }}
+                transition={{ delay: i * 0.04, duration: 0.28 }}
               >
                 <MobileAssetCard position={p} totalPortfolioValue={totalPortfolioValue} />
               </motion.div>
@@ -728,7 +738,7 @@ export function MobileDashboard({
         )}
       </div>
 
-      {/* ─── Modals ──────────────────────────────────────────────────────── */}
+      {/* ─── Modals ──────────────────────────────────────────────────── */}
       <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
     </div>
   )
