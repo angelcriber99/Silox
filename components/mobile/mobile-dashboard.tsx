@@ -249,7 +249,7 @@ export function MobileDashboard({
                       className="text-[13px] font-bold tabular-nums"
                       style={{ color: isPositive ? "#30D158" : "#FF453A" }}
                     >
-                      {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatPnl(totals.totalPnl)}`}
+                      {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
                     </span>
                     <span
                       className="text-[11px] font-semibold"
