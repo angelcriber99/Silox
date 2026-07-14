@@ -252,7 +252,7 @@ async function _fetchMarketPrices(
         dailyChangePercent24h,
         originalPrice: rawPrice,
         originalCurrency,
-        marketState: usMarketState
+        marketState
       }
     },
   )
