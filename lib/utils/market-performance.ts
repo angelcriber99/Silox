@@ -1,115 +1,91 @@
 export type MarketSession = 'PRE' | 'REGULAR' | 'POST' | 'CLOSED'
 
-export interface MarketPerformanceQuote {
-  regularMarketPrice?: number
-  regularMarketChangePercent?: number
-  regularMarketPreviousClose?: number
-  regularMarketTime?: string | Date
-  preMarketPrice?: number
-  preMarketChangePercent?: number
-  preMarketTime?: string | Date
-  postMarketPrice?: number
-  postMarketChangePercent?: number
-  postMarketTime?: string | Date
+export interface ChartMeta {
+  currency?: string
   exchangeTimezoneName?: string
+  regularMarketPrice?: number
+  chartPreviousClose?: number
+  previousClose?: number
+  currentTradingPeriod?: {
+    pre?: { start: number | Date; end: number | Date }
+    regular?: { start: number | Date; end: number | Date }
+    post?: { start: number | Date; end: number | Date }
+  }
+}
+
+export interface ChartQuote {
+  date: Date
+  open: number | null
+  high: number | null
+  low: number | null
+  close: number | null
+  volume: number | null
 }
 
 export interface MarketPerformance {
   currentPrice: number | null
   sessionChangePercent: number | null
   dailyChangePercent: number | null
-  latestTime?: string | Date
+  latestTime?: Date
+  marketState: MarketSession
 }
 
 const US_MARKET_TIME_ZONE = 'America/New_York'
-const MAX_PREVIOUS_POST_AGE_MS = 4 * 24 * 60 * 60 * 1000
 
 function percentChange(current?: number | null, baseline?: number | null): number | null {
   if (current == null || baseline == null || baseline <= 0) return null
   return ((current - baseline) / baseline) * 100
 }
 
-function isUsablePreviousPost(quote: MarketPerformanceQuote): boolean {
-  if (!quote.postMarketPrice || quote.postMarketPrice <= 0) return false
-  if (!quote.postMarketTime || !quote.preMarketTime) return true
+export function determineMarketState(meta: ChartMeta, now = new Date()): MarketSession {
+  if (!meta.currentTradingPeriod) {
+    return 'CLOSED'
+  }
 
-  const postTime = new Date(quote.postMarketTime).getTime()
-  const preTime = new Date(quote.preMarketTime).getTime()
-  const age = preTime - postTime
+  const nowMs = now.getTime()
+  
+  const getMs = (val: any) => val instanceof Date ? val.getTime() : (typeof val === 'number' ? val * 1000 : 0)
 
-  return Number.isFinite(age) && age >= 0 && age <= MAX_PREVIOUS_POST_AGE_MS
+  const preStart = getMs(meta.currentTradingPeriod.pre?.start)
+  const preEnd = getMs(meta.currentTradingPeriod.pre?.end)
+  const regStart = getMs(meta.currentTradingPeriod.regular?.start)
+  const regEnd = getMs(meta.currentTradingPeriod.regular?.end)
+  const postStart = getMs(meta.currentTradingPeriod.post?.start)
+  const postEnd = getMs(meta.currentTradingPeriod.post?.end)
+
+  if (preStart && nowMs >= preStart && nowMs < preEnd) return 'PRE'
+  if (regStart && nowMs >= regStart && nowMs < regEnd) return 'REGULAR'
+  if (postStart && nowMs >= postStart && nowMs < postEnd) return 'POST'
+  
+  return 'CLOSED'
 }
 
-/**
- * Separates the percentage for the active session from the full trading-day
- * movement. The UI percentage may reset while daily money and history continue
- * to use dailyChangePercent.
- */
-export function calculateMarketPerformance(
-  quote: MarketPerformanceQuote,
-  session: MarketSession,
-  timeZone = US_MARKET_TIME_ZONE
-): MarketPerformance {
-  if (session === 'PRE') {
-    const currentPrice = quote.preMarketPrice ?? quote.regularMarketPrice ?? null
-    const sessionBaseline = isUsablePreviousPost(quote)
-      ? quote.postMarketPrice
-      : quote.regularMarketPrice
+export function extractMarketPerformance(meta: ChartMeta, quotes: ChartQuote[]): MarketPerformance {
+  let lastValidClose: number | null = null
+  let latestTime: Date | undefined = undefined
 
-    return {
-      currentPrice,
-      sessionChangePercent: percentChange(currentPrice, sessionBaseline) ?? null,
-      dailyChangePercent: percentChange(currentPrice, quote.regularMarketPrice) ?? null,
-      latestTime: quote.preMarketTime ?? quote.regularMarketTime,
+  if (quotes && quotes.length > 0) {
+    for (let i = quotes.length - 1; i >= 0; i--) {
+      const q = quotes[i]
+      if (q.close !== null && q.close !== undefined) {
+        lastValidClose = q.close
+        latestTime = q.date
+        break
+      }
     }
   }
 
-  if (session === 'POST') {
-    const currentPrice = quote.postMarketPrice ?? quote.regularMarketPrice ?? null
+  const currentPrice = lastValidClose ?? meta.regularMarketPrice ?? null
+  const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? null
+  
+  const dailyChangePercent = percentChange(currentPrice, previousClose)
 
-    return {
-      currentPrice,
-      sessionChangePercent: percentChange(currentPrice, quote.regularMarketPrice) ?? null,
-      dailyChangePercent: percentChange(currentPrice, quote.regularMarketPrice) ?? null,
-      latestTime: quote.postMarketTime ?? quote.regularMarketTime,
-    }
-  }
-
-  if (session === 'REGULAR') {
-    const isDelayedAtOpen = 
-      quote.regularMarketPrice === quote.regularMarketPreviousClose && 
-      quote.preMarketPrice != null && 
-      quote.preMarketPrice !== quote.regularMarketPreviousClose;
-
-    const isRegularQuoteStale = 
-      (quote.regularMarketTime && !isQuoteFromCurrentMarketDate(quote.regularMarketTime, new Date(), timeZone)) ||
-      isDelayedAtOpen;
-
-    const currentPrice = (isRegularQuoteStale ? quote.preMarketPrice : quote.regularMarketPrice) ?? quote.regularMarketPrice ?? null
-
-    const changePercent = isRegularQuoteStale
-      ? percentChange(currentPrice, quote.regularMarketPreviousClose)
-      : (quote.regularMarketChangePercent ?? percentChange(currentPrice, quote.regularMarketPreviousClose))
-
-    return {
-      currentPrice,
-      sessionChangePercent: changePercent,
-      dailyChangePercent: changePercent,
-      latestTime: isRegularQuoteStale ? (quote.preMarketTime ?? quote.regularMarketTime) : quote.regularMarketTime,
-    }
-  }
-
-  const currentPrice = quote.postMarketPrice ?? quote.regularMarketPrice ?? null
   return {
     currentPrice,
-    // Keep the last completed session visible while the market is inactive.
-    // The next PRE quote gets a new baseline and performs the actual reset.
-    sessionChangePercent: quote.postMarketPrice
-      ? percentChange(currentPrice, quote.regularMarketPrice)
-      : quote.regularMarketChangePercent ??
-        percentChange(currentPrice, quote.regularMarketPreviousClose),
-    dailyChangePercent: percentChange(currentPrice, quote.regularMarketPreviousClose),
-    latestTime: quote.postMarketTime ?? quote.regularMarketTime,
+    sessionChangePercent: dailyChangePercent,
+    dailyChangePercent,
+    latestTime,
+    marketState: determineMarketState(meta)
   }
 }
 

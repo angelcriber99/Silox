@@ -10,8 +10,7 @@ import {
   type FxRatesToEur,
 } from '@/lib/utils/currency'
 import {
-  calculateMarketPerformance,
-  isQuoteFromCurrentMarketDate,
+  extractMarketPerformance,
   type MarketSession,
 } from '@/lib/utils/market-performance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
@@ -133,35 +132,7 @@ export interface MarketPricesResult {
   marketState: string
 }
 
-function getMarketState(timeZone: string): MarketSession {
-  const now = new Date()
-  const options = { timeZone, hour12: false }
-  
-  const localDateString = now.toLocaleString('en-US', options)
-  const localDate = new Date(localDateString)
-  
-  const day = localDate.getDay() // 0 = Sunday, 1 = Monday...
-  if (day === 0 || day === 6) return 'CLOSED'
 
-  const hours = localDate.getHours()
-  const minutes = localDate.getMinutes()
-  
-  const time = hours * 100 + minutes 
-  
-  const isUS = timeZone.includes('America/')
-  
-  if (isUS) {
-    if (time < 400) return 'CLOSED'
-    if (time >= 400 && time < 930) return 'PRE'
-    if (time >= 930 && time < 1600) return 'REGULAR'
-    if (time >= 1600 && time < 2000) return 'POST'
-    return 'CLOSED'
-  } else {
-    // For EU/Asia, default open hours roughly 09:00 - 17:30 local time
-    if (time >= 900 && time < 1730) return 'REGULAR'
-    return 'CLOSED'
-  }
-}
 
 // In-memory cache for the server action to prevent Yahoo rate limits
 // while bypassing Next.js unstable_cache completely.
@@ -238,72 +209,27 @@ async function _fetchMarketPrices(
         }
       }
 
-      const [quote, chart] = await Promise.all([
-        getYahooFinance().quote(ticker) as Promise<YahooQuote>,
+      const [chart1m, chart1d] = await Promise.all([
+        getYahooFinance().chart(ticker, { interval: '1m', period1: new Date(Date.now() - 24 * 60 * 60 * 1000), includePrePost: true }).catch(() => null),
         getYahooFinance().chart(ticker, { period1: d, interval: '1d' }).catch(() => null),
       ])
 
-      const originalCurrency = normalizeYahooCurrency(quote.currency)
-      const quoteTimeZone = quote.exchangeTimezoneName || 'America/New_York'
-      const marketState = getMarketState(quoteTimeZone)
-      let performance = calculateMarketPerformance(quote, marketState, quoteTimeZone)
-
-      // Fallback for Vercel/Yahoo edge cases where preMarketPrice is omitted
-      // despite marketState being PRE. We fetch a 1-day 1-minute chart.
-      // We ALSO do this if marketState is REGULAR but regularMarketPrice equals previousClose (Yahoo 15m delay bug)
-      const isDelayedAtOpen = marketState === 'REGULAR' && !quote.preMarketPrice && quote.regularMarketPrice === quote.regularMarketPreviousClose
-      if ((marketState === 'PRE' && !quote.preMarketPrice) || isDelayedAtOpen) {
-        try {
-          const preChart = await getYahooFinance().chart(ticker, { 
-            period1: new Date(Date.now() - 24 * 60 * 60 * 1000), 
-            interval: '1m', 
-            includePrePost: true 
-          })
-          if (preChart && preChart.quotes && preChart.quotes.length > 0) {
-            const lastQuote = preChart.quotes[preChart.quotes.length - 1]
-            if (lastQuote && lastQuote.close) {
-              quote.preMarketPrice = lastQuote.close
-              performance = calculateMarketPerformance(quote, marketState, quoteTimeZone)
-            }
-          }
-        } catch (e) { }
-      } else if (marketState === 'POST' && !quote.postMarketPrice) {
-        try {
-          const postChart = await getYahooFinance().chart(ticker, { 
-            period1: new Date(Date.now() - 24 * 60 * 60 * 1000), 
-            interval: '1m', 
-            includePrePost: true 
-          })
-          if (postChart && postChart.quotes && postChart.quotes.length > 0) {
-            const lastQuote = postChart.quotes[postChart.quotes.length - 1]
-            if (lastQuote && lastQuote.close) {
-              quote.postMarketPrice = lastQuote.close
-              performance = calculateMarketPerformance(quote, marketState, quoteTimeZone)
-            }
-          }
-        } catch (e) { }
+      if (!chart1m) {
+        throw new Error(`Failed to fetch 1m chart for ${ticker}`)
       }
 
-      // Yahoo can briefly expose yesterday's extended-hours quote immediately
-      // after REGULAR -> POST. Preserve today's regular daily result in that gap.
-      if (
-        !isQuoteFromCurrentMarketDate(performance.latestTime, new Date(), quoteTimeZone) &&
-        (marketState === 'POST' || marketState === 'CLOSED') &&
-        isQuoteFromCurrentMarketDate(quote.regularMarketTime, new Date(), quoteTimeZone)
-      ) {
-        performance = calculateMarketPerformance({
-          ...quote,
-          postMarketPrice: undefined,
-          postMarketTime: undefined,
-        }, marketState, quoteTimeZone)
-      }
+      const meta = chart1m.meta
+      const quotes = (chart1m.quotes as any) || []
+      
+      const originalCurrency = normalizeYahooCurrency(meta.currency || 'USD')
+      const performance = extractMarketPerformance(meta as any, quotes)
 
       const rawPrice = performance.currentPrice
       let changePercent24h = performance.sessionChangePercent
       let dailyChangePercent24h = performance.dailyChangePercent
       let sparkline: number[] = []
-      if (chart?.quotes) {
-        sparkline = chart.quotes
+      if (chart1d?.quotes) {
+        sparkline = chart1d.quotes
           .map((q) => q.close)
           .filter((c): c is number => c !== null && c !== undefined)
       }
@@ -326,7 +252,7 @@ async function _fetchMarketPrices(
         dailyChangePercent24h,
         originalPrice: rawPrice,
         originalCurrency,
-        marketState
+        marketState: performance.marketState,
       }
     },
   )
