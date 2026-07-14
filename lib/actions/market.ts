@@ -248,6 +248,40 @@ async function _fetchMarketPrices(
       const marketState = getMarketState(quoteTimeZone)
       let performance = calculateMarketPerformance(quote, marketState)
 
+      // Fallback for Vercel/Yahoo edge cases where preMarketPrice is omitted
+      // despite marketState being PRE. We fetch a 1-day 1-minute chart.
+      if (marketState === 'PRE' && !quote.preMarketPrice) {
+        try {
+          const preChart = await getYahooFinance().chart(ticker, { 
+            period1: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+            interval: '1m', 
+            includePrePost: true 
+          })
+          if (preChart && preChart.quotes && preChart.quotes.length > 0) {
+            const lastQuote = preChart.quotes[preChart.quotes.length - 1]
+            if (lastQuote && lastQuote.close) {
+              quote.preMarketPrice = lastQuote.close
+              performance = calculateMarketPerformance(quote, marketState)
+            }
+          }
+        } catch (e) { }
+      } else if (marketState === 'POST' && !quote.postMarketPrice) {
+        try {
+          const postChart = await getYahooFinance().chart(ticker, { 
+            period1: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+            interval: '1m', 
+            includePrePost: true 
+          })
+          if (postChart && postChart.quotes && postChart.quotes.length > 0) {
+            const lastQuote = postChart.quotes[postChart.quotes.length - 1]
+            if (lastQuote && lastQuote.close) {
+              quote.postMarketPrice = lastQuote.close
+              performance = calculateMarketPerformance(quote, marketState)
+            }
+          }
+        } catch (e) { }
+      }
+
       // Yahoo can briefly expose yesterday's extended-hours quote immediately
       // after REGULAR -> POST. Preserve today's regular daily result in that gap.
       if (
