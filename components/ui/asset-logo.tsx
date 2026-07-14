@@ -71,7 +71,7 @@ export function AssetLogo({
       <div 
         className="absolute inset-0"
         style={{
-          background: cfg.bg,
+          background: "rgba(255, 255, 255, 0.9)",
           border: `1.5px solid ${cfg.pill}`,
           borderRadius: size * 0.25,
         }}
@@ -80,7 +80,7 @@ export function AssetLogo({
       <img
         src={`/api/logo?ticker=${logoTicker}`}
         alt={logoTicker}
-        className="w-full h-full object-contain p-[15%] drop-shadow-sm relative z-10"
+        className="w-full h-full object-contain p-[12%] relative z-10"
         onError={() => setError(true)}
       />
     </div>
