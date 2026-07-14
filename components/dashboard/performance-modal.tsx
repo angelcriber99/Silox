@@ -12,10 +12,14 @@ import { es } from "date-fns/locale"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { getMarketDateKey } from "@/lib/utils/market-performance"
+import type { EnrichedPosition } from "@/lib/types"
+import { computePortfolioTotals } from "@/lib/api/assets"
 
 interface PerformanceModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  positions?: EnrichedPosition[]
+  marketState?: string
   currentPnl24h?: number
   currentTotalValue?: number
   currentTotalCost?: number
@@ -32,7 +36,9 @@ export interface ChartDataPoint {
   isFirstPoint: boolean
 }
 
-export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTotalValue, currentTotalCost }: PerformanceModalProps) {
+import { DistributionExtended } from "./distribution-extended"
+
+export function PerformanceModal({ open, onOpenChange, positions = [], marketState = 'CLOSED', currentPnl24h, currentTotalValue, currentTotalCost }: PerformanceModalProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M")
   const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null)
   const { data: snapshots, isLoading } = useHistory()
@@ -169,92 +175,162 @@ export function PerformanceModal({ open, onOpenChange, currentPnl24h, currentTot
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl bg-background/95 backdrop-blur-xl border-border/50 p-0 overflow-hidden">
-        <div className="p-6 pb-2 border-b border-border/40">
-          <DialogHeader className="mb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
-                  <BarChart2 className="w-6 h-6 text-blue-500" />
-                  Análisis de Rendimiento
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground mt-1">
-                  Métricas avanzadas sobre la evolución de tu portfolio.
-                </DialogDescription>
-              </div>
-              
-              {/* Time Range Selector */}
-              <div className="flex bg-muted/50 p-1 rounded-lg border border-border/50 self-start sm:self-auto">
-                {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
-                  <button
-                    key={tr}
-                    onClick={() => setTimeRange(tr)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                      timeRange === tr 
-                        ? "bg-background text-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                    }`}
-                  >
-                    {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </DialogHeader>
-
-          {/* Period Summary Header */}
-          {!isLoading && processedData.length > 0 && (
-            <div className="flex items-end gap-6 mb-4">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Patrimonio</p>
-                <p className="text-3xl font-bold tabular-nums text-foreground">
-                  {hideBalances ? "****" : formatCurrency(displayData.endValue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">{displayData.dateLabel}</p>
-                <div className="flex items-baseline gap-2">
-                  <p className={`text-xl font-bold tabular-nums ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {displayData.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayData.pnl)}
-                  </p>
-                  <p className={`text-sm font-medium ${displayData.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    ({displayData.pnlPercent >= 0 ? '+' : ''}{formatPercent(displayData.pnlPercent).replace('+', '')})
-                  </p>
+      <DialogContent className="sm:max-w-5xl bg-background/95 backdrop-blur-xl border-border/50 p-0 overflow-hidden">
+        <Tabs defaultValue="distribucion" className="w-full h-full flex flex-col">
+          <div className="p-6 pb-4 border-b border-border/40">
+            <DialogHeader className="mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
+                    <BarChart2 className="w-6 h-6 text-blue-500" />
+                    Análisis de Cartera
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground mt-1">
+                    Visualiza la distribución y métricas avanzadas de tu portfolio.
+                  </DialogDescription>
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="p-6 pt-4 bg-muted/10">
-          {isLoading ? (
-            <div className="h-[400px] w-full flex items-center justify-center">
-              <div className="animate-pulse flex flex-col items-center gap-3 text-muted-foreground/80">
-                <Activity className="h-8 w-8 animate-bounce" />
-                <p>Calculando evolución...</p>
-              </div>
-            </div>
-          ) : processedData.length === 0 ? (
-             <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                Añade activos a tu portfolio y espera un día para ver tu evolución.
-             </div>
-          ) : (
-            <Tabs defaultValue="patrimonio" className="w-full">
-              <div className="flex justify-center mb-6">
-                <TabsList className="grid grid-cols-2 w-[400px]">
-                  <TabsTrigger value="patrimonio">Evolución del Patrimonio</TabsTrigger>
+                <TabsList className="grid grid-cols-3 w-full sm:w-[450px]">
+                  <TabsTrigger value="distribucion">Distribución</TabsTrigger>
+                  <TabsTrigger value="patrimonio">Patrimonio</TabsTrigger>
                   <TabsTrigger value="pnl">PnL Diario</TabsTrigger>
                 </TabsList>
               </div>
-              <TabsContent value="patrimonio" className="mt-0">
-                <PortfolioHistoryChart chartData={filteredData} onHoverChange={setHoveredPoint} />
-              </TabsContent>
-              <TabsContent value="pnl" className="mt-0">
-                <DailyPnlChart chartData={filteredData} />
-              </TabsContent>
-            </Tabs>
-          )}
-        </div>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 pt-4 bg-muted/10 h-full">
+            <TabsContent value="distribucion" className="mt-0 h-full">
+              <div className="bg-card/40 border border-border/40 backdrop-blur-md rounded-xl p-4 sm:p-6 shadow-sm min-h-[400px]">
+                 <DistributionExtended 
+                   positions={positions} 
+                   marketState={marketState}
+                 />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="patrimonio" className="mt-0">
+               <div className="bg-card/40 border border-border/40 backdrop-blur-md rounded-xl p-4 sm:p-6 shadow-sm min-h-[400px]">
+                 {/* Period Summary Header for historical views */}
+                  {!isLoading && processedData.length > 0 && (
+                    <div className="flex items-end justify-between gap-6 mb-6">
+                      <div className="flex items-end gap-6">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Patrimonio</p>
+                          <p className="text-3xl font-bold tabular-nums text-foreground">
+                            {hideBalances ? "****" : formatCurrency(displayData.endValue)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">{displayData.dateLabel}</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className={`text-xl font-bold tabular-nums ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {displayData.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayData.pnl)}
+                            </p>
+                            <p className={`text-sm font-medium ${displayData.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              ({displayData.pnlPercent >= 0 ? '+' : ''}{formatPercent(displayData.pnlPercent).replace('+', '')})
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Time Range Selector */}
+                      <div className="flex bg-background p-1 rounded-lg border border-border/50 self-start sm:self-auto">
+                        {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
+                          <button
+                            key={tr}
+                            onClick={() => setTimeRange(tr)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                              timeRange === tr 
+                                ? "bg-muted text-foreground shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                 {isLoading ? (
+                  <div className="h-[400px] w-full flex items-center justify-center">
+                    <div className="animate-pulse flex flex-col items-center gap-3 text-muted-foreground/80">
+                      <Activity className="h-8 w-8 animate-bounce" />
+                      <p>Calculando evolución...</p>
+                    </div>
+                  </div>
+                ) : processedData.length === 0 ? (
+                   <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground text-sm">
+                      Añade activos a tu portfolio y espera un día para ver tu evolución.
+                   </div>
+                ) : (
+                  <PortfolioHistoryChart chartData={filteredData} onHoverChange={setHoveredPoint} />
+                )}
+               </div>
+            </TabsContent>
+            
+            <TabsContent value="pnl" className="mt-0">
+               <div className="bg-card/40 border border-border/40 backdrop-blur-md rounded-xl p-4 sm:p-6 shadow-sm min-h-[400px]">
+                 {/* Period Summary Header for historical views */}
+                  {!isLoading && processedData.length > 0 && (
+                    <div className="flex items-end justify-between gap-6 mb-6">
+                      <div className="flex items-end gap-6">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Patrimonio</p>
+                          <p className="text-3xl font-bold tabular-nums text-foreground">
+                            {hideBalances ? "****" : formatCurrency(displayData.endValue)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">{displayData.dateLabel}</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className={`text-xl font-bold tabular-nums ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {displayData.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayData.pnl)}
+                            </p>
+                            <p className={`text-sm font-medium ${displayData.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              ({displayData.pnlPercent >= 0 ? '+' : ''}{formatPercent(displayData.pnlPercent).replace('+', '')})
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Time Range Selector */}
+                      <div className="flex bg-background p-1 rounded-lg border border-border/50 self-start sm:self-auto">
+                        {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
+                          <button
+                            key={tr}
+                            onClick={() => setTimeRange(tr)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                              timeRange === tr 
+                                ? "bg-muted text-foreground shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                 {isLoading ? (
+                  <div className="h-[400px] w-full flex items-center justify-center">
+                    <div className="animate-pulse flex flex-col items-center gap-3 text-muted-foreground/80">
+                      <Activity className="h-8 w-8 animate-bounce" />
+                      <p>Calculando evolución...</p>
+                    </div>
+                  </div>
+                ) : processedData.length === 0 ? (
+                   <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground text-sm">
+                      Añade activos a tu portfolio y espera un día para ver tu evolución.
+                   </div>
+                ) : (
+                  <DailyPnlChart chartData={filteredData} />
+                )}
+               </div>
+            </TabsContent>
+          </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

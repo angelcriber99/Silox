@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl"
 import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 import { useNotes } from "@/lib/stores/use-notes"
 import Marquee from "react-fast-marquee"
+import { PerformanceModal } from "@/components/dashboard/performance-modal"
 
 interface PortfolioSummaryProps {
   totals: PortfolioTotals
@@ -40,6 +41,7 @@ export function PortfolioSummary({
 }: PortfolioSummaryProps) {
   const { hideBalances } = usePreferences()
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
+  const [chartsOpen, setChartsOpen] = useState(false)
   const [cashAssetId, setCashAssetId] = useState<string | null>(null)
   const t = useTranslations("Dashboard")
 
@@ -161,11 +163,28 @@ export function PortfolioSummary({
             )}
           </div>
         )}
+
+        <button
+          onClick={() => setChartsOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-sm font-semibold shadow-sm mt-1"
+        >
+          <BarChart2 className="w-4 h-4" />
+          Análisis Avanzado
+        </button>
         
         <WithdrawCashModal
           open={withdrawModalOpen}
           onOpenChange={setWithdrawModalOpen}
           cashAssetId={cashAssetId || ""}
+        />
+
+        <PerformanceModal
+          open={chartsOpen}
+          onOpenChange={setChartsOpen}
+          positions={positions}
+          currentPnl24h={totals.totalPnl24h}
+          currentTotalValue={totals.totalValue}
+          currentTotalCost={totals.totalCost}
         />
       </div>
     )
@@ -281,6 +300,13 @@ export function PortfolioSummary({
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
               Plan Estratégico
+            </button>
+            <button
+              onClick={() => setChartsOpen(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm w-full md:w-auto"
+            >
+              <BarChart2 className="w-4 h-4" />
+              Análisis Avanzado
             </button>
           </div>
         </div>
