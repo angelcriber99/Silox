@@ -272,34 +272,30 @@ export function PositionsTable({
 
   return (
     <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden">
-      <CardHeader className="p-5 md:p-7 pb-6 flex flex-col gap-6 border-b border-border/20">
+      <CardHeader className="p-4 md:p-5 pb-4 flex flex-col gap-4 border-b border-border/20">
         {/* TOP ROW: Title, Badges, Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-5 md:gap-8">
-            <CardTitle className="text-lg md:text-xl font-semibold text-foreground flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary shadow-sm">
-                <Layers className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
+            <CardTitle className="text-base md:text-lg font-medium text-foreground flex items-center gap-2">
+              <Layers className="h-4 w-4 text-muted-foreground" />
               <span className="tracking-tight">{t('positions')}</span>
             </CardTitle>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center gap-2.5 px-4 py-2 rounded-full bg-secondary/20 border border-secondary/30 text-[13px] font-medium shadow-sm hidden sm:flex backdrop-blur-md transition-colors hover:bg-secondary/30 cursor-default">
-                <Wallet className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-muted-foreground/90">Liquidez:</span>
-                <span className="font-semibold text-foreground tracking-wide">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground hidden sm:flex bg-muted/20 border border-border/30 px-3 py-1.5 rounded-md transition-colors hover:bg-muted/30">
+                <Wallet className="w-3.5 h-3.5" />
+                Liquidez: <span className="font-medium text-foreground ml-0.5">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
               </div>
               {fondoMonetarioAmount > 0 && (
-                <div className="flex items-center justify-center gap-2.5 px-4 py-2 rounded-full bg-secondary/20 border border-secondary/30 text-[13px] font-medium shadow-sm hidden sm:flex backdrop-blur-md transition-colors hover:bg-secondary/30 cursor-default">
-                  <PiggyBank className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-muted-foreground/90">F. Monetario:</span>
-                  <span className="font-semibold text-foreground tracking-wide">{hideBalances ? "••••" : formatCurrency(fondoMonetarioAmount)}</span>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground hidden sm:flex bg-muted/20 border border-border/30 px-3 py-1.5 rounded-md transition-colors hover:bg-muted/30">
+                  <PiggyBank className="w-3.5 h-3.5" />
+                  F. Monetario: <span className="font-medium text-foreground ml-0.5">{hideBalances ? "••••" : formatCurrency(fondoMonetarioAmount)}</span>
                 </div>
               )}
             </div>
           </div>
           
-          <div className="flex items-center gap-3 self-end md:self-auto">
+          <div className="flex items-center gap-2 self-end md:self-auto">
             <Button
               size="sm"
               variant="outline"
@@ -338,18 +334,18 @@ export function PositionsTable({
         </div>
 
         {/* BOTTOM ROW: Filters & Search */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 pt-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="relative w-full sm:w-auto group">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
             <Input
               placeholder={t('search_asset')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-[13px] md:text-sm bg-muted/20 border-border/40 w-full sm:w-[260px] rounded-full text-foreground focus-visible:ring-primary/30 focus-visible:bg-background transition-all hover:bg-muted/30"
+              className="pl-8 h-8 text-[13px] bg-muted/20 border-border/40 w-full sm:w-[240px] rounded-md text-foreground focus-visible:ring-primary/30 focus-visible:bg-background transition-all hover:bg-muted/30"
             />
           </div>
 
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap">
             {FILTER_OPTIONS.map((opt) => {
               const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
               const disabled =
