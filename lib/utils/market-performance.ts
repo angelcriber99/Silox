@@ -50,18 +50,6 @@ export function calculateMarketPerformance(
   session: MarketSession,
 ): MarketPerformance {
   if (session === 'PRE') {
-    // Si no tenemos datos de pre-market (muy común en Yahoo Finance desde ciertas IPs),
-    // debemos comportarnos como si el mercado estuviera CERRADO para no mostrar 0.0.
-    if (quote.preMarketPrice == null && quote.preMarketChangePercent == null) {
-      const currentPrice = quote.regularMarketPrice ?? null
-      return {
-        currentPrice,
-        sessionChangePercent: quote.regularMarketChangePercent ?? percentChange(currentPrice, quote.regularMarketPreviousClose),
-        dailyChangePercent: quote.regularMarketChangePercent ?? percentChange(currentPrice, quote.regularMarketPreviousClose),
-        latestTime: quote.regularMarketTime,
-      }
-    }
-
     const currentPrice = quote.preMarketPrice ?? quote.regularMarketPrice ?? null
     const sessionBaseline = isUsablePreviousPost(quote)
       ? quote.postMarketPrice
