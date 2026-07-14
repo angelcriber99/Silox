@@ -1,6 +1,6 @@
 "use server"
 
-import { unstable_cache } from 'next/cache'
+import { unstable_cache, unstable_noStore } from 'next/cache'
 
 import {
   convertSeriesToEur,
@@ -176,6 +176,8 @@ export async function fetchMarketPricesDirect(
   tickers: string[],
   convertToEurFlag: boolean = false
 ): Promise<MarketPricesResult> {
+  unstable_noStore()
+  
   const cacheKey = `${tickers.slice().sort().join(',')}:${convertToEurFlag}`
   
   const cached = actionCache.get(cacheKey)
