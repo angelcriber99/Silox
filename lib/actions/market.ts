@@ -278,13 +278,13 @@ async function _fetchMarketPrices(
         marketState
       }
       
-      if (marketState === 'REGULAR') {
+      if (marketState === 'PRE') {
+        globalMarketState = 'PRE'
+      } else if (marketState === 'POST' && globalMarketState !== 'PRE') {
+        globalMarketState = 'POST'
+      } else if (marketState === 'REGULAR' && globalMarketState !== 'PRE' && globalMarketState !== 'POST') {
         hasOpenMarket = true
         globalMarketState = 'REGULAR'
-      } else if (marketState === 'PRE' && globalMarketState !== 'REGULAR') {
-        globalMarketState = 'PRE'
-      } else if (marketState === 'POST' && globalMarketState === 'CLOSED') {
-        globalMarketState = 'POST'
       }
     } else if (ticker) {
       prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null, dailyChangePercent24h: null }
