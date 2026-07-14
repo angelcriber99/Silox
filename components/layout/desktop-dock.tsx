@@ -24,7 +24,7 @@ const navItems = [
 
 export function DesktopDock() {
   const pathname = usePathname()
-  const t = useTranslations('Nav')
+  const t = useTranslations('Navigation')
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-end justify-center gap-2 px-4 py-3 rounded-2xl bg-card/40 backdrop-blur-2xl border border-border/40 shadow-2xl">

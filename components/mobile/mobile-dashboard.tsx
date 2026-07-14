@@ -2,18 +2,14 @@
 
 import { useMemo, useState } from "react"
 import {
-  Bell, Eye, EyeOff, TrendingUp, TrendingDown,
-  Wallet, FileUp, ArrowUp, ArrowDown, Zap,
+  Bell, Eye, EyeOff, FileUp
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
-import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from "recharts"
-import type { MouseHandlerDataParam } from "recharts"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { hapticFeedback } from "@/lib/utils/haptics"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
-import { useHistory } from "@/lib/hooks/use-portfolio"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
@@ -78,15 +74,10 @@ export function MobileDashboard({
   const { hideBalances, setHideBalances } = usePreferences()
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [filterType, setFilterType] = useState<string>("All")
-  const [chartRange, setChartRange] = useState<"1W" | "1M" | "3M" | "YTD" | "1Y" | "MAX">("1M")
-  const [scrubData, setScrubData] = useState<{ i: number; v: number; pnl: number } | null>(null)
   const t = useTranslations("Dashboard")
-
-  const { data: snapshots } = useHistory()
 
   const isPositive     = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
-  const areaColorHex   = isPositive ? "#30D158" : "#FF453A"
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
@@ -99,49 +90,7 @@ export function MobileDashboard({
     }
   }
 
-  // Portfolio chart data
-  const portfolioSparkline = useMemo(() => {
-    if (!snapshots || snapshots.length === 0) return []
-    const sorted = [...snapshots].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    )
-    const dailySnapshots = new Map<string, typeof snapshots[0]>()
-    sorted.forEach(s => {
-      const day = new Date(s.timestamp).toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
-      dailySnapshots.set(day, s)
-    })
 
-    let filtered = Array.from(dailySnapshots.values())
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-
-    if (filtered.length < 2) return []
-
-    const now = new Date()
-    const cutoff = new Date()
-    switch (chartRange) {
-      case "1W": cutoff.setDate(now.getDate() - 7); break
-      case "1M": cutoff.setMonth(now.getMonth() - 1); break
-      case "3M": cutoff.setMonth(now.getMonth() - 3); break
-      case "YTD": cutoff.setFullYear(now.getFullYear(), 0, 1); break
-      case "1Y": cutoff.setFullYear(now.getFullYear() - 1); break
-      case "MAX": cutoff.setFullYear(2000); break
-    }
-
-    filtered = filtered.filter(s => new Date(s.timestamp) >= cutoff)
-
-    if (filtered.length < 2) {
-      filtered = Array.from(dailySnapshots.values())
-        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-        .slice(-2)
-    }
-
-    const start = filtered[0].total_value
-    return filtered.map((s, i) => ({
-      i,
-      v: s.total_value,
-      pnl: s.total_value - start,
-    }))
-  }, [snapshots, chartRange])
 
   // Sorted + filtered positions
   const sortedPositions = useMemo(() => {
@@ -173,14 +122,7 @@ export function MobileDashboard({
     return map
   }, [sortedPositions, filterType])
 
-  const totalPortfolioValue = totals.totalValue
 
-  const movers = useMemo(() => {
-    return [...positions]
-      .filter(p => p.change_amount_24h && Math.abs(p.change_amount_24h) > 0.01)
-      .sort((a, b) => Math.abs(b.change_amount_24h || 0) - Math.abs(a.change_amount_24h || 0))
-      .slice(0, 8)
-  }, [positions])
 
   // ── Loading skeleton ─────────────────────────────────────────────────────
   if (isLoading) {
@@ -285,7 +227,7 @@ export function MobileDashboard({
                   }}
                 >
                   <AnimatedNumber
-                    value={scrubData ? scrubData.v : totals.totalValue}
+                    value={totals.totalValue}
                     format="currency"
                     hide={hideBalances}
                   />
@@ -293,7 +235,7 @@ export function MobileDashboard({
               </motion.div>
 
               {/* PnL row */}
-              {totals.totalCost > 0 && !scrubData && (
+              {totals.totalCost > 0 && (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   {/* Total PnL */}
                   <div
@@ -303,20 +245,17 @@ export function MobileDashboard({
                       border: `0.5px solid ${isPositive ? "rgba(48,209,88,0.25)" : "rgba(255,69,58,0.25)"}`,
                     }}
                   >
-                    {isPositive
-                      ? <ArrowUp className="w-3 h-3" style={{ color: "#30D158" }} />
-                      : <ArrowDown className="w-3 h-3" style={{ color: "#FF453A" }} />}
                     <span
                       className="text-[13px] font-bold tabular-nums"
                       style={{ color: isPositive ? "#30D158" : "#FF453A" }}
                     >
-                      {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
+                      {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatPnl(totals.totalPnl)}`}
                     </span>
                     <span
                       className="text-[11px] font-semibold"
                       style={{ color: isPositive ? "rgba(48,209,88,0.75)" : "rgba(255,69,58,0.75)" }}
                     >
-                      {hideBalances ? "" : `(${formatPercent(totals.totalPnlPercent)})`}
+                      {hideBalances ? "" : `(${formatPercent(totals.totalPnlPercent).replace('+', '')})`}
                     </span>
                   </div>
 
@@ -346,30 +285,10 @@ export function MobileDashboard({
                       className="text-[11px] font-semibold"
                       style={{ color: daily24Positive ? "rgba(48,209,88,0.70)" : "rgba(255,69,58,0.70)" }}
                     >
-                      {hideBalances ? "" : formatPercent(totals.totalPnlPercent24h)}
+                      {hideBalances ? "" : `(${formatPercent(totals.totalPnlPercent24h).replace('+', '')})`}
                     </span>
                   </div>
                 </div>
-              )}
-
-              {/* Scrub overlay */}
-              {scrubData && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full mt-2 w-fit"
-                  style={{
-                    background: scrubData.pnl >= 0 ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)",
-                    border: `0.5px solid ${scrubData.pnl >= 0 ? "rgba(48,209,88,0.30)" : "rgba(255,69,58,0.30)"}`,
-                    color: scrubData.pnl >= 0 ? "#30D158" : "#FF453A",
-                  }}
-                >
-                  {scrubData.pnl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                  <span className="text-[13px] font-bold tabular-nums">
-                    {hideBalances ? "••••" : formatPnl(scrubData.pnl)}
-                  </span>
-                  <span className="text-[10px] font-semibold opacity-70">vs {chartRange}</span>
-                </motion.div>
               )}
             </div>
 
@@ -419,209 +338,6 @@ export function MobileDashboard({
           </div>
         </div>
       </div>
-
-      {/* ─── Sparkline chart ───────────────────────────────────────────── */}
-      {portfolioSparkline.length > 1 && (
-        <div className="h-[160px] w-full relative" style={{ marginTop: -2 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={portfolioSparkline}
-              margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
-              onMouseMove={(event: MouseHandlerDataParam) => {
-                const index = Number(event.activeTooltipIndex)
-                if (event.isTooltipActive && Number.isInteger(index)) {
-                  const newScrub = portfolioSparkline[index]
-                  if (!newScrub) return
-                  setScrubData(prev => {
-                    if (prev?.i !== newScrub.i) hapticFeedback.light()
-                    return newScrub
-                  })
-                }
-              }}
-              onMouseLeave={() => setScrubData(null)}
-              onTouchEnd={() => setScrubData(null)}
-            >
-              <defs>
-                <linearGradient id="mobileGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={areaColorHex} stopOpacity={0.45} />
-                  <stop offset="65%"  stopColor={areaColorHex} stopOpacity={0.08} />
-                  <stop offset="100%" stopColor={areaColorHex} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <YAxis hide domain={["dataMin - 300", "dataMax + 300"]} />
-              <Tooltip
-                content={() => null}
-                cursor={{ stroke: areaColorHex, strokeWidth: 1.5, strokeDasharray: "4 4" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="v"
-                stroke={areaColorHex}
-                strokeWidth={2.5}
-                fill="url(#mobileGrad)"
-                isAnimationActive
-                animationDuration={700}
-                activeDot={{ r: 5, fill: areaColorHex, stroke: "var(--background)", strokeWidth: 2 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* ─── Chart Range Selector ─────────────────────────────────────── */}
-      <div className="px-4 pb-5 pt-2 flex gap-1">
-        {(["1W", "1M", "3M", "YTD", "1Y", "MAX"] as const).map(range => (
-          <button
-            key={range}
-            onClick={() => { hapticFeedback.light(); setChartRange(range) }}
-            className="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all relative overflow-hidden"
-            style={{
-              color: chartRange === range ? "#FFFFFF" : "rgba(255,255,255,0.30)",
-              background: chartRange === range ? "rgba(255,255,255,0.12)" : "transparent",
-            }}
-          >
-            {range}
-          </button>
-        ))}
-      </div>
-
-      {/* ─── Metric Cards (3-column bento) ─────────────────────────── */}
-      <div className="px-4 pb-5">
-        <div className="grid grid-cols-3 gap-3">
-          {/* Invested */}
-          <div
-            className="flex flex-col justify-between p-4 rounded-2xl"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <Wallet className="w-4 h-4 mb-3" style={{ color: "rgba(255,255,255,0.40)" }} />
-            <div>
-              <p
-                className="text-[17px] font-extrabold tabular-nums leading-tight"
-                style={{ color: "#FFFFFF", letterSpacing: "-0.03em" }}
-              >
-                {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
-              </p>
-              <p
-                className="text-[9px] font-bold uppercase tracking-wider mt-1"
-                style={{ color: "rgba(255,255,255,0.30)" }}
-              >
-                Invertido
-              </p>
-            </div>
-          </div>
-
-          {/* Total gain */}
-          <div
-            className="flex flex-col justify-between p-4 rounded-2xl"
-            style={{
-              background: isPositive ? "rgba(48,209,88,0.09)" : "rgba(255,69,58,0.09)",
-              border: `0.5px solid ${isPositive ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
-            }}
-          >
-            {isPositive
-              ? <TrendingUp className="w-4 h-4 mb-3" style={{ color: "#30D158" }} />
-              : <TrendingDown className="w-4 h-4 mb-3" style={{ color: "#FF453A" }} />}
-            <div>
-              <p
-                className="text-[17px] font-extrabold tabular-nums leading-tight"
-                style={{ color: isPositive ? "#30D158" : "#FF453A", letterSpacing: "-0.03em" }}
-              >
-                {hideBalances ? "••••" : formatPnl(totals.totalPnl)}
-              </p>
-              <p
-                className="text-[9px] font-bold uppercase tracking-wider mt-1"
-                style={{ color: isPositive ? "rgba(48,209,88,0.55)" : "rgba(255,69,58,0.55)" }}
-              >
-                Ganancia
-              </p>
-            </div>
-          </div>
-
-          {/* 24h */}
-          <div
-            className="flex flex-col justify-between p-4 rounded-2xl"
-            style={{
-              background: daily24Positive ? "rgba(48,209,88,0.07)" : "rgba(255,69,58,0.07)",
-              border: `0.5px solid ${daily24Positive ? "rgba(48,209,88,0.15)" : "rgba(255,69,58,0.15)"}`,
-            }}
-          >
-            <Zap className="w-4 h-4 mb-3" style={{ color: daily24Positive ? "rgba(48,209,88,0.60)" : "rgba(255,69,58,0.60)" }} />
-            <div>
-              <p
-                className="text-[17px] font-extrabold tabular-nums leading-tight"
-                style={{ color: daily24Positive ? "#30D158" : "#FF453A", letterSpacing: "-0.03em" }}
-              >
-                {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
-              </p>
-              <p
-                className="text-[9px] font-bold uppercase tracking-wider mt-1"
-                style={{ color: daily24Positive ? "rgba(48,209,88,0.55)" : "rgba(255,69,58,0.55)" }}
-              >
-                Hoy
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── Live Market Movers ───────────────────────────────────────── */}
-      {movers.length > 0 && (
-        <div
-          className="pb-5"
-          style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
-        >
-          <div className="flex items-center px-4 pt-4 mb-3 gap-2">
-            <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: "#30D158" }} />
-              <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#30D158" }} />
-            </div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(255,255,255,0.35)" }}>
-              Impacto hoy
-            </p>
-          </div>
-
-          <div className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory px-4 pb-1 gap-2.5 scroll-smooth">
-            {movers.map(p => {
-              const isGain = (p.change_amount_24h || 0) >= 0
-              const ticker = p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
-                ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
-                : p.ticker.split(".")[0]
-              return (
-                <Link key={p.activo_id} href={`/activo/${p.activo_id}`} className="snap-center shrink-0">
-                  <motion.div
-                    whileTap={{ scale: 0.94 }}
-                    className="flex flex-col gap-0.5 px-3.5 py-2.5 rounded-2xl"
-                    style={{
-                      background: isGain ? "rgba(48,209,88,0.09)" : "rgba(255,69,58,0.09)",
-                      border: `0.5px solid ${isGain ? "rgba(48,209,88,0.20)" : "rgba(255,69,58,0.20)"}`,
-                      minWidth: 90,
-                    }}
-                  >
-                    <span className="text-[13px] font-extrabold" style={{ color: "#FFFFFF" }}>
-                      {ticker}
-                    </span>
-                    <span
-                      className="text-[12px] font-bold tabular-nums"
-                      style={{ color: isGain ? "#30D158" : "#FF453A" }}
-                    >
-                      {isGain ? "+" : ""}{hideBalances ? "•••" : formatCurrency(p.change_amount_24h || 0)}
-                    </span>
-                    <span
-                      className="text-[10px] font-semibold tabular-nums"
-                      style={{ color: isGain ? "rgba(48,209,88,0.65)" : "rgba(255,69,58,0.65)" }}
-                    >
-                      {hideBalances ? "•••" : formatPercent(p.change_percent_24h ?? 0)}
-                    </span>
-                  </motion.div>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ─── Asset filter pills ───────────────────────────────────────── */}
       {assetTypes.length > 2 && (
