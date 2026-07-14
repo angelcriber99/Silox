@@ -18,6 +18,7 @@ import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatUnits, formatPnl } from "@/lib/utils/formatters"
 import { Sparkline } from "@/components/asset/sparkline"
 import { AddAssetModal } from "@/components/asset/add-asset-modal"
+import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { HelpGuideModal } from "@/components/dashboard/help-guide-modal"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { usePreferences } from "@/lib/stores/use-preferences"
@@ -319,6 +320,21 @@ export function PositionsTable({
                 <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 border-2 border-background animate-pulse" />
               )}
             </div>
+            
+            <RevolutSync>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
+                title="Sincronizar extracto (CSV/Excel)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 shrink-0">
+                  <path d="M14.6541 21.0118H9.33644V14.1611H5L12 3L19 14.1611H14.6541V21.0118Z" fill="currentColor"/>
+                </svg>
+                Importar
+              </Button>
+            </RevolutSync>
+
             <Button
               size="sm"
               onClick={() => setAddAssetOpen(true)}
