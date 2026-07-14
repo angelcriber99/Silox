@@ -243,7 +243,12 @@ async function _fetchMarketPrices(
 
       const originalCurrency = normalizeYahooCurrency(quote.currency)
       const quoteTimeZone = quote.exchangeTimezoneName || 'America/New_York'
-      const marketState = getMarketState(quoteTimeZone)
+      let marketState: 'PRE' | 'REGULAR' | 'POST' | 'CLOSED' = 'REGULAR'
+      const rawMarketState = (quote as any).marketState
+      if (rawMarketState === 'PRE' || rawMarketState === 'PREPRE') marketState = 'PRE'
+      else if (rawMarketState === 'POST' || rawMarketState === 'POSTPOST') marketState = 'POST'
+      else if (rawMarketState === 'CLOSED') marketState = 'CLOSED'
+
       let performance = calculateMarketPerformance(quote, marketState)
 
       // Yahoo can briefly expose yesterday's extended-hours quote immediately
