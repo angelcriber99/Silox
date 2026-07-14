@@ -43,7 +43,9 @@ interface YahooQuote {
   regularMarketChangePercent?: number
   currency?: string
   preMarketPrice?: number
+  preMarketChangePercent?: number
   postMarketPrice?: number
+  postMarketChangePercent?: number
   regularMarketPreviousClose?: number
   regularMarketTime?: string | Date
   preMarketTime?: string | Date
@@ -159,6 +161,13 @@ function getMarketState(timeZone: string): MarketSession {
     if (time >= 900 && time < 1730) return 'REGULAR'
     return 'CLOSED'
   }
+}
+
+export async function fetchMarketPricesDirect(
+  tickers: string[],
+  convertToEurFlag: boolean = false
+): Promise<MarketPricesResult> {
+  return _fetchMarketPrices(tickers, convertToEurFlag)
 }
 
 async function _fetchMarketPrices(
@@ -313,18 +322,18 @@ export async function fetchMarketPrices(
   // Create a unique cache key based on the requested tickers
   const sortedTickers = [...tickers].sort()
   // A session-specific key makes the percentage reset on the first refresh after
-  // PRE/REGULAR/POST transitions instead of waiting for the old 5-minute entry.
-  // Add a time bucket to enforce actual revalidation since unstable_cache can be sticky.
-  const timeBucket = Math.floor(Date.now() / 300000)
+  // PRE/REGULAR/POST transitions instead of waiting for the old entry.
+  // Time bucket forces actual revalidation since unstable_cache can be sticky.
+  const timeBucket = Math.floor(Date.now() / 60000)
   const cacheKey = `market-prices-v4-${timeBucket}-${getMarketState('America/New_York')}-${sortedTickers.join('-')}-${convertToEurFlag}`
   
-  // Cache for 5 minutes (300 seconds)
+  // Cache for 60 seconds (reduced from 300s for more real-time updates)
   const getCachedPrices = unstable_cache(
     async () => {
       return _fetchMarketPrices(sortedTickers, convertToEurFlag)
     },
     [cacheKey],
-    { revalidate: 300, tags: ['market-prices'] }
+    { revalidate: 60, tags: ['market-prices'] }
   )
 
   return getCachedPrices()

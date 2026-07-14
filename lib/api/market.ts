@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
 import type { EventoRecurrente, PriceData } from '@/lib/types'
-import { fetchMarketPrices } from '@/lib/actions/market'
 
 export async function fetchEventosRecurrentes(): Promise<EventoRecurrente[]> {
   const { data, error } = await createClient()
@@ -62,10 +61,21 @@ export async function fetchPrices(
   if (tickers.length === 0) return { prices: {} }
 
   try {
-    const data = await fetchMarketPrices(tickers, true)
+    const res = await fetch('/api/prices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tickers, convert: true }),
+    })
+    
+    if (!res.ok) {
+      throw new Error(`Error fetching prices: ${res.statusText}`)
+    }
+    
+    const data = await res.json()
     
     const prices: Record<string, PriceData> = {}
-    for (const [ticker, val] of Object.entries(data.prices)) {
+    for (const [ticker, valRaw] of Object.entries(data.prices)) {
+      const val = valRaw as any
       prices[ticker] = {
         price: val.price ?? null,
         sparkline: val.sparkline ?? [],
