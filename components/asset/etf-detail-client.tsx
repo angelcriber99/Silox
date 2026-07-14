@@ -13,6 +13,7 @@ import { useAssetCalculations, RawTransaction } from './detail/use-asset-calcula
 import dynamic from 'next/dynamic'
 import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetNews } from "./detail/asset-news"
+import { AssetLogo } from "@/components/ui/asset-logo"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { MarketStats } from "./detail/market-stats"
@@ -64,13 +65,29 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
 
         {/* ═══════════ HERO: TICKER & PRECIO ═══════════ */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8 animate-fade-in">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-1">
-              {position.nombre || position.ticker}
-            </h1>
-            <p className="text-xl text-muted-foreground font-medium">
-              Símbolo: {position.ticker} {position.isin ? `• ISIN: ${position.isin}` : ''}
-            </p>
+          <div className="flex items-center gap-4 md:gap-5">
+            <AssetLogo 
+              ticker={position.ticker} 
+              name={position.nombre} 
+              type={position.tipo} 
+              size={64}
+              className="drop-shadow-sm hidden md:flex"
+            />
+            <AssetLogo 
+              ticker={position.ticker} 
+              name={position.nombre} 
+              type={position.tipo} 
+              size={48}
+              className="drop-shadow-sm flex md:hidden"
+            />
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-1">
+                {position.nombre || position.ticker}
+              </h1>
+              <p className="text-xl text-muted-foreground font-medium">
+                Símbolo: {position.ticker} {position.isin ? `• ISIN: ${position.isin}` : ''}
+              </p>
+            </div>
           </div>
           <div className="text-left md:text-right">
             <p className="text-4xl md:text-5xl font-bold text-foreground tabular-nums drop-shadow-md">

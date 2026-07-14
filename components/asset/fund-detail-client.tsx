@@ -20,6 +20,7 @@ import type { EnrichedPosition } from '@/lib/types'
 
 import dynamic from 'next/dynamic'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
+import { AssetLogo } from "@/components/ui/asset-logo"
 import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetNews } from "./detail/asset-news"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
@@ -126,27 +127,44 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
 
         {/* ═══════════ HERO ═══════════ */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 animate-fade-in">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Badge variant="outline" className={TIPO_BADGE_STYLES[position.tipo] || "bg-muted text-foreground/80"}>
-                {position.tipo}
-              </Badge>
-              {position.estrategia && (
-                <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border">
-                  {position.estrategia}
+          <div className="flex items-center gap-4 md:gap-5">
+            <AssetLogo 
+              ticker={position.ticker} 
+              name={position.nombre} 
+              type={position.tipo} 
+              size={64}
+              className="drop-shadow-sm hidden md:flex"
+            />
+            <AssetLogo 
+              ticker={position.ticker} 
+              name={position.nombre} 
+              type={position.tipo} 
+              size={48}
+              className="drop-shadow-sm flex md:hidden"
+            />
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Badge variant="outline" className={TIPO_BADGE_STYLES[position.tipo] || "bg-muted text-foreground/80"}>
+                  {position.tipo}
                 </Badge>
-              )}
-            </div>
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground mb-2">
+                {position.estrategia && (
+                  <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border">
+                    {position.estrategia}
+                  </Badge>
+                )}
+              </div>
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground mb-2">
               {position.nombre || position.ticker}
             </h1>
             <p className="text-muted-foreground/80 font-medium">
               Símbolo: <span className="text-foreground/80">{position.ticker}</span>
-              {position.isin && ` • ISIN: ${position.isin}`}
+              {position.isin && <span className="mx-2 opacity-50">•</span>}
+              {position.isin && <span>ISIN: <span className="text-foreground/80">{position.isin}</span></span>}
               {position.original_currency && position.original_currency !== "EUR" && (
                 <span className="text-muted-foreground/60"> • Moneda nativa: {position.original_currency}</span>
               )}
             </p>
+            </div>
           </div>
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground/80 uppercase font-bold tracking-wider mb-1">Valor Actual</p>

@@ -13,6 +13,7 @@ import type { EnrichedPosition } from '@/lib/types'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
 import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetNews } from "./detail/asset-news"
+import { AssetLogo } from "@/components/ui/asset-logo"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { StockExtendedStats } from "./detail/stock-extended-stats"
@@ -61,13 +62,29 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
 
         {/* ═══════════ HERO: TICKER & PRECIO ═══════════ */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8 animate-fade-in">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground mb-1">
-              {position.ticker}
-            </h1>
-            <p className="text-xl text-muted-foreground font-medium">
-              {position.nombre}
-            </p>
+          <div className="flex items-center gap-4 md:gap-5">
+            <AssetLogo 
+              ticker={position.ticker} 
+              name={position.nombre} 
+              type={position.tipo} 
+              size={64}
+              className="drop-shadow-sm hidden md:flex"
+            />
+            <AssetLogo 
+              ticker={position.ticker} 
+              name={position.nombre} 
+              type={position.tipo} 
+              size={48}
+              className="drop-shadow-sm flex md:hidden"
+            />
+            <div>
+              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground mb-1">
+                {position.ticker}
+              </h1>
+              <p className="text-xl text-muted-foreground font-medium">
+                {position.nombre}
+              </p>
+            </div>
           </div>
           <div className="text-left md:text-right">
             <p className="text-5xl md:text-6xl font-bold text-foreground tabular-nums drop-shadow-md">

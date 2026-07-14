@@ -26,6 +26,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { WaveTrackerModal, parseAssetNotes } from "@/components/asset/wave-tracker-modal"
 import { Waves } from "lucide-react"
+import { AssetLogo } from "@/components/ui/asset-logo"
 
 interface PositionsTableProps {
   positions: EnrichedPosition[]
@@ -449,18 +450,27 @@ export function PositionsTable({
                       style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(245 158 11), 0 0 20px rgba(245, 158, 11, 0.4)" } : undefined}
                     >
                       <TableCell className={`font-medium text-foreground tabular-nums ${cellPadding}`}>
-                        <Link href={`/activo/${p.activo_id}`} className="flex flex-col hover:text-amber-500 transition-colors">
-                          <span>
-                            {displaySymbol}
-                            {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
-                              <span className="text-muted-foreground/80 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
-                            )}
-                          </span>
-                          {p.isin && (
-                            <span className="text-[10px] text-muted-foreground/80 tracking-wide font-normal mt-0.5">
-                              {p.isin}
+                        <Link href={`/activo/${p.activo_id}`} className="flex items-center gap-3 hover:text-amber-500 transition-colors">
+                          <AssetLogo 
+                            ticker={p.ticker} 
+                            name={p.nombre} 
+                            type={p.tipo} 
+                            size={28}
+                            className="hidden sm:flex"
+                          />
+                          <div className="flex flex-col">
+                            <span>
+                              {displaySymbol}
+                              {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
+                                <span className="text-muted-foreground/80 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
+                              )}
                             </span>
-                          )}
+                            {p.isin && (
+                              <span className="text-[10px] text-muted-foreground/80 tracking-wide font-normal mt-0.5">
+                                {p.isin}
+                              </span>
+                            )}
+                          </div>
                         </Link>
                       </TableCell>
                       <TableCell className={`text-muted-foreground/80 text-sm max-w-[160px] truncate hidden md:table-cell ${cellPadding}`}>
