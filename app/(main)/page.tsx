@@ -47,17 +47,17 @@ export default function Home() {
   }
 
   return (
-    <PullToRefresh onRefresh={async () => { await refetch() }}>
-      <main className="min-h-full bg-background text-foreground flex flex-col">
-
-        {/* ── Mobile ─────────────────────────────────────────────────── */}
+    <main className="min-h-full bg-background text-foreground flex flex-col flex-1 w-full">
+      {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden">
-        <MobileDashboard
-          positions={positions}
-          totals={totals}
-          isLoading={isLoading}
-          marketState={marketState}
-        />
+        <PullToRefresh onRefresh={async () => { await refetch() }}>
+          <MobileDashboard
+            positions={positions}
+            totals={totals}
+            isLoading={isLoading}
+            marketState={marketState}
+          />
+        </PullToRefresh>
       </div>
 
       {/* ── Desktop ─────────────────────────────────────────────────── */}
@@ -129,7 +129,6 @@ export default function Home() {
           void queryClient.invalidateQueries({ queryKey: ["upcoming-events"] })
         }}
       />
-      </main>
-    </PullToRefresh>
+    </main>
   )
 }
