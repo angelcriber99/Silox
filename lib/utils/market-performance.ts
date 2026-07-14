@@ -48,6 +48,7 @@ function isUsablePreviousPost(quote: MarketPerformanceQuote): boolean {
 export function calculateMarketPerformance(
   quote: MarketPerformanceQuote,
   session: MarketSession,
+  timeZone = US_MARKET_TIME_ZONE
 ): MarketPerformance {
   if (session === 'PRE') {
     const currentPrice = quote.preMarketPrice ?? quote.regularMarketPrice ?? null
@@ -75,17 +76,18 @@ export function calculateMarketPerformance(
   }
 
   if (session === 'REGULAR') {
-    const currentPrice = quote.regularMarketPrice ?? null
+    const isRegularQuoteStale = quote.regularMarketTime && !isQuoteFromCurrentMarketDate(quote.regularMarketTime, new Date(), timeZone)
+    const currentPrice = (isRegularQuoteStale ? quote.preMarketPrice : quote.regularMarketPrice) ?? quote.regularMarketPrice ?? null
+
+    const changePercent = isRegularQuoteStale
+      ? percentChange(currentPrice, quote.regularMarketPreviousClose)
+      : (quote.regularMarketChangePercent ?? percentChange(currentPrice, quote.regularMarketPreviousClose))
 
     return {
       currentPrice,
-      sessionChangePercent:
-        quote.regularMarketChangePercent ??
-        percentChange(currentPrice, quote.regularMarketPreviousClose),
-      dailyChangePercent:
-        quote.regularMarketChangePercent ??
-        percentChange(currentPrice, quote.regularMarketPreviousClose),
-      latestTime: quote.regularMarketTime,
+      sessionChangePercent: changePercent,
+      dailyChangePercent: changePercent,
+      latestTime: isRegularQuoteStale ? (quote.preMarketTime ?? quote.regularMarketTime) : quote.regularMarketTime,
     }
   }
 

@@ -246,7 +246,7 @@ async function _fetchMarketPrices(
       const originalCurrency = normalizeYahooCurrency(quote.currency)
       const quoteTimeZone = quote.exchangeTimezoneName || 'America/New_York'
       const marketState = getMarketState(quoteTimeZone)
-      let performance = calculateMarketPerformance(quote, marketState)
+      let performance = calculateMarketPerformance(quote, marketState, quoteTimeZone)
 
       // Fallback for Vercel/Yahoo edge cases where preMarketPrice is omitted
       // despite marketState being PRE. We fetch a 1-day 1-minute chart.
@@ -261,7 +261,7 @@ async function _fetchMarketPrices(
             const lastQuote = preChart.quotes[preChart.quotes.length - 1]
             if (lastQuote && lastQuote.close) {
               quote.preMarketPrice = lastQuote.close
-              performance = calculateMarketPerformance(quote, marketState)
+              performance = calculateMarketPerformance(quote, marketState, quoteTimeZone)
             }
           }
         } catch (e) { }
@@ -276,7 +276,7 @@ async function _fetchMarketPrices(
             const lastQuote = postChart.quotes[postChart.quotes.length - 1]
             if (lastQuote && lastQuote.close) {
               quote.postMarketPrice = lastQuote.close
-              performance = calculateMarketPerformance(quote, marketState)
+              performance = calculateMarketPerformance(quote, marketState, quoteTimeZone)
             }
           }
         } catch (e) { }
@@ -293,7 +293,7 @@ async function _fetchMarketPrices(
           ...quote,
           postMarketPrice: undefined,
           postMarketTime: undefined,
-        }, marketState)
+        }, marketState, quoteTimeZone)
       }
 
       const rawPrice = performance.currentPrice
