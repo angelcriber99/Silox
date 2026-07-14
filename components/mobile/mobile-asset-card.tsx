@@ -34,6 +34,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   const { hideBalances, compactView } = usePreferences()
   const { openWithAsset } = useQuickAdd()
   const [isSwiped, setIsSwiped] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const x = useMotionValue(0)
   const actionOpacity = useTransform(x, [-MAX_SWIPE, -SWIPE_THRESHOLD / 2], [1, 0])
   const actionScale  = useTransform(x, [-MAX_SWIPE, -SWIPE_THRESHOLD], [1, 0.8])
@@ -54,6 +55,8 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
     p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario"
       ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
       : p.ticker.split(".")[0]
+
+  const logoTicker = displayTicker.includes("-") ? displayTicker.split("-")[0] : displayTicker
 
   const displayName =
     p.nombre
@@ -91,10 +94,19 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
           style={{ borderBottom: "0.5px solid rgba(255,255,255,0.05)" }}
         >
           <div
-            className="h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-[11px]"
+            className="h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-[11px] overflow-hidden"
             style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.pill}` }}
           >
-            {displayTicker.slice(0, 2)}
+            {imgError ? (
+              displayTicker.slice(0, 2)
+            ) : (
+              <img
+                src={`https://companiesmarketcap.com/img/company-logos/64/${logoTicker}.png`}
+                alt={logoTicker}
+                className="w-full h-full object-contain p-1"
+                onError={() => setImgError(true)}
+              />
+            )}
           </div>
           <span className="text-[13px] font-semibold flex-1 truncate" style={{ color: "var(--foreground)" }}>
             {displayTicker}
@@ -169,7 +181,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
             <div className="flex items-center gap-3.5">
               {/* Avatar */}
               <div
-                className="h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 font-black text-[15px]"
+                className="h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 font-black text-[15px] overflow-hidden relative"
                 style={{
                   background: cfg.bg,
                   color: cfg.color,
@@ -177,7 +189,16 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
                   letterSpacing: "-0.02em",
                 }}
               >
-                {displayTicker.slice(0, 2)}
+                {imgError ? (
+                  displayTicker.slice(0, 2)
+                ) : (
+                  <img
+                    src={`https://companiesmarketcap.com/img/company-logos/64/${logoTicker}.png`}
+                    alt={logoTicker}
+                    className="w-full h-full object-contain p-1.5 drop-shadow-md"
+                    onError={() => setImgError(true)}
+                  />
+                )}
               </div>
 
               {/* Name + type + weight bar */}
