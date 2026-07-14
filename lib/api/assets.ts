@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 import { CASH_ASSET_DEFAULTS, displayAssetType, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
+import { calculateOpenCostBasis } from '@/lib/utils/open-cost-basis'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
   const supabase = createClient()
@@ -10,7 +11,31 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   if (errorPos) throw new Error(`Error cargando posiciones: ${errorPos.message}`)
 
-  return (posiciones ?? []).map(displayAssetType)
+  const normalizedPositions = (posiciones ?? []).map(displayAssetType)
+  const metalAssetIds = normalizedPositions
+    .filter((position) => position.tipo === 'Metal')
+    .map((position) => position.activo_id)
+
+  if (metalAssetIds.length === 0) return normalizedPositions
+
+  const { data: metalTransactions, error: transactionsError } = await supabase
+    .from('transacciones')
+    .select('activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha, created_at')
+    .in('activo_id', metalAssetIds)
+    .eq('estado', 'Completada')
+
+  if (transactionsError) {
+    console.error(`Error cargando operaciones de metales: ${transactionsError.message}`)
+    return normalizedPositions
+  }
+
+  const openCosts = calculateOpenCostBasis(metalTransactions ?? [])
+  return normalizedPositions.map((position) => {
+    const openCost = openCosts.get(position.activo_id)
+    return position.tipo === 'Metal' && openCost !== undefined
+      ? { ...position, coste_total: openCost }
+      : position
+  })
 }
 
 export async function fetchActivos(): Promise<Activo[]> {
