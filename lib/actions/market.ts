@@ -314,7 +314,9 @@ export async function fetchMarketPrices(
   const sortedTickers = [...tickers].sort()
   // A session-specific key makes the percentage reset on the first refresh after
   // PRE/REGULAR/POST transitions instead of waiting for the old 5-minute entry.
-  const cacheKey = `market-prices-v3-${getMarketState('America/New_York')}-${sortedTickers.join('-')}-${convertToEurFlag}`
+  // Add a time bucket to enforce actual revalidation since unstable_cache can be sticky.
+  const timeBucket = Math.floor(Date.now() / 300000)
+  const cacheKey = `market-prices-v4-${timeBucket}-${getMarketState('America/New_York')}-${sortedTickers.join('-')}-${convertToEurFlag}`
   
   // Cache for 5 minutes (300 seconds)
   const getCachedPrices = unstable_cache(
