@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import {
-  Bell, Eye, EyeOff, FileUp
+  Bell, Eye, EyeOff, FileUp, Wallet
 } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
