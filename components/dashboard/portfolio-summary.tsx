@@ -132,20 +132,7 @@ export function PortfolioSummary({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mt-2">
-          <div className="p-4 flex flex-col gap-1.5 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 hover:bg-card/60 transition-colors">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Invertido</span>
-            <p className="text-base font-bold tabular-nums text-foreground">
-              <AnimatedNumber value={totals.totalCost} format="currency" hide={hideBalances} />
-            </p>
-          </div>
-          <div className="p-4 flex flex-col gap-1.5 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 hover:bg-card/60 transition-colors">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Rentabilidad</span>
-            <p className="text-base font-bold tabular-nums" style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}>
-              <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
-            </p>
-          </div>
-        </div>
+
 
         {(liquidezAmount > 0 || fmAmount > 0) && (
           <div className="flex gap-2 w-full">

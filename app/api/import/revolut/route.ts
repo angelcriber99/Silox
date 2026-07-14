@@ -525,14 +525,14 @@ async function parseRows(rows: string[][], userId: string): Promise<ParsedImport
 
 function isMetalAccountStatement(headers: string[]): boolean {
   return (
-    headers.includes('tipo') &&
-    headers.includes('producto') &&
-    headers.includes('fechadeinicio') &&
-    headers.includes('descripcion') &&
-    headers.includes('importe') &&
-    headers.includes('comision') &&
-    headers.includes('divisa') &&
-    headers.includes('saldo')
+    (headers.includes('tipo') || headers.includes('type')) &&
+    (headers.includes('producto') || headers.includes('product')) &&
+    (headers.includes('fechadeinicio') || headers.includes('starteddate')) &&
+    (headers.includes('descripcion') || headers.includes('description')) &&
+    (headers.includes('importe') || headers.includes('amount')) &&
+    (headers.includes('comision') || headers.includes('fee')) &&
+    (headers.includes('divisa') || headers.includes('currency')) &&
+    (headers.includes('saldo') || headers.includes('balance'))
   )
 }
 
@@ -676,11 +676,13 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
       }
     }
 
-    const effectiveUnitPriceEur = valueEur && valueEur > 0
+    let effectiveUnitPriceEur = valueEur && valueEur > 0
       ? valueEur / quantity
       : Number.NaN
 
-    if (!Number.isFinite(effectiveUnitPriceEur) || effectiveUnitPriceEur <= 0) continue
+    if (!Number.isFinite(effectiveUnitPriceEur) || effectiveUnitPriceEur <= 0) {
+      effectiveUnitPriceEur = 0
+    }
 
     parsed.push({
       user_id: userId,

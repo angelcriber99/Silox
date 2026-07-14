@@ -430,7 +430,7 @@ export function MobileDashboard({
                     >
                       <MobileAssetCard
                         position={p}
-                        totalPortfolioValue={totalPortfolioValue}
+                        totalPortfolioValue={totals.totalValue}
                       />
                     </motion.div>
                   ))}
@@ -447,7 +447,7 @@ export function MobileDashboard({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04, duration: 0.28 }}
               >
-                <MobileAssetCard position={p} totalPortfolioValue={totalPortfolioValue} />
+                <MobileAssetCard position={p} totalPortfolioValue={totals.totalValue} />
               </motion.div>
             ))}
           </div>
