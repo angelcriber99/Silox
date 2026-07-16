@@ -162,6 +162,8 @@ function getMetalPriceEntry(
     originalPrice: metrics.price,
     originalCurrency: 'EUR',
     marketState: 'OPEN',
+    latestTime: new Date().toISOString(),
+    isStale: false,
   }
 }
 
@@ -196,6 +198,12 @@ export interface PriceEntry {
   originalPrice?: number | null
   originalCurrency?: string
   marketState?: string
+  latestTime?: string
+  exchangeTimezone?: string
+  sessionStart?: string
+  sessionEnd?: string
+  nextTransition?: string
+  isStale?: boolean
 }
 
 export interface MarketPricesResult {
@@ -214,7 +222,15 @@ interface ActionCacheEntry {
   expiresAt: number
 }
 const actionCache = new Map<string, ActionCacheEntry>()
-const ACTION_CACHE_TTL = 60_000
+const ACTIVE_CACHE_TTL = 8_000
+const CLOSED_CACHE_TTL = 60_000
+const sparklineCache = new Map<string, { values: number[]; expiresAt: number }>()
+
+function getResultCacheTtl(result: MarketPricesResult): number {
+  return ['PRE', 'REGULAR', 'POST', 'OPEN'].includes(result.marketState)
+    ? ACTIVE_CACHE_TTL
+    : CLOSED_CACHE_TTL
+}
 
 export async function fetchMarketPricesDirect(
   tickers: string[],
@@ -239,7 +255,7 @@ export async function fetchMarketPricesDirect(
     }
   }
   
-  actionCache.set(cacheKey, { data, expiresAt: Date.now() + ACTION_CACHE_TTL })
+  actionCache.set(cacheKey, { data, expiresAt: Date.now() + getResultCacheTtl(data) })
   return data
 }
 
@@ -273,7 +289,9 @@ async function _fetchMarketPrices(
           dailyChangePercent24h: 0,
           originalPrice: 1.0,
           originalCurrency: 'EUR',
-          marketState: 'OPEN'
+          marketState: 'OPEN',
+          latestTime: new Date().toISOString(),
+          isStale: false,
         }
       }
 
@@ -286,9 +304,13 @@ async function _fetchMarketPrices(
         }
       }
 
+      const cachedSparkline = sparklineCache.get(ticker)
+      const chart1dPromise = cachedSparkline && cachedSparkline.expiresAt > Date.now()
+        ? Promise.resolve(null)
+        : getYahooFinance().chart(ticker, { period1: d, interval: '1d' }).catch(() => null)
       const [chart1m, chart1d] = await Promise.all([
         getYahooFinance().chart(ticker, { interval: '1m', period1: new Date(Date.now() - 24 * 60 * 60 * 1000), includePrePost: true }).catch(() => null),
-        getYahooFinance().chart(ticker, { period1: d, interval: '1d' }).catch(() => null),
+        chart1dPromise,
       ])
 
       if (!chart1m) {
@@ -304,11 +326,12 @@ async function _fetchMarketPrices(
       const rawPrice = performance.currentPrice
       const changePercent24h = performance.sessionChangePercent
       const dailyChangePercent24h = performance.dailyChangePercent
-      let sparkline: number[] = []
+      let sparkline: number[] = cachedSparkline?.values ?? []
       if (chart1d?.quotes) {
         sparkline = chart1d.quotes
           .map((q) => q.close)
           .filter((c): c is number => c !== null && c !== undefined)
+        sparklineCache.set(ticker, { values: sparkline, expiresAt: Date.now() + 5 * 60_000 })
       }
 
       let price = rawPrice
@@ -330,6 +353,12 @@ async function _fetchMarketPrices(
         originalPrice: rawPrice,
         originalCurrency,
         marketState: performance.marketState,
+        latestTime: performance.latestTime?.toISOString(),
+        exchangeTimezone: performance.exchangeTimezone,
+        sessionStart: performance.sessionStart?.toISOString(),
+        sessionEnd: performance.sessionEnd?.toISOString(),
+        nextTransition: performance.nextTransition?.toISOString(),
+        isStale: performance.isStale,
       }
     },
   )
@@ -342,7 +371,7 @@ async function _fetchMarketPrices(
     const ticker = tickers[i]
 
     if (result.status === 'fulfilled') {
-      const { price, sparkline, currency, changePercent24h, dailyChangePercent24h, originalPrice, originalCurrency, marketState } = result.value
+      const { price, sparkline, currency, changePercent24h, dailyChangePercent24h, originalPrice, originalCurrency, marketState, latestTime, exchangeTimezone, sessionStart, sessionEnd, nextTransition, isStale } = result.value
       prices[ticker] = {
         price,
         sparkline,
@@ -351,7 +380,13 @@ async function _fetchMarketPrices(
         dailyChangePercent24h,
         originalPrice,
         originalCurrency,
-        marketState
+        marketState,
+        latestTime,
+        exchangeTimezone,
+        sessionStart,
+        sessionEnd,
+        nextTransition,
+        isStale,
       }
       
       if (marketState === 'PRE') {

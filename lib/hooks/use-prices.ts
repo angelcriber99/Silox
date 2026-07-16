@@ -1,12 +1,14 @@
 "use client"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { fetchPrices } from '@/lib/api/market'
 import { useRef, useEffect } from 'react'
 import type { PriceData } from '@/lib/types'
+import { usePreferences } from '@/lib/stores/use-preferences'
 
 export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
   const lastKnownPrices = useRef<Record<string, PriceData>>({})
+  const { refreshInterval, pauseUpdatesWhenHidden } = usePreferences()
 
   // Cargar de localStorage al inicio
   useEffect(() => {
@@ -32,8 +34,12 @@ export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
       for (const ticker of tickers) {
         if (mergedPrices[ticker]?.price === null && lastKnownPrices.current[ticker]?.price != null) {
           mergedPrices[ticker] = {
-            ...lastKnownPrices.current[ticker],
-            // keep the current market state or anything else if needed, but restore price
+            ...mergedPrices[ticker],
+            price: lastKnownPrices.current[ticker].price,
+            originalPrice: lastKnownPrices.current[ticker].originalPrice,
+            originalCurrency: lastKnownPrices.current[ticker].originalCurrency,
+            sparkline: lastKnownPrices.current[ticker].sparkline,
+            isStale: true,
           }
         } else if (mergedPrices[ticker]?.price != null) {
           // Update last known good price
@@ -46,7 +52,7 @@ export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
       if (hasUpdates) {
         try {
           localStorage.setItem('silox_last_prices', JSON.stringify(lastKnownPrices.current))
-        } catch (e) {
+        } catch {
           // ignore quota errors
         }
       }
@@ -54,7 +60,10 @@ export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
       return { ...data, prices: mergedPrices }
     },
     enabled: tickers.length > 0 && (options?.enabled ?? true),
-    staleTime: 15_000,
-    refetchInterval: 15_000, // Auto-refresh every 15 seconds
+    staleTime: Math.min(refreshInterval, 10_000),
+    refetchInterval: refreshInterval,
+    refetchIntervalInBackground: !pauseUpdatesWhenHidden,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   })
 }

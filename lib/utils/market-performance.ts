@@ -1,5 +1,10 @@
 export type MarketSession = 'PRE' | 'REGULAR' | 'POST' | 'CLOSED'
 
+export interface TradingPeriod {
+  start: number | Date
+  end: number | Date
+}
+
 export interface ChartMeta {
   currency?: string
   exchangeTimezoneName?: string
@@ -7,9 +12,9 @@ export interface ChartMeta {
   chartPreviousClose?: number
   previousClose?: number
   currentTradingPeriod?: {
-    pre?: { start: number | Date; end: number | Date }
-    regular?: { start: number | Date; end: number | Date }
-    post?: { start: number | Date; end: number | Date }
+    pre?: TradingPeriod
+    regular?: TradingPeriod
+    post?: TradingPeriod
   }
 }
 
@@ -26,72 +31,111 @@ export interface MarketPerformance {
   currentPrice: number | null
   sessionChangePercent: number | null
   dailyChangePercent: number | null
+  sessionBaseline: number | null
+  dailyBaseline: number | null
   latestTime?: Date
   marketState: MarketSession
+  exchangeTimezone: string
+  sessionStart?: Date
+  sessionEnd?: Date
+  nextTransition?: Date
+  isStale: boolean
 }
 
-const US_MARKET_TIME_ZONE = 'America/New_York'
+const DEFAULT_MARKET_TIME_ZONE = 'America/New_York'
+const ACTIVE_QUOTE_STALE_AFTER_MS = 10 * 60 * 1000
+
+function toMilliseconds(value?: number | Date): number {
+  if (value instanceof Date) return value.getTime()
+  return typeof value === 'number' ? value * 1000 : 0
+}
 
 function percentChange(current?: number | null, baseline?: number | null): number | null {
   if (current == null || baseline == null || baseline <= 0) return null
   return ((current - baseline) / baseline) * 100
 }
 
+function getSessionPeriod(meta: ChartMeta, state: MarketSession): TradingPeriod | undefined {
+  if (state === 'PRE') return meta.currentTradingPeriod?.pre
+  if (state === 'REGULAR') return meta.currentTradingPeriod?.regular
+  if (state === 'POST') return meta.currentTradingPeriod?.post
+  return undefined
+}
+
 export function determineMarketState(meta: ChartMeta, now = new Date()): MarketSession {
-  if (!meta.currentTradingPeriod) {
-    return 'CLOSED'
+  const nowMs = now.getTime()
+  const periods: Array<[MarketSession, TradingPeriod | undefined]> = [
+    ['PRE', meta.currentTradingPeriod?.pre],
+    ['REGULAR', meta.currentTradingPeriod?.regular],
+    ['POST', meta.currentTradingPeriod?.post],
+  ]
+
+  for (const [state, period] of periods) {
+    const start = toMilliseconds(period?.start)
+    const end = toMilliseconds(period?.end)
+    if (start && end && nowMs >= start && nowMs < end) return state
   }
 
-  const nowMs = now.getTime()
-  
-  const getMs = (val: any) => val instanceof Date ? val.getTime() : (typeof val === 'number' ? val * 1000 : 0)
-
-  const preStart = getMs(meta.currentTradingPeriod.pre?.start)
-  const preEnd = getMs(meta.currentTradingPeriod.pre?.end)
-  const regStart = getMs(meta.currentTradingPeriod.regular?.start)
-  const regEnd = getMs(meta.currentTradingPeriod.regular?.end)
-  const postStart = getMs(meta.currentTradingPeriod.post?.start)
-  const postEnd = getMs(meta.currentTradingPeriod.post?.end)
-
-  if (preStart && nowMs >= preStart && nowMs < preEnd) return 'PRE'
-  if (regStart && nowMs >= regStart && nowMs < regEnd) return 'REGULAR'
-  if (postStart && nowMs >= postStart && nowMs < postEnd) return 'POST'
-  
   return 'CLOSED'
 }
 
-export function extractMarketPerformance(meta: ChartMeta, quotes: ChartQuote[]): MarketPerformance {
-  let lastValidClose: number | null = null
-  let latestTime: Date | undefined = undefined
+export function extractMarketPerformance(
+  meta: ChartMeta,
+  quotes: ChartQuote[],
+  now = new Date(),
+): MarketPerformance {
+  const exchangeTimezone = meta.exchangeTimezoneName || DEFAULT_MARKET_TIME_ZONE
+  const marketState = determineMarketState(meta, now)
+  const marketDate = getMarketDateKey(now, exchangeTimezone)
+  const validQuotes = (quotes ?? [])
+    .filter((quote): quote is ChartQuote & { close: number } =>
+      quote.close != null && Number.isFinite(quote.close) && !Number.isNaN(new Date(quote.date).getTime()),
+    )
+    .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime())
+  const currentDateQuotes = validQuotes.filter(
+    (quote) => getMarketDateKey(quote.date, exchangeTimezone) === marketDate,
+  )
+  const latestQuote = currentDateQuotes.at(-1)
+  const latestTime = latestQuote ? new Date(latestQuote.date) : undefined
+  const currentPrice = latestQuote?.close ?? meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
+  const dailyBaseline = meta.chartPreviousClose ?? meta.previousClose ?? null
+  const dailyChangePercent = latestQuote ? percentChange(currentPrice, dailyBaseline) : 0
 
-  if (quotes && quotes.length > 0) {
-    for (let i = quotes.length - 1; i >= 0; i--) {
-      const q = quotes[i]
-      if (q.close !== null && q.close !== undefined) {
-        lastValidClose = q.close
-        latestTime = q.date
-        break
-      }
-    }
-  }
-
-  const currentPrice = lastValidClose ?? meta.regularMarketPrice ?? null
-  const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? null
-  
-  const dailyChangePercent = percentChange(currentPrice, previousClose)
+  const activePeriod = getSessionPeriod(meta, marketState)
+  const sessionStartMs = toMilliseconds(activePeriod?.start)
+  const sessionEndMs = toMilliseconds(activePeriod?.end)
+  const sessionQuotes = activePeriod
+    ? currentDateQuotes.filter((quote) => {
+        const time = new Date(quote.date).getTime()
+        return time >= sessionStartMs && time < sessionEndMs
+      })
+    : []
+  const sessionBaseline = sessionQuotes[0]?.close ?? null
+  const sessionChangePercent = marketState === 'CLOSED'
+    ? 0
+    : percentChange(sessionQuotes.at(-1)?.close ?? null, sessionBaseline)
+  const quoteAge = latestTime ? now.getTime() - latestTime.getTime() : Number.POSITIVE_INFINITY
+  const isStale = !latestQuote || (marketState !== 'CLOSED' && quoteAge > ACTIVE_QUOTE_STALE_AFTER_MS)
 
   return {
     currentPrice,
-    sessionChangePercent: dailyChangePercent,
+    sessionChangePercent: sessionChangePercent ?? 0,
     dailyChangePercent,
+    sessionBaseline,
+    dailyBaseline,
     latestTime,
-    marketState: determineMarketState(meta)
+    marketState,
+    exchangeTimezone,
+    sessionStart: activePeriod ? new Date(sessionStartMs) : undefined,
+    sessionEnd: activePeriod ? new Date(sessionEndMs) : undefined,
+    nextTransition: activePeriod ? new Date(sessionEndMs) : undefined,
+    isStale,
   }
 }
 
 export function getMarketDateKey(
   value: string | Date,
-  timeZone = US_MARKET_TIME_ZONE,
+  timeZone = DEFAULT_MARKET_TIME_ZONE,
 ): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
@@ -109,8 +153,8 @@ export function getMarketDateKey(
 export function isQuoteFromCurrentMarketDate(
   latestTime: string | Date | undefined,
   now = new Date(),
-  timeZone = US_MARKET_TIME_ZONE,
+  timeZone = DEFAULT_MARKET_TIME_ZONE,
 ): boolean {
-  if (!latestTime) return true
+  if (!latestTime) return false
   return getMarketDateKey(latestTime, timeZone) === getMarketDateKey(now, timeZone)
 }

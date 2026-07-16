@@ -104,6 +104,35 @@ function SettingRow({ icon: Icon, title, desc, action, iconColor }: SettingRowPr
   )
 }
 
+function DashboardPreferences() {
+  const preferences = usePreferences()
+  const selectClass = "rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/40"
+
+  return (
+    <section className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Actualización de precios</span><select className={`${selectClass} w-full`} value={preferences.refreshInterval} onChange={(event) => preferences.setRefreshInterval(Number(event.target.value) as 5000 | 10000 | 15000 | 30000 | 60000)}><option value={5000}>Cada 5 segundos</option><option value={10000}>Cada 10 segundos</option><option value={15000}>Cada 15 segundos</option><option value={30000}>Cada 30 segundos</option><option value={60000}>Cada minuto</option></select></label>
+        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Orden de posiciones</span><select className={`${selectClass} w-full`} value={preferences.dashboardSort} onChange={(event) => preferences.setDashboardSort(event.target.value as 'value' | 'day' | 'session' | 'pnl')}><option value="value">Mayor valor</option><option value="day">Mejor resultado hoy</option><option value="session">Mejor sesión</option><option value="pnl">Mayor rentabilidad total</option></select></label>
+        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Densidad</span><select className={`${selectClass} w-full`} value={preferences.dashboardDensity} onChange={(event) => preferences.setDashboardDensity(event.target.value as 'auto' | 'compact' | 'comfortable')}><option value="auto">Automática</option><option value="compact">Compacta</option><option value="comfortable">Cómoda</option></select></label>
+        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Activos por pantalla</span><select className={`${selectClass} w-full`} value={preferences.dashboardPageSize} onChange={(event) => preferences.setDashboardPageSize(event.target.value === 'auto' ? 'auto' : Number(event.target.value) as 5 | 8 | 12)}><option value="auto">Automático</option><option value={5}>5</option><option value={8}>8</option><option value={12}>12</option></select></label>
+        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Tamaño de texto</span><select className={`${selectClass} w-full`} value={preferences.fontScale} onChange={(event) => preferences.setFontScale(event.target.value as 'small' | 'normal' | 'large')}><option value="small">Pequeño</option><option value="normal">Normal</option><option value="large">Grande</option></select></label>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card divide-y divide-border">
+        {[
+          ['Pausar en segundo plano', preferences.pauseUpdatesWhenHidden, preferences.setPauseUpdatesWhenHidden],
+          ['Mostrar nombre del activo', preferences.showAssetNames, preferences.setShowAssetNames],
+          ['Mostrar tipo de activo', preferences.showAssetTypes, preferences.setShowAssetTypes],
+          ['Rendimiento de sesión', preferences.showSessionPerformance, preferences.setShowSessionPerformance],
+          ['Resultado acumulado del día', preferences.showDailyPerformance, preferences.setShowDailyPerformance],
+          ['Rentabilidad total', preferences.showTotalPerformance, preferences.setShowTotalPerformance],
+          ['Estado del mercado', preferences.showMarketStatus, preferences.setShowMarketStatus],
+          ['Hora de actualización', preferences.showLastUpdate, preferences.setShowLastUpdate],
+        ].map(([label, checked, setter]) => <div key={label as string} className="flex items-center justify-between gap-4 p-4"><span className="text-sm font-medium">{label as string}</span><CustomSwitch checked={checked as boolean} onChange={() => (setter as (value: boolean) => void)(!(checked as boolean))} /></div>)}
+      </div>
+    </section>
+  )
+}
+
 export default function SettingsPage() {
   const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false)
   const [activeTab, setActiveTab] = useState<Tab>('appearance')
@@ -239,6 +268,11 @@ export default function SettingsPage() {
                 </div>
               </div>
             </section>
+
+          <section>
+            <h2 className="mb-2 ml-2 text-[13px] font-bold uppercase tracking-widest text-muted-foreground">Dashboard y tiempo real</h2>
+            <DashboardPreferences />
+          </section>
 
           {/* Seguridad */}
           <section>
@@ -461,6 +495,10 @@ export default function SettingsPage() {
                         <button onClick={() => setTableDensity('compact')} className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${tableDensity === 'compact' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Compacta</button>
                       </div>
                     </div>
+                  </div>
+                  <div className="space-y-3 pt-4">
+                    <label className="ml-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Dashboard y tiempo real</label>
+                    <DashboardPreferences />
                   </div>
                 </div>
               </div>

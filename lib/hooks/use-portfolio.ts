@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useMemo, useEffect, useRef } from "react"
+import { useMemo, useEffect, useRef, useState } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
 import { fetchPosiciones, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
 import { savePortfolioHistory } from '@/lib/api/assets'
@@ -29,6 +29,7 @@ export function usePendingTransactions(options?: { enabled?: boolean }) {
 
 export function usePortfolio(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true
+  const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
   const {
     data: positions,
     isLoading: positionsLoading,
@@ -85,16 +86,20 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     const channelName = `portfolio-realtime-${Math.random()}`
     
     const channel = supabase.channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'posiciones' }, () => {
-        refetchPositions()
-      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transacciones' }, () => {
         refetchPositions()
         refetchPending()
       })
-      .subscribe()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activos' }, () => {
+        refetchPositions()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'eventos_recurrentes' }, () => {})
+      .subscribe((status) => {
+        setRealtimeStatus(status === 'SUBSCRIBED' ? 'connected' : status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' ? 'disconnected' : 'connecting')
+      })
 
     return () => {
+      setRealtimeStatus('disconnected')
       supabase.removeChannel(channel)
     }
   }, [enabled, refetchPositions, refetchPending])
@@ -118,6 +123,7 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     pricesUpdatedAt,
     marketState: pricePayload?.marketState ?? 'CLOSED',
     pendingTxs: pendingTxs ?? [],
+    realtimeStatus,
   }
 }
 

@@ -66,7 +66,7 @@ export async function fetchPrices(
     
     const prices: Record<string, PriceData> = {}
     for (const [ticker, valRaw] of Object.entries(data.prices)) {
-      const val = valRaw as any
+      const val = valRaw
       prices[ticker] = {
         price: val.price ?? null,
         sparkline: val.sparkline ?? [],
@@ -74,6 +74,13 @@ export async function fetchPrices(
         originalCurrency: val.originalCurrency,
         changePercent24h: val.changePercent24h ?? null,
         dailyChangePercent24h: val.dailyChangePercent24h ?? null,
+        marketState: val.marketState,
+        latestTime: val.latestTime,
+        exchangeTimezone: val.exchangeTimezone,
+        sessionStart: val.sessionStart,
+        sessionEnd: val.sessionEnd,
+        nextTransition: val.nextTransition,
+        isStale: val.isStale ?? true,
       }
     }
     return { prices, fxRates: data.fxRates, marketState: data.marketState }

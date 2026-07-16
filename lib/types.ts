@@ -31,6 +31,11 @@ export interface EnrichedPosition extends Posicion {
   daily_change_percent_24h: number | null // cumulative trading-day percentage
   change_amount_24h: number | null // cumulative trading-day amount
   change_amount_24h_nativo?: number | null
+  market_state?: string
+  price_updated_at?: string
+  price_is_stale?: boolean
+  market_session_ends_at?: string
+  market_timezone?: string
 }
 
 export interface Transaccion {
@@ -92,6 +97,7 @@ export interface PortfolioTotals {
   totalPnlPercent: number
   totalPnl24h: number
   totalPnlPercent24h: number
+  totalDailyPnlPercent: number
   positionCount: number
   hasAllPrices: boolean
 }
@@ -103,4 +109,11 @@ export interface PriceData {
   originalCurrency?: string
   changePercent24h?: number | null // active market-session percentage
   dailyChangePercent24h?: number | null // cumulative trading-day percentage
+  marketState?: string
+  latestTime?: string
+  exchangeTimezone?: string
+  sessionStart?: string
+  sessionEnd?: string
+  nextTransition?: string
+  isStale?: boolean
 }

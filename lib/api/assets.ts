@@ -217,6 +217,11 @@ export function enrichPositions(
       daily_change_percent_24h,
       change_amount_24h,
       change_amount_24h_nativo,
+      market_state: priceData?.marketState,
+      price_updated_at: priceData?.latestTime,
+      price_is_stale: priceData?.isStale ?? true,
+      market_session_ends_at: priceData?.sessionEnd,
+      market_timezone: priceData?.exchangeTimezone,
     }
   })
 }
@@ -240,12 +245,16 @@ export function computePortfolioTotals(
   let totalPnl24h = 0
   let totalSessionPnl = 0
   let totalSessionBaseline = 0
+  let totalDailyBaseline = 0
   
   withValues.forEach((p) => {
     const cp = p.change_percent_24h ?? 0
     const v = p.valor_actual ?? 0
     if (v > 0) {
       totalPnl24h += p.change_amount_24h ?? 0
+
+      const dailyPercent = p.daily_change_percent_24h ?? 0
+      totalDailyBaseline += v / (1 + dailyPercent / 100)
 
       const sessionBaseline = v / (1 + cp / 100)
       totalSessionPnl += v - sessionBaseline
@@ -256,6 +265,9 @@ export function computePortfolioTotals(
   const totalPnlPercent24h = totalSessionBaseline > 0
     ? (totalSessionPnl / totalSessionBaseline) * 100
     : 0
+  const totalDailyPnlPercent = totalDailyBaseline > 0
+    ? (totalPnl24h / totalDailyBaseline) * 100
+    : 0
 
   return {
     totalValue,
@@ -264,6 +276,7 @@ export function computePortfolioTotals(
     totalPnlPercent,
     totalPnl24h,
     totalPnlPercent24h,
+    totalDailyPnlPercent,
     positionCount: positions.filter((p) => p.unidades > 0).length,
     hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => p.valor_actual !== null),
   }
