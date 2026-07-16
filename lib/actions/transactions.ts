@@ -5,12 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { TransaccionSchema } from '@/lib/validations/schemas'
 import type { Transaccion } from '@/lib/types'
 import { fetchMarketPrices } from '@/lib/actions/market'
-import { calculateCashMovement } from '@/lib/domain/transactions/cash-movement'
-
-const TransactionMutationSchema = TransaccionSchema.extend({
-  use_efectivo: z.boolean().optional(),
-})
-
+const TransactionMutationSchema = TransaccionSchema
 type TransactionMutation = z.infer<typeof TransactionMutationSchema>
 type FxRates = Record<string, number>
 
@@ -53,7 +48,7 @@ async function prepareMonetaryValues(
   const convertsCommission = input.comision !== undefined
     && input.comision_moneda !== undefined
     && input.comision_moneda !== assetCurrency
-  const fxRates = convertsPrice || convertsCommission || (input.use_efectivo && assetCurrency !== 'EUR')
+  const fxRates = convertsPrice || convertsCommission
     ? (await fetchMarketPrices([], true)).fxRates ?? {}
     : {}
   const notes: string[] = []
@@ -106,24 +101,6 @@ async function getOwnedAssetCurrency(assetId: string, userId: string) {
   return asset.moneda as string
 }
 
-function getCashMovement(transaction: {
-  tipo_operacion: string
-  cantidad: number
-  precio_unitario: number
-  comision: number
-  retencion_origen?: number | null
-  retencion_destino?: number | null
-}) {
-  return calculateCashMovement({
-    operation: transaction.tipo_operacion,
-    quantity: transaction.cantidad,
-    unitPrice: transaction.precio_unitario,
-    commission: transaction.comision,
-    withholdingOrigin: transaction.retencion_origen ?? 0,
-    withholdingDestination: transaction.retencion_destino ?? 0,
-  })
-}
-
 export async function insertTransaccionAction(formData: unknown): Promise<Transaccion> {
   try {
     const supabase = await createClient()
@@ -145,19 +122,14 @@ export async function insertTransaccionAction(formData: unknown): Promise<Transa
       fecha: validated.fecha,
       notas: monetary.notes || null,
     }
-    const rawCash = validated.use_efectivo ? getCashMovement(transaction) : null
-    const cash = rawCash ? {
-      ...rawCash,
-      amount: assetCurrency === 'EUR' ? rawCash.amount : (
-        assetCurrency === 'USD' ? rawCash.amount / (monetary.fxRates['USD'] ?? 1) : convertCurrency(rawCash.amount, assetCurrency, 'EUR', monetary.fxRates)
-      )
-    } : null
-
-    const { data, error } = await supabase.rpc('create_transaction_with_cash', {
-      p_transaction: transaction,
-      p_cash_operation: cash?.operation ?? null,
-      p_cash_amount: cash?.amount ?? null,
-    })
+    const { data, error } = await supabase
+      .from('transacciones')
+      .insert({
+        user_id: user.id,
+        ...transaction
+      })
+      .select()
+      .single()
 
     if (error) throw new Error(`Error registrando transacción: ${error.message} | ${error.details} | ${error.hint}`)
     return data as Transaccion
@@ -202,14 +174,12 @@ export async function updateTransaccionAction(
     fecha: validated.fecha ?? current.fecha,
     notas: monetary.notes || null,
   }
-  const cash = getCashMovement(transaction)
-
-  const { data, error } = await supabase.rpc('update_transaction_with_cash', {
-    p_transaction_id: id,
-    p_transaction: transaction,
-    p_cash_operation: cash?.operation ?? null,
-    p_cash_amount: cash?.amount ?? null,
-  })
+  const { data, error } = await supabase
+    .from('transacciones')
+    .update(transaction)
+    .eq('id', id)
+    .select()
+    .single()
 
   if (error) throw new Error(`Error actualizando transacción: ${error.message}`)
   return data as Transaccion

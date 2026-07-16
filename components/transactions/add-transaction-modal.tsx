@@ -54,7 +54,6 @@ export function AddTransactionModal({
     () => new Date().toISOString().split("T")[0]
   )
   const [notas, setNotas] = useState("")
-  const [useEfectivo, setUseEfectivo] = useState(true)
 
   const addTransaction = useAddTransaction()
 
@@ -70,7 +69,6 @@ export function AddTransactionModal({
     setComisionMoneda(position?.moneda || "EUR")
     setFecha(new Date().toISOString().split("T")[0])
     setNotas("")
-    setUseEfectivo(true)
   }
 
   const handleClose = (v: boolean) => {
@@ -118,7 +116,6 @@ export function AddTransactionModal({
         retencion_destino: retencionDestinoNum,
         fecha,
         notas: notas.trim() || undefined,
-        use_efectivo: useEfectivo && position.tipo !== "Liquidez",
       })
 
       if ((res as any)?.id === "ERROR") {
@@ -408,27 +405,6 @@ export function AddTransactionModal({
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Cash Automation Checkbox */}
-          {position?.tipo !== "Liquidez" && (
-            <div className="flex items-center gap-2 pt-1 pb-1">
-              <input
-                type="checkbox"
-                id="useEfectivo"
-                checked={useEfectivo}
-                onChange={(e) => setUseEfectivo(e.target.checked)}
-                className="h-4 w-4 rounded border-border bg-background text-emerald-500 focus:ring-emerald-500/50 cursor-pointer"
-                disabled={addTransaction.isPending}
-              />
-              <Label htmlFor="useEfectivo" className="text-sm font-medium cursor-pointer text-foreground/80">
-                {isCompra
-                  ? "Usar saldo de Efectivo"
-                  : isVenta
-                  ? "Mantener capital en Efectivo"
-                  : "Añadir rendimiento a Efectivo"}
-              </Label>
             </div>
           )}
 

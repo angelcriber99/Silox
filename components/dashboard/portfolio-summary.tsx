@@ -50,22 +50,9 @@ export function PortfolioSummary({
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
 
-  const cashPositions = positions.filter(p => p.ticker.startsWith('CASH') || p.tipo === 'Liquidez')
-  const liquidezAmount = cashPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
-  const liquidezPos = cashPositions.length > 0 ? cashPositions[0] : null
-
   const fmPositions = positions.filter(p => p.tipo === 'Fondo Monetario')
   const fmAmount = fmPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
   const fmPos = fmPositions.length > 0 ? fmPositions[0] : null
-
-  const pendingCashEur = useMemo(() => {
-    if (!pendingTxs) return 0
-    return pendingTxs.reduce((sum, tx) => {
-      if (tx.tipo_operacion !== 'Compra') return sum
-      const fx = tx.activo?.moneda === 'USD' ? 1.07 : 1
-      return sum + ((tx.cantidad * tx.precio_unitario) / fx)
-    }, 0)
-  }, [pendingTxs])
 
   const topDailyAsset = useMemo(() => {
     if (!positions.length) return null
@@ -140,26 +127,15 @@ export function PortfolioSummary({
 
 
 
-        {(liquidezAmount > 0 || fmAmount > 0) && (
+        {fmAmount > 0 && (
           <div className="flex gap-2 w-full">
-            {liquidezAmount > 0 && (
-              <button
-                onClick={() => { if (liquidezPos) { setCashAssetId(liquidezPos.activo_id); setWithdrawModalOpen(true); } }}
-                className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl bg-card/60 hover:bg-card border border-border/40 transition-all text-xs font-medium"
-              >
-                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">Liquidez</span>
-                <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
-              </button>
-            )}
-            {fmAmount > 0 && (
-              <button
-                onClick={() => { if (fmPos) { setCashAssetId(fmPos.activo_id); setWithdrawModalOpen(true); } }}
-                className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl bg-card/60 hover:bg-card border border-border/40 transition-all text-xs font-medium"
-              >
-                <span className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">F. Monetario</span>
-                <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(fmAmount)}</span>
-              </button>
-            )}
+            <button
+              onClick={() => { if (fmPos) { setCashAssetId(fmPos.activo_id); setWithdrawModalOpen(true); } }}
+              className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl bg-card/60 hover:bg-card border border-border/40 transition-all text-xs font-medium"
+            >
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">F. Monetario</span>
+              <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(fmAmount)}</span>
+            </button>
           </div>
         )}
 
@@ -185,7 +161,6 @@ export function PortfolioSummary({
           onOpenChange={setWithdrawModalOpen}
           cashAssetId={cashAssetId || ""}
           sourceAssetType={positions.find(p => p.activo_id === cashAssetId)?.tipo}
-          liquidezAssetId={liquidezPos?.activo_id}
         />
 
         <PerformanceModal
@@ -265,28 +240,7 @@ export function PortfolioSummary({
 
           {/* Right: Quick actions */}
           <div className="flex flex-row md:absolute md:top-8 md:right-6 md:flex-col gap-3 mt-4 md:mt-0 z-20">
-            {liquidezAmount > 0 && (
-              <div className="flex flex-col items-center md:items-end gap-1">
-                <button
-                  onClick={() => {
-                    if (liquidezPos) {
-                      setCashAssetId(liquidezPos.activo_id)
-                      setWithdrawModalOpen(true)
-                    }
-                  }}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/60 hover:bg-card text-foreground border border-border/40 transition-all text-[13px] font-medium backdrop-blur-md shadow-sm w-full md:w-auto"
-                >
-                  <Wallet className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Liquidez:</span>
-                  <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(liquidezAmount)}</span>
-                </button>
-                {pendingCashEur > 0 && !hideBalances && (
-                  <span className="text-[10px] font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                    -{formatCurrency(pendingCashEur)} en uso
-                  </span>
-                )}
-              </div>
-            )}
+
             {fmAmount > 0 && (
               <div className="flex flex-col items-center md:items-end gap-1">
                 <button
@@ -458,7 +412,7 @@ export function PortfolioSummary({
         onOpenChange={setWithdrawModalOpen}
         cashAssetId={cashAssetId || ""}
         sourceAssetType={positions.find(p => p.activo_id === cashAssetId)?.tipo}
-        liquidezAssetId={liquidezPos?.activo_id}
+
       />
     </div>
   )
