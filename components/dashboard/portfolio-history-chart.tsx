@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useId } from "react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts"
 import type { TooltipContentProps } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
@@ -18,6 +18,7 @@ interface PortfolioHistoryChartProps {
 
 export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipContent, hideYAxis }: PortfolioHistoryChartProps) {
   const { hideBalances } = usePreferences()
+  const chartId = useId()
 
   if (!chartData || chartData.length === 0) {
     return null
@@ -101,7 +102,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
           margin={{ top: 15, right: 0, left: 0, bottom: 0 }}
         >
           <defs>
-            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={`colorValue-${chartId}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={lineColor} stopOpacity={0.4}/>
               <stop offset="50%" stopColor={lineColor} stopOpacity={0.1}/>
               <stop offset="100%" stopColor={lineColor} stopOpacity={0}/>
@@ -156,7 +157,7 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             stroke={lineColor} 
             strokeWidth={3}
             fillOpacity={1} 
-            fill="url(#colorValue)" 
+            fill={`url(#colorValue-${chartId})`} 
             activeDot={{ r: 5, fill: lineColor, stroke: "var(--background)", strokeWidth: 3 }}
             dot={false}
             isAnimationActive={false}

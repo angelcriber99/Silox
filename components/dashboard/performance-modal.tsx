@@ -264,7 +264,9 @@ export function PerformanceModal({ open, onOpenChange, positions = [], marketSta
                       Añade activos a tu portfolio y espera un día para ver tu evolución.
                    </div>
                 ) : (
-                  <PortfolioHistoryChart chartData={filteredData} onHoverChange={setHoveredPoint} />
+                  <div className="h-[300px] w-full mt-4">
+                    <PortfolioHistoryChart chartData={filteredData} onHoverChange={setHoveredPoint} />
+                  </div>
                 )}
                </div>
             </TabsContent>
