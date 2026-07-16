@@ -49,13 +49,16 @@ export default function RadarPage() {
     return Array.from(tickers)
   }, [positions])
 
+  // Use a stringified version of tickers to prevent infinite refetching
+  const tickersStr = uniqueTickers.join(',')
+
   useEffect(() => {
-    if (uniqueTickers.length === 0) return
+    if (!tickersStr) return
 
     const fetchNews = async () => {
       setLoadingNews(true)
       try {
-        const items = uniqueTickers.map(t => ({ query: t, displayName: t }))
+        const items = tickersStr.split(',').map(t => ({ query: t, displayName: t }))
         const res = await fetch("/api/noticias", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -79,7 +82,7 @@ export default function RadarPage() {
         const res = await fetch("/api/calendar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tickers: uniqueTickers }),
+          body: JSON.stringify({ tickers: tickersStr.split(',') }),
         })
         if (res.ok) {
           const data = await res.json()
@@ -94,7 +97,7 @@ export default function RadarPage() {
 
     fetchNews()
     fetchCalendar()
-  }, [uniqueTickers])
+  }, [tickersStr])
 
   const allEvents = useMemo(() => {
     const combined = [...marketEvents, ...aiEvents]
@@ -165,13 +168,25 @@ export default function RadarPage() {
     return list
   }, [allEvents, selectedDate])
 
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
+
   const displayedNews = useMemo(() => {
     let list = noticias
     if (selectedDate) {
       list = noticias.filter(n => isSameDay(new Date(n.providerPublishTime), selectedDate))
     }
+    if (selectedTicker) {
+      list = list.filter(n => n.relatedTicker === selectedTicker)
+    }
     return list
-  }, [noticias, selectedDate])
+  }, [noticias, selectedDate, selectedTicker])
+
+  // Extract tickers that actually have news
+  const newsTickers = useMemo(() => {
+    const tickers = new Set<string>()
+    noticias.forEach(n => tickers.add(n.relatedTicker))
+    return Array.from(tickers).sort()
+  }, [noticias])
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col pb-24 relative">
@@ -215,7 +230,8 @@ export default function RadarPage() {
                     <div key={`empty-${idx}`} className="h-8 rounded-md" />
                   ))}
                   
-                  {month.days.map((day, idx) => {
+                  {month.days.map((day, dayIdx) => {
+                    const colIdx = (dayIdx + month.padding) % 7
                     const dayEvents = allEvents.filter(e => isSameDay(new Date(e.date), day))
                     const hasEvent = dayEvents.length > 0
                     const firstEvent = dayEvents[0]
@@ -232,8 +248,19 @@ export default function RadarPage() {
                       bgClass += " ring-2 ring-primary ring-offset-1 ring-offset-background"
                     }
 
+                    // Smart tooltip positioning based on column index
+                    let tooltipPosClass = "left-1/2 -translate-x-1/2"
+                    let trianglePosClass = "left-1/2 -translate-x-1/2"
+                    if (colIdx <= 1) {
+                      tooltipPosClass = "left-0"
+                      trianglePosClass = "left-4"
+                    } else if (colIdx >= 5) {
+                      tooltipPosClass = "right-0"
+                      trianglePosClass = "right-4"
+                    }
+
                     return (
-                      <div key={idx} className="relative group">
+                      <div key={dayIdx} className="relative group">
                         <button
                           onClick={() => setSelectedDate(day)}
                           className={`w-full h-8 flex items-center justify-center rounded-md text-xs transition-all border border-transparent ${bgClass}`}
@@ -243,7 +270,7 @@ export default function RadarPage() {
                         
                         {/* Custom Tooltip on Hover */}
                         {hasEvent && (
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 rounded-xl bg-zinc-900 border border-white/10 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+                          <div className={`absolute bottom-full mb-2 w-48 p-2.5 rounded-xl bg-zinc-900 border border-white/10 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none ${tooltipPosClass}`}>
                             <div className="flex flex-col gap-1.5">
                               {dayEvents.map(e => (
                                 <div key={e.id} className="flex items-start gap-1.5">
@@ -256,7 +283,7 @@ export default function RadarPage() {
                               ))}
                             </div>
                             {/* Little triangle pointer */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-zinc-900" />
+                            <div className={`absolute top-full -mt-[1px] border-4 border-transparent border-t-zinc-900 ${trianglePosClass}`} />
                           </div>
                         )}
                       </div>
@@ -271,62 +298,53 @@ export default function RadarPage() {
 
       <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full space-y-8">
         
-        {/* ── Events List (Filtered) ────────────────────────────────────────────────── */}
-        {(displayedEvents.length > 0 || selectedDate) && (
-          <div>
-            <h3 className="text-sm font-bold text-zinc-400 mb-4 uppercase tracking-wider">
-              {selectedDate ? `Eventos el ${format(selectedDate, "d 'de' MMMM", { locale: es })}` : "Próximos Eventos"}
-            </h3>
-            
-            {displayedEvents.length === 0 ? (
-              <p className="text-sm text-zinc-500">No hay eventos para este día.</p>
-            ) : (
-              <div className="relative border-l border-white/10 ml-3 space-y-6">
-                {displayedEvents.map((event) => {
-                  const dateObj = new Date(event.date)
-                  return (
-                    <div key={event.id} className="relative pl-6">
-                      <div className="absolute -left-3 top-1 w-6 h-6 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center">
-                        {getEventIcon(event.type, "w-3.5 h-3.5")}
-                      </div>
-                      <div className="flex flex-col">
-                        {!selectedDate && (
-                          <span className="text-[11px] font-semibold text-primary mb-1 uppercase tracking-wider">
-                            {dateObj.toLocaleDateString(es.code, { weekday: 'short', day: 'numeric', month: 'short' })}
-                          </span>
-                        )}
-                        <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-white/5 mt-1">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-white/10 text-white/90">
-                              {event.ticker}
-                            </span>
-                            <span className="text-xs text-zinc-300">
-                              {event.title}
-                            </span>
-                          </div>
-                          {event.description && (
-                            <p className="text-[11px] text-zinc-500 leading-relaxed mt-2">
-                              {event.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ── News Feed (Filtered) ────────────────────────────────────────────────── */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Newspaper className="w-4 h-4 text-zinc-400" />
-            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
-              {selectedDate ? `Noticias del ${format(selectedDate, "d 'de' MMMM", { locale: es })}` : "Últimas Noticias"}
-            </h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Newspaper className="w-4 h-4 text-zinc-400" />
+              <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+                {selectedDate ? `Noticias del ${format(selectedDate, "d 'de' MMMM", { locale: es })}` : "Últimas Noticias"}
+              </h3>
+            </div>
+            {(selectedDate || selectedTicker) && (
+              <button 
+                onClick={() => { setSelectedDate(null); setSelectedTicker(null); }}
+                className="text-xs text-primary"
+              >
+                Limpiar Filtros
+              </button>
+            )}
           </div>
+
+          {/* Ticker Filters */}
+          {!loadingNews && newsTickers.length > 0 && (
+            <div className="flex overflow-x-auto snap-x hide-scrollbar gap-2 pb-4 mb-2">
+              <button
+                onClick={() => setSelectedTicker(null)}
+                className={`snap-start flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
+                  selectedTicker === null 
+                    ? 'bg-zinc-100 text-zinc-900 border-zinc-100' 
+                    : 'bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:bg-zinc-800'
+                }`}
+              >
+                Todos
+              </button>
+              {newsTickers.map(ticker => (
+                <button
+                  key={ticker}
+                  onClick={() => setSelectedTicker(ticker === selectedTicker ? null : ticker)}
+                  className={`snap-start flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
+                    selectedTicker === ticker 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:bg-zinc-800'
+                  }`}
+                >
+                  {ticker}
+                </button>
+              ))}
+            </div>
+          )}
           
           {loadingNews ? (
             <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
