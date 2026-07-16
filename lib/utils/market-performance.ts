@@ -115,7 +115,7 @@ export function extractMarketPerformance(
     ? 0
     : percentChange(sessionQuotes.at(-1)?.close ?? null, sessionBaseline)
   const quoteAge = latestTime ? now.getTime() - latestTime.getTime() : Number.POSITIVE_INFINITY
-  const isStale = !latestQuote || (marketState !== 'CLOSED' && quoteAge > ACTIVE_QUOTE_STALE_AFTER_MS)
+  const isStale = !latestQuote || quoteAge > ACTIVE_QUOTE_STALE_AFTER_MS
 
   return {
     currentPrice,
