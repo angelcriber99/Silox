@@ -3,142 +3,82 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { hapticFeedback } from "@/lib/utils/haptics"
 import {
-  LayoutDashboard,
-  LineChart,
-  Plus,
   ArrowLeftRight,
-  UserCircle,
+  ChartNoAxesCombined,
+  LayoutDashboard,
+  Plus,
+  Settings2,
 } from "lucide-react"
+
+import { hapticFeedback } from "@/lib/utils/haptics"
 
 interface MobileBottomNavProps {
   onAddPress: () => void
 }
 
 const tabs = [
-  { name: "Cartera",     href: "/",           Icon: LayoutDashboard, label: "Cartera" },
-  { name: "Análisis",    href: "/analisis",    Icon: LineChart,       label: "Análisis" },
-  { name: "fab",         href: "#",            Icon: Plus,            label: "Añadir",   isFab: true },
-  { name: "Movimientos", href: "/movimientos", Icon: ArrowLeftRight,  label: "Historial" },
-  { name: "Perfil",      href: "/settings",    Icon: UserCircle,      label: "Perfil" },
-]
+  { name: "Cartera", href: "/", Icon: LayoutDashboard },
+  { name: "Análisis", href: "/analisis", Icon: ChartNoAxesCombined },
+  { name: "Añadir", href: "#", Icon: Plus, isFab: true },
+  { name: "Movimientos", href: "/movimientos", Icon: ArrowLeftRight },
+  { name: "Ajustes", href: "/settings", Icon: Settings2 },
+] as const
 
 export function MobileBottomNav({ onAddPress }: MobileBottomNavProps) {
   const pathname = usePathname()
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 md:hidden">
-      {/* Frosted glass background */}
-      <div
-        className="absolute inset-x-0 bottom-0"
-        style={{
-          height: "calc(82px + env(safe-area-inset-bottom, 0px))",
-          background: "rgba(10,10,12,0.88)",
-          backdropFilter: "blur(40px) saturate(180%)",
-          WebkitBackdropFilter: "blur(40px) saturate(180%)",
-          borderTop: "0.5px solid rgba(255,255,255,0.09)",
-          boxShadow: "0 -1px 0 rgba(255,255,255,0.04), 0 -20px 40px rgba(0,0,0,0.30)",
-        }}
-      />
-
-      {/* Tab row */}
-      <div
-        className="pointer-events-auto relative flex w-full items-stretch justify-around"
-        style={{
-          height: "calc(68px + env(safe-area-inset-bottom, 0px))",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        }}
-      >
+    <nav
+      aria-label="Navegación principal"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-2 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] md:hidden"
+    >
+      <div className="pointer-events-auto mx-auto grid h-[68px] max-w-lg grid-cols-5 items-center rounded-2xl border border-border/80 bg-card/95 px-1.5 shadow-[0_20px_70px_rgba(0,0,0,.48)] backdrop-blur-2xl">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href
+          const isActive = tab.href === "/"
+            ? pathname === "/"
+            : pathname === tab.href || pathname.startsWith(`${tab.href}/`)
 
-          if (tab.isFab) {
+          if ("isFab" in tab && tab.isFab) {
             return (
-              <div key="fab" className="flex items-center justify-center px-2">
-                <motion.button
-                  whileTap={{ scale: 0.86 }}
-                  onClick={() => {
-                    hapticFeedback.heavy()
-                    onAddPress()
-                  }}
-                  className="flex items-center justify-center"
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 26,
-                    background: "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))",
-                    boxShadow: "0 4px 20px rgba(48,209,88,0.35), 0 0 0 1px rgba(48,209,88,0.15)",
-                  }}
-                  aria-label="Añadir transacción"
-                >
-                  <Plus
-                    className="h-6 w-6"
-                    strokeWidth={2.5}
-                    style={{ color: "#FFFFFF" }}
-                  />
-                </motion.button>
-              </div>
+              <button
+                key={tab.name}
+                type="button"
+                onClick={() => {
+                  hapticFeedback.heavy()
+                  onAddPress()
+                }}
+                className="group relative mx-auto flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-emerald-400 text-slate-950 shadow-lg shadow-sky-500/25 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                aria-label="Añadir operación o activo"
+              >
+                <Plus className="size-6" strokeWidth={2.6} />
+                <span className="absolute -bottom-3.5 text-[8px] font-black uppercase tracking-wide text-foreground">Añadir</span>
+              </button>
             )
           }
 
           const { Icon } = tab
-
           return (
             <Link
               key={tab.name}
               href={tab.href}
               onClick={() => hapticFeedback.light()}
-              className="relative flex flex-col items-center justify-center gap-[3px] flex-1 py-2"
-              aria-label={tab.name}
+              aria-current={isActive ? "page" : undefined}
+              className="relative flex h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {/* Active pill background */}
               {isActive && (
-                <motion.div
-                  layoutId="nav-pill"
-                  className="absolute inset-x-3 top-1.5 bottom-1.5 rounded-2xl"
-                  style={{ background: "rgba(255,255,255,0.07)" }}
-                  transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                <motion.span
+                  layoutId="mobile-navigation-active"
+                  className="absolute inset-1 rounded-xl border border-sky-400/15 bg-sky-400/10"
+                  transition={{ type: "spring", stiffness: 480, damping: 38 }}
                 />
               )}
-
-              {/* Icon */}
-              <motion.div
-                animate={{
-                  scale: isActive ? 1.05 : 1,
-                  y: isActive ? -0.5 : 0,
-                }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              >
-                <Icon
-                  style={{
-                    width: 22,
-                    height: 22,
-                    strokeWidth: isActive ? 2.2 : 1.7,
-                    color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.38)",
-                    transition: "color 0.2s ease, stroke-width 0.2s ease",
-                  }}
-                />
-              </motion.div>
-
-              {/* Label */}
-              <motion.span
-                animate={{ opacity: isActive ? 1 : 0.45 }}
-                style={{
-                  fontSize: 10,
-                  fontWeight: isActive ? 700 : 500,
-                  color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.45)",
-                  letterSpacing: "0.01em",
-                  lineHeight: 1,
-                  transition: "all 0.2s ease",
-                }}
-              >
-                {tab.label}
-              </motion.span>
+              <Icon className={`relative size-5 ${isActive ? "text-sky-400" : "text-muted-foreground"}`} strokeWidth={isActive ? 2.3 : 1.9} />
+              <span className={`relative max-w-full truncate text-[9px] font-bold ${isActive ? "text-foreground" : "text-muted-foreground"}`}>{tab.name}</span>
             </Link>
           )
         })}
       </div>
-    </div>
+    </nav>
   )
 }

@@ -3,6 +3,7 @@
 import { lazy, Suspense, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { PieChart, Target } from "lucide-react"
+import { IOSHeader } from "@/components/ui/ios-header"
 
 const ComprehensiveAnalysis = lazy(() =>
   import("@/components/analysis/comprehensive-analysis").then((mod) => ({
@@ -35,7 +36,7 @@ export default function AnalysisPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`
                     relative flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg flex-1 transition-colors whitespace-nowrap min-w-[120px]
                     ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground/80 hover:bg-muted/50"}
@@ -61,19 +62,16 @@ export default function AnalysisPage() {
 
       {/* Mobile iOS Header */}
       <div className="md:hidden">
-        <div className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/40">
-          <div className="px-5 pb-3 pt-6">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-4">Análisis</h1>
-            {/* iOS Native-looking Segmented Control */}
-            <div className="flex p-1 bg-muted/60 rounded-xl">
+        <IOSHeader title="Análisis" subtitle="Riesgo, diversificación y proyecciones">
+            <div className="grid h-11 grid-cols-2 rounded-xl border border-border/60 bg-muted/50 p-1">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`
-                      relative flex-1 py-2 text-sm font-semibold rounded-lg transition-colors
+                      relative min-w-0 rounded-lg px-2 text-xs font-bold transition-colors
                       ${isActive ? "text-foreground" : "text-muted-foreground"}
                     `}
                   >
@@ -84,17 +82,16 @@ export default function AnalysisPage() {
                         transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                       />
                     )}
-                    <span className="relative z-10">{tab.label}</span>
+                    <span className="relative z-10 inline-flex max-w-full items-center gap-1.5"><tab.icon className="size-3.5 shrink-0" /><span className="truncate">{tab.id === "exhaustivo" ? "Cartera" : tab.label}</span></span>
                   </button>
                 )
               })}
             </div>
-          </div>
-        </div>
+        </IOSHeader>
       </div>
 
       {/* Content Area */}
-      <main className="flex-1 p-4 md:p-8">
+      <main className="flex-1 px-3 py-4 md:p-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

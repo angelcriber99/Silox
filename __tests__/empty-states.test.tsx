@@ -77,7 +77,7 @@ describe('Empty States UI Verification', () => {
         />
       )
       expect(screen.getByText('Patrimonio total')).toBeInTheDocument()
-      expect(screen.getAllByText('Hoy').length).toBeGreaterThan(0)
+      expect(screen.getByText('Sin posiciones abiertas')).toBeInTheDocument()
       expect(container).toBeInTheDocument()
     })
   })

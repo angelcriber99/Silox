@@ -7,8 +7,8 @@ import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import {
   Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell,
-  Volume2, Shield, Download, CreditCard, Link as LinkIcon,
-  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings,
+  Shield, Download, Link as LinkIcon,
+  Smartphone, Zap, ChevronRight, LogOut, Check, Settings,
   AlertTriangle, Loader2, Trash2
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -23,9 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
+import { IOSHeader } from "@/components/ui/ios-header"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -143,15 +142,11 @@ export default function SettingsPage() {
   const { 
     language, setLanguage,
     amoled, setAmoled,
-    zenMode, setZenMode,
     accentColor, setAccentColor,
-    biometrics, setBiometrics,
     twoFactor, setTwoFactor,
     tableDensity, setTableDensity,
-    showPnlPercentOnly, setShowPnlPercentOnly,
     hideBalances, setHideBalances,
     pushNotifs, setPushNotifs,
-    emailNotifs, setEmailNotifs,
     priceAlerts, setPriceAlerts,
     weeklyReport, setWeeklyReport,
     dividendAlerts, setDividendAlerts
@@ -210,13 +205,9 @@ export default function SettingsPage() {
     <div className="flex flex-col h-full w-full">
       {/* ── Mobile View (iOS Grouped List) ──────────────────────────────── */}
       <div className="md:hidden flex flex-col flex-1 pb-24 bg-background">
-        <div className="px-5 pb-2 pt-6 sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-border/40">
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
-            {t('title')}
-          </h1>
-        </div>
+        <IOSHeader title={t('title')} subtitle="Cuenta, apariencia y datos en un solo lugar" />
         
-        <div className="flex flex-col gap-6 px-4 pt-6">
+        <div className="flex flex-col gap-6 px-3 pt-4">
           {/* Apariencia */}
           <section>
             <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Apariencia</h2>

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
+import type { RevolutImportTransaction } from "@/lib/domain/imports/revolut-response"
 
 interface RevolutSyncProps {
   children: React.ReactNode
@@ -22,8 +23,8 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
   const router = useRouter()
   const [importSummary, setImportSummary] = useState<{
     isOpen: boolean;
-    imported: any[];
-    ignored: any[];
+    imported: RevolutImportTransaction[];
+    ignored: RevolutImportTransaction[];
   }>({
     isOpen: false,
     imported: [],

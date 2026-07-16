@@ -11,7 +11,6 @@ import { PullToRefresh } from "@/components/layout/pull-to-refresh"
 import { EditAssetModal } from "@/components/asset/edit-asset-modal"
 import { AddEventModal } from "@/components/market/add-event-modal"
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal"
-import { PendingOrders } from "@/components/transactions/pending-orders"
 
 export default function Home() {
   const queryClient = useQueryClient()
@@ -38,10 +37,6 @@ export default function Home() {
   return (
     <main className="min-h-full w-full flex-1 bg-background text-foreground">
       <PullToRefresh onRefresh={async () => { await refetch() }}>
-        <div className="mx-auto w-full max-w-[1480px] px-4 sm:px-6 lg:px-8">
-          <PendingOrders transactions={pendingTxs} />
-        </div>
-
         <MinimalDashboard
           positions={positions}
           totals={totals}
@@ -49,6 +44,7 @@ export default function Home() {
           marketState={marketState}
           pricesUpdatedAt={pricesUpdatedAt}
           realtimeStatus={realtimeStatus}
+          pendingTransactions={pendingTxs}
           onRefresh={() => void refetch()}
           onAddTransaction={openTransactionModal}
           onEditAsset={openEditAssetModal}

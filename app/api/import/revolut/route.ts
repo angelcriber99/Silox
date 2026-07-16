@@ -28,7 +28,16 @@ interface ParsedImportTransaction {
   isin?: string
 }
 
-type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
+function toDatabaseTransaction(transaction: ParsedImportTransaction) {
+  return {
+    user_id: transaction.user_id,
+    tipo_operacion: transaction.tipo_operacion,
+    cantidad: transaction.cantidad,
+    precio_unitario: transaction.precio_unitario,
+    fecha: transaction.fecha,
+    comision: transaction.comision,
+  }
+}
 
 const CRYPTO_SYMBOLS = new Set([
   '1INCH', 'AAVE', 'ADA', 'ALGO', 'ATOM', 'AVAX', 'BCH', 'BNB', 'BONK', 'BTC',
@@ -1054,8 +1063,11 @@ export async function POST(request: Request) {
         ignoredCount++
         ignored.push(tx)
       } else {
-        const { ticker, rawTicker, nombre, tipoActivo, moneda, isin, ...dbTx } = tx
-        toInsert.push({ ...dbTx, activo_id, estado: 'Completada' })
+        toInsert.push({
+          ...toDatabaseTransaction(tx),
+          activo_id,
+          estado: 'Completada',
+        })
         imported.push(tx)
         newTxCount++
       }

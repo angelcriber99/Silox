@@ -1,10 +1,9 @@
 "use client"
 
 import React, { useState, useMemo, Fragment } from "react"
-import { useTransactions, useDeleteTransaction } from "@/lib/hooks/use-transactions"
+import { useTransactions } from "@/lib/hooks/use-transactions"
 import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
-import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Trash2, Search, Filter, Scale, Star } from "lucide-react"
-import { toast } from "sonner"
+import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Search, Scale, Star } from "lucide-react"
 import type { Transaccion } from '@/lib/types'
 import { EditTransactionModal } from "@/components/transactions/edit-transaction-modal"
 import { ExportExcelButton } from "@/components/transactions/export-excel-button"
@@ -23,7 +22,6 @@ import {
 
 export default function MovimientosPage() {
   const { data: transactions, isLoading } = useTransactions(1000)
-  const deleteTransaction = useDeleteTransaction()
   const { positions } = usePortfolio()
   const { hideBalances } = usePreferences()
 
@@ -37,17 +35,6 @@ export default function MovimientosPage() {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("¿Seguro que deseas eliminar esta transacción de forma permanente?")) {
-      try {
-        await deleteTransaction.mutateAsync(id)
-        toast.success("Transacción eliminada")
-      } catch (err) {
-        toast.error("Error al eliminar la transacción")
-      }
-    }
-  }
-
   const handleEdit = (tx: Transaccion) => {
     setSelectedTx(tx)
     setEditModalOpen(true)
@@ -56,9 +43,6 @@ export default function MovimientosPage() {
   // Filter logic
   const filteredTransactions = useMemo(() => {
     if (!transactions) return []
-
-    const now = new Date()
-    const currentYear = now.getFullYear()
 
     return transactions.filter((tx) => {
       // 0. Exclude Efectivo/CASH (since they clutter the view when buying assets)
@@ -112,21 +96,16 @@ export default function MovimientosPage() {
     <main className="min-h-full bg-background text-foreground flex flex-col">
       {/* ── Mobile View ────────────────────────────────────────────── */}
       <div className="md:hidden flex flex-col pb-24 bg-background">
-        <IOSHeader title="Movimientos">
+        <IOSHeader title="Movimientos" subtitle="Historial, búsqueda y edición de operaciones">
           <div className="flex flex-col gap-2.5">
             {/* Native Search Bar */}
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.35)" }} />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar activo o ticker..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 rounded-xl border-none text-white"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  fontSize: 15,
-                  fontWeight: 400,
-                }}
+                className="h-11 rounded-xl border-border/60 bg-card pl-9 text-[15px] font-medium text-foreground"
               />
             </div>
 
@@ -136,11 +115,7 @@ export default function MovimientosPage() {
                 <button
                   key={opt}
                   onClick={() => setTypeFilter(opt)}
-                  className="flex-shrink-0 snap-start px-3.5 py-1 rounded-full text-[13px] font-semibold transition-all"
-                  style={{
-                    background: typeFilter === opt ? "#30D158" : "rgba(255,255,255,0.08)",
-                    color: typeFilter === opt ? "#000000" : "rgba(255,255,255,0.55)",
-                  }}
+                  className={`h-9 flex-shrink-0 snap-start rounded-full px-4 text-[13px] font-bold transition-all ${typeFilter === opt ? "bg-primary text-primary-foreground" : "border border-border/60 bg-card text-muted-foreground"}`}
                 >
                   {opt === "Todos" ? "Todos" : opt === "Compra" ? "Compras" : opt === "Venta" ? "Ventas" : "Dividendos"}
                 </button>
