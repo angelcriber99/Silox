@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Settings,
   History,
+  FileText,
   TrendingUp,
   PieChart,
   Newspaper,
