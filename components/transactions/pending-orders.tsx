@@ -66,8 +66,8 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
   }
 
   return (
-    <Card className="border border-border bg-background mb-6 rounded-none shadow-none">
-      <CardHeader className="border-b border-border px-6 py-4 flex flex-row items-center justify-between bg-background">
+    <Card className="bg-card/50 backdrop-blur-xl border-border/50 shadow-xl overflow-hidden mb-6">
+      <CardHeader className="border-b border-border/20 px-6 py-4 flex flex-row items-center justify-between bg-muted/20">
         <div className="flex items-center gap-2">
           <Clock className="w-5 h-5 text-amber-400" />
           <CardTitle className="text-lg">Órdenes Pendientes</CardTitle>

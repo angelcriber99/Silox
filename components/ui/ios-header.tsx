@@ -1,6 +1,7 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { ReactNode } from "react"
+import { motion } from "framer-motion"
 
 interface IOSHeaderProps {
   title: string
@@ -20,35 +21,53 @@ export function IOSHeader({
 }: IOSHeaderProps) {
   return (
     <header
-      className="sticky top-0 z-30 border-b border-border/70 bg-background/92 shadow-[0_12px_40px_-34px_rgba(0,0,0,.8)] backdrop-blur-2xl"
+      className="sticky top-0 z-30"
+      style={{
+        background: "rgba(0,0,0,0.85)",
+        backdropFilter: "blur(32px) saturate(180%)",
+        WebkitBackdropFilter: "blur(32px) saturate(180%)",
+        borderBottom: "0.5px solid rgba(255,255,255,0.10)",
+      }}
     >
       <div
         className="flex flex-col px-4"
         style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
-          paddingBottom: children ? "10px" : "12px",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
+          paddingBottom: children ? "12px" : "14px",
         }}
       >
         {/* Title row */}
         <div className="flex items-center justify-between">
-          <div className="flex min-w-0 flex-col">
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            className="flex flex-col"
+          >
             <h1
-              className="truncate text-foreground"
               style={{
-                fontSize: largeTile ? 28 : 21,
-                fontWeight: 800,
-                letterSpacing: -0.65,
+                fontSize: largeTile ? 34 : 22,
+                fontWeight: 700,
+                letterSpacing: -0.5,
+                color: "#FFFFFF",
                 lineHeight: 1.1,
               }}
             >
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-1 truncate text-xs font-medium text-muted-foreground">
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.45)",
+                  marginTop: 2,
+                  fontWeight: 400,
+                }}
+              >
                 {subtitle}
               </p>
             )}
-          </div>
+          </motion.div>
 
           {rightAction && (
             <div className="flex items-center gap-2 ml-3">

@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireApiUser } from '@/lib/server/api-auth'
 
 export async function POST() {
-  const auth = await requireApiUser()
-  if (!auth.ok) return auth.response
-
-  const supabase = await createClient()
+  const supabase = (await createClient()) as any
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return NextResponse.json({ error: 'No autorizado. Debes iniciar sesión primero en la app.' }, { status: 401 })
+  }
 
   const { error } = await supabase
     .from('portfolio_history')
     .delete()
-    .eq('user_id', auth.user.id)
+    .eq('user_id', user.id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

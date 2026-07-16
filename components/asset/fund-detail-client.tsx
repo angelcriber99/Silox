@@ -95,9 +95,9 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
   const colorHex = isPositive ? "#10b981" : "#f43f5e"
 
   return (
-    <div className="min-h-full bg-background selection:bg-purple-500/30">
+    <div className="min-h-screen bg-background selection:bg-purple-500/30">
       {/* ═══════════ HEADER ═══════════ */}
-      <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
@@ -108,13 +108,16 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               variant="outline"
               size="sm"
               onClick={() => setTraspasoOpen(true)}
-              className="hidden md:flex border-border text-foreground hover:bg-muted transition-colors rounded-none"
+              className="hidden md:flex border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 transition-colors"
             >
               <ArrowRightLeft className="w-4 h-4 mr-2" />
               Traspaso
             </Button>
             <div className="flex items-center gap-2.5 opacity-50">
-               <span className="text-xs uppercase font-semibold text-muted-foreground tracking-widest">{position.tipo}</span>
+              <div className="h-6 w-6 rounded-md bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+                <Activity className="h-3 w-3 text-foreground" />
+              </div>
+              <span className="text-sm font-bold tracking-tight text-foreground">Silox</span>
             </div>
           </div>
         </div>
@@ -141,19 +144,16 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
             />
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                <Badge variant="outline" className={TIPO_BADGE_STYLES[position.tipo] || "bg-muted text-foreground/80"}>
                   {position.tipo}
-                </span>
+                </Badge>
                 {position.estrategia && (
-                  <>
-                    <span className="opacity-50 text-muted-foreground">•</span>
-                    <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                      {position.estrategia}
-                    </span>
-                  </>
+                  <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border">
+                    {position.estrategia}
+                  </Badge>
                 )}
               </div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground mb-2">
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground mb-2">
               {position.nombre || position.ticker}
             </h1>
             <p className="text-muted-foreground/80 font-medium">
@@ -210,49 +210,73 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         </div>
 
         {/* ═══════════ KPIs GRID ═══════════ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-y md:divide-y-0 md:divide-x divide-border border-y border-border mb-8 mt-10">
-          <div className="p-6">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Total Invertido</span>
-            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatCurrency(position.coste_total, 'EUR')}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in stagger-1">
+          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+              <Wallet className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Total Invertido</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(position.coste_total, 'EUR')}</p>
           </div>
-          <div className="p-6">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Ganado por Mercado</span>
-            <p className="text-xl font-medium tabular-nums mt-1" style={{ color: stats.gananciaIntereses >= 0 ? "var(--positive)" : "var(--negative)" }}>
+          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <span className="text-xs font-medium uppercase tracking-wider">Ganado por Mercado</span>
+            </div>
+            <p className={`text-2xl font-bold tabular-nums ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
               {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
             </p>
           </div>
-          <div className="p-6">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Participaciones</span>
-            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatUnits(position.unidades)}</p>
+          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+              <Layers className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Participaciones</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatUnits(position.unidades)}</p>
           </div>
-          <div className="p-6">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Operaciones</span>
-            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{position.num_operaciones}</p>
+          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+              <CalendarDays className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Operaciones</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{position.num_operaciones}</p>
           </div>
         </div>
 
         {/* ═══════════ ADVANCED STATS ROW ═══════════ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-y md:divide-y-0 md:divide-x divide-border border-b border-border mb-10">
-          <div className="p-6 bg-muted/20">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">CAGR</span>
-            <p className="text-xl font-medium text-foreground tabular-nums mt-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-in stagger-1">
+          <div className="bg-gradient-to-br from-purple-950/40 to-zinc-900/60 border border-purple-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-purple-300">
+              <Zap className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">CAGR</span>
+            </div>
+            <p className="text-2xl font-bold text-purple-300 tabular-nums">
               {stats.cagr > 0 ? "+" : ""}{stats.cagr.toFixed(2)}%
             </p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Rentabilidad anualizada</p>
           </div>
-          <div className="p-6 bg-muted/20">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Tiempo</span>
-            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{stats.monthsInvested} meses</p>
+          <div className="bg-gradient-to-br from-blue-950/40 to-zinc-900/60 border border-blue-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-blue-300">
+              <Clock className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Tiempo</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-300 tabular-nums">{stats.monthsInvested} meses</p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Desde {stats.firstTxDate?.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }) || '—'}</p>
           </div>
-          <div className="p-6 bg-muted/20">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Media / Mes</span>
-            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatCurrency(stats.avgMonthly, 'EUR')}</p>
+          <div className="bg-gradient-to-br from-amber-950/40 to-zinc-900/60 border border-amber-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-amber-300">
+              <DollarSign className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Media / Mes</span>
+            </div>
+            <p className="text-2xl font-bold text-amber-300 tabular-nums">{formatCurrency(stats.avgMonthly, 'EUR')}</p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Aportación media mensual</p>
           </div>
-          <div className="p-6 bg-muted/20">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Mayor Compra</span>
-            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatCurrency(stats.maxCompra, 'EUR')}</p>
+          <div className="bg-gradient-to-br from-emerald-950/40 to-zinc-900/60 border border-emerald-800/30 rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2 text-emerald-300">
+              <Award className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Mayor Compra</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-300 tabular-nums">{formatCurrency(stats.maxCompra, 'EUR')}</p>
             <p className="text-[10px] text-muted-foreground/80 mt-1">Tu mayor aportación</p>
           </div>
         </div>
@@ -263,7 +287,8 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
              <InteractiveAssetChart ticker={position.ticker} moneda={position.moneda} colorHex={colorHex} />
           </div>
           <div className="lg:col-span-1">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">
+            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-400" />
               Datos del Mercado
             </h2>
             <MarketStats ticker={position.ticker} moneda={position.moneda} />
@@ -271,31 +296,34 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         </div>
 
         {/* ═══════════ PRECIO MEDIO vs PRECIO ACTUAL ═══════════ */}
-        <div className="border border-border mb-10 p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Precio Medio de Compra</p>
-                <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatCurrency(stats.precioMedio, position.moneda)}</p>
+        <Card className="bg-card border-border backdrop-blur-sm mb-10 animate-fade-in stagger-1">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Target className="h-5 w-5 text-amber-400" />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Precio Medio de Compra</p>
+                  <p className="text-xl font-bold text-foreground tabular-nums">{formatCurrency(stats.precioMedio, position.moneda)}</p>
+                </div>
+              </div>
+              <div className="flex-1 max-w-md mx-4">
+                <div className="relative h-3 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ${stats.precioPorcentaje >= 0 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-rose-500 to-rose-400'}`}
+                    style={{ width: `${Math.min(100, Math.abs(stats.precioPorcentaje) + 50)}%` }}
+                  />
+                </div>
+                <p className={`text-center mt-2 text-sm font-medium tabular-nums ${stats.precioPorcentaje >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}% respecto a tu precio medio
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-muted-foreground">Precio Actual</p>
+                <p className="text-xl font-bold text-foreground tabular-nums">{formatCurrency(stats.precioActual, position.moneda)}</p>
               </div>
             </div>
-            <div className="flex-1 max-w-md mx-4">
-              <div className="relative h-2 bg-muted overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 transition-all duration-1000"
-                  style={{ width: `${Math.min(100, Math.abs(stats.precioPorcentaje) + 50)}%`, backgroundColor: stats.precioPorcentaje >= 0 ? "var(--positive)" : "var(--negative)" }}
-                />
-              </div>
-              <p className="text-center mt-2 text-xs font-semibold tabular-nums" style={{ color: stats.precioPorcentaje >= 0 ? "var(--positive)" : "var(--negative)" }}>
-                {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}% respecto a tu precio medio
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Precio Actual</p>
-              <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatCurrency(stats.precioActual, position.moneda)}</p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* ═══════════ TU DINERO vs INTERESES (DONUT GRANDE) + EVOLUCIÓN ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
@@ -326,133 +354,147 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
 
         {/* ═══════════ SIMULADOR DE INTERÉS COMPUESTO ═══════════ */}
         {(position.tipo === "Fondo Indexado" || position.tipo === "Fondo Monetario") && (
-          <div className="border border-border mb-10 p-6">
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold uppercase tracking-widest text-foreground">
-                Simulador de Interés Compuesto
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Proyecta el futuro. Cambia los parámetros y observa la curva exponencial.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* Controles */}
-              <div className="lg:col-span-1 space-y-6 bg-muted/10 p-5 border border-border">
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase font-semibold text-muted-foreground">Aportación Mensual (€)</Label>
-                  <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-background border-border text-foreground rounded-none" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase font-semibold text-muted-foreground">Años Vista</Label>
-                  <Input type="number" value={years} onChange={e => setYears(Number(e.target.value))} className="bg-background border-border text-foreground rounded-none" min={1} max={50} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase font-semibold text-muted-foreground">Rentabilidad Anual (%)</Label>
-                  <Input type="number" value={expectedReturn} onChange={e => setExpectedReturn(Number(e.target.value))} className="bg-background border-border text-foreground rounded-none" step={0.1} />
-                </div>
-                <div className="pt-4 border-t border-border space-y-4">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-widest">De tu bolsillo</p>
-                    <p className="text-lg font-medium text-foreground tabular-nums">{formatCurrency(finalData?.invested ?? 0)}</p>
+          <Card className="bg-card border-border backdrop-blur-sm mb-10 animate-fade-in stagger-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-foreground text-base">
+                <Calculator className="h-5 w-5 text-purple-400" />
+                🔮 La Magia del Interés Compuesto
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Proyecta el futuro. Cambia los parámetros y observa cómo la curva se despega exponencialmente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Controles */}
+                <div className="lg:col-span-1 space-y-6 bg-background/50 p-5 rounded-xl border border-border/50">
+                  <div className="space-y-2">
+                    <Label className="text-foreground/80 text-sm">Aportación Mensual (€)</Label>
+                    <Input type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="bg-card border-border text-foreground" />
                   </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-widest">Intereses Generados</p>
-                    <p className="text-lg font-medium text-foreground tabular-nums">+{formatCurrency(finalData?.interest ?? 0)}</p>
+                  <div className="space-y-2">
+                    <Label className="text-foreground/80 text-sm">Años Vista</Label>
+                    <Input type="number" value={years} onChange={e => setYears(Number(e.target.value))} className="bg-card border-border text-foreground" min={1} max={50} />
                   </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-widest">Capital Final</p>
-                    <p className="text-xl font-semibold text-foreground tabular-nums">
-                      {formatCurrency(finalData?.capital ?? 0)}
-                    </p>
+                  <div className="space-y-2">
+                    <Label className="text-foreground/80 text-sm">Rentabilidad Anual (%)</Label>
+                    <Input type="number" value={expectedReturn} onChange={e => setExpectedReturn(Number(e.target.value))} className="bg-card border-border text-foreground" step={0.1} />
+                  </div>
+                  <div className="pt-4 border-t border-border/50 space-y-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground/80 uppercase font-medium">De tu bolsillo</p>
+                      <p className="text-lg font-bold text-blue-400 tabular-nums">{formatCurrency(finalData?.invested ?? 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground/80 uppercase font-medium">Intereses Generados</p>
+                      <p className="text-lg font-bold text-emerald-400 tabular-nums">+{formatCurrency(finalData?.interest ?? 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground/80 uppercase font-medium">Capital Final</p>
+                      <p className="text-2xl font-bold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)] tabular-nums">
+                        {formatCurrency(finalData?.capital ?? 0)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Gráfico */}
-              <div className="lg:col-span-3 h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={simulationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <XAxis dataKey="year" stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 11 }} tickFormatter={(v) => `Año ${v}`} />
-                    <YAxis stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 11 }} tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
-                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                    <Tooltip content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null
-                      const cap = payload[0]?.value as number
-                      const inv = payload[1]?.value as number
-                      return (
-                        <div className="bg-background border border-border p-3 shadow-md">
-                          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest border-b border-border pb-2 mb-2">Año {label}</p>
-                          <div className="space-y-1">
-                            <div className="flex justify-between gap-6">
-                              <span className="text-xs text-foreground font-medium">Capital Total</span>
-                              <span className="text-xs text-foreground font-semibold tabular-nums">{formatCurrency(cap)}</span>
-                            </div>
-                            <div className="flex justify-between gap-6">
-                              <span className="text-xs text-muted-foreground font-medium">Tu Dinero</span>
-                              <span className="text-xs text-muted-foreground font-semibold tabular-nums">{formatCurrency(inv)}</span>
-                            </div>
-                            <div className="pt-2 mt-1 border-t border-border flex justify-between gap-6">
-                              <span className="text-xs text-foreground font-medium">Intereses</span>
-                              <span className="text-xs text-foreground font-semibold tabular-nums">+{formatCurrency(cap - inv)}</span>
+                {/* Gráfico */}
+                <div className="lg:col-span-3 h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={simulationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="cCapital" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="cInvested" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="year" stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `Año ${v}`} />
+                      <YAxis stroke="#52525b" tick={{ fill: '#a1a1aa', fontSize: 12 }} tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                      <Tooltip content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null
+                        const cap = payload[0]?.value as number
+                        const inv = payload[1]?.value as number
+                        return (
+                          <div className="bg-card border border-border p-4 rounded-xl shadow-2xl">
+                            <p className="text-foreground/80 text-sm mb-3 font-medium border-b border-border pb-2">Año {label}</p>
+                            <div className="space-y-2">
+                              <div className="flex justify-between gap-6">
+                                <span className="text-purple-400 text-sm">Capital Total</span>
+                                <span className="text-purple-400 text-sm font-bold tabular-nums">{formatCurrency(cap)}</span>
+                              </div>
+                              <div className="flex justify-between gap-6">
+                                <span className="text-blue-400 text-sm">Tu Dinero</span>
+                                <span className="text-blue-400 text-sm font-bold tabular-nums">{formatCurrency(inv)}</span>
+                              </div>
+                              <div className="pt-2 mt-2 border-t border-border flex justify-between gap-6">
+                                <span className="text-emerald-400 text-xs">Intereses</span>
+                                <span className="text-emerald-400 text-xs font-bold tabular-nums">+{formatCurrency(cap - inv)}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )
-                    }} />
-                    <Area type="monotone" dataKey="capital" stroke="#a1a1aa" strokeWidth={1} fillOpacity={0.1} fill="#a1a1aa" animationDuration={500} />
-                    <Area type="monotone" dataKey="invested" stroke="#52525b" strokeWidth={1} fillOpacity={0.1} fill="#52525b" animationDuration={500} />
-                  </AreaChart>
-                </ResponsiveContainer>
+                        )
+                      }} />
+                      <Area type="monotone" dataKey="capital" stroke="#a855f7" strokeWidth={2} fillOpacity={1} fill="url(#cCapital)" animationDuration={1500} />
+                      <Area type="monotone" dataKey="invested" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#cInvested)" animationDuration={1500} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
 
         {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
-        <div className="mt-12">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">
+        <div className="animate-fade-in stagger-4">
+          <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-muted-foreground" />
             Historial de Transacciones
           </h2>
-          <div className="border-t border-border overflow-x-auto">
+          <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="text-muted-foreground text-[11px] uppercase tracking-widest font-semibold border-b border-border">
+              <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
                 <tr>
-                  <th className="px-4 py-4 font-semibold">Fecha</th>
-                  <th className="px-4 py-4 font-semibold">Tipo</th>
-                  <th className="px-4 py-4 text-right font-semibold">Unidades</th>
-                  <th className="px-4 py-4 text-right font-semibold">Precio</th>
-                  <th className="px-4 py-4 text-right font-semibold">Total</th>
-                  <th className="px-4 py-4 text-right font-semibold">Comisión</th>
-                  <th className="px-4 py-4 text-right font-semibold">P&L</th>
-                  <th className="px-4 py-4 text-right font-semibold">Acumulado</th>
+                  <th className="px-5 py-4">Fecha</th>
+                  <th className="px-5 py-4">Tipo</th>
+                  <th className="px-5 py-4 text-right">Unidades</th>
+                  <th className="px-5 py-4 text-right">Precio</th>
+                  <th className="px-5 py-4 text-right">Total</th>
+                  <th className="px-5 py-4 text-right">Comisión</th>
+                  <th className="px-5 py-4 text-right">P&L</th>
+                  <th className="px-5 py-4 text-right">Acumulado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-zinc-800/50">
                 {txTableData.map((tx) => (
                   <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-4 text-foreground/80 whitespace-nowrap">
+                    <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
                       {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: tx.tipo_operacion === 'Compra' ? "var(--positive)" : "var(--negative)" }}>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                         {tx.tipo_operacion}
                       </span>
                       {tx.estado === 'Pendiente' && (
-                        <span className="ml-2 text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                        <span className="ml-1 inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           Pendiente
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-4 text-right tabular-nums text-foreground">{formatUnits(Number(tx.cantidad))}</td>
-                    <td className="px-4 py-4 text-right tabular-nums text-foreground">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
-                    <td className="px-4 py-4 text-right tabular-nums font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
-                    <td className="px-4 py-4 text-right tabular-nums text-muted-foreground">
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-muted-foreground/80">
                       {tx.comision > 0 ? formatCurrency(tx.comision, position.moneda) : "—"}
                     </td>
-                    <td className="px-4 py-4 text-right tabular-nums">
+                    <td className="px-5 py-4 text-right tabular-nums">
                       {tx.pnlTotal !== null ? (
-                        <span style={{ color: tx.pnlTotal >= 0 ? "var(--positive)" : "var(--negative)" }}>
+                        <span className={tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}>
                           {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotal)}
                           <span className="text-[10px] ml-1 opacity-60">
                             ({tx.pnlPct !== null ? (tx.pnlPct >= 0 ? "+" : "") + tx.pnlPct.toFixed(1) + "%" : ""})
@@ -462,7 +504,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                         <span className="text-muted-foreground/60">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-4 text-right tabular-nums text-muted-foreground">{formatCurrency(tx.accumulated, position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">{formatCurrency(tx.accumulated, position.moneda)}</td>
                   </tr>
                 ))}
                 {transactions.length === 0 && (

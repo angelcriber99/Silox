@@ -137,7 +137,7 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
       </div>
 
       {!hasData ? (
-        <div className="text-xs text-muted-foreground">Añade activos con transacciones para ver la distribución.</div>
+        <div className="h-4 text-xs text-muted-foreground">Sin datos</div>
       ) : (
         <>
           {/* Stacked Bar */}

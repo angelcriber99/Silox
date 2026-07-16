@@ -1,59 +1,105 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import Link from "next/link"
-import { Activity, ArrowLeft, ChevronDown } from "lucide-react"
-
-import { HistoryDashboard } from "@/components/history/history-dashboard"
-import { PageHeading } from "@/components/layout/page-heading"
-import { calculateFIFO } from "@/lib/utils/fifo-calculator"
+import { useState, useMemo } from "react"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
+import { calculateFIFO } from "@/lib/utils/fifo-calculator"
+import { Activity, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { HistoryDashboard } from "@/components/history/history-dashboard"
 
 export default function HistorialPage() {
   const { data: allTransactions, isLoading } = useAllTransactions()
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
-  const taxEvents = useMemo(() => calculateFIFO(allTransactions ?? []), [allTransactions])
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
+
+  // Calulate FIFO events
+  const taxEvents = useMemo(() => {
+    if (!allTransactions) return []
+    return calculateFIFO(allTransactions)
+  }, [allTransactions])
+
+  // Get available years
   const availableYears = useMemo(() => {
+    const years = new Set<number>()
+    if (allTransactions) {
+      allTransactions.forEach(tx => {
+        years.add(new Date(tx.fecha).getFullYear())
+      })
+    }
+    // Always include current year and last year as baseline
     const current = new Date().getFullYear()
-    const years = new Set([current, current - 1])
-    allTransactions?.forEach((transaction) => years.add(new Date(transaction.fecha).getFullYear()))
-    return Array.from(years).sort((left, right) => right - left)
+    years.add(current)
+    years.add(current - 1)
+    return Array.from(years).sort((a, b) => b - a)
   }, [allTransactions])
 
   return (
-    <main className="min-h-full bg-background text-foreground">
-      <div className="mx-auto w-full max-w-[1440px] space-y-6 px-4 py-6 md:px-6 md:py-8 lg:px-8">
-        <PageHeading
-          eyebrow="Evolución"
-          title="Historial anual"
-          description="Revisa aportaciones, operaciones y rendimiento consolidado de cada ejercicio."
-          icon={Activity}
-          actions={<>
-            <Link href="/movimientos" className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-              <ArrowLeft className="size-4" /> Movimientos
-            </Link>
-            <label className="relative">
-              <span className="sr-only">Seleccionar año</span>
-              <select
-                className="h-10 min-w-32 appearance-none rounded-xl border border-primary/20 bg-primary/10 pl-3 pr-9 text-sm font-bold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <main className="min-h-full bg-background text-foreground flex flex-col animate-fade-in">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10 mb-20 md:mb-0 space-y-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col gap-4">
+          <Link 
+            href="/movimientos" 
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-fit text-sm font-medium"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver a Movimientos
+          </Link>
+
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "oklch(0.65 0.17 270 / 0.12)", border: "1px solid oklch(0.65 0.17 270 / 0.20)" }}
+                >
+                  <Activity className="h-5 w-5" style={{ color: "oklch(0.65 0.17 270)" }} />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+                  Year in Review
+                </h1>
+              </div>
+              <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
+                Resumen anual de tu actividad inversora, compras, ventas y rentabilidad.
+              </p>
+            </div>
+            
+            <div className="relative">
+              <select 
+                className="appearance-none font-semibold rounded-xl pl-4 pr-8 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 cursor-pointer transition-all text-sm"
+                style={{
+                  background: "oklch(0.65 0.17 270 / 0.10)",
+                  border: "1px solid oklch(0.65 0.17 270 / 0.25)",
+                  color: "oklch(0.65 0.17 270)",
+                }}
                 value={selectedYear}
-                onChange={(event) => setSelectedYear(Number(event.target.value))}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
               >
-                {availableYears.map((year) => <option key={year} value={year}>Año {year}</option>)}
+                {availableYears.map(year => (
+                  <option key={year} value={year}>Año {year}</option>
+                ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-primary" />
-            </label>
-          </>}
-        />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs">
+                ▾
+              </div>
+            </div>
+          </div>
+        </div>
 
         {isLoading ? (
-          <div className="animate-pulse space-y-5">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-28 rounded-2xl bg-muted/50" />)}</div>
-            <div className="h-80 rounded-2xl bg-muted/50" />
+          <div className="animate-pulse flex flex-col gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-card/50 rounded-xl" />)}
+            </div>
+            <div className="h-80 bg-card/50 rounded-xl" />
           </div>
         ) : (
-          <HistoryDashboard transactions={allTransactions ?? []} taxEvents={taxEvents} year={selectedYear} />
+          <HistoryDashboard 
+            transactions={allTransactions || []} 
+            taxEvents={taxEvents} 
+            year={selectedYear} 
+          />
         )}
       </div>
     </main>

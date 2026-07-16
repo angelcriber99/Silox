@@ -4,12 +4,11 @@ import { useState, useMemo } from "react"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
 import { formatCurrency } from "@/lib/utils/formatters"
-import { Scale, TrendingUp, TrendingDown, ArrowLeft, Info, HelpCircle, FileText, ChevronDown } from "lucide-react"
+import { Scale, TrendingUp, TrendingDown, ArrowLeft, Info, HelpCircle, FileText } from "lucide-react"
 import { TaxGuide } from "@/components/tax/tax-guide"
 import { TaxChat } from "@/components/tax/tax-chat"
 import { TaxPdfExport } from "@/components/tax/tax-pdf-export"
 import Link from "next/link"
-import { PageHeading } from "@/components/layout/page-heading"
 
 export default function DeclararPage() {
   const { data: allTransactions, isLoading } = useAllTransactions()
@@ -111,18 +110,43 @@ export default function DeclararPage() {
     <main className="min-h-full bg-background text-foreground flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 pb-10 mb-20 md:mb-0 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
         
-        <PageHeading
-          eyebrow="Fiscalidad"
-          title="Asistente de declaración"
-          description="Calcula ganancias, pérdidas, dividendos y retenciones con el método FIFO."
-          icon={Scale}
-          actions={<>
-              <Link href="/movimientos" className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"><ArrowLeft className="size-4" />Movimientos</Link>
+        {/* Header Section */}
+        <div className="flex flex-col gap-4">
+          <Link 
+            href="/movimientos" 
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-fit text-sm font-medium"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver a Movimientos
+          </Link>
+
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-3">
+              <div
+                className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
+              >
+                <Scale className="h-5 w-5" style={{ color: "var(--primary)" }} />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+                Asistente de Declaración
+              </h1>
+            </div>
+            <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
+              Cálculo automatizado de ganancias y pérdidas patrimoniales (Método FIFO).
+            </p>
+          </div>
+            <div className="flex items-center gap-3">
               <TaxPdfExport targetId="tax-report-content" filename={`Silox_Informe_Fiscal_${selectedYear}.pdf`} />
-              <label className="relative">
-                <span className="sr-only">Seleccionar ejercicio fiscal</span>
+              <div className="relative">
                 <select 
-                  className="h-10 min-w-[120px] appearance-none rounded-xl border border-primary/20 bg-primary/10 pl-3 pr-9 text-sm font-bold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="appearance-none font-semibold rounded-xl pl-4 pr-8 py-2.5 min-w-[120px] focus:outline-none focus:ring-2 cursor-pointer transition-all text-sm"
+                  style={{
+                    background: "oklch(0.68 0.17 192 / 0.10)",
+                    border: "1px solid oklch(0.68 0.17 192 / 0.25)",
+                    color: "var(--primary)",
+                  }}
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
                 >
@@ -130,10 +154,13 @@ export default function DeclararPage() {
                     <option key={year} value={year}>Año {year}</option>
                   ))}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-primary" />
-              </label>
-          </>}
-        />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs">
+                  ▾
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div id="tax-report-content" className="flex flex-col gap-8 bg-background pb-8">
           {isLoading ? (

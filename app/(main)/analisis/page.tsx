@@ -1,55 +1,116 @@
 "use client"
 
 import { lazy, Suspense, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { ChartNoAxesCombined, PieChart, Target } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { PieChart, Target } from "lucide-react"
 
-import { PageHeading } from "@/components/layout/page-heading"
-import { IOSHeader } from "@/components/ui/ios-header"
-import { cn } from "@/lib/utils"
-
-const ComprehensiveAnalysis = lazy(() => import("@/components/analysis/comprehensive-analysis").then((module) => ({ default: module.ComprehensiveAnalysis })))
-const Projections = lazy(() => import("@/components/analysis/projections").then((module) => ({ default: module.Projections })))
-
-const tabs = [
-  { id: "exhaustivo", label: "Cartera", longLabel: "Análisis de cartera", icon: PieChart },
-  { id: "proyecciones", label: "Proyecciones", longLabel: "Proyecciones", icon: Target },
-] as const
+const ComprehensiveAnalysis = lazy(() =>
+  import("@/components/analysis/comprehensive-analysis").then((mod) => ({
+    default: mod.ComprehensiveAnalysis,
+  }))
+)
+const Projections = lazy(() =>
+  import("@/components/analysis/projections").then((mod) => ({
+    default: mod.Projections,
+  }))
+)
 
 export default function AnalysisPage() {
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>("exhaustivo")
+  const [activeTab, setActiveTab] = useState<"exhaustivo" | "proyecciones">("exhaustivo")
 
-  const tabSelector = (mobile = false) => (
-    <div className={cn("grid grid-cols-2 rounded-xl border border-border/60 bg-muted/45 p-1", mobile ? "h-11" : "h-10 min-w-[340px]")}>
-      {tabs.map((tab) => {
-        const active = activeTab === tab.id
-        return (
-          <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={cn("relative min-w-0 rounded-lg px-3 text-xs font-bold text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring", active && "text-foreground")}>
-            {active && <motion.span layoutId={mobile ? "analysis-mobile-tab" : "analysis-desktop-tab"} className="absolute inset-0 rounded-lg border border-border/60 bg-background shadow-sm" transition={{ type: "spring", stiffness: 430, damping: 34 }} />}
-            <span className="relative inline-flex items-center gap-1.5"><tab.icon className="size-3.5" /><span className="truncate">{mobile ? tab.label : tab.longLabel}</span></span>
-          </button>
-        )
-      })}
-    </div>
-  )
+  const tabs = [
+    { id: "exhaustivo", label: "Análisis Exhaustivo", icon: PieChart },
+    { id: "proyecciones", label: "Proyecciones", icon: Target },
+  ] as const
 
   return (
-    <main className="min-h-full bg-background text-foreground">
-      <div className="md:hidden"><IOSHeader title="Análisis" subtitle="Riesgo, diversificación y proyecciones">{tabSelector(true)}</IOSHeader></div>
+    <div className="flex flex-col min-h-screen bg-background pb-20 md:pb-0">
+      {/* Header */}
+      <header className="hidden md:flex px-4 pt-12 pb-4 md:px-8 md:pt-10 sticky top-0 bg-background/80 backdrop-blur-xl z-30 border-b border-border/40">
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground mb-4">Análisis</h1>
+          <div className="flex p-1 space-x-1 bg-muted/50 rounded-xl overflow-x-auto hide-scrollbar">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`
+                    relative flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg flex-1 transition-colors whitespace-nowrap min-w-[120px]
+                    ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground/80 hover:bg-muted/50"}
+                  `}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabAnalisis"
+                      className="absolute inset-0 bg-background shadow-sm rounded-lg border border-border/50"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <tab.icon className={`w-4 h-4 ${isActive ? 'text-primary' : ''}`} />
+                    {tab.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </header>
 
-      <div className="mx-auto w-full max-w-[1440px] px-3 py-4 md:px-6 md:py-8 lg:px-8">
-        <PageHeading className="hidden md:flex" eyebrow="Inteligencia" title="Análisis de cartera" description="Entiende la concentración, la diversificación y el recorrido potencial de tus inversiones." icon={ChartNoAxesCombined} actions={tabSelector()} />
-
-        <div className="mt-0 md:mt-6">
-          <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
-              <Suspense fallback={<div className="grid animate-pulse gap-4 md:grid-cols-3"><div className="h-40 rounded-2xl bg-muted/50 md:col-span-2" /><div className="h-40 rounded-2xl bg-muted/50" /><div className="h-72 rounded-2xl bg-muted/50 md:col-span-3" /></div>}>
-                {activeTab === "exhaustivo" ? <ComprehensiveAnalysis /> : <Projections />}
-              </Suspense>
-            </motion.div>
-          </AnimatePresence>
+      {/* Mobile iOS Header */}
+      <div className="md:hidden">
+        <div className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/40">
+          <div className="px-5 pb-3 pt-6">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-4">Análisis</h1>
+            {/* iOS Native-looking Segmented Control */}
+            <div className="flex p-1 bg-muted/60 rounded-xl">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`
+                      relative flex-1 py-2 text-sm font-semibold rounded-lg transition-colors
+                      ${isActive ? "text-foreground" : "text-muted-foreground"}
+                    `}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabAnalisisMobile"
+                        className="absolute inset-0 bg-background shadow-sm rounded-lg border border-border/20"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                      />
+                    )}
+                    <span className="relative z-10">{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
-    </main>
+
+      {/* Content Area */}
+      <main className="flex-1 p-4 md:p-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="w-full h-full max-w-6xl mx-auto"
+          >
+            <Suspense fallback={null}>
+              {activeTab === "exhaustivo" && <ComprehensiveAnalysis />}
+              {activeTab === "proyecciones" && <Projections />}
+            </Suspense>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+    </div>
   )
 }

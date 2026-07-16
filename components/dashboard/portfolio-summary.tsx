@@ -200,15 +200,16 @@ export function PortfolioSummary({
       <div className="relative px-6 pt-8 pb-8">
         <div className="flex flex-col items-center justify-center text-center">
           {/* Left: Value block */}
-          <div className="flex flex-col items-start z-10">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center justify-start gap-2">
+          <div className="flex flex-col items-center z-10">
+            <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center justify-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               Valor del Portfolio
             </p>
-            <div className="text-5xl md:text-6xl font-medium tracking-tight leading-none mb-4 text-foreground">
+            <div className="text-5xl md:text-[56px] font-bold tracking-tight leading-none mb-4 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent text-center">
               <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
             </div>
             
-            <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 mt-2">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 w-fit">
               {/* Total PnL */}
               <div
                 className="flex items-center justify-center gap-1.5"
@@ -256,7 +257,7 @@ export function PortfolioSummary({
           {/* Right: Quick actions */}
           <div className="flex flex-row md:absolute md:top-8 md:right-6 md:flex-col gap-3 mt-4 md:mt-0 z-20">
             {liquidezAmount > 0 && (
-            <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+              <div className="flex flex-col items-center md:items-end gap-1">
                 <button
                   onClick={() => {
                     if (liquidezPos) {
@@ -264,7 +265,7 @@ export function PortfolioSummary({
                       setWithdrawModalOpen(true)
                     }
                   }}
-                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-none bg-background hover:bg-muted text-foreground border border-border transition-all text-xs font-semibold w-full md:w-auto"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/60 hover:bg-card text-foreground border border-border/40 transition-all text-[13px] font-medium backdrop-blur-md shadow-sm w-full md:w-auto"
                 >
                   <Wallet className="w-4 h-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Liquidez:</span>
@@ -296,14 +297,14 @@ export function PortfolioSummary({
             )}
             <button
               onClick={() => useNotes.getState().setIsOpen(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-none bg-background hover:bg-muted text-foreground border border-border transition-all text-xs font-semibold w-full md:w-auto"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
               Plan Estratégico
             </button>
             <button
               onClick={() => setChartsOpen(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-none bg-foreground hover:bg-foreground/90 text-background transition-all text-xs font-semibold w-full md:w-auto"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm w-full md:w-auto"
             >
               <BarChart2 className="w-4 h-4" />
               Análisis Avanzado
@@ -313,13 +314,13 @@ export function PortfolioSummary({
       </div>
 
       {/* ── KPI grid ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-border border-y border-border px-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-6 pb-6">
 
         {/* Invested */}
-        <div className="p-6 flex flex-col gap-2">
+        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Invertido</span>
-            <div className="text-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Invertido</span>
+            <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
@@ -332,11 +333,13 @@ export function PortfolioSummary({
         </div>
 
         {/* P&L */}
-        <div className="p-6 flex flex-col gap-2">
+        <div
+          className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Ganancia Total</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Ganancia Total</span>
             <div
-              className="text-foreground"
+              className="p-1.5 rounded-lg"
               style={{
                 background: isPositive ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
                 color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
@@ -357,10 +360,16 @@ export function PortfolioSummary({
         </div>
 
         {/* Rentabilidad % */}
-        <div className="p-6 flex flex-col gap-2">
+        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Rentabilidad</span>
-            <div className="text-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Rentabilidad</span>
+            <div
+              className="p-1.5 rounded-lg"
+              style={{
+                background: isPositive ? "oklch(0.65 0.19 155 / 0.12)" : "oklch(0.62 0.20 20 / 0.12)",
+                color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)",
+              }}
+            >
               <Target className="w-4 h-4" />
             </div>
           </div>
@@ -379,11 +388,11 @@ export function PortfolioSummary({
         </div>
 
         {/* Top Activo Hoy */}
-        <div className="p-6 flex flex-col gap-2">
+        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Top Activo Hoy</span>
-            <div className="text-foreground">
-              <Sparkles className="w-4 h-4" />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Top Activo Hoy</span>
+            <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">
+              <Sparkles className="w-4 h-4 text-amber-400" />
             </div>
           </div>
           {topDailyAsset ? (
@@ -407,26 +416,32 @@ export function PortfolioSummary({
 
       {/* ── Live Market Movers (scrollable) ─────────────────── */}
       {!hideBalances && movers.length > 0 && (
-        <div className="py-4 border-b border-border overflow-x-auto whitespace-nowrap px-6 flex gap-3 hide-scrollbar">
+        <div className="py-2.5 border-t border-border/10 overflow-hidden bg-background/30 [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+          <Marquee speed={35} gradient={false} pauseOnHover={true}>
             {movers.map(p => {
               const isGain = (p.change_amount_24h || 0) >= 0;
               return (
                 <Link
                   key={p.activo_id}
                   href={`/activo/${p.activo_id}`}
-                  className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 border border-border rounded-none hover:bg-muted transition-colors"
+                  className={`mx-1.5 flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] border transition-all hover:scale-105 ${
+                    isGain
+                      ? "bg-emerald-500/5 border-emerald-500/15 hover:bg-emerald-500/10"
+                      : "bg-rose-500/5 border-rose-500/15 hover:bg-rose-500/10"
+                  }`}
                 >
-                  <span className="text-xs font-semibold text-foreground">
+                  <span className="text-[11px] font-bold text-foreground/80">
                     {p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" 
                       ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
                       : p.ticker.split(".")[0]}
                   </span>
-                  <span className={`text-xs font-bold tabular-nums flex items-center`} style={{ color: isGain ? "var(--positive)" : "var(--negative)" }}>
+                  <span className={`text-[11px] font-bold tabular-nums flex items-center ${isGain ? "text-emerald-400" : "text-rose-400"}`}>
                     {isGain ? "+" : ""}{formatCurrency(p.change_amount_24h || 0)}
                   </span>
                 </Link>
               )
             })}
+          </Marquee>
         </div>
       )}
       <WithdrawCashModal

@@ -155,7 +155,7 @@ export function MobileBottomSheet({
       } else {
         toast.error(data.error || "No se encontró el activo en Yahoo Finance")
       }
-    } catch {
+    } catch (err) {
       toast.error("Error al buscar el activo")
     } finally {
       setIsSearching(false)
@@ -256,31 +256,31 @@ export function MobileBottomSheet({
               
               {/* Header & Tabs */}
               <div className="px-5 pb-4">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <div><h2 className="text-xl font-extrabold text-foreground">Añadir a la cartera</h2><p className="mt-1 text-xs text-muted-foreground">Registra, busca o importa en pocos pasos</p></div>
-                  <button onClick={onClose} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-card text-muted-foreground transition-transform active:scale-95" aria-label="Cerrar panel de añadir">
+                <div className="flex justify-between items-center mb-5">
+                  <h2 className="text-xl font-extrabold text-foreground">Añadir</h2>
+                  <button onClick={onClose} className="p-2 bg-card rounded-full text-muted-foreground active:scale-95 transition-transform">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 {/* Segmented Control */}
                 {(step === "select" && newAssetStep === "search") && (
-                  <div className="grid h-12 grid-cols-3 rounded-xl border border-border/60 bg-card p-1">
+                  <div className="flex p-1 bg-card rounded-xl">
                     <button 
                       onClick={() => { setActiveTab("operacion"); resetForm() }} 
-                      className={`rounded-lg px-1 text-xs font-bold transition-colors ${activeTab === "operacion" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "operacion" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
-                      Operación
+                      Mis Activos
                     </button>
                     <button 
                       onClick={() => { setActiveTab("nuevo"); resetForm() }} 
-                      className={`rounded-lg px-1 text-xs font-bold transition-colors ${activeTab === "nuevo" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "nuevo" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
-                      Nuevo activo
+                      Buscar Nuevo
                     </button>
                     <button 
                       onClick={() => { setActiveTab("importar"); resetForm() }} 
-                      className={`rounded-lg px-1 text-xs font-bold transition-colors ${activeTab === "importar" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "importar" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
                     >
                       Importar
                     </button>
@@ -298,13 +298,13 @@ export function MobileBottomSheet({
                       <FileUp className="w-8 h-8" />
                     </div>
                     <h3 className="font-bold text-lg text-foreground">Importar Archivo</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">Importa un CSV o Excel de Revolut o MyInvestor. Detectaremos automáticamente el formato y evitaremos duplicados.</p>
+                    <p className="text-sm text-muted-foreground">Sube un archivo PDF o CSV con tus transacciones de brokers como Revolut, DeGiro, etc.</p>
                     
                     <div className="pt-4 w-full">
                       <RevolutSync className="w-full">
                         <div className="w-full bg-primary text-primary-foreground font-bold rounded-xl py-4 flex items-center justify-center gap-2">
                           <FileUp className="w-5 h-5" />
-                          Seleccionar archivo
+                          Seleccionar Documento
                         </div>
                       </RevolutSync>
                     </div>

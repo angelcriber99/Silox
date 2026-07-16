@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useSyncExternalStore, type ReactNode } from "react"
-import Link from "next/link"
 import { usePreferences, type Language } from "@/lib/stores/use-preferences"
+import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import {
   Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell,
-  Shield, Download, Link as LinkIcon,
-  Smartphone, Zap, ChevronRight, LogOut, Check, Settings,
+  Volume2, Shield, Download, CreditCard, Link as LinkIcon,
+  Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings,
   AlertTriangle, Loader2, Trash2
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -24,9 +24,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { IOSHeader } from "@/components/ui/ios-header"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { RevolutSync } from "@/components/transactions/revolut-sync"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -105,35 +105,6 @@ function SettingRow({ icon: Icon, title, desc, action, iconColor }: SettingRowPr
   )
 }
 
-function DashboardPreferences() {
-  const preferences = usePreferences()
-  const selectClass = "rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/40"
-
-  return (
-    <section className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Actualización de precios</span><select className={`${selectClass} w-full`} value={preferences.refreshInterval} onChange={(event) => preferences.setRefreshInterval(Number(event.target.value) as 5000 | 10000 | 15000 | 30000 | 60000)}><option value={5000}>Cada 5 segundos</option><option value={10000}>Cada 10 segundos</option><option value={15000}>Cada 15 segundos</option><option value={30000}>Cada 30 segundos</option><option value={60000}>Cada minuto</option></select></label>
-        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Orden de posiciones</span><select className={`${selectClass} w-full`} value={preferences.dashboardSort} onChange={(event) => preferences.setDashboardSort(event.target.value as 'value' | 'day' | 'session' | 'pnl')}><option value="value">Mayor valor</option><option value="day">Mejor resultado hoy</option><option value="session">Mejor sesión</option><option value="pnl">Mayor rentabilidad total</option></select></label>
-        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Densidad</span><select className={`${selectClass} w-full`} value={preferences.dashboardDensity} onChange={(event) => preferences.setDashboardDensity(event.target.value as 'auto' | 'compact' | 'comfortable')}><option value="auto">Automática</option><option value="compact">Compacta</option><option value="comfortable">Cómoda</option></select></label>
-        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Activos por pantalla</span><select className={`${selectClass} w-full`} value={preferences.dashboardPageSize} onChange={(event) => preferences.setDashboardPageSize(event.target.value === 'auto' ? 'auto' : Number(event.target.value) as 5 | 8 | 12)}><option value="auto">Automático</option><option value={5}>5</option><option value={8}>8</option><option value={12}>12</option></select></label>
-        <label className="rounded-2xl border border-border bg-card p-4 text-sm"><span className="mb-2 block font-semibold">Tamaño de texto</span><select className={`${selectClass} w-full`} value={preferences.fontScale} onChange={(event) => preferences.setFontScale(event.target.value as 'small' | 'normal' | 'large')}><option value="small">Pequeño</option><option value="normal">Normal</option><option value="large">Grande</option></select></label>
-      </div>
-      <div className="overflow-hidden rounded-2xl border border-border bg-card divide-y divide-border">
-        {[
-          ['Pausar en segundo plano', preferences.pauseUpdatesWhenHidden, preferences.setPauseUpdatesWhenHidden],
-          ['Mostrar nombre del activo', preferences.showAssetNames, preferences.setShowAssetNames],
-          ['Mostrar tipo de activo', preferences.showAssetTypes, preferences.setShowAssetTypes],
-          ['Rendimiento de sesión', preferences.showSessionPerformance, preferences.setShowSessionPerformance],
-          ['Resultado acumulado del día', preferences.showDailyPerformance, preferences.setShowDailyPerformance],
-          ['Rentabilidad total', preferences.showTotalPerformance, preferences.setShowTotalPerformance],
-          ['Estado del mercado', preferences.showMarketStatus, preferences.setShowMarketStatus],
-          ['Hora de actualización', preferences.showLastUpdate, preferences.setShowLastUpdate],
-        ].map(([label, checked, setter]) => <div key={label as string} className="flex items-center justify-between gap-4 p-4"><span className="text-sm font-medium">{label as string}</span><CustomSwitch checked={checked as boolean} onChange={() => (setter as (value: boolean) => void)(!(checked as boolean))} /></div>)}
-      </div>
-    </section>
-  )
-}
-
 export default function SettingsPage() {
   const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false)
   const [activeTab, setActiveTab] = useState<Tab>('appearance')
@@ -144,11 +115,15 @@ export default function SettingsPage() {
   const { 
     language, setLanguage,
     amoled, setAmoled,
+    zenMode, setZenMode,
     accentColor, setAccentColor,
+    biometrics, setBiometrics,
     twoFactor, setTwoFactor,
     tableDensity, setTableDensity,
+    showPnlPercentOnly, setShowPnlPercentOnly,
     hideBalances, setHideBalances,
     pushNotifs, setPushNotifs,
+    emailNotifs, setEmailNotifs,
     priceAlerts, setPriceAlerts,
     weeklyReport, setWeeklyReport,
     dividendAlerts, setDividendAlerts
@@ -206,10 +181,14 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-full w-full">
       {/* ── Mobile View (iOS Grouped List) ──────────────────────────────── */}
-      <div className="hidden">
-        <IOSHeader title={t('title')} subtitle="Cuenta, apariencia y datos en un solo lugar" />
+      <div className="md:hidden flex flex-col flex-1 pb-24 bg-background">
+        <div className="px-5 pb-2 pt-6 sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-border/40">
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+            {t('title')}
+          </h1>
+        </div>
         
-        <div className="flex flex-col gap-6 px-3 pt-4">
+        <div className="flex flex-col gap-6 px-4 pt-6">
           {/* Apariencia */}
           <section>
             <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Apariencia</h2>
@@ -262,11 +241,6 @@ export default function SettingsPage() {
               </div>
             </section>
 
-          <section>
-            <h2 className="mb-2 ml-2 text-[13px] font-bold uppercase tracking-widest text-muted-foreground">Dashboard y tiempo real</h2>
-            <DashboardPreferences />
-          </section>
-
           {/* Seguridad */}
           <section>
             <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Seguridad</h2>
@@ -301,7 +275,7 @@ export default function SettingsPage() {
 
       {/* ── Desktop View ────────────────────────────────────────────── */}
       <div
-        className="flex max-w-6xl w-full mx-auto flex-col md:flex-row gap-5 md:gap-8 min-h-[calc(100vh-5rem)] px-3 py-5 pb-24 md:px-6 md:py-8 md:pb-8 animate-fade-in"
+        className="hidden md:flex max-w-6xl w-full mx-auto flex-col md:flex-row gap-6 md:gap-8 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0 animate-fade-in"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}
       >
       
@@ -489,10 +463,6 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-3 pt-4">
-                    <label className="ml-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Dashboard y tiempo real</label>
-                    <DashboardPreferences />
-                  </div>
                 </div>
               </div>
             )}
@@ -594,21 +564,19 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* MyInvestor */}
+                  {/* MyInvestor (Connected) */}
                   <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-emerald-500/30 relative overflow-hidden group shadow-sm">
                     <div className="absolute top-0 right-0 p-3">
                       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Excel compatible
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Sincronizado
                       </span>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-border/20">
                       <span className="text-xl font-bold text-slate-800">MYI</span>
                     </div>
                     <h3 className="text-lg font-bold">MyInvestor</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa órdenes finalizadas por ISIN, participaciones e importe.</p>
-                    <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
-                      Importar Excel
-                    </RevolutSync>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincronización diaria de fondos indexados y efectivo.</p>
+                    <button className="w-full py-2.5 rounded-xl border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
                   </div>
 
                   {/* Revolut */}

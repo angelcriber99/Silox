@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useState, useMemo, Fragment } from "react"
-import { useTransactions } from "@/lib/hooks/use-transactions"
+import { useTransactions, useDeleteTransaction } from "@/lib/hooks/use-transactions"
 import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
-import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Search, Scale, Star } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Trash2, Search, Filter, Scale, Star } from "lucide-react"
+import { toast } from "sonner"
 import type { Transaccion } from '@/lib/types'
 import { EditTransactionModal } from "@/components/transactions/edit-transaction-modal"
 import { ExportExcelButton } from "@/components/transactions/export-excel-button"
@@ -14,7 +15,6 @@ import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import Link from "next/link"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { IOSHeader } from "@/components/ui/ios-header"
-import { PageHeading } from "@/components/layout/page-heading"
 
 import {
   DropdownMenu,
@@ -25,6 +25,7 @@ import {
 
 export default function MovimientosPage() {
   const { data: transactions, isLoading } = useTransactions(1000)
+  const deleteTransaction = useDeleteTransaction()
   const { positions } = usePortfolio()
   const { hideBalances } = usePreferences()
 
@@ -38,6 +39,17 @@ export default function MovimientosPage() {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
 
+  const handleDelete = async (id: string) => {
+    if (window.confirm("¿Seguro que deseas eliminar esta transacción de forma permanente?")) {
+      try {
+        await deleteTransaction.mutateAsync(id)
+        toast.success("Transacción eliminada")
+      } catch (err) {
+        toast.error("Error al eliminar la transacción")
+      }
+    }
+  }
+
   const handleEdit = (tx: Transaccion) => {
     setSelectedTx(tx)
     setEditModalOpen(true)
@@ -46,6 +58,9 @@ export default function MovimientosPage() {
   // Filter logic
   const filteredTransactions = useMemo(() => {
     if (!transactions) return []
+
+    const now = new Date()
+    const currentYear = now.getFullYear()
 
     return transactions.filter((tx) => {
       // 0. Exclude Efectivo/CASH (since they clutter the view when buying assets)
@@ -99,16 +114,21 @@ export default function MovimientosPage() {
     <main className="min-h-full bg-background text-foreground flex flex-col">
       {/* ── Mobile View ────────────────────────────────────────────── */}
       <div className="md:hidden flex flex-col pb-24 bg-background">
-        <IOSHeader title="Movimientos" subtitle="Historial, búsqueda y edición de operaciones">
+        <IOSHeader title="Movimientos">
           <div className="flex flex-col gap-2.5">
             {/* Native Search Bar */}
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.35)" }} />
               <Input
                 placeholder="Buscar activo o ticker..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-11 rounded-xl border-border/60 bg-card pl-9 text-[15px] font-medium text-foreground"
+                className="pl-9 h-10 rounded-xl border-none text-white"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  fontSize: 15,
+                  fontWeight: 400,
+                }}
               />
             </div>
 
@@ -118,7 +138,11 @@ export default function MovimientosPage() {
                 <button
                   key={opt}
                   onClick={() => setTypeFilter(opt)}
-                  className={`h-9 flex-shrink-0 snap-start rounded-full px-4 text-[13px] font-bold transition-all ${typeFilter === opt ? "bg-primary text-primary-foreground" : "border border-border/60 bg-card text-muted-foreground"}`}
+                  className="flex-shrink-0 snap-start px-3.5 py-1 rounded-full text-[13px] font-semibold transition-all"
+                  style={{
+                    background: typeFilter === opt ? "#30D158" : "rgba(255,255,255,0.08)",
+                    color: typeFilter === opt ? "#000000" : "rgba(255,255,255,0.55)",
+                  }}
                 >
                   {opt === "Todos" ? "Todos" : opt === "Compra" ? "Compras" : opt === "Venta" ? "Ventas" : "Dividendos"}
                 </button>
@@ -243,28 +267,38 @@ export default function MovimientosPage() {
       <div className="hidden md:flex flex-1 max-w-7xl mx-auto w-full flex-col px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
         
         {/* ── Page Header ────────────────────────────────────────── */}
-        <PageHeading
-          eyebrow="Actividad"
-          title="Movimientos"
-          description="Consulta, filtra y edita todas las operaciones que construyen tu cartera."
-          icon={History}
-          actions={<>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-3">
+              <div
+                className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
+              >
+                <History className="h-5 w-5" style={{ color: "var(--primary)" }} />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+                Movimientos
+              </h1>
+            </div>
+            <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
+              Historial completo de operaciones y contabilidad personal.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <RevolutSync>
+              <Button
+                variant="outline"
+                className="bg-transparent border-border text-muted-foreground hover:text-foreground h-10 w-10 p-0"
+                title="Sincronizar extracto (CSV/Excel)"
+              >
+                <ArrowDownRight className="w-4 h-4" />
+              </Button>
+            </RevolutSync>
             <ExportExcelButton
               transactions={transactions || []}
               positions={positions || []}
             />
-            <RevolutSync>
-              <Button
-                variant="outline"
-                className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200 h-10 px-4 rounded-xl font-semibold text-sm"
-                title="Sincronizar extracto (CSV/Excel)"
-              >
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 shrink-0">
-                  <path d="M14.6541 21.0118H9.33644V14.1611H5L12 3L19 14.1611H14.6541V21.0118Z" fill="currentColor"/>
-                </svg>
-                Importar
-              </Button>
-            </RevolutSync>
             <Link
               href="/declarar"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
@@ -277,8 +311,8 @@ export default function MovimientosPage() {
               <Scale className="h-4 w-4" />
               Declarar
             </Link>
-          </>}
-        />
+          </div>
+        </div>
 
         {/* ── Filters ──────────────────────────────────────────────── */}
         <div
