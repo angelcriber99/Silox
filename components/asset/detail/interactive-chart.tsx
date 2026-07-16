@@ -15,11 +15,11 @@ const PurchaseDot = (props: any) => {
       <circle
         cx={cx}
         cy={cy}
-        r={4}
+        r={6}
         fill="#10b981"
         stroke="#18181b"
         strokeWidth={2}
-        className="animate-fade-in"
+        className="animate-fade-in drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]"
       />
     )
   }
@@ -43,10 +43,11 @@ interface InteractiveAssetChartProps {
   colorHex: string
   transactions?: RawTransaction[]
   units?: number
+  historicalPnl?: { absolute: number, percent: number }
   onRangePerformanceChange?: (perf: { label: string, absolute: number, percent: number } | null) => void
 }
 
-export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions = [], units = 0, onRangePerformanceChange }: InteractiveAssetChartProps) {
+export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions = [], units = 0, historicalPnl, onRangePerformanceChange }: InteractiveAssetChartProps) {
   const [range, setRange] = useState("1mo")
 
   const { data, isLoading, error } = useQuery({
@@ -61,16 +62,28 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
       if (enrichedChart.length > 0) {
         // Enriquecer con compras
         if (transactions.length > 0) {
-          const purchaseDates = transactions
+          const purchasesByDate = transactions
             .filter(t => t.tipo_operacion === 'Compra' && t.fecha)
-            .map(t => new Date(t.fecha).toISOString().split('T')[0])
+            .reduce((acc, t) => {
+              const dateStr = new Date(t.fecha).toISOString().split('T')[0]
+              if (!acc[dateStr]) acc[dateStr] = []
+              acc[dateStr].push(t)
+              return acc
+            }, {} as Record<string, RawTransaction[]>)
             
           enrichedChart = enrichedChart.map((p: any) => {
             const pointDateStr = new Date(p.date).toISOString().split('T')[0]
-            return {
-              ...p,
-              isPurchase: purchaseDates.includes(pointDateStr)
+            const purchases = purchasesByDate[pointDateStr]
+            if (purchases) {
+              const totalQty = purchases.reduce((sum, t) => sum + Number(t.cantidad), 0)
+              const avgPrice = purchases.reduce((sum, t) => sum + Number(t.cantidad) * Number(t.precio_unitario), 0) / totalQty
+              return {
+                ...p,
+                isPurchase: true,
+                purchaseDetails: { qty: totalQty, price: avgPrice }
+              }
             }
+            return p
           })
         }
         
@@ -78,11 +91,28 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
         if (onRangePerformanceChange) {
           if (range === '1d') {
              onRangePerformanceChange(null) // Para 1D, usar el cálculo diario estándar del padre
+          } else if (range === 'max' && historicalPnl) {
+             onRangePerformanceChange({
+               label: 'Histórico',
+               absolute: historicalPnl.absolute,
+               percent: historicalPnl.percent
+             })
           } else {
-             const firstPrice = enrichedChart[0].price
+             let effectiveFirstPrice = enrichedChart[0].price
+             if (transactions.length > 0) {
+               const sortedTx = [...transactions].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+               const firstTxDateStr = new Date(sortedTx[0].fecha).toISOString().split('T')[0]
+               const chartStartDateStr = new Date(enrichedChart[0].date).toISOString().split('T')[0]
+               
+               if (new Date(firstTxDateStr) > new Date(chartStartDateStr)) {
+                 const point = enrichedChart.find((p: any) => new Date(p.date).toISOString().split('T')[0] >= firstTxDateStr)
+                 if (point) effectiveFirstPrice = point.price
+               }
+             }
+
              const lastPrice = enrichedChart[enrichedChart.length - 1].price
-             const absoluteChange = (lastPrice - firstPrice) * units
-             const percentChange = ((lastPrice - firstPrice) / firstPrice) * 100
+             const absoluteChange = (lastPrice - effectiveFirstPrice) * units
+             const percentChange = ((lastPrice - effectiveFirstPrice) / effectiveFirstPrice) * 100
              
              const labelMap: Record<string, string> = {
                '5d': 'en 5 días',
@@ -172,6 +202,14 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
                       <p className="text-foreground font-bold tabular-nums text-lg">
                         {formatCurrency(point.price, moneda)}
                       </p>
+                      {point.isPurchase && point.purchaseDetails && (
+                        <div className="mt-2 pt-2 border-t border-border/50">
+                          <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-500 mb-0.5">Compra Realizada</p>
+                          <p className="text-sm font-medium text-foreground">
+                            {point.purchaseDetails.qty} acciones <span className="text-muted-foreground font-normal">a {formatCurrency(point.purchaseDetails.price, moneda)}</span>
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )
                 }} 

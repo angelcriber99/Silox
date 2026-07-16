@@ -123,6 +123,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
             colorHex={colorHex} 
             transactions={transactions}
             units={position.unidades}
+            historicalPnl={{ absolute: position.pnl ?? 0, percent: position.pnl_percent ?? 0 }}
             onRangePerformanceChange={setRangePerformance}
           />
         </div>
