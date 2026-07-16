@@ -114,11 +114,20 @@ export function PortfolioSummary({
               </span>
             </div>
             
-            <div className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground/80 mt-1">
-              <span className="uppercase tracking-widest text-[10px]">Total Histórico</span>
-              <span className="tabular-nums font-semibold" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
-                {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
-              </span>
+            <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[12px] font-medium text-muted-foreground/80 mt-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="uppercase tracking-widest text-[10px]">Total Histórico</span>
+                <span className="tabular-nums font-semibold" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
+                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+                </span>
+              </div>
+              <span className="hidden sm:inline opacity-30 text-[10px]">•</span>
+              <div className="flex items-center gap-1.5">
+                <span className="uppercase tracking-widest text-[10px]">Invertido</span>
+                <span className="tabular-nums font-semibold text-foreground/80">
+                  {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -212,6 +221,15 @@ export function PortfolioSummary({
                     ({daily24Positive ? "+" : ""}{formatCurrency(totals.totalPnl24h)})
                   </span>
                 )}
+              </div>
+
+              {/* Invested */}
+              <span className="w-px h-4 bg-border/60" />
+              <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
+                <span className="font-normal uppercase tracking-widest text-[10px]">Invertido</span>
+                <span className="font-semibold tabular-nums text-foreground/80">
+                  {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
+                </span>
               </div>
 
               {/* Prices sync badge */}
