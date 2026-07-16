@@ -9,6 +9,7 @@ import { CapacitorProvider } from "@/components/providers/capacitor-provider";
 import { ThemeEngine } from "@/components/providers/theme-engine";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import { Analytics } from '@vercel/analytics/next';
 import "./globals.css";
 
 const inter = Inter({
@@ -108,6 +109,7 @@ export default async function RootLayout({
             }}
           />
         </NextIntlClientProvider>
+        <Analytics />
       </body>
     </html>
   );
