@@ -78,7 +78,7 @@ export function WithdrawCashModal({
       if (transferToLiquidez && sourceAssetType === 'Fondo Monetario' && liquidezAssetId) {
         await addTransaction.mutateAsync({
           activo_id: liquidezAssetId,
-          tipo_operacion: "Ingreso",
+          tipo_operacion: "Compra",
           cantidad: cantidadNum,
           precio_unitario: 1, // Cash price is always 1
           comision: 0,
