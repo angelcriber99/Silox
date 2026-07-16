@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, LogOut } from "lucide-react"
+import { Check, LogOut, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import type { RevolutImportTransaction } from "@/lib/domain/imports/revolut-response"
+import type { SkippedImportTransaction } from "@/app/api/import/revolut/route"
 
 interface RevolutSyncProps {
   children: React.ReactNode
@@ -25,10 +26,12 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
     isOpen: boolean;
     imported: RevolutImportTransaction[];
     ignored: RevolutImportTransaction[];
+    skipped: SkippedImportTransaction[];
   }>({
     isOpen: false,
     imported: [],
-    ignored: []
+    ignored: [],
+    skipped: []
   })
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,7 +52,8 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
         setImportSummary({
           isOpen: true,
           imported: data.imported || [],
-          ignored: data.ignored || []
+          ignored: data.ignored || [],
+          skipped: data.skipped || []
         })
         
         router.refresh()
@@ -141,7 +145,29 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
                 </div>
               )}
               
-              {importSummary.imported.length === 0 && importSummary.ignored.length === 0 && (
+              {importSummary.skipped.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold flex items-center gap-2 mb-3 text-rose-500">
+                    <AlertTriangle className="w-4 h-4" /> 
+                    Fallidas / Omitidas ({importSummary.skipped.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {importSummary.skipped.map((tx, i) => (
+                      <div key={i} className="flex justify-between items-center text-sm p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">{tx.ticker}</span>
+                            {tx.fecha && <span className="text-xs text-muted-foreground">{tx.fecha}</span>}
+                          </div>
+                          <span className="text-xs text-rose-400 font-medium">{tx.reason}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {importSummary.imported.length === 0 && importSummary.ignored.length === 0 && importSummary.skipped.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-8">No se encontraron operaciones de compra/venta en el extracto.</p>
               )}
             </div>

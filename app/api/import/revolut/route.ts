@@ -485,7 +485,8 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
   if (rows.length < 2) return { parsed: [], skipped: [] }
 
   if (isMyInvestorStatement(rows)) {
-    return parseMyInvestorStatement(rows, userId, resolveMyInvestorAsset)
+    const parsed = await parseMyInvestorStatement(rows, userId, resolveMyInvestorAsset)
+    return { parsed, skipped: [] }
   }
 
   const headers = rows[0].map(normalizeHeader)
@@ -516,6 +517,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     headers.includes('date')
 
   const parsed: ParsedImportTransaction[] = []
+  const skipped: SkippedImportTransaction[] = []
 
   const dataRows = rows.slice(1)
 
@@ -530,7 +532,12 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     const description = normalizeText(row[descriptionIdx])
     const operation = inferOperation(typeValue, description, quantityRaw)
 
-    if (!rawTicker || !date || !operation || !Number.isFinite(quantity) || quantity <= 0) continue
+    if (!rawTicker || !date || !operation || !Number.isFinite(quantity) || quantity <= 0) {
+      if (rawTicker || normalizeText(row[dateIdx])) {
+        skipped.push({ ticker: rawTicker || 'Desconocido', fecha: normalizeText(row[dateIdx]), reason: 'Datos incompletos o cantidad inválida' })
+      }
+      continue
+    }
 
     const asset = isCryptoAccountStatement
       ? {
@@ -561,7 +568,10 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
             ? 0
             : Number.NaN
 
-    if (!Number.isFinite(precioUnitario) || precioUnitario < 0) continue
+    if (!Number.isFinite(precioUnitario) || precioUnitario < 0) {
+      skipped.push({ ticker: asset.ticker, fecha: date, reason: 'Precio unitario o total inválido' })
+      continue
+    }
 
     const displayName = normalizeText(row[nameIdx]) || asset.nombre
 
@@ -580,7 +590,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     })
   }
 
-  return parsed
+  return { parsed, skipped }
 }
 
 function isMetalAccountStatement(headers: string[]): boolean {
@@ -821,7 +831,7 @@ function parseInternalCryptoMovements(rows: string[][], userId: string): ParseRe
         ? Math.abs(total) / quantity
         : 0
 
-    internalMovements.push({
+    parsed.push({
       user_id: userId,
       ticker: normalizeCryptoTicker(rawTicker),
       rawTicker: rawSymbol,
@@ -836,7 +846,7 @@ function parseInternalCryptoMovements(rows: string[][], userId: string): ParseRe
     })
   }
 
-  return { parsed: internalMovements, skipped }
+  return { parsed, skipped }
 }
 
 function parseFixedRows(rows: string[][], userId: string): ParseResult {

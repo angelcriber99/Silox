@@ -9,6 +9,7 @@ import { EditTransactionModal } from "@/components/transactions/edit-transaction
 import { ExportExcelButton } from "@/components/transactions/export-excel-button"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import Link from "next/link"
 import { usePreferences } from "@/lib/stores/use-preferences"
