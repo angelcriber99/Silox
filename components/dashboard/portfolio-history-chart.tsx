@@ -106,10 +106,6 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
               <stop offset="50%" stopColor={lineColor} stopOpacity={0.1}/>
               <stop offset="100%" stopColor={lineColor} stopOpacity={0}/>
             </linearGradient>
-            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
           </defs>
           <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" opacity={0.5} />
           <XAxis 
@@ -164,7 +160,6 @@ export function PortfolioHistoryChart({ chartData, onHoverChange, hideTooltipCon
             activeDot={{ r: 5, fill: lineColor, stroke: "var(--background)", strokeWidth: 3 }}
             dot={false}
             isAnimationActive={false}
-            filter="url(#glow)"
           />
         </AreaChart>
       </ResponsiveContainer>
