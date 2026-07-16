@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { IOSHeader } from "@/components/ui/ios-header"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
-import { Newspaper, Calendar as CalendarIcon, Loader2, Rocket, AlertTriangle, Briefcase, TrendingUp } from "lucide-react"
+import { Newspaper, Loader2, Rocket, AlertTriangle, Briefcase, TrendingUp } from "lucide-react"
+import { startOfMonth, endOfMonth, eachDayOfInterval, addMonths, format, isSameDay, getDay, isPast, isToday } from "date-fns"
+import { es } from "date-fns/locale"
 
 type CalendarEvent = {
   id: string
@@ -26,7 +28,6 @@ type NewsItem = {
 
 export default function RadarPage() {
   const { positions } = usePortfolio()
-  const [activeTab, setActiveTab] = useState<"Noticias" | "Calendario">("Noticias")
   
   const [noticias, setNoticias] = useState<NewsItem[]>([])
   const [aiEvents, setAiEvents] = useState<CalendarEvent[]>([])
@@ -34,6 +35,8 @@ export default function RadarPage() {
   
   const [loadingNews, setLoadingNews] = useState(false)
   const [loadingCalendar, setLoadingCalendar] = useState(false)
+
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   const uniqueTickers = useMemo(() => {
     if (!positions) return []
@@ -95,20 +98,51 @@ export default function RadarPage() {
 
   const allEvents = useMemo(() => {
     const combined = [...marketEvents, ...aiEvents]
-    // Filter out past events
-    const now = new Date().getTime()
-    return combined
-      .filter(e => new Date(e.date).getTime() >= now - 24 * 60 * 60 * 1000) // Keep today's events too
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    return combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   }, [marketEvents, aiEvents])
 
-  const getEventIcon = (type: string) => {
+  // Generate 6 months data
+  const monthsData = useMemo(() => {
+    const now = new Date()
+    const months = []
+    for (let i = 0; i < 6; i++) {
+      const currentMonth = addMonths(now, i)
+      const start = startOfMonth(currentMonth)
+      const end = endOfMonth(currentMonth)
+      const days = eachDayOfInterval({ start, end })
+      
+      // Calculate padding for first day of month (0 = Sunday, 1 = Monday)
+      // We want Monday to be 0, Sunday to be 6
+      const firstDay = getDay(start)
+      const padding = firstDay === 0 ? 6 : firstDay - 1
+
+      months.push({
+        date: currentMonth,
+        days,
+        padding,
+      })
+    }
+    return months
+  }, [])
+
+  const getEventIcon = (type: string, className?: string) => {
+    const cn = className || "w-4 h-4"
     switch(type) {
-      case 'EARNINGS': return <Briefcase className="w-4 h-4 text-blue-400" />
-      case 'DIVIDEND': return <TrendingUp className="w-4 h-4 text-green-400" />
-      case 'EX_DIVIDEND': return <AlertTriangle className="w-4 h-4 text-yellow-400" />
-      case 'AI_EVENT': return <Rocket className="w-4 h-4 text-purple-400" />
-      default: return <CalendarIcon className="w-4 h-4 text-gray-400" />
+      case 'EARNINGS': return <Briefcase className={`${cn} text-blue-400`} />
+      case 'DIVIDEND': return <TrendingUp className={`${cn} text-green-400`} />
+      case 'EX_DIVIDEND': return <AlertTriangle className={`${cn} text-yellow-400`} />
+      case 'AI_EVENT': return <Rocket className={`${cn} text-purple-400`} />
+      default: return null
+    }
+  }
+
+  const getEventBgColor = (type: string) => {
+    switch(type) {
+      case 'EARNINGS': return 'bg-blue-400/20 text-blue-300 border-blue-400/30'
+      case 'DIVIDEND': return 'bg-green-400/20 text-green-300 border-green-400/30'
+      case 'EX_DIVIDEND': return 'bg-yellow-400/20 text-yellow-300 border-yellow-400/30'
+      case 'AI_EVENT': return 'bg-purple-400/20 text-purple-300 border-purple-400/30'
+      default: return 'bg-zinc-800 text-zinc-300'
     }
   }
 
@@ -118,113 +152,155 @@ export default function RadarPage() {
     return 'text-zinc-500'
   }
 
+  // Filter lists based on selected date
+  const displayedEvents = useMemo(() => {
+    let list = allEvents.filter(e => {
+      const edate = new Date(e.date)
+      return !isPast(edate) || isToday(edate) // filter past events globally unless selected
+    })
+
+    if (selectedDate) {
+      list = allEvents.filter(e => isSameDay(new Date(e.date), selectedDate))
+    }
+    return list
+  }, [allEvents, selectedDate])
+
+  const displayedNews = useMemo(() => {
+    let list = noticias
+    if (selectedDate) {
+      list = noticias.filter(n => isSameDay(new Date(n.providerPublishTime), selectedDate))
+    }
+    return list
+  }, [noticias, selectedDate])
+
   return (
-    <main className="min-h-full bg-background text-foreground flex flex-col pb-24">
+    <main className="min-h-full bg-background text-foreground flex flex-col pb-24 relative">
       <IOSHeader title="Radar" />
       
-      {/* Sticky Tabs */}
-      <div className="sticky top-[env(safe-area-inset-top,0px)] z-20 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex px-4 pt-14 pb-2">
-          <div className="flex w-full bg-zinc-900/50 p-1 rounded-xl">
-            <button
-              onClick={() => setActiveTab("Noticias")}
-              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
-                activeTab === "Noticias" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200"
-              }`}
+      {/* ── Smart Calendar ────────────────────────────────────────────────── */}
+      <div className="w-full border-b border-border/50 bg-background/90 backdrop-blur-xl z-20 pt-16">
+        <div className="px-4 pb-2 flex items-center justify-between">
+          <h2 className="text-lg font-bold tracking-tight">Calendario Inteligente</h2>
+          {selectedDate && (
+            <button 
+              onClick={() => setSelectedDate(null)}
+              className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md"
             >
-              <Newspaper className="w-4 h-4" />
-              Noticias
+              Ver Todo
             </button>
-            <button
-              onClick={() => setActiveTab("Calendario")}
-              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
-                activeTab === "Calendario" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              <CalendarIcon className="w-4 h-4" />
-              Calendario
-            </button>
-          </div>
+          )}
         </div>
-      </div>
-
-      <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full">
-        {activeTab === "Noticias" ? (
-          <div className="space-y-4">
-            {loadingNews ? (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                <p>Analizando noticias de tus activos...</p>
-              </div>
-            ) : noticias.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground">
-                No hay noticias recientes para tus activos.
-              </div>
-            ) : (
-              noticias.map((news) => (
-                <a 
-                  key={news.uuid} 
-                  href={news.link} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="block p-4 rounded-2xl bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-white/10 text-white/80">
-                      {news.relatedTicker}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">
-                      {new Date(news.providerPublishTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-zinc-100 leading-snug mb-2">
-                    {news.title}
-                  </h3>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{news.publisher}</span>
-                    {news.sentiment && (
-                      <span className={`text-[10px] font-bold tracking-wider ${getSentimentColor(news.sentiment)}`}>
-                        {news.sentiment}
-                      </span>
-                    )}
-                  </div>
-                </a>
-              ))
-            )}
+        
+        {loadingCalendar ? (
+          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+            <Loader2 className="w-6 h-6 animate-spin mb-3" />
+            <p className="text-sm">Analizando fechas clave...</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {loadingCalendar ? (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                <p>Extrayendo eventos del mercado e IA...</p>
+          <div className="flex overflow-x-auto snap-x hide-scrollbar px-4 pb-6 gap-6">
+            {monthsData.map((month, i) => (
+              <div key={i} className="flex-shrink-0 snap-start w-[260px]">
+                <h3 className="text-sm font-semibold capitalize mb-3 px-1 text-zinc-100">
+                  {format(month.date, "MMMM yyyy", { locale: es })}
+                </h3>
+                
+                <div className="grid grid-cols-7 gap-1.5 text-center mb-1.5">
+                  {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, idx) => (
+                    <div key={idx} className="text-[10px] font-medium text-zinc-500">{day}</div>
+                  ))}
+                </div>
+                
+                <div className="grid grid-cols-7 gap-1.5">
+                  {Array.from({ length: month.padding }).map((_, idx) => (
+                    <div key={`empty-${idx}`} className="h-8 rounded-md" />
+                  ))}
+                  
+                  {month.days.map((day, idx) => {
+                    const dayEvents = allEvents.filter(e => isSameDay(new Date(e.date), day))
+                    const hasEvent = dayEvents.length > 0
+                    const firstEvent = dayEvents[0]
+                    const isSelected = selectedDate && isSameDay(day, selectedDate)
+                    
+                    let bgClass = "bg-transparent text-zinc-400 hover:bg-zinc-800"
+                    if (hasEvent) {
+                      bgClass = getEventBgColor(firstEvent.type)
+                    } else if (isToday(day)) {
+                      bgClass = "bg-zinc-800 text-white font-bold"
+                    }
+
+                    if (isSelected) {
+                      bgClass += " ring-2 ring-primary ring-offset-1 ring-offset-background"
+                    }
+
+                    return (
+                      <div key={idx} className="relative group">
+                        <button
+                          onClick={() => setSelectedDate(day)}
+                          className={`w-full h-8 flex items-center justify-center rounded-md text-xs transition-all border border-transparent ${bgClass}`}
+                        >
+                          {format(day, "d")}
+                        </button>
+                        
+                        {/* Custom Tooltip on Hover */}
+                        {hasEvent && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 rounded-xl bg-zinc-900 border border-white/10 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+                            <div className="flex flex-col gap-1.5">
+                              {dayEvents.map(e => (
+                                <div key={e.id} className="flex items-start gap-1.5">
+                                  <div className="mt-0.5">{getEventIcon(e.type, "w-3.5 h-3.5")}</div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] font-bold text-white leading-tight">{e.ticker}</span>
+                                    <span className="text-[10px] text-zinc-400 leading-tight">{e.title}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            {/* Little triangle pointer */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-zinc-900" />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            ) : allEvents.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground">
-                No hay eventos próximos detectados para tu cartera.
-              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full space-y-8">
+        
+        {/* ── Events List (Filtered) ────────────────────────────────────────────────── */}
+        {(displayedEvents.length > 0 || selectedDate) && (
+          <div>
+            <h3 className="text-sm font-bold text-zinc-400 mb-4 uppercase tracking-wider">
+              {selectedDate ? `Eventos el ${format(selectedDate, "d 'de' MMMM", { locale: es })}` : "Próximos Eventos"}
+            </h3>
+            
+            {displayedEvents.length === 0 ? (
+              <p className="text-sm text-zinc-500">No hay eventos para este día.</p>
             ) : (
-              <div className="relative border-l border-white/10 ml-3 space-y-8 pb-10">
-                {allEvents.map((event) => {
+              <div className="relative border-l border-white/10 ml-3 space-y-6">
+                {displayedEvents.map((event) => {
                   const dateObj = new Date(event.date)
                   return (
                     <div key={event.id} className="relative pl-6">
-                      {/* Timeline dot */}
                       <div className="absolute -left-3 top-1 w-6 h-6 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center">
-                        {getEventIcon(event.type)}
+                        {getEventIcon(event.type, "w-3.5 h-3.5")}
                       </div>
-                      
                       <div className="flex flex-col">
-                        <span className="text-[11px] font-semibold text-primary mb-1 uppercase tracking-wider">
-                          {dateObj.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}
-                        </span>
-                        
+                        {!selectedDate && (
+                          <span className="text-[11px] font-semibold text-primary mb-1 uppercase tracking-wider">
+                            {dateObj.toLocaleDateString(es.code, { weekday: 'short', day: 'numeric', month: 'short' })}
+                          </span>
+                        )}
                         <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-white/5 mt-1">
                           <div className="flex items-center gap-2 mb-1.5">
                             <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-white/10 text-white/90">
                               {event.ticker}
                             </span>
-                            <span className="text-xs text-zinc-400">
+                            <span className="text-xs text-zinc-300">
                               {event.title}
                             </span>
                           </div>
@@ -242,6 +318,60 @@ export default function RadarPage() {
             )}
           </div>
         )}
+
+        {/* ── News Feed (Filtered) ────────────────────────────────────────────────── */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Newspaper className="w-4 h-4 text-zinc-400" />
+            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+              {selectedDate ? `Noticias del ${format(selectedDate, "d 'de' MMMM", { locale: es })}` : "Últimas Noticias"}
+            </h3>
+          </div>
+          
+          {loadingNews ? (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin mb-3" />
+              <p className="text-sm">Analizando noticias...</p>
+            </div>
+          ) : displayedNews.length === 0 ? (
+            <div className="p-4 rounded-xl border border-dashed border-white/10 text-center text-muted-foreground text-sm">
+              No se encontraron noticias.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {displayedNews.map((news) => (
+                <a 
+                  key={news.uuid} 
+                  href={news.link} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="block p-4 rounded-2xl bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-white/10 text-white/80">
+                      {news.relatedTicker}
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      {new Date(news.providerPublishTime).toLocaleDateString(es.code, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-100 leading-snug mb-2">
+                    {news.title}
+                  </h3>
+                  <div className="flex justify-between items-center mt-3">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{news.publisher}</span>
+                    {news.sentiment && (
+                      <span className={`text-[10px] font-bold tracking-wider ${getSentimentColor(news.sentiment)}`}>
+                        {news.sentiment}
+                      </span>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </main>
   )
