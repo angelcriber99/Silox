@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireApiUser } from '@/lib/server/api-auth'
 import { getGeminiClient } from '@/lib/server/gemini'
-import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { SchemaType } from '@google/generative-ai'
 
 const NoticiasSchema = z.object({
@@ -17,7 +16,6 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response
 
   try {
-    const yahooFinance = getYahooFinance()
     const body = await request.json()
     
     const parsed = NoticiasSchema.safeParse(body)
@@ -29,59 +27,36 @@ export async function POST(request: Request) {
     }
     
     const { items } = parsed.data
+    const selectedItems = items.slice(0, 10) // Limit to 10 tickers to avoid massive prompts
+    const tickers = selectedItems.map(i => i.displayName).join(", ")
 
-    const selectedItems = items.slice(0, 5)
-
-    const newsResults = await Promise.allSettled(
-      selectedItems.map(async (item) => {
-        try {
-          const result = await yahooFinance.search(item.query)
-          // Filtrar para que sean historias (STORY) y coger las 2 primeras
-          const news = result.news.filter(n => n.type === 'STORY').slice(0, 2)
-          return { item, news }
-        } catch {
-          return { item, news: [] }
-        }
-      })
-    )
-
-    const noticias = newsResults.flatMap((res) => {
-      if (res.status === 'fulfilled') {
-        return res.value.news.map(n => ({
-          ...n,
-          relatedTicker: res.value.item.displayName, // Nombre limpio o Ticker limpio
-          sentiment: undefined as string | undefined
-        }))
-      }
-      return []
-    })
-
-    // Ordenar noticias por fecha (las más recientes primero)
-    noticias.sort((a, b) => new Date(b.providerPublishTime).getTime() - new Date(a.providerPublishTime).getTime())
-
+    let noticias: any[] = []
     let aiEvents: any[] = []
 
-    // Traducir títulos con Gemini y extraer eventos clave
-    if (noticias.length > 0 && process.env.GEMINI_API_KEY) {
+    if (process.env.GEMINI_API_KEY) {
       try {
         const model = getGeminiClient().getGenerativeModel({ 
           model: "gemini-2.5-flash",
+          // @ts-ignore: googleSearch is supported by the API but missing in SDK types
           tools: [{ googleSearch: {} }],
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: {
               type: SchemaType.OBJECT,
               properties: {
-                translations: {
+                noticias: {
                   type: SchemaType.ARRAY,
                   items: {
                     type: SchemaType.OBJECT,
                     properties: {
-                      index: { type: SchemaType.INTEGER },
-                      translatedTitle: { type: SchemaType.STRING },
+                      title: { type: SchemaType.STRING, description: "Título de la noticia en español" },
+                      publisher: { type: SchemaType.STRING, description: "Nombre del medio o fuente (ej. Reuters, Bloomberg)" },
+                      link: { type: SchemaType.STRING, description: "URL de la noticia original" },
+                      providerPublishTime: { type: SchemaType.STRING, description: "Fecha de publicación en formato ISO 8601 (ej. 2024-03-20T14:30:00Z)" },
+                      relatedTicker: { type: SchemaType.STRING, description: "El ticker exacto relacionado con esta noticia" },
                       sentiment: { type: SchemaType.STRING, enum: ["POSITIVE", "NEGATIVE", "NEUTRAL"], format: "enum" }
                     },
-                    required: ["index", "translatedTitle", "sentiment"]
+                    required: ["title", "publisher", "link", "providerPublishTime", "relatedTicker", "sentiment"]
                   }
                 },
                 events: {
@@ -91,42 +66,44 @@ export async function POST(request: Request) {
                     properties: {
                       title: { type: SchemaType.STRING, description: "Breve título del evento en español, ej: Lanzamiento Satélite, Aprobación FDA" },
                       date: { type: SchemaType.STRING, description: "Fecha estimada en formato YYYY-MM-DD. Si solo se menciona el mes, pon el primer día del mes." },
-                      ticker: { type: SchemaType.STRING, description: "Ticker relacionado (si se deduce de la noticia)" },
+                      ticker: { type: SchemaType.STRING, description: "El ticker exacto relacionado" },
                     },
                     required: ["title", "date", "ticker"]
                   }
                 }
               },
-              required: ["translations", "events"]
+              required: ["noticias", "events"]
             }
           }
         })
         
-        const uniqueTickersStr = Array.from(new Set(noticias.map(n => n.relatedTicker))).join(", ")
-        const titlesToTranslate = noticias.map((n, i) => `[ID: ${i} | Ticker: ${n.relatedTicker}] ${n.title}`).join('\n')
-        
-        const prompt = `Analiza los siguientes titulares de noticias financieras.
-1. Tradúcelos al español neutro manteniendo el tono periodístico.
-2. Analiza el sentimiento de la noticia (POSITIVE, NEGATIVE, NEUTRAL) respecto a la empresa.
-3. Extrae cualquier evento futuro importante mencionado (lanzamientos, reuniones clave, aprobaciones). No incluyas resultados financieros (earnings) ni dividendos, solo eventos puntuales de negocio.
-4. IMPORTANTE: Además de las noticias provistas, UTILIZA LA BÚSQUEDA EN INTERNET para encontrar eventos corporativos clave y muy relevantes programados para los próximos 6 meses para las siguientes empresas: ${uniqueTickersStr}. (Ejemplo: ASTS lanzamiento de satélites Bluebird, Apple Keynote, Aprobaciones de la FDA, etc.). Añade estos eventos al array de 'events'.
+        const prompt = `Actúa como un analista financiero experto. Tienes a tu disposición la herramienta de Google Search.
+Tu objetivo es buscar en internet la información más reciente, veraz y de fuentes contrastadas y fiables (ej: Reuters, Bloomberg, Expansión, El Economista, webs oficiales, etc) para las siguientes empresas/tickers: ${tickers}.
 
-Titulares:
-${titlesToTranslate}`
+Tareas obligatorias:
+1. Encuentra entre 1 y 2 noticias MUY RECIENTES Y RELEVANTES para CADA UNO de los tickers mencionados. 
+2. Redacta el título de la noticia en ESPAÑOL NEUTRO.
+3. Evalúa el sentimiento de cada noticia (POSITIVE, NEGATIVE, NEUTRAL) respecto a la empresa.
+4. MUY IMPORTANTE: Busca también eventos corporativos clave y muy relevantes programados para los próximos 6 meses para estas mismas empresas (Ejemplo: ASTS lanzamiento de satélites Bluebird, Apple Keynote, Aprobaciones de la FDA, conferencias clave, etc.). Añade estos eventos al array de 'events'. NO incluyas simples presentaciones de resultados trimestrales (earnings) ni pagos de dividendos; céntrate en eventos puntuales de negocio.
+
+Devuelve la información estructurada en el JSON solicitado.`
 
         const result = await model.generateContent(prompt)
         const text = await result.response.text()
         const parsedJson = JSON.parse(text)
 
-        // Parsear traducciones
-        if (parsedJson.translations) {
-          parsedJson.translations.forEach((t: any) => {
-            const idx = t.index
-            if (noticias[idx]) {
-              noticias[idx].title = t.translatedTitle
-              noticias[idx].sentiment = t.sentiment
-            }
-          })
+        if (parsedJson.noticias) {
+          noticias = parsedJson.noticias.map((n: any, idx: number) => ({
+            uuid: `ai-news-${Date.now()}-${idx}`,
+            title: n.title,
+            publisher: n.publisher,
+            link: n.link,
+            providerPublishTime: n.providerPublishTime,
+            relatedTicker: n.relatedTicker,
+            sentiment: n.sentiment
+          }))
+          // Sort newest first
+          noticias.sort((a, b) => new Date(b.providerPublishTime).getTime() - new Date(a.providerPublishTime).getTime())
         }
 
         if (parsedJson.events) {
@@ -139,8 +116,7 @@ ${titlesToTranslate}`
           }))
         }
       } catch (err) {
-        console.error("Error traduciendo noticias:", err)
-        // Fallback silently to English if translation fails
+        console.error("Error generando noticias con Gemini:", err)
       }
     }
 
@@ -148,11 +124,12 @@ ${titlesToTranslate}`
       { noticias, aiEvents },
       {
         headers: {
-          'Cache-Control': 'private, max-age=300', // Caché de 5 min para noticias
+          'Cache-Control': 'private, max-age=300',
         },
       }
     )
-  } catch {
+  } catch (error) {
+    console.error("Internal error in /api/noticias:", error)
     return NextResponse.json(
       { error: 'Error interno al obtener noticias' },
       { status: 500 }
