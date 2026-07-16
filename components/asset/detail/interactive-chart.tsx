@@ -2,10 +2,29 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine
 } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { Skeleton } from "@/components/ui/skeleton"
+import type { RawTransaction } from "./use-asset-calculations"
+
+const PurchaseDot = (props: any) => {
+  const { cx, cy, payload } = props
+  if (payload?.isPurchase) {
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={4}
+        fill="#10b981"
+        stroke="#18181b"
+        strokeWidth={2}
+        className="animate-fade-in"
+      />
+    )
+  }
+  return null
+}
 
 const RANGES = [
   { label: "1D", value: "1d" },
@@ -22,9 +41,12 @@ interface InteractiveAssetChartProps {
   ticker: string
   moneda: string
   colorHex: string
+  transactions?: RawTransaction[]
+  units?: number
+  onRangePerformanceChange?: (perf: { label: string, absolute: number, percent: number } | null) => void
 }
 
-export function InteractiveAssetChart({ ticker, moneda, colorHex }: InteractiveAssetChartProps) {
+export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions = [], units = 0, onRangePerformanceChange }: InteractiveAssetChartProps) {
   const [range, setRange] = useState("1mo")
 
   const { data, isLoading, error } = useQuery({
@@ -32,7 +54,58 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex }: InteractiveA
     queryFn: async () => {
       const res = await fetch(`/api/market/${ticker}?range=${range}`)
       if (!res.ok) throw new Error("Failed to fetch market data")
-      return res.json()
+      const result = await res.json()
+      
+      let enrichedChart = result.chart || []
+      
+      if (enrichedChart.length > 0) {
+        // Enriquecer con compras
+        if (transactions.length > 0) {
+          const purchaseDates = transactions
+            .filter(t => t.tipo_operacion === 'Compra' && t.fecha)
+            .map(t => new Date(t.fecha).toISOString().split('T')[0])
+            
+          enrichedChart = enrichedChart.map((p: any) => {
+            const pointDateStr = new Date(p.date).toISOString().split('T')[0]
+            return {
+              ...p,
+              isPurchase: purchaseDates.includes(pointDateStr)
+            }
+          })
+        }
+        
+        // Calcular rendimiento del rango
+        if (onRangePerformanceChange) {
+          if (range === '1d') {
+             onRangePerformanceChange(null) // Para 1D, usar el cálculo diario estándar del padre
+          } else {
+             const firstPrice = enrichedChart[0].price
+             const lastPrice = enrichedChart[enrichedChart.length - 1].price
+             const absoluteChange = (lastPrice - firstPrice) * units
+             const percentChange = ((lastPrice - firstPrice) / firstPrice) * 100
+             
+             const labelMap: Record<string, string> = {
+               '5d': 'en 5 días',
+               '1mo': 'en 1 mes',
+               '6mo': 'en 6 meses',
+               'ytd': 'en YTD',
+               '1y': 'en 1 año',
+               '5y': 'en 5 años',
+               'max': 'Histórico'
+             }
+             
+             onRangePerformanceChange({
+               label: labelMap[range] || '',
+               absolute: absoluteChange,
+               percent: percentChange
+             })
+          }
+        }
+      } else if (onRangePerformanceChange) {
+         onRangePerformanceChange(null)
+      }
+      
+      return { ...result, chart: enrichedChart }
     },
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
@@ -110,7 +183,9 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex }: InteractiveA
                 strokeWidth={2} 
                 fillOpacity={1} 
                 fill={`url(#colorPrice-${ticker})`} 
-                animationDuration={500} 
+                animationDuration={500}
+                dot={<PurchaseDot />}
+                activeDot={{ r: 6, strokeWidth: 0, fill: colorHex }}
               />
             </AreaChart>
           </ResponsiveContainer>

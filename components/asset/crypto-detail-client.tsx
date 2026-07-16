@@ -36,8 +36,15 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
   } = useAssetCalculations(position, transactions)
 
   const [alertsOpen, setAlertsOpen] = useState(false)
+  const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
 
-  const isPositive = (position.change_percent_24h || 0) >= 0
+  const currentPerformance = rangePerformance || {
+    label: "Hoy",
+    absolute: position.change_amount_24h ?? 0,
+    percent: position.change_percent_24h ?? 0
+  }
+
+  const isPositive = currentPerformance.absolute >= 0
   const colorHex = isPositive ? "#10b981" : "#f43f5e"
 
   return (
@@ -95,20 +102,25 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
               )}
             </div>
             <div className="flex items-center md:justify-end gap-2 mt-2">
-              {position.change_percent_24h !== null && position.change_amount_24h !== null && (
-                <p className={`text-lg font-bold tabular-nums flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                  {isPositive ? "+" : ""}{formatCurrency(position.change_amount_24h, position.moneda)} 
-                  <span className="ml-1 opacity-80">({isPositive ? "+" : ""}{position.change_percent_24h.toFixed(2)}%)</span>
-                  <span className="text-muted-foreground text-sm ml-2 font-medium">Hoy</span>
-                </p>
-              )}
+              <p className={`text-lg font-bold tabular-nums flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                {isPositive ? "+" : ""}{formatCurrency(currentPerformance.absolute, position.moneda)} 
+                <span className="ml-1 opacity-80">({isPositive ? "+" : ""}{currentPerformance.percent.toFixed(2)}%)</span>
+                <span className="text-muted-foreground text-sm ml-2 font-medium">{currentPerformance.label}</span>
+              </p>
             </div>
           </div>
         </div>
 
         {/* ═══════════ GRÁFICO INTERACTIVO ═══════════ */}
         <div className="mb-8 animate-fade-in stagger-1">
-          <InteractiveAssetChart ticker={position.ticker} moneda={position.moneda} colorHex={colorHex} />
+          <InteractiveAssetChart 
+            ticker={position.ticker} 
+            moneda={position.moneda} 
+            colorHex={colorHex} 
+            transactions={transactions}
+            units={position.unidades}
+            onRangePerformanceChange={setRangePerformance}
+          />
         </div>
 
         {/* ═══════════ TU POSICIÓN ═══════════ */}

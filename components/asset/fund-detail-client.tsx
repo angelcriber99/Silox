@@ -91,7 +91,15 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
 
   const finalData = simulationData[simulationData.length - 1]
 
-  const isPositive = (position.change_percent_24h || 0) >= 0
+  const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
+
+  const currentPerformance = rangePerformance || {
+    label: "hoy",
+    absolute: position.change_amount_24h ?? 0,
+    percent: position.change_percent_24h ?? 0
+  }
+
+  const isPositive = currentPerformance.absolute >= 0
   const colorHex = isPositive ? "#10b981" : "#f43f5e"
 
   return (
@@ -172,11 +180,9 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               {position.valor_actual !== null ? formatCurrency(position.valor_actual, 'EUR') : "—"}
             </p>
             <div className="flex flex-col md:flex-row items-end justify-end gap-3 mt-1">
-              {position.change_percent_24h !== null && (
-                <p className={`text-base font-medium tabular-nums flex items-center gap-1 ${position.change_percent_24h >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                  {position.change_percent_24h >= 0 ? "+" : ""}{position.change_percent_24h.toFixed(2)}% hoy
-                </p>
-              )}
+              <p className={`text-base font-medium tabular-nums flex items-center gap-1 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+                {isPositive ? "+" : ""}{currentPerformance.percent.toFixed(2)}% {currentPerformance.label}
+              </p>
               {position.pnl_percent !== null && (
                 <p className={`text-lg font-medium tabular-nums flex items-center gap-1 ${position.pnl_percent >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                   <span className="text-muted-foreground/60 hidden md:inline">|</span>
@@ -284,7 +290,14 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         {/* ═══════════ GRÁFICO INTERACTIVO Y ESTADÍSTICAS ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-1">
           <div className="lg:col-span-2">
-             <InteractiveAssetChart ticker={position.ticker} moneda={position.moneda} colorHex={colorHex} />
+             <InteractiveAssetChart 
+               ticker={position.ticker} 
+               moneda={position.moneda} 
+               colorHex={colorHex}
+               transactions={transactions}
+               units={position.unidades}
+               onRangePerformanceChange={setRangePerformance}
+             />
           </div>
           <div className="lg:col-span-1">
             <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
