@@ -11,6 +11,24 @@ import { formatCurrency } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 import type { useAssetCalculations } from './use-asset-calculations'
 
+const PurchaseDot = (props: any) => {
+  const { cx, cy, payload } = props
+  if (payload?.isPurchase) {
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={4}
+        fill="#10b981"
+        stroke="#18181b"
+        strokeWidth={2}
+        className="animate-fade-in"
+      />
+    )
+  }
+  return null
+}
+
 type AssetCalculations = ReturnType<typeof useAssetCalculations>
 
 interface AssetCapitalDonutProps {
@@ -164,10 +182,30 @@ export function AssetEvolutionChart({ evolutionData }: AssetEvolutionChartProps)
               }} />
               
               {/* Valor total */}
-              <Area yAxisId="left" type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#gValue)" animationDuration={1500} />
+              <Area 
+                yAxisId="left" 
+                type="monotone" 
+                dataKey="value" 
+                stroke="#10b981" 
+                strokeWidth={2} 
+                fillOpacity={1} 
+                fill="url(#gValue)" 
+                activeDot={{ r: 6, strokeWidth: 0, fill: '#10b981' }} 
+                dot={<PurchaseDot />}
+              />
               
               {/* Aportaciones (solo línea punteada para que se vea claramente el área de valor debajo) */}
-              <Area yAxisId="left" type="stepAfter" dataKey="invested" stroke="#3b82f6" strokeWidth={2} strokeDasharray="4 4" fillOpacity={0} fill="none" animationDuration={1500} />
+              <Area 
+                yAxisId="left" 
+                type="stepAfter" 
+                dataKey="invested" 
+                stroke="#3b82f6" 
+                strokeWidth={1.5} 
+                strokeDasharray="4 4" 
+                fillOpacity={0} 
+                fill="none" 
+                animationDuration={1500} 
+              />
               
               {/* Intereses (Eje derecho) */}
               <Area yAxisId="right" type="monotone" dataKey="profit" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#gProfit)" animationDuration={1500} />

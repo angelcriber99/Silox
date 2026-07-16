@@ -146,21 +146,44 @@ export function WithdrawCashModal({
           </div>
 
           {sourceAssetType === 'Fondo Monetario' && liquidezAssetId && (
-            <div className="flex items-center space-x-2 pt-2">
-              <input
-                type="checkbox"
-                id="transferToLiquidez"
-                checked={transferToLiquidez}
-                onChange={(e) => setTransferToLiquidez(e.target.checked)}
-                className="w-4 h-4 rounded border-border bg-background accent-primary cursor-pointer"
-                disabled={addTransaction.isPending}
-              />
-              <Label
-                htmlFor="transferToLiquidez"
-                className="text-sm text-foreground/80 cursor-pointer"
-              >
-                Transferir a Liquidez (efectivo)
-              </Label>
+            <div className="space-y-3 pt-2">
+              <Label className="text-foreground/80">Destino de los fondos</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTransferToLiquidez(true)}
+                  disabled={addTransaction.isPending}
+                  className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all ${
+                    transferToLiquidez 
+                      ? "border-blue-500/50 bg-blue-500/10 ring-1 ring-blue-500/50" 
+                      : "border-border bg-card/50 hover:bg-muted/50 hover:border-border/80"
+                  }`}
+                >
+                  <span className={`font-semibold text-sm ${transferToLiquidez ? "text-blue-400" : "text-foreground"}`}>
+                    Transferir a Liquidez
+                  </span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Mantiene el dinero en el broker para invertir después.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTransferToLiquidez(false)}
+                  disabled={addTransaction.isPending}
+                  className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all ${
+                    !transferToLiquidez 
+                      ? "border-rose-500/50 bg-rose-500/10 ring-1 ring-rose-500/50" 
+                      : "border-border bg-card/50 hover:bg-muted/50 hover:border-border/80"
+                  }`}
+                >
+                  <span className={`font-semibold text-sm ${!transferToLiquidez ? "text-rose-400" : "text-foreground"}`}>
+                    Retirar de la Cartera
+                  </span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Para enviar a tu cuenta bancaria (ocio, gastos...).
+                  </span>
+                </button>
+              </div>
             </div>
           )}
 

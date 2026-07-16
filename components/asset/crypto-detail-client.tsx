@@ -86,9 +86,14 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
             </div>
           </div>
           <div className="text-left md:text-right">
-            <p className="text-5xl md:text-6xl font-bold text-foreground tabular-nums drop-shadow-md">
-              {position.precio_actual !== null ? formatCurrency(position.precio_actual, position.moneda) : "—"}
-            </p>
+            <div className="flex items-center md:justify-end gap-3">
+              <p className="text-5xl md:text-6xl font-bold text-foreground tabular-nums drop-shadow-md">
+                {position.precio_actual !== null ? formatCurrency(position.precio_actual, position.moneda) : "—"}
+              </p>
+              {position.price_is_stale && (
+                <div title="Precio desactualizado, se actualizará en la próxima sesión" className="w-3 h-3 rounded-full bg-amber-500 animate-pulse mt-2 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+              )}
+            </div>
             <div className="flex items-center md:justify-end gap-2 mt-2">
               {position.change_percent_24h !== null && position.change_amount_24h !== null && (
                 <p className={`text-lg font-bold tabular-nums flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>

@@ -63,7 +63,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
     let accUnits = 0
     let accCost = 0
     let accDividends = 0
-    const points: { date: string; invested: number; value: number; profit: number }[] = []
+    const points: { date: string; invested: number; value: number; profit: number; isPurchase?: boolean }[] = []
 
     for (const tx of sorted) {
       const qty = Number(tx.cantidad) || 0
@@ -87,7 +87,8 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
         date: new Date(tx.fecha).toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
         invested: inv,
         value: val,
-        profit: Math.round((val - inv + accDividends) * 100) / 100
+        profit: Math.round((val - inv + accDividends) * 100) / 100,
+        isPurchase: tx.tipo_operacion === "Compra",
       })
     }
 
@@ -99,7 +100,8 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
         date: "Hoy",
         invested: inv,
         value: val,
-        profit: Math.round((val - inv + accDividends) * 100) / 100
+        profit: Math.round((val - inv + accDividends) * 100) / 100,
+        isPurchase: false,
       })
     }
 

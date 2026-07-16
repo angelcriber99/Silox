@@ -78,6 +78,7 @@ export default function Home() {
                 loading={isLoading}
                 pendingTxs={pendingTxs}
                 variant="sidebar"
+                marketState={marketState}
               />
               
               <div className="flex flex-col gap-6 p-4">

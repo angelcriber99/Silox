@@ -255,7 +255,7 @@ export function MobileDashboard({
                       className="text-[11px] font-semibold"
                       style={{ color: isPositive ? "rgba(48,209,88,0.75)" : "rgba(255,69,58,0.75)" }}
                     >
-                      {hideBalances ? "" : `(${formatPercent(totals.totalPnlPercent).replace('+', '')})`}
+                      {hideBalances ? "" : `(${formatPercent(totals.totalPnlPercent)})`}
                     </span>
                   </div>
 

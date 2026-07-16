@@ -319,7 +319,12 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-muted-foreground">Precio Actual</p>
-                <p className="text-xl font-bold text-foreground tabular-nums">{formatCurrency(stats.precioActual, position.moneda)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xl font-bold text-foreground tabular-nums">{formatCurrency(stats.precioActual, position.moneda)}</p>
+                  {position.price_is_stale && (
+                    <div title="Precio desactualizado, se actualizará en la próxima sesión" className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>

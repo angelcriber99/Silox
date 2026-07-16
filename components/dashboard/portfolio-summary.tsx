@@ -25,6 +25,7 @@ interface PortfolioSummaryProps {
   pendingTxs?: Transaccion[]
   loading?: boolean
   variant?: 'default' | 'sidebar'
+  marketState?: string
 }
 
 function Skeleton({ className = "" }: { className?: string }) {
@@ -38,6 +39,7 @@ export function PortfolioSummary({
   pendingTxs = [],
   loading = false,
   variant = 'default',
+  marketState = 'REGULAR',
 }: PortfolioSummaryProps) {
   const { hideBalances } = usePreferences()
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
@@ -101,10 +103,17 @@ export function PortfolioSummary({
     return (
       <div className="flex flex-col gap-4 p-4 relative bg-background shrink-0">
         <div className="flex flex-col items-center z-10 py-6">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center justify-center gap-1.5 opacity-80">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
-            Valor del Portfolio
-          </p>
+          <div className="flex items-center gap-3 mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-1.5 opacity-80">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
+              Valor del Portfolio
+            </p>
+            {marketState !== 'REGULAR' && (
+              <div className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-muted text-muted-foreground border border-border/50">
+                {marketState === 'CLOSED' ? 'Cerrado' : marketState === 'PRE' ? 'Pre-Market' : 'Post-Market'}
+              </div>
+            )}
+          </div>
           <div className="text-4xl lg:text-5xl font-bold tracking-tight leading-none mb-6 bg-gradient-to-br from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent text-center drop-shadow-sm">
             <AnimatedNumber value={totals.totalValue} format="currency" hide={hideBalances} />
           </div>
