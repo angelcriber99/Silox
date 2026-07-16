@@ -105,7 +105,7 @@ export function AddTransactionModal({
     }
 
     try {
-      await addTransaction.mutateAsync({
+      const res = await addTransaction.mutateAsync({
         activo_id: position.activo_id,
         tipo_operacion: tipoOperacion,
         estado: estado,
@@ -120,6 +120,10 @@ export function AddTransactionModal({
         notas: notas.trim() || undefined,
         use_efectivo: useEfectivo && position.tipo !== "Liquidez",
       })
+
+      if ((res as any)?.id === "ERROR") {
+        throw new Error((res as any).notas)
+      }
 
       const total = cantidadNum * precioNum
 

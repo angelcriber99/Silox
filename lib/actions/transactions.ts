@@ -124,35 +124,39 @@ function getCashMovement(transaction: {
 }
 
 export async function insertTransaccionAction(formData: unknown): Promise<Transaccion> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('No estás autenticado')
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('No estás autenticado')
 
-  const validated = TransactionMutationSchema.parse(formData)
-  const assetCurrency = await getOwnedAssetCurrency(validated.activo_id, user.id)
-  const monetary = await prepareMonetaryValues(validated, assetCurrency)
-  const transaction = {
-    activo_id: validated.activo_id,
-    tipo_operacion: validated.tipo_operacion,
-    cantidad: validated.cantidad,
-    precio_unitario: monetary.price ?? validated.precio_unitario,
-    comision: monetary.commission ?? validated.comision,
-    retencion_origen: validated.retencion_origen ?? 0,
-    retencion_destino: validated.retencion_destino ?? 0,
-    estado: validated.estado ?? 'Completada',
-    fecha: validated.fecha,
-    notas: monetary.notes || null,
+    const validated = TransactionMutationSchema.parse(formData)
+    const assetCurrency = await getOwnedAssetCurrency(validated.activo_id, user.id)
+    const monetary = await prepareMonetaryValues(validated, assetCurrency)
+    const transaction = {
+      activo_id: validated.activo_id,
+      tipo_operacion: validated.tipo_operacion,
+      cantidad: validated.cantidad,
+      precio_unitario: monetary.price ?? validated.precio_unitario,
+      comision: monetary.commission ?? validated.comision,
+      retencion_origen: validated.retencion_origen ?? 0,
+      retencion_destino: validated.retencion_destino ?? 0,
+      estado: validated.estado ?? 'Completada',
+      fecha: validated.fecha,
+      notas: monetary.notes || null,
+    }
+    const cash = validated.use_efectivo ? getCashMovement(transaction) : null
+
+    const { data, error } = await supabase.rpc('create_transaction_with_cash', {
+      p_transaction: transaction,
+      p_cash_operation: cash?.operation ?? null,
+      p_cash_amount: cash?.amount ?? null,
+    })
+
+    if (error) throw new Error(`Error registrando transacción: ${error.message} | ${error.details} | ${error.hint}`)
+    return data as Transaccion
+  } catch (e: any) {
+    return { id: "ERROR", notas: String(e.stack || e.message || e) } as any
   }
-  const cash = validated.use_efectivo ? getCashMovement(transaction) : null
-
-  const { data, error } = await supabase.rpc('create_transaction_with_cash', {
-    p_transaction: transaction,
-    p_cash_operation: cash?.operation ?? null,
-    p_cash_amount: cash?.amount ?? null,
-  })
-
-  if (error) throw new Error(`Error registrando transacción: ${error.message}`)
-  return data as Transaccion
 }
 
 export async function updateTransaccionAction(
