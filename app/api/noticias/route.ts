@@ -38,47 +38,11 @@ export async function POST(request: Request) {
         const model = getGeminiClient().getGenerativeModel({ 
           model: "gemini-2.5-flash",
           // @ts-ignore: googleSearch is supported by the API but missing in SDK types
-          tools: [{ googleSearch: {} }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: SchemaType.OBJECT,
-              properties: {
-                noticias: {
-                  type: SchemaType.ARRAY,
-                  items: {
-                    type: SchemaType.OBJECT,
-                    properties: {
-                      title: { type: SchemaType.STRING, description: "Título de la noticia en español" },
-                      publisher: { type: SchemaType.STRING, description: "Nombre del medio o fuente (ej. Reuters, Bloomberg)" },
-                      link: { type: SchemaType.STRING, description: "URL de la noticia original" },
-                      providerPublishTime: { type: SchemaType.STRING, description: "Fecha de publicación en formato ISO 8601 (ej. 2024-03-20T14:30:00Z)" },
-                      relatedTicker: { type: SchemaType.STRING, description: "El ticker exacto relacionado con esta noticia" },
-                      sentiment: { type: SchemaType.STRING, enum: ["POSITIVE", "NEGATIVE", "NEUTRAL"], format: "enum" }
-                    },
-                    required: ["title", "publisher", "link", "providerPublishTime", "relatedTicker", "sentiment"]
-                  }
-                },
-                events: {
-                  type: SchemaType.ARRAY,
-                  items: {
-                    type: SchemaType.OBJECT,
-                    properties: {
-                      title: { type: SchemaType.STRING, description: "Breve título del evento en español, ej: Lanzamiento Satélite, Aprobación FDA" },
-                      date: { type: SchemaType.STRING, description: "Fecha estimada en formato YYYY-MM-DD. Si solo se menciona el mes, pon el primer día del mes." },
-                      ticker: { type: SchemaType.STRING, description: "El ticker exacto relacionado" },
-                    },
-                    required: ["title", "date", "ticker"]
-                  }
-                }
-              },
-              required: ["noticias", "events"]
-            }
-          }
+          tools: [{ googleSearch: {} }]
         })
         
         const prompt = `Actúa como un analista financiero experto. Tienes a tu disposición la herramienta de Google Search.
-Tu objetivo es buscar en internet la información más reciente, veraz y de fuentes contrastadas y fiables (ej: Reuters, Bloomberg, Expansión, El Economista, webs oficiales, etc) para las siguientes empresas/tickers: ${tickers}.
+Busca las noticias y eventos más recientes (de los últimos días o semanas) para los siguientes tickers: ${tickers}.
 
 Tareas obligatorias:
 1. Encuentra entre 1 y 2 noticias MUY RECIENTES Y RELEVANTES para CADA UNO de los tickers mencionados. 
@@ -86,7 +50,29 @@ Tareas obligatorias:
 3. Evalúa el sentimiento de cada noticia (POSITIVE, NEGATIVE, NEUTRAL) respecto a la empresa.
 4. MUY IMPORTANTE: Busca también eventos corporativos clave y muy relevantes programados para los próximos 6 meses para estas mismas empresas (Ejemplo: ASTS lanzamiento de satélites Bluebird, Apple Keynote, Aprobaciones de la FDA, conferencias clave, etc.). Añade estos eventos al array de 'events'. NO incluyas simples presentaciones de resultados trimestrales (earnings) ni pagos de dividendos; céntrate en eventos puntuales de negocio.
 
-Devuelve la información estructurada en el JSON solicitado.`
+Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS (sin texto antes o después del JSON). Utiliza el siguiente esquema:
+{
+  "noticias": [
+    {
+      "title": "Título de la noticia en español",
+      "publisher": "Nombre de la fuente (ej. Reuters)",
+      "link": "URL original de la noticia",
+      "providerPublishTime": "Fecha en formato ISO 8601 (ej. 2024-03-20T14:30:00Z)",
+      "relatedTicker": "Ticker exacto relacionado",
+      "sentiment": "POSITIVE, NEGATIVE o NEUTRAL"
+    }
+  ],
+  "events": [
+    {
+      "title": "Breve título del evento",
+      "date": "Fecha estimada YYYY-MM-DD",
+      "ticker": "Ticker exacto relacionado"
+    }
+  ]
+}
+
+- Devuelve SOLO un array JSON válido dentro de llaves, sin bloques de código markdown si es posible.
+- Solo incluye noticias financieras y eventos reales y verificables encontrados en tu búsqueda.`
 
         const result = await model.generateContent(prompt)
         const text = await result.response.text()
