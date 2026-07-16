@@ -44,16 +44,14 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
   return (
     <div className="min-h-screen bg-background selection:bg-amber-500/30">
       {/* ═══════════ HEADER ═══════════ */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm font-medium">Volver</span>
           </Link>
           <div className="flex items-center gap-2.5">
-             <Badge variant="outline" className={TIPO_BADGE_STYLES[position.tipo] || "bg-muted text-foreground/80"}>
-                {position.tipo}
-             </Badge>
+             <span className="text-xs uppercase font-semibold text-muted-foreground tracking-widest">{position.tipo}</span>
           </div>
         </div>
       </header>
@@ -108,29 +106,28 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
         </div>
 
         {/* ═══════════ TU POSICIÓN ═══════════ */}
-        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2 animate-fade-in stagger-1">
-          <Wallet className="h-5 w-5 text-amber-400" />
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 mt-12">
           Tu Posición
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-in stagger-2">
-          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Acciones</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatUnits(position.unidades)}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-y md:divide-y-0 md:divide-x divide-border border-y border-border mb-10">
+          <div className="p-6">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Acciones</span>
+            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatUnits(position.unidades)}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual || 0, 'EUR')}</p>
+          <div className="p-6">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Valor</span>
+            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual || 0, 'EUR')}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Precio Medio</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(stats.precioMedio, position.moneda)}</p>
+          <div className="p-6">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Precio Medio</span>
+            <p className="text-xl font-medium text-foreground tabular-nums mt-1">{formatCurrency(stats.precioMedio, position.moneda)}</p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rentabilidad Total</span>
-            <p className={`text-2xl font-bold tabular-nums mt-1 ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+          <div className="p-6">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Rentabilidad Total</span>
+            <p className="text-xl font-medium text-foreground tabular-nums mt-1" style={{ color: stats.gananciaIntereses >= 0 ? "var(--positive)" : "var(--negative)" }}>
               {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
             </p>
-            <p className={`text-sm font-bold tabular-nums ${stats.precioPorcentaje >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+            <p className="text-sm font-semibold tabular-nums mt-1" style={{ color: stats.precioPorcentaje >= 0 ? "var(--positive)" : "var(--negative)", opacity: 0.8 }}>
               {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}%
             </p>
           </div>
@@ -144,40 +141,39 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
         {/* ═══════════ HISTORIAL DE TRANSACCIONES Y ALERTAS ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-4">
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">
               Operaciones Recientes
             </h2>
-            <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
+            <div className="border-t border-border overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
+                <thead className="text-muted-foreground text-[11px] uppercase tracking-widest font-semibold border-b border-border">
                   <tr>
-                    <th className="px-5 py-4">Fecha</th>
-                    <th className="px-5 py-4">Tipo</th>
-                    <th className="px-5 py-4 text-right">Acciones</th>
-                    <th className="px-5 py-4 text-right">Precio</th>
-                    <th className="px-5 py-4 text-right">Total</th>
+                    <th className="px-4 py-4 font-semibold">Fecha</th>
+                    <th className="px-4 py-4 font-semibold">Tipo</th>
+                    <th className="px-4 py-4 text-right font-semibold">Acciones</th>
+                    <th className="px-4 py-4 text-right font-semibold">Precio</th>
+                    <th className="px-4 py-4 text-right font-semibold">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/50">
+                <tbody className="divide-y divide-border">
                   {txTableData.slice().reverse().map((tx) => (
                     <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
+                      <td className="px-4 py-4 text-foreground/80 whitespace-nowrap">
                         {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                      <td className="px-4 py-4">
+                        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: tx.tipo_operacion === 'Compra' ? "var(--positive)" : "var(--negative)" }}>
                           {tx.tipo_operacion}
                         </span>
                         {tx.estado === 'Pendiente' && (
-                          <span className="ml-1 inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          <span className="ml-2 text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
                             Pendiente
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
-                      <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
-                      <td className="px-5 py-4 text-right tabular-nums font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
+                      <td className="px-4 py-4 text-right tabular-nums text-foreground">{formatUnits(Number(tx.cantidad))}</td>
+                      <td className="px-4 py-4 text-right tabular-nums text-foreground">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                      <td className="px-4 py-4 text-right tabular-nums font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -186,8 +182,7 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
           </div>
           
           <div className="lg:col-span-1">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-violet-400" />
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">
               Tus Alertas
             </h2>
             <AssetAlerts 

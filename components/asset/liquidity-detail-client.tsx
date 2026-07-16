@@ -42,16 +42,16 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
   return (
     <div className="min-h-screen bg-background selection:bg-emerald-500/30">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm font-medium">Volver</span>
           </Link>
           <div className="flex items-center gap-2.5">
-             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+             <span className="text-xs uppercase font-semibold text-muted-foreground tracking-widest text-emerald-500">
                 Liquidez
-             </Badge>
+             </span>
           </div>
         </div>
       </header>
@@ -62,9 +62,9 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 animate-fade-in">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+              <span className="text-xs font-semibold uppercase tracking-widest text-emerald-500">
                 Efectivo Disponible
-              </Badge>
+              </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-1">
               Cartera CASH
@@ -82,75 +82,73 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
         </div>
 
         {/* METRICS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12 animate-fade-in stagger-1">
-          <Card className="bg-emerald-500/5 border-emerald-500/20">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total Ingresado</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(metrics.totalDepositos, 'EUR')}</p>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <PiggyBank className="h-5 w-5 text-emerald-500" />
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border border border-border mb-12">
+          <div className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Total Ingresado</p>
+                <p className="text-2xl font-medium text-foreground tabular-nums">{formatCurrency(metrics.totalDepositos, 'EUR')}</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-rose-500/5 border-rose-500/20">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total Retirado</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(metrics.totalRetiradas, 'EUR')}</p>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-rose-500/10 flex items-center justify-center">
-                  <Wallet className="h-5 w-5 text-rose-500" />
-                </div>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Total Retirado</p>
+                <p className="text-2xl font-medium text-foreground tabular-nums">{formatCurrency(metrics.totalRetiradas, 'EUR')}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* HISTORIAL */}
-        <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2 animate-fade-in stagger-2">
-          <History className="h-6 w-6 text-primary" />
-          Historial de Movimientos
-        </h2>
-        
-        <div className="space-y-4 animate-fade-in stagger-3">
-          {txTableData.length > 0 ? txTableData.map((tx) => {
-            const isDeposit = tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Depósito' || tx.tipo_operacion === 'Ingreso'
-            return (
-            <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/40 backdrop-blur-sm hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isDeposit ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                  <DollarSign className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold">
-                    {isDeposit ? 'Ingreso / Depósito' : 'Retirada / Venta'}
-                    {tx.estado === 'Pendiente' && (
-                      <span className="ml-2 inline-flex px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                        Pendiente
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{new Date(tx.fecha).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className={`font-bold tabular-nums ${isDeposit ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {isDeposit ? '+' : '-'}{formatCurrency(tx.total, 'EUR')}
-                </p>
-              </div>
-            </div>
-            )
-          }) : (
-            <div className="text-center py-12 border border-dashed rounded-xl bg-card/20">
-              <History className="h-10 w-10 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground font-medium">No hay movimientos de efectivo todavía</p>
-            </div>
-          )}
+        <div className="mt-12">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">
+            Historial de Movimientos
+          </h2>
+          
+          <div className="border-t border-border overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-muted-foreground text-[11px] uppercase tracking-widest font-semibold border-b border-border">
+                <tr>
+                  <th className="px-4 py-4 font-semibold">Tipo</th>
+                  <th className="px-4 py-4 font-semibold">Fecha</th>
+                  <th className="px-4 py-4 text-right font-semibold">Importe</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {txTableData.length > 0 ? txTableData.map((tx) => {
+                  const isDeposit = tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Depósito' || tx.tipo_operacion === 'Ingreso'
+                  return (
+                    <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-4 text-foreground/80 whitespace-nowrap">
+                        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: isDeposit ? "var(--positive)" : "var(--negative)" }}>
+                          {isDeposit ? 'Ingreso / Depósito' : 'Retirada / Venta'}
+                        </span>
+                        {tx.estado === 'Pendiente' && (
+                          <span className="ml-2 text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                            Pendiente
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-foreground/80">
+                        {new Date(tx.fecha).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-4 text-right tabular-nums font-medium text-foreground">
+                        {isDeposit ? '+' : '-'}{formatCurrency(tx.total, 'EUR')}
+                      </td>
+                    </tr>
+                  )
+                }) : (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-12 text-center">
+                      <p className="text-muted-foreground font-medium text-sm">No hay movimientos de efectivo todavía</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </main>
