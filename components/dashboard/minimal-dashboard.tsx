@@ -4,16 +4,21 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import {
   Bell,
+  ChartNoAxesCombined,
   ChevronLeft,
   ChevronRight,
   Eye,
   EyeOff,
   FileUp,
+  Layers3,
+  List,
   Pencil,
   Plus,
   RefreshCw,
   Search,
   SlidersHorizontal,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react"
 
 import type { EnrichedPosition, EventoRecurrente, PortfolioTotals } from "@/lib/types"
@@ -43,12 +48,14 @@ interface MinimalDashboardProps {
 
 const ALL_TYPES = "Todos"
 const MARKET_LABELS: Record<string, string> = {
-  REGULAR: "Mercado",
-  PRE: "Pre",
-  POST: "Post",
+  REGULAR: "Regular",
+  PRE: "Premercado",
+  POST: "Postmercado",
   CLOSED: "Cerrado",
   OPEN: "Abierto",
 }
+
+const ALLOCATION_COLORS = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#64748b"]
 
 function performanceClass(value: number | null | undefined) {
   if ((value ?? 0) > 0) return "text-emerald-500"
@@ -61,6 +68,81 @@ function SignedValue({ value, kind }: { value: number | null; kind: "currency" |
   if (hideBalances) return <span className="text-muted-foreground">••••</span>
   if (value === null) return <span className="text-muted-foreground">—</span>
   return <span className={`font-semibold tabular-nums ${performanceClass(value)}`}>{kind === "currency" ? formatPnl(value) : formatPercent(value)}</span>
+}
+
+function PortfolioOverviewPanel({ positions, totals, hideBalances, updatedAt }: { positions: EnrichedPosition[]; totals: PortfolioTotals; hideBalances: boolean; updatedAt?: string | number | null }) {
+  const overview = useMemo(() => {
+    const invested = positions.filter((position) => position.unidades > 0)
+    const allocationMap = new Map<string, number>()
+    const sessionMap = new Map<string, number>()
+    let cash = 0
+    let freshPrices = 0
+
+    for (const position of invested) {
+      const value = position.valor_actual ?? 0
+      if (position.tipo === "Liquidez" || position.ticker.startsWith("CASH")) cash += value
+      else allocationMap.set(position.tipo, (allocationMap.get(position.tipo) ?? 0) + value)
+      const state = position.market_state ?? "CLOSED"
+      sessionMap.set(state, (sessionMap.get(state) ?? 0) + 1)
+      if (!position.price_is_stale && position.precio_actual !== null) freshPrices++
+    }
+
+    const allocation = [...allocationMap.entries()]
+      .sort((left, right) => right[1] - left[1])
+      .map(([name, value], index) => ({ name, value, color: ALLOCATION_COLORS[index % ALLOCATION_COLORS.length], percent: totals.totalValue > 0 ? value / totals.totalValue * 100 : 0 }))
+    const movers = invested
+      .filter((position) => position.tipo !== "Liquidez" && position.daily_change_percent_24h !== null)
+      .sort((left, right) => (right.daily_change_percent_24h ?? 0) - (left.daily_change_percent_24h ?? 0))
+    const largest = [...invested].sort((left, right) => (right.valor_actual ?? 0) - (left.valor_actual ?? 0))[0]
+
+    return {
+      allocation,
+      sessions: [...sessionMap.entries()].sort((left, right) => right[1] - left[1]),
+      best: movers[0],
+      worst: movers.at(-1),
+      largest,
+      concentration: largest && totals.totalValue > 0 ? (largest.valor_actual ?? 0) / totals.totalValue * 100 : 0,
+      cash,
+      freshPrices,
+      investedCount: invested.length,
+    }
+  }, [positions, totals.totalValue])
+
+  return (
+    <aside className="flex min-h-0 flex-1 flex-col gap-2" aria-label="Resumen inteligente de cartera">
+      <section className="border border-border bg-background p-3">
+        <div className="mb-2 flex items-center justify-between"><h2 className="flex items-center gap-2 text-xs font-semibold"><Layers3 className="size-3.5 text-primary" />Distribución</h2><span className="text-[10px] text-muted-foreground">Por tipo</span></div>
+        <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+          {overview.allocation.map((item) => <span key={item.name} style={{ width: `${item.percent}%`, backgroundColor: item.color }} title={`${item.name}: ${item.percent.toFixed(1)}%`} />)}
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
+          {overview.allocation.slice(0, 4).map((item) => <div key={item.name} className="flex min-w-0 items-center gap-1.5 text-[10px]"><span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} /><span className="truncate text-muted-foreground">{item.name}</span><span className="ml-auto tabular-nums">{item.percent.toFixed(0)}%</span></div>)}
+        </div>
+      </section>
+
+      <section className="border border-border bg-background p-3">
+        <div className="mb-2 flex items-center justify-between"><h2 className="flex items-center gap-2 text-xs font-semibold"><ChartNoAxesCombined className="size-3.5 text-primary" />Mercados ahora</h2>{updatedAt && <time className="text-[10px] tabular-nums text-muted-foreground">{new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" }).format(new Date(updatedAt))} Madrid</time>}</div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {overview.sessions.slice(0, 4).map(([state, count]) => <div key={state} className="flex items-center justify-between border border-border bg-background px-2 py-1.5 text-[10px]"><span className="inline-flex items-center gap-1.5"><span className={`size-1.5 rounded-none ${state === "REGULAR" || state === "OPEN" ? "bg-emerald-500" : state === "PRE" ? "bg-blue-500" : state === "POST" ? "bg-violet-500" : "bg-muted-foreground/50"}`} />{MARKET_LABELS[state] ?? state}</span><strong>{count}</strong></div>)}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-2">
+        <div className="border border-emerald-500/50 bg-background p-3"><span className="flex items-center gap-1 text-[10px] text-emerald-500"><TrendingUp className="size-3" />Mejor hoy</span><strong className="mt-1 block truncate text-xs">{overview.best?.ticker.split(".")[0] ?? "—"}</strong><span className={`text-[11px] ${performanceClass(overview.best?.daily_change_percent_24h)}`}>{formatPercent(overview.best?.daily_change_percent_24h ?? 0)}</span></div>
+        <div className="border border-rose-500/50 bg-background p-3"><span className="flex items-center gap-1 text-[10px] text-rose-500"><TrendingDown className="size-3" />Peor hoy</span><strong className="mt-1 block truncate text-xs">{overview.worst?.ticker.split(".")[0] ?? "—"}</strong><span className={`text-[11px] ${performanceClass(overview.worst?.daily_change_percent_24h)}`}>{formatPercent(overview.worst?.daily_change_percent_24h ?? 0)}</span></div>
+      </section>
+
+      <section className="min-h-0 flex-1 border border-border bg-background p-3">
+        <h2 className="mb-2 text-xs font-semibold">Diagnóstico</h2>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px]">
+          <div><span className="block text-muted-foreground">Mayor posición</span><strong className="block truncate">{overview.largest?.ticker.split(".")[0] ?? "—"} · {overview.concentration.toFixed(1)}%</strong></div>
+          <div><span className="block text-muted-foreground">Precios frescos</span><strong>{overview.freshPrices}/{overview.investedCount}</strong></div>
+          <div><span className="block text-muted-foreground">Liquidez</span><strong>{hideBalances ? "••••" : formatCurrency(overview.cash)}</strong></div>
+          <div><span className="block text-muted-foreground">P&L acumulado</span><strong className={performanceClass(totals.totalPnl)}>{hideBalances ? "••••" : formatPnl(totals.totalPnl)}</strong></div>
+        </div>
+      </section>
+    </aside>
+  )
 }
 
 function DashboardSkeleton() {
@@ -86,6 +168,7 @@ export function MinimalDashboard({
   const [autoPageSize, setAutoPageSize] = useState(5)
   const [addAssetOpen, setAddAssetOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
+  const [mobilePanel, setMobilePanel] = useState<"positions" | "overview">("positions")
 
   useEffect(() => {
     const update = () => setAutoPageSize(window.innerWidth >= 1280 && window.innerHeight >= 800 ? 12 : window.innerWidth >= 768 ? 8 : window.innerHeight < 720 ? 4 : 5)
@@ -158,11 +241,17 @@ export function MinimalDashboard({
           </div>
         </header>
 
-        <section className="flex min-h-0 flex-1 flex-col" aria-labelledby="positions-heading">
+        <div className="grid shrink-0 grid-cols-2 border border-border bg-background p-0.5 lg:hidden">
+          <button type="button" onClick={() => setMobilePanel("positions")} className={`flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-semibold ${mobilePanel === "positions" ? "bg-muted shadow-sm" : "text-muted-foreground"}`}><List className="size-3.5" />Posiciones</button>
+          <button type="button" onClick={() => setMobilePanel("overview")} className={`flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-semibold ${mobilePanel === "overview" ? "bg-muted shadow-sm" : "text-muted-foreground"}`}><ChartNoAxesCombined className="size-3.5" />Resumen</button>
+        </div>
+
+        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,.72fr)]">
+        <section className={`${mobilePanel === "positions" ? "flex" : "hidden"} min-h-0 flex-col lg:flex`} aria-labelledby="positions-heading">
           <div className="mb-2 flex shrink-0 items-center gap-2">
             <div className="mr-auto"><h1 id="positions-heading" className="font-semibold">Posiciones <span className="font-normal text-muted-foreground">{activePositions.length}</span></h1><p className="hidden text-[11px] text-muted-foreground sm:block">Sesión, día acumulado y rendimiento total sin mezclar periodos.</p></div>
             <div className="relative w-32 sm:w-52"><Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(0) }} placeholder="Buscar" className="h-8 pl-7 text-xs" /></div>
-            <label className="relative w-9 sm:w-36"><span className="sr-only">Filtrar</span><SlidersHorizontal className="absolute left-2.5 top-1/2 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" /><select value={typeFilter} onChange={(event) => { setTypeFilter(event.target.value); setPage(0) }} className="h-8 w-full appearance-none rounded-lg border border-input bg-background pl-8 pr-2 text-xs outline-none"><option value={ALL_TYPES}>Todos</option>{positionTypes.slice(1).map((type) => <option key={type}>{type}</option>)}</select></label>
+            <label className="relative w-9 sm:w-36"><span className="sr-only">Filtrar</span><SlidersHorizontal className="absolute left-2.5 top-1/2 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" /><select value={typeFilter} onChange={(event) => { setTypeFilter(event.target.value); setPage(0) }} className="h-8 w-full appearance-none rounded-none border border-input bg-background pl-8 pr-2 text-xs outline-none"><option value={ALL_TYPES}>Todos</option>{positionTypes.slice(1).map((type) => <option key={type}>{type}</option>)}</select></label>
             <Button variant="outline" size="sm" onClick={onAddEvent} className="hidden sm:inline-flex">Evento</Button>
           </div>
 
@@ -172,7 +261,7 @@ export function MinimalDashboard({
           <div className="min-h-0 flex-1 divide-y divide-border/60 overflow-hidden">
             {visiblePositions.map((position) => (
               <article key={position.activo_id} className={`grid items-center gap-2 px-1 transition-colors hover:bg-muted/30 lg:grid-cols-[minmax(190px,1.5fr)_repeat(5,minmax(80px,.7fr))_72px] lg:gap-3 ${compact ? "py-1.5" : "py-3"}`}>
-                <Link href={`/activo/${position.activo_id}`} className="flex min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Link href={`/activo/${position.activo_id}`} className="flex min-w-0 items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <AssetLogo ticker={position.ticker} name={position.nombre} type={position.tipo} size={compact ? 34 : 42} />
                   <span className="min-w-0"><strong className="block truncate text-xs sm:text-sm">{position.ticker.split(".")[0]}</strong>{preferences.showAssetNames && <span className="block truncate text-[10px] text-muted-foreground sm:text-xs">{position.nombre || position.isin || "Sin nombre"}</span>}{preferences.showAssetTypes && <span className="hidden text-[9px] text-muted-foreground sm:block lg:hidden">{position.tipo}</span>}</span>
                 </Link>
@@ -194,6 +283,10 @@ export function MinimalDashboard({
             <div className="flex items-center gap-1"><Button variant="ghost" size="icon-sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)} aria-label="Página anterior"><ChevronLeft /></Button><span className="min-w-12 text-center">{safePage + 1}/{pageCount}</span><Button variant="ghost" size="icon-sm" disabled={safePage >= pageCount - 1} onClick={() => setPage(safePage + 1)} aria-label="Página siguiente"><ChevronRight /></Button></div>
           </footer>
         </section>
+        <div className={`${mobilePanel === "overview" ? "flex" : "hidden"} min-h-0 lg:flex`}>
+          <PortfolioOverviewPanel positions={activePositions} totals={totals} hideBalances={hide} updatedAt={pricesUpdatedAt} />
+        </div>
+        </div>
       </div>
       <AddAssetModal open={addAssetOpen} onOpenChange={setAddAssetOpen} />
       <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />

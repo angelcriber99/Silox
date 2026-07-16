@@ -601,19 +601,21 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* MyInvestor (Connected) */}
+                  {/* MyInvestor */}
                   <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-emerald-500/30 relative overflow-hidden group shadow-sm">
                     <div className="absolute top-0 right-0 p-3">
                       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Sincronizado
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Excel compatible
                       </span>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-border/20">
                       <span className="text-xl font-bold text-slate-800">MYI</span>
                     </div>
                     <h3 className="text-lg font-bold">MyInvestor</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincronización diaria de fondos indexados y efectivo.</p>
-                    <button className="w-full py-2.5 rounded-xl border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa órdenes finalizadas por ISIN, participaciones e importe.</p>
+                    <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
+                      Importar Excel
+                    </RevolutSync>
                   </div>
 
                   {/* Revolut */}
@@ -622,9 +624,9 @@ export default function SettingsPage() {
                       <span className="text-xl font-bold text-white">R</span>
                     </div>
                     <h3 className="text-lg font-bold">Revolut</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa tu extracto PDF para sincronizar operaciones.</p>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa operaciones desde CSV o Excel y evita duplicados.</p>
                     <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
-                      Subir Extracto (CSV)
+                      Importar CSV / Excel
                     </RevolutSync>
                   </div>
 

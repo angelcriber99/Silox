@@ -76,7 +76,7 @@ describe('Empty States UI Verification', () => {
           isLoading={false}
         />
       )
-      expect(screen.getByText('Patrimonio')).toBeInTheDocument()
+      expect(screen.getByText('Patrimonio total')).toBeInTheDocument()
       expect(screen.getAllByText('Hoy').length).toBeGreaterThan(0)
       expect(container).toBeInTheDocument()
     })

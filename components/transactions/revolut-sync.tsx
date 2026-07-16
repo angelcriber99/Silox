@@ -87,7 +87,7 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
           <DialogHeader className="p-6 pb-2">
             <DialogTitle>Resumen de Importación</DialogTitle>
             <DialogDescription>
-              Resultados de la sincronización de tu extracto
+              Resultado de la importación de Revolut o MyInvestor
             </DialogDescription>
           </DialogHeader>
           

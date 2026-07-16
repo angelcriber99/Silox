@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { CellValue } from 'exceljs'
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import {
+  isMyInvestorStatement,
+  parseMyInvestorStatement,
+  type ResolvedMyInvestorAsset,
+} from '@/lib/domain/imports/myinvestor'
 
 export const runtime = 'nodejs'
 
 type ImportOperation = 'Compra' | 'Venta'
-type AssetKind = 'Acción' | 'Crypto' | 'Metal'
+type AssetKind = 'Acción' | 'ETF' | 'Fondo Indexado' | 'Crypto' | 'Metal'
 
 interface ParsedImportTransaction {
   user_id: string
@@ -19,6 +25,7 @@ interface ParsedImportTransaction {
   precio_unitario: number
   fecha: string
   comision: number
+  isin?: string
 }
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
@@ -230,18 +237,18 @@ async function parseWorkbook(buffer: ArrayBuffer): Promise<string[][]> {
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(buffer)
 
-  const sheet = workbook.worksheets[0]
-  if (!sheet) return []
+  const sheets = workbook.worksheets.map((sheet) => {
+    const rows: string[][] = []
+    sheet.eachRow((row) => {
+      const values = row.values
+      if (!Array.isArray(values)) return
+      const cells = values.slice(1).map(cellToString)
+      if (cells.some(Boolean)) rows.push(cells)
+    })
+    return rows
+  }).filter((rows) => rows.length > 0)
 
-  const rows: string[][] = []
-  sheet.eachRow((row) => {
-    const values = row.values
-    if (!Array.isArray(values)) return
-    const cells = values.slice(1).map(cellToString)
-    if (cells.some(Boolean)) rows.push(cells)
-  })
-
-  return rows
+  return sheets.find(isMyInvestorStatement) ?? sheets[0] ?? []
 }
 
 function findIndex(headers: string[], candidates: string[]): number {
@@ -266,17 +273,46 @@ function getLegacyMetalTickers(symbol: string): string[] {
 function getAssetSector(kind: AssetKind): string {
   if (kind === 'Crypto') return 'Crypto'
   if (kind === 'Metal') return 'Metales'
+  if (kind === 'ETF' || kind === 'Fondo Indexado') return 'Fondos'
   return 'Desconocido'
 }
 
-function getDatabaseAssetType(kind: AssetKind): 'Acción' | 'Crypto' {
+function getDatabaseAssetType(kind: AssetKind): 'Acción' | 'ETF' | 'Fondo Indexado' | 'Crypto' {
   if (kind === 'Metal') return 'Crypto'
   return kind
 }
 
 function getAssetGeography(kind: AssetKind): string {
-  if (kind === 'Crypto' || kind === 'Metal') return 'Global'
+  if (kind === 'Crypto' || kind === 'Metal' || kind === 'ETF' || kind === 'Fondo Indexado') return 'Global'
   return 'Desconocida'
+}
+
+async function resolveMyInvestorAsset(isin: string, statementName: string): Promise<ResolvedMyInvestorAsset> {
+  const yahoo = getYahooFinance()
+
+  for (const query of [isin, statementName]) {
+    try {
+      const result = await yahoo.search(query)
+      const candidates = result.quotes.filter((candidate) => candidate.isYahooFinance && candidate.symbol)
+      const preferredType = /\bETF\b/i.test(statementName) ? 'ETF' : 'MUTUALFUND'
+      const quote = candidates.find((candidate) => String(candidate.quoteType).toUpperCase() === preferredType)
+        ?? candidates.find((candidate) => String(candidate.quoteType).toUpperCase() === 'ETF')
+        ?? candidates[0]
+      if (!quote?.symbol) continue
+
+      const quoteType = String(quote.quoteType ?? '').toUpperCase()
+      return {
+        ticker: String(quote.symbol),
+        name: String(quote.longname || quote.shortname || statementName),
+        type: quoteType === 'ETF' ? 'ETF' : quoteType === 'EQUITY' ? 'Acción' : 'Fondo Indexado',
+        currency: 'EUR',
+      }
+    } catch {
+      // Try the descriptive fund name before falling back to the ISIN.
+    }
+  }
+
+  return { ticker: isin, name: statementName, type: 'Fondo Indexado', currency: 'EUR' }
 }
 
 function inferAsset(rawTicker: string, rowText: string): {
@@ -427,6 +463,10 @@ async function fetchMetalUnitPriceEur(
 
 async function parseRows(rows: string[][], userId: string): Promise<ParsedImportTransaction[]> {
   if (rows.length < 2) return []
+
+  if (isMyInvestorStatement(rows)) {
+    return parseMyInvestorStatement(rows, userId, resolveMyInvestorAsset)
+  }
 
   const headers = rows[0].map(normalizeHeader)
   if (isMetalAccountStatement(headers)) return parseMetalRows(rows, userId)
@@ -838,7 +878,7 @@ export async function POST(request: Request) {
 
     let { data: activos } = await supabase
       .from('activos')
-      .select('id, ticker, tipo, sector, moneda')
+      .select('id, ticker, isin, tipo, sector, moneda')
       .eq('user_id', user.id)
 
     let { data: existingTransactions } = await supabase
@@ -912,6 +952,7 @@ export async function POST(request: Request) {
       let activo_id = null
       const existingActivo = activos?.find(a =>
         a.ticker === tx.ticker ||
+        (tx.isin != null && a.isin === tx.isin) ||
         ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && a.ticker === tx.rawTicker) ||
         (tx.tipoActivo === 'Metal' && getLegacyMetalTickers(tx.rawTicker).includes(a.ticker))
       )
@@ -919,11 +960,12 @@ export async function POST(request: Request) {
       if (existingActivo) {
         activo_id = existingActivo.id
         const dbTipo = getDatabaseAssetType(tx.tipoActivo)
-        if ((tx.tipoActivo === 'Crypto' || tx.tipoActivo === 'Metal') && (existingActivo.ticker !== tx.ticker || existingActivo.tipo !== dbTipo || existingActivo.sector !== getAssetSector(tx.tipoActivo) || existingActivo.moneda !== tx.moneda)) {
+        if (existingActivo.ticker !== tx.ticker || (tx.isin != null && existingActivo.isin !== tx.isin) || existingActivo.tipo !== dbTipo || existingActivo.sector !== getAssetSector(tx.tipoActivo) || existingActivo.moneda !== tx.moneda) {
           await supabase
             .from('activos')
             .update({
               ticker: tx.ticker,
+              ...(tx.isin ? { isin: tx.isin } : {}),
               nombre: tx.nombre,
               tipo: dbTipo,
               moneda: tx.moneda,
@@ -933,6 +975,7 @@ export async function POST(request: Request) {
             .eq('id', existingActivo.id)
 
           existingActivo.ticker = tx.ticker
+          if (tx.isin) existingActivo.isin = tx.isin
           existingActivo.tipo = dbTipo
           existingActivo.sector = getAssetSector(tx.tipoActivo)
           existingActivo.moneda = tx.moneda
@@ -944,6 +987,7 @@ export async function POST(request: Request) {
           .insert({
             user_id: user.id,
             ticker: tx.ticker,
+            isin: tx.isin ?? null,
             nombre: tx.nombre,
             tipo: dbTipo,
             estrategia: 'Satellite',
@@ -951,7 +995,7 @@ export async function POST(request: Request) {
             sector: getAssetSector(tx.tipoActivo),
             geografia: getAssetGeography(tx.tipoActivo),
           })
-          .select('id, ticker, tipo, sector, moneda')
+          .select('id, ticker, isin, tipo, sector, moneda')
           .single()
 
         if (createError) {
@@ -1010,7 +1054,7 @@ export async function POST(request: Request) {
         ignoredCount++
         ignored.push(tx)
       } else {
-        const { ticker, rawTicker, nombre, tipoActivo, moneda, ...dbTx } = tx
+        const { ticker, rawTicker, nombre, tipoActivo, moneda, isin, ...dbTx } = tx
         toInsert.push({ ...dbTx, activo_id, estado: 'Completada' })
         imported.push(tx)
         newTxCount++

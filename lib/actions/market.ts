@@ -11,6 +11,7 @@ import {
 } from '@/lib/utils/currency'
 import {
   extractMarketPerformance,
+  summarizeMarketStates,
   type ChartMeta,
   type ChartQuote,
 } from '@/lib/utils/market-performance'
@@ -364,7 +365,7 @@ async function _fetchMarketPrices(
   )
 
   const prices: Record<string, PriceEntry> = {}
-  let globalMarketState = 'CLOSED'
+  const marketStates: string[] = []
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i]
@@ -389,13 +390,7 @@ async function _fetchMarketPrices(
         isStale,
       }
       
-      if (marketState === 'PRE') {
-        globalMarketState = 'PRE'
-      } else if (marketState === 'POST' && globalMarketState !== 'PRE') {
-        globalMarketState = 'POST'
-      } else if (marketState === 'REGULAR' && globalMarketState !== 'PRE' && globalMarketState !== 'POST') {
-        globalMarketState = 'REGULAR'
-      }
+      if (marketState) marketStates.push(marketState)
     } else if (ticker) {
       prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null, dailyChangePercent24h: null }
     }
@@ -405,7 +400,7 @@ async function _fetchMarketPrices(
     prices,
     fxRates,
     displayCurrency: convertToEurFlag ? 'EUR' : 'native',
-    marketState: globalMarketState,
+    marketState: summarizeMarketStates(marketStates),
   }
 }
 

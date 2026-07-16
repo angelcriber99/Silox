@@ -4,6 +4,7 @@ import {
   determineMarketState,
   extractMarketPerformance,
   isQuoteFromCurrentMarketDate,
+  summarizeMarketStates,
   type ChartMeta,
   type ChartQuote,
 } from '@/lib/utils/market-performance'
@@ -84,5 +85,10 @@ describe('market session performance', () => {
 
   it('treats a missing quote timestamp as non-current', () => {
     expect(isQuoteFromCurrentMarketDate(undefined)).toBe(false)
+  })
+
+  it('does not let a European post-market mask an open US regular market', () => {
+    expect(summarizeMarketStates(['POST', 'REGULAR', 'CLOSED'])).toBe('REGULAR')
+    expect(summarizeMarketStates(['CLOSED', 'POST'])).toBe('POST')
   })
 })
