@@ -65,7 +65,7 @@ export function WithdrawCashModal({
     try {
       await addTransaction.mutateAsync({
         activo_id: cashAssetId,
-        tipo_operacion: "Retirada",
+        tipo_operacion: "Venta",
         cantidad: cantidadNum,
         precio_unitario: 1, // Cash price is always 1
         comision: 0,
