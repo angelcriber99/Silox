@@ -93,7 +93,7 @@ export const usePreferences = create<PreferencesState>()(
       priceAlerts: true,
       weeklyReport: false,
       dividendAlerts: true,
-      refreshInterval: 15_000,
+      refreshInterval: 5_000,
       pauseUpdatesWhenHidden: true,
       dashboardDensity: 'auto',
       dashboardPageSize: 'auto',

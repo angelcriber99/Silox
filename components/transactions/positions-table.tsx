@@ -116,11 +116,13 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
 function LivePrice({ 
   value, 
   currency, 
-  hideBalances 
+  hideBalances,
+  isStale 
 }: { 
   value: number | null;
   currency?: string;
   hideBalances: boolean;
+  isStale?: boolean;
 }) {
   const [flash, setFlash] = useState<'up'|'down'|null>(null);
   const prevValue = useRef(value);
@@ -152,13 +154,21 @@ function LivePrice({
       : { background: "transparent", color: "rgba(255,255,255,0.8)" }
 
   return (
-    <span 
-      className={`${baseClasses} ${flash === 'down' ? 'animate-pulse' : ''}`}
-      style={flashStyle}
-    >
-      {formatCurrency(value, currency || 'EUR')}
-    </span>
-  );
+    <div className="flex items-center justify-end gap-1.5">
+      {isStale && (
+        <div 
+          className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" 
+          title="El precio no se ha actualizado recientemente."
+        />
+      )}
+      <span 
+        className={`${baseClasses} ${flash === 'down' ? 'animate-pulse' : ''}`}
+        style={flashStyle}
+      >
+        {formatCurrency(value, currency || 'EUR')}
+      </span>
+    </div>
+  )
 }
 
 function SkeletonRow() {
@@ -514,6 +524,7 @@ export function PositionsTable({
                           value={p.precio_actual_nativo !== null ? p.precio_actual_nativo : p.precio_actual}
                           currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
                           hideBalances={hideBalances}
+                          isStale={p.price_is_stale}
                         />
                       </TableCell>
                       <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>
