@@ -66,6 +66,7 @@ export async function POST(request: Request) {
       try {
         const model = getGeminiClient().getGenerativeModel({ 
           model: "gemini-2.5-flash",
+          tools: [{ googleSearch: {} }],
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: {
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
                       date: { type: SchemaType.STRING, description: "Fecha estimada en formato YYYY-MM-DD. Si solo se menciona el mes, pon el primer día del mes." },
                       ticker: { type: SchemaType.STRING, description: "Ticker relacionado (si se deduce de la noticia)" },
                     },
-                    required: ["title", "date"]
+                    required: ["title", "date", "ticker"]
                   }
                 }
               },
@@ -100,11 +101,15 @@ export async function POST(request: Request) {
             }
           }
         })
+        
+        const uniqueTickersStr = Array.from(new Set(noticias.map(n => n.relatedTicker))).join(", ")
         const titlesToTranslate = noticias.map((n, i) => `[ID: ${i} | Ticker: ${n.relatedTicker}] ${n.title}`).join('\n')
+        
         const prompt = `Analiza los siguientes titulares de noticias financieras.
 1. Tradúcelos al español neutro manteniendo el tono periodístico.
 2. Analiza el sentimiento de la noticia (POSITIVE, NEGATIVE, NEUTRAL) respecto a la empresa.
 3. Extrae cualquier evento futuro importante mencionado (lanzamientos, reuniones clave, aprobaciones). No incluyas resultados financieros (earnings) ni dividendos, solo eventos puntuales de negocio.
+4. IMPORTANTE: Además de las noticias provistas, UTILIZA LA BÚSQUEDA EN INTERNET para encontrar eventos corporativos clave y muy relevantes programados para los próximos 6 meses para las siguientes empresas: ${uniqueTickersStr}. (Ejemplo: ASTS lanzamiento de satélites Bluebird, Apple Keynote, Aprobaciones de la FDA, etc.). Añade estos eventos al array de 'events'.
 
 Titulares:
 ${titlesToTranslate}`
