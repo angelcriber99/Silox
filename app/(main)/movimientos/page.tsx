@@ -7,6 +7,7 @@ import { ArrowUpRight, ArrowDownRight, History, MoreHorizontal, Pencil, Search, 
 import type { Transaccion } from '@/lib/types'
 import { EditTransactionModal } from "@/components/transactions/edit-transaction-modal"
 import { ExportExcelButton } from "@/components/transactions/export-excel-button"
+import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { Input } from "@/components/ui/input"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import Link from "next/link"
@@ -251,6 +252,18 @@ export default function MovimientosPage() {
               transactions={transactions || []}
               positions={positions || []}
             />
+            <RevolutSync>
+              <Button
+                variant="outline"
+                className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200 h-10 px-4 rounded-xl font-semibold text-sm"
+                title="Sincronizar extracto (CSV/Excel)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 shrink-0">
+                  <path d="M14.6541 21.0118H9.33644V14.1611H5L12 3L19 14.1611H14.6541V21.0118Z" fill="currentColor"/>
+                </svg>
+                Importar
+              </Button>
+            </RevolutSync>
             <Link
               href="/declarar"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"

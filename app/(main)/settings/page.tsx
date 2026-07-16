@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useSyncExternalStore, type ReactNode } from "react"
+import Link from "next/link"
 import { usePreferences, type Language } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
@@ -23,8 +24,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { IOSHeader } from "@/components/ui/ios-header"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -615,10 +617,10 @@ export default function SettingsPage() {
                       <span className="text-xl font-bold text-white">R</span>
                     </div>
                     <h3 className="text-lg font-bold">Revolut</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa operaciones desde CSV o Excel y evita duplicados.</p>
-                    <RevolutSync className="w-full flex items-center justify-center py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
-                      Importar CSV / Excel
-                    </RevolutSync>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa operaciones desde CSV o Excel directamente en la pestaña de Movimientos.</p>
+                    <Link href="/movimientos" className="w-full flex items-center justify-center py-2.5 rounded-xl bg-secondary text-secondary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
+                      Ir a Movimientos
+                    </Link>
                   </div>
 
                   {/* DeGiro */}

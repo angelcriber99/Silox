@@ -470,8 +470,19 @@ async function fetchMetalUnitPriceEur(
   return latestUnitsPerEur && latestUnitsPerEur > 0 ? 1 / latestUnitsPerEur : null
 }
 
-async function parseRows(rows: string[][], userId: string): Promise<ParsedImportTransaction[]> {
-  if (rows.length < 2) return []
+export interface SkippedImportTransaction {
+  ticker?: string
+  fecha?: string
+  reason: string
+}
+
+export interface ParseResult {
+  parsed: ParsedImportTransaction[]
+  skipped: SkippedImportTransaction[]
+}
+
+async function parseRows(rows: string[][], userId: string): Promise<ParseResult> {
+  if (rows.length < 2) return { parsed: [], skipped: [] }
 
   if (isMyInvestorStatement(rows)) {
     return parseMyInvestorStatement(rows, userId, resolveMyInvestorAsset)
@@ -636,7 +647,7 @@ async function getMetalRowValueEur(
   return grossQuantity * historicalUnitPriceEur
 }
 
-async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedImportTransaction[]> {
+async function parseMetalRows(rows: string[][], userId: string): Promise<ParseResult> {
   const headers = rows[0].map(normalizeHeader)
   const dateIdx = findIndex(headers, ['fechadefinalizacion', 'fechadeinicio', 'date', 'fecha'])
   const amountIdx = findIndex(headers, ['importe', 'amount'])
@@ -645,9 +656,10 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
   const descriptionIdx = findIndex(headers, ['descripcion', 'description'])
   const stateIdx = findIndex(headers, ['state', 'estado'])
 
-  if (dateIdx < 0 || amountIdx < 0 || currencyIdx < 0) return []
+  if (dateIdx < 0 || amountIdx < 0 || currencyIdx < 0) return { parsed: [], skipped: [] }
 
   const parsed: ParsedImportTransaction[] = []
+  const skipped: SkippedImportTransaction[] = []
   const metalRateCache = new Map<string, Promise<MetalRates | null>>()
 
   for (const row of rows.slice(1)) {
@@ -664,14 +676,22 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
     const description = normalizeText(row[descriptionIdx])
     const operation: ImportOperation | null = amount > 0 ? 'Compra' : amount < 0 ? 'Venta' : null
 
-    if (!date || !operation || !Number.isFinite(amount) || amount === 0) continue
+    if (!date || !operation || !Number.isFinite(amount) || amount === 0) {
+      if (rawDateKey || Number.isFinite(amount)) {
+        skipped.push({ ticker: metalSymbol, fecha: normalizeText(row[dateIdx]), reason: 'Datos incompletos o cantidad cero' })
+      }
+      continue
+    }
 
     const grossQuantity = Math.abs(amount)
     const quantity = operation === 'Compra' && Number.isFinite(feeInUnits)
       ? grossQuantity - feeInUnits
       : grossQuantity
 
-    if (!Number.isFinite(quantity) || quantity <= 0) continue
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      skipped.push({ ticker: metalSymbol, fecha: date, reason: 'Cantidad neta inválida' })
+      continue
+    }
 
     const name = METAL_NAMES[metalSymbol] ?? metalSymbol
     let valueEur = await getMetalRowValueEur(
@@ -730,7 +750,8 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
       : Number.NaN
 
     if (!Number.isFinite(effectiveUnitPriceEur) || effectiveUnitPriceEur <= 0) {
-      effectiveUnitPriceEur = 0
+      skipped.push({ ticker: metalSymbol, fecha: date, reason: 'No se pudo obtener el precio en EUR para esta fecha' })
+      continue
     }
 
     parsed.push({
@@ -748,11 +769,11 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParsedI
     })
   }
 
-  return parsed
+  return { parsed, skipped }
 }
 
-function parseInternalCryptoMovements(rows: string[][], userId: string): ParsedImportTransaction[] {
-  if (rows.length < 2) return []
+function parseInternalCryptoMovements(rows: string[][], userId: string): ParseResult {
+  if (rows.length < 2) return { parsed: [], skipped: [] }
 
   const headers = rows[0].map(normalizeHeader)
   const dateIdx = findIndex(headers, ['date', 'fecha', 'completeddate', 'completed', 'executeddate', 'starteddate'])
@@ -771,9 +792,10 @@ function parseInternalCryptoMovements(rows: string[][], userId: string): ParsedI
     headers.includes('fees') &&
     headers.includes('date')
 
-  if (!isCryptoAccountStatement || dateIdx < 0 || tickerIdx < 0 || typeIdx < 0 || qtyIdx < 0) return []
+  if (!isCryptoAccountStatement || dateIdx < 0 || tickerIdx < 0 || typeIdx < 0 || qtyIdx < 0) return { parsed: [], skipped: [] }
 
-  const internalMovements: ParsedImportTransaction[] = []
+  const parsed: ParsedImportTransaction[] = []
+  const skipped: SkippedImportTransaction[] = []
 
   for (const row of rows.slice(1)) {
     const typeValue = normalizeText(row[typeIdx])
@@ -783,7 +805,12 @@ function parseInternalCryptoMovements(rows: string[][], userId: string): ParsedI
     const date = parseDate(row[dateIdx])
     const quantity = Math.abs(parseNumber(row[qtyIdx]))
 
-    if (!rawTicker || !date || !Number.isFinite(quantity) || quantity <= 0) continue
+    if (!rawTicker || !date || !Number.isFinite(quantity) || quantity <= 0) {
+      if (rawTicker || normalizeText(row[dateIdx])) {
+        skipped.push({ ticker: rawTicker || 'Desconocido', fecha: normalizeText(row[dateIdx]), reason: 'Datos de staking incompletos' })
+      }
+      continue
+    }
 
     const rawSymbol = rawTicker.toUpperCase().replace(/[^A-Z0-9]/g, '')
     const price = parseNumber(row[priceIdx])
@@ -809,11 +836,12 @@ function parseInternalCryptoMovements(rows: string[][], userId: string): ParsedI
     })
   }
 
-  return internalMovements
+  return { parsed: internalMovements, skipped }
 }
 
-function parseFixedRows(rows: string[][], userId: string): ParsedImportTransaction[] {
+function parseFixedRows(rows: string[][], userId: string): ParseResult {
   const parsed: ParsedImportTransaction[] = []
+  const skipped: SkippedImportTransaction[] = []
 
   for (const cols of rows.slice(1)) {
     if (cols.length < 5) continue
@@ -826,8 +854,17 @@ function parseFixedRows(rows: string[][], userId: string): ParsedImportTransacti
     const date = parseDate(rawDate)
     const operation = inferOperation(type, '', quantity)
 
-    if (!rawTicker || !date || !operation || !Number.isFinite(quantity) || quantity <= 0) continue
-    if (!Number.isFinite(price) || price <= 0) continue
+    if (!rawTicker || !date || !operation || !Number.isFinite(quantity) || quantity <= 0) {
+      if (rawTicker || rawDate) {
+        skipped.push({ ticker: rawTicker || 'Desconocido', fecha: normalizeText(rawDate), reason: 'Faltan datos requeridos (fecha, ticker, operación, cantidad)' })
+      }
+      continue
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+      skipped.push({ ticker: rawTicker, fecha: date, reason: 'Precio inválido o cero' })
+      continue
+    }
 
     const asset = inferAsset(rawTicker, cols.join(' '))
 
@@ -846,7 +883,7 @@ function parseFixedRows(rows: string[][], userId: string): ParsedImportTransacti
     })
   }
 
-  return parsed
+  return { parsed, skipped }
 }
 
 export async function POST(request: Request) {
@@ -882,8 +919,13 @@ export async function POST(request: Request) {
       ? await parseWorkbook(arrayBuffer)
       : parseCsv(new TextDecoder().decode(arrayBuffer))
 
-    const parsedTransactions = await parseRows(rows, user.id)
-    const internalCryptoMovements = parseInternalCryptoMovements(rows, user.id)
+    const mainResult = await parseRows(rows, user.id)
+    const parsedTransactions = mainResult.parsed
+    let skippedTransactions = mainResult.skipped
+
+    const cryptoResult = parseInternalCryptoMovements(rows, user.id)
+    const internalCryptoMovements = cryptoResult.parsed
+    skippedTransactions = skippedTransactions.concat(cryptoResult.skipped)
 
     let { data: activos } = await supabase
       .from('activos')
@@ -1097,6 +1139,7 @@ export async function POST(request: Request) {
       removedInternalMovements,
       imported,
       ignored,
+      skipped: skippedTransactions,
     })
 
   } catch (error: unknown) {
