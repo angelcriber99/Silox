@@ -30,6 +30,10 @@
   "Navigation": {
     "dashboard": "Resumen",
     "portfolio": "Portfolio",
+    "radar": "Radar",
+    "analisis-page": "Análisis",
+    "analisis": "Historial",
+    "declarar": "Impuestos",
     "settings": "Ajustes"
   },
   "Dashboard": {

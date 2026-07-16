@@ -7,15 +7,16 @@ import {
   LayoutDashboard,
   Settings,
   History,
-  FileText,
   TrendingUp,
   PieChart,
+  Newspaper,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 const navItems = [
   { key: "dashboard", href: "/", icon: LayoutDashboard },
   { key: "portfolio", href: "/movimientos", icon: History },
+  { key: "radar", href: "/radar", icon: Newspaper },
   { key: "analisis-page", href: "/analisis", icon: PieChart },
   { key: "analisis", href: "/historial", icon: TrendingUp },
   { key: "declarar", href: "/declarar", icon: FileText },
