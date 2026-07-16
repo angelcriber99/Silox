@@ -319,6 +319,7 @@ export function PortfolioSummary({
         <div className="p-6 flex flex-col gap-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Invertido</span>
+            <div className="text-foreground">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
