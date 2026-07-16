@@ -42,7 +42,7 @@ export default function RadarPage() {
     if (!positions) return []
     const tickers = new Set<string>()
     positions.forEach(p => {
-      if (p.ticker && p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez' && p.ticker !== 'CASH') {
+      if (p.ticker && p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez' && p.ticker !== 'CASH' && Math.abs(p.unidades) > 0.000001) {
         tickers.add(p.ticker)
       }
     })
@@ -191,19 +191,34 @@ export default function RadarPage() {
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col pb-24 relative">
       <IOSHeader title="Radar" />
-      
-      {/* ── Smart Calendar ────────────────────────────────────────────────── */}
-      <div className="w-full border-b border-border/50 bg-background/90 backdrop-blur-xl z-20 pt-16">
-        <div className="px-4 pb-2 flex items-center justify-between">
-          <h2 className="text-lg font-bold tracking-tight">Calendario Inteligente</h2>
-          {selectedDate && (
-            <button 
-              onClick={() => setSelectedDate(null)}
-              className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md"
-            >
-              Ver Todo
-            </button>
-          )}
+      {/* ── Decorative Smart Calendar Header ────────────────────────── */}
+      <div className="w-full border-b border-border/50 bg-background/90 backdrop-blur-xl z-20 pt-16 pb-4">
+        <div className="px-4 mb-4">
+          <div className="relative overflow-hidden rounded-2xl bg-zinc-900/60 border border-white/5 p-5 flex items-center justify-between">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-transparent opacity-60" />
+            <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-32 h-32 bg-primary/20 blur-3xl rounded-full" />
+            
+            <div className="relative z-10">
+              <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2.5">
+                <div className="p-1.5 bg-primary/20 rounded-lg text-primary">
+                  <Rocket className="w-4 h-4" />
+                </div>
+                Calendario Inteligente
+              </h2>
+              <p className="text-zinc-400 text-xs mt-1.5 max-w-sm">
+                Monitoriza los próximos 6 meses de eventos clave, presentaciones y noticias proyectadas para tus activos.
+              </p>
+            </div>
+
+            {selectedDate && (
+              <button 
+                onClick={() => setSelectedDate(null)}
+                className="relative z-10 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm hover:bg-primary/20 transition-colors"
+              >
+                Ver Todo
+              </button>
+            )}
+          </div>
         </div>
         
         {loadingCalendar ? (
@@ -212,7 +227,7 @@ export default function RadarPage() {
             <p className="text-sm">Analizando fechas clave...</p>
           </div>
         ) : (
-          <div className="flex overflow-x-auto snap-x hide-scrollbar px-4 pb-6 gap-6">
+          <div className="flex overflow-x-auto snap-x hide-scrollbar px-4 pb-2 gap-6">
             {monthsData.map((month, i) => (
               <div key={i} className="flex-shrink-0 snap-start w-[260px]">
                 <h3 className="text-sm font-semibold capitalize mb-3 px-1 text-zinc-100">

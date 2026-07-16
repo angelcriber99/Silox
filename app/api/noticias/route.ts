@@ -90,7 +90,12 @@ Devuelve la información estructurada en el JSON solicitado.`
 
         const result = await model.generateContent(prompt)
         const text = await result.response.text()
-        const parsedJson = JSON.parse(text)
+        
+        // Remove markdown backticks if Gemini includes them
+        const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+        const cleanText = jsonMatch ? jsonMatch[1] : text
+        
+        const parsedJson = JSON.parse(cleanText)
 
         if (parsedJson.noticias) {
           noticias = parsedJson.noticias.map((n: any, idx: number) => ({
