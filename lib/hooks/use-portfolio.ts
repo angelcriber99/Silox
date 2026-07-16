@@ -44,7 +44,9 @@ export function usePortfolio(options?: { enabled?: boolean }) {
 
   // The posiciones view is the confirmed accounting source of truth. Pending
   // orders are fetched separately for projected balances and UI badges.
-  const confirmedPositions = useMemo(() => positions ?? [], [positions])
+  const confirmedPositions = useMemo(() => {
+    return (positions ?? []).filter(p => p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez')
+  }, [positions])
 
   const tickers = useMemo(
     () => confirmedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker),

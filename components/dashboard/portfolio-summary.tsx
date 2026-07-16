@@ -50,9 +50,7 @@ export function PortfolioSummary({
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
 
-  const fmPositions = positions.filter(p => p.tipo === 'Fondo Monetario')
-  const fmAmount = fmPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
-  const fmPos = fmPositions.length > 0 ? fmPositions[0] : null
+
 
   const topDailyAsset = useMemo(() => {
     if (!positions.length) return null
@@ -127,17 +125,7 @@ export function PortfolioSummary({
 
 
 
-        {fmAmount > 0 && (
-          <div className="flex gap-2 w-full">
-            <button
-              onClick={() => { if (fmPos) { setCashAssetId(fmPos.activo_id); setWithdrawModalOpen(true); } }}
-              className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl bg-card/60 hover:bg-card border border-border/40 transition-all text-xs font-medium"
-            >
-              <span className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">F. Monetario</span>
-              <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(fmAmount)}</span>
-            </button>
-          </div>
-        )}
+
 
         <div className="flex gap-2 w-full mt-1">
           <button
@@ -241,23 +229,7 @@ export function PortfolioSummary({
           {/* Right: Quick actions */}
           <div className="flex flex-row md:absolute md:top-8 md:right-6 md:flex-col gap-3 mt-4 md:mt-0 z-20">
 
-            {fmAmount > 0 && (
-              <div className="flex flex-col items-center md:items-end gap-1">
-                <button
-                  onClick={() => {
-                    if (fmPos) {
-                      setCashAssetId(fmPos.activo_id)
-                      setWithdrawModalOpen(true)
-                    }
-                  }}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-card/60 hover:bg-card text-foreground border border-border/40 transition-all text-[13px] font-medium backdrop-blur-md shadow-sm w-full md:w-auto"
-                >
-                  <PiggyBank className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">F. Monetario:</span>
-                  <span className="font-semibold">{hideBalances ? "••••" : formatCurrency(fmAmount)}</span>
-                </button>
-              </div>
-            )}
+
             <button
               onClick={() => useNotes.getState().setIsOpen(true)}
               className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"

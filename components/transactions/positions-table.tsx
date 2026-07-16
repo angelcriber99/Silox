@@ -271,11 +271,7 @@ export function PositionsTable({
 
 
 
-  const fondoMonetarioAmount = useMemo(() => {
-    return positions
-      .filter(p => p.tipo === 'Fondo Monetario')
-      .reduce((acc, p) => acc + (p.valor_actual ?? 0), 0)
-  }, [positions])
+
 
   return (
     <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden w-full">
@@ -290,12 +286,7 @@ export function PositionsTable({
 
             <div className="flex items-center gap-2">
 
-              {fondoMonetarioAmount > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground hidden sm:flex bg-muted/20 border border-border/30 px-3 py-1.5 rounded-md transition-colors hover:bg-muted/30">
-                  <PiggyBank className="w-3.5 h-3.5" />
-                  F. Monetario: <span className="font-medium text-foreground ml-0.5">{hideBalances ? "••••" : formatCurrency(fondoMonetarioAmount)}</span>
-                </div>
-              )}
+
             </div>
           </div>
           
