@@ -53,7 +53,7 @@ async function prepareMonetaryValues(
   const convertsCommission = input.comision !== undefined
     && input.comision_moneda !== undefined
     && input.comision_moneda !== assetCurrency
-  const fxRates = convertsPrice || convertsCommission
+  const fxRates = convertsPrice || convertsCommission || (input.use_efectivo && assetCurrency !== 'EUR')
     ? (await fetchMarketPrices([], true)).fxRates ?? {}
     : {}
   const notes: string[] = []
@@ -89,6 +89,7 @@ async function prepareMonetaryValues(
     price,
     commission,
     notes: [baseNotes, conversionNotes].filter(Boolean).join(' '),
+    fxRates,
   }
 }
 
@@ -144,7 +145,13 @@ export async function insertTransaccionAction(formData: unknown): Promise<Transa
       fecha: validated.fecha,
       notas: monetary.notes || null,
     }
-    const cash = validated.use_efectivo ? getCashMovement(transaction) : null
+    const rawCash = validated.use_efectivo ? getCashMovement(transaction) : null
+    const cash = rawCash ? {
+      ...rawCash,
+      amount: assetCurrency === 'EUR' ? rawCash.amount : (
+        assetCurrency === 'USD' ? rawCash.amount / (monetary.fxRates['USD'] ?? 1) : convertCurrency(rawCash.amount, assetCurrency, 'EUR', monetary.fxRates)
+      )
+    } : null
 
     const { data, error } = await supabase.rpc('create_transaction_with_cash', {
       p_transaction: transaction,
