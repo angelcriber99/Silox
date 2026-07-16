@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { requireApiUser } from '@/lib/server/api-auth'
 import { getGeminiClient } from '@/lib/server/gemini'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { SchemaType } from '@google/generative-ai'
 
 const NoticiasSchema = z.object({
   items: z.array(z.object({
@@ -48,7 +49,8 @@ export async function POST(request: Request) {
       if (res.status === 'fulfilled') {
         return res.value.news.map(n => ({
           ...n,
-          relatedTicker: res.value.item.displayName // Nombre limpio o Ticker limpio
+          relatedTicker: res.value.item.displayName, // Nombre limpio o Ticker limpio
+          sentiment: undefined as string | undefined
         }))
       }
       return []
@@ -57,34 +59,80 @@ export async function POST(request: Request) {
     // Ordenar noticias por fecha (las más recientes primero)
     noticias.sort((a, b) => new Date(b.providerPublishTime).getTime() - new Date(a.providerPublishTime).getTime())
 
-    // Traducir títulos con Gemini de forma masiva
+    let aiEvents: any[] = []
+
+    // Traducir títulos con Gemini y extraer eventos clave
     if (noticias.length > 0 && process.env.GEMINI_API_KEY) {
       try {
-        const model = getGeminiClient().getGenerativeModel({ model: "gemini-2.5-flash" })
-        const titlesToTranslate = noticias.map((n, i) => `${i}: ${n.title}`).join('\n')
-        const prompt = `Traduce los siguientes titulares de noticias financieras del inglés al español neutro. Mantén el tono periodístico.
-Devuelve ÚNICAMENTE los títulos traducidos, línea por línea, respetando el número inicial y los dos puntos. No añadas nada más.
-Ejemplo de salida:
-0: Apple presenta su nuevo iPhone
-1: Los mercados se desploman por la inflación
+        const model = getGeminiClient().getGenerativeModel({ 
+          model: "gemini-2.5-flash",
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.OBJECT,
+              properties: {
+                translations: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      index: { type: SchemaType.INTEGER },
+                      translatedTitle: { type: SchemaType.STRING },
+                      sentiment: { type: SchemaType.STRING, enum: ["POSITIVE", "NEGATIVE", "NEUTRAL"], format: "enum" }
+                    },
+                    required: ["index", "translatedTitle", "sentiment"]
+                  }
+                },
+                events: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      title: { type: SchemaType.STRING, description: "Breve título del evento en español, ej: Lanzamiento Satélite, Aprobación FDA" },
+                      date: { type: SchemaType.STRING, description: "Fecha estimada en formato YYYY-MM-DD. Si solo se menciona el mes, pon el primer día del mes." },
+                      ticker: { type: SchemaType.STRING, description: "Ticker relacionado (si se deduce de la noticia)" },
+                    },
+                    required: ["title", "date"]
+                  }
+                }
+              },
+              required: ["translations", "events"]
+            }
+          }
+        })
+        const titlesToTranslate = noticias.map((n, i) => `[ID: ${i} | Ticker: ${n.relatedTicker}] ${n.title}`).join('\n')
+        const prompt = `Analiza los siguientes titulares de noticias financieras.
+1. Tradúcelos al español neutro manteniendo el tono periodístico.
+2. Analiza el sentimiento de la noticia (POSITIVE, NEGATIVE, NEUTRAL) respecto a la empresa.
+3. Extrae cualquier evento futuro importante mencionado (lanzamientos, reuniones clave, aprobaciones). No incluyas resultados financieros (earnings) ni dividendos, solo eventos puntuales de negocio.
 
 Titulares:
 ${titlesToTranslate}`
 
         const result = await model.generateContent(prompt)
         const text = await result.response.text()
+        const parsedJson = JSON.parse(text)
 
         // Parsear traducciones
-        const lines = text.split('\n').filter(l => l.trim() !== '')
-        lines.forEach(line => {
-          const match = line.match(/^(\d+):\s*(.*)$/)
-          if (match) {
-            const idx = parseInt(match[1], 10)
+        if (parsedJson.translations) {
+          parsedJson.translations.forEach((t: any) => {
+            const idx = t.index
             if (noticias[idx]) {
-              noticias[idx].title = match[2].trim()
+              noticias[idx].title = t.translatedTitle
+              noticias[idx].sentiment = t.sentiment
             }
-          }
-        })
+          })
+        }
+
+        if (parsedJson.events) {
+          aiEvents = parsedJson.events.map((e: any) => ({
+            id: `aievent-${Date.now()}-${Math.random()}`,
+            ticker: e.ticker || "UNKNOWN",
+            date: new Date(e.date).toISOString(),
+            type: 'AI_EVENT',
+            title: e.title,
+          }))
+        }
       } catch (err) {
         console.error("Error traduciendo noticias:", err)
         // Fallback silently to English if translation fails
@@ -92,7 +140,7 @@ ${titlesToTranslate}`
     }
 
     return NextResponse.json(
-      { noticias },
+      { noticias, aiEvents },
       {
         headers: {
           'Cache-Control': 'private, max-age=300', // Caché de 5 min para noticias

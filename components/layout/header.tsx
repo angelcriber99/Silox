@@ -19,8 +19,8 @@ export function Header() {
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Movimientos", href: "/movimientos", icon: History },
-    { name: "Análisis", href: "/analisis", icon: PieChart },
-    { name: "Historial", href: "/historial", icon: Activity },
+    { name: "Radar", href: "/radar", icon: Activity },
+    { name: "Historial", href: "/historial", icon: PieChart },
   ]
 
   return (

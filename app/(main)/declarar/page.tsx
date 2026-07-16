@@ -20,9 +20,12 @@ export default function DeclararPage() {
   // Calulate FIFO events
   const taxEvents = useMemo(() => {
     if (!allTransactions) return []
-    return calculateFIFO(allTransactions).filter(e => 
-      e.ticker !== 'CASH' && !e.ticker.startsWith('CASH_') && e.tipoActivo !== 'Liquidez'
+    const filteredTx = allTransactions.filter(tx => 
+      tx.activo?.tipo !== 'Fondo Monetario' && 
+      tx.activo?.tipo !== 'Liquidez' &&
+      !tx.activo?.ticker?.startsWith('CASH')
     )
+    return calculateFIFO(filteredTx)
   }, [allTransactions])
 
   // Get available years
@@ -31,7 +34,7 @@ export default function DeclararPage() {
     // Also include years from dividends
     if (allTransactions) {
       allTransactions.forEach(tx => {
-        if (tx.tipo_operacion === 'Dividendo') {
+        if (tx.tipo_operacion === 'Dividendo' && tx.activo?.tipo !== 'Fondo Monetario' && tx.activo?.tipo !== 'Liquidez' && !tx.activo?.ticker?.startsWith('CASH')) {
           years.add(new Date(tx.fecha).getFullYear())
         }
       })
@@ -41,7 +44,7 @@ export default function DeclararPage() {
     years.add(current)
     years.add(current - 1)
     return Array.from(years).sort((a, b) => b - a)
-  }, [taxEvents])
+  }, [taxEvents, allTransactions])
 
   // Filter events for selected year
   const yearEvents = useMemo(() => {
@@ -85,6 +88,9 @@ export default function DeclararPage() {
     if (!allTransactions) return []
     return allTransactions.filter(tx => 
       tx.tipo_operacion === 'Dividendo' && 
+      tx.activo?.tipo !== 'Fondo Monetario' &&
+      tx.activo?.tipo !== 'Liquidez' &&
+      !tx.activo?.ticker?.startsWith('CASH') &&
       new Date(tx.fecha).getFullYear() === selectedYear
     ).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
   }, [allTransactions, selectedYear])

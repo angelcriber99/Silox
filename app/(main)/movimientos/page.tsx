@@ -63,12 +63,14 @@ export default function MovimientosPage() {
     const currentYear = now.getFullYear()
 
     return transactions.filter((tx) => {
-      // 0. Exclude Efectivo/CASH (since they clutter the view when buying assets)
+      // 0. Exclude Efectivo/CASH and Fondo Monetario (since they clutter the view when buying assets)
       if (
         tx.notas?.includes("[Auto-Cash:") ||
         tx.notas?.includes("Auto-liquidez") ||
         tx.activo?.ticker?.startsWith('CASH') ||
-        tx.activo?.nombre?.toLowerCase().includes('efectivo')
+        tx.activo?.nombre?.toLowerCase().includes('efectivo') ||
+        tx.activo?.tipo === 'Fondo Monetario' ||
+        tx.activo?.tipo === 'Liquidez'
       ) {
         return false
       }

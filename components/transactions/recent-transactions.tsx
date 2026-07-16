@@ -39,7 +39,14 @@ export function RecentTransactions() {
           </div>
         ) : (
           <div className="space-y-1 max-h-[320px] overflow-y-auto pr-1">
-            {transactions.filter(tx => !(tx.notas?.includes("[Auto-Cash:") || tx.notas?.includes("Auto-liquidez"))).map((tx) => {
+            {transactions.filter(tx => !(
+              tx.notas?.includes("[Auto-Cash:") || 
+              tx.notas?.includes("Auto-liquidez") ||
+              tx.activo?.ticker?.startsWith('CASH') ||
+              tx.activo?.nombre?.toLowerCase().includes('efectivo') ||
+              tx.activo?.tipo === 'Fondo Monetario' ||
+              tx.activo?.tipo === 'Liquidez'
+            )).map((tx) => {
               const isCompra = tx.tipo_operacion === "Compra"
               const isDividendo = tx.tipo_operacion === "Dividendo"
               let total = 0

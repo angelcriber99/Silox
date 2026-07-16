@@ -10,6 +10,7 @@ import {
   Plus,
   ArrowLeftRight,
   UserCircle,
+  Newspaper,
 } from "lucide-react"
 
 interface MobileBottomNavProps {
@@ -18,7 +19,7 @@ interface MobileBottomNavProps {
 
 const tabs = [
   { name: "Cartera",     href: "/",           Icon: LayoutDashboard, label: "Cartera" },
-  { name: "Análisis",    href: "/analisis",    Icon: LineChart,       label: "Análisis" },
+  { name: "Radar",       href: "/radar",      Icon: Newspaper,       label: "Radar" },
   { name: "fab",         href: "#",            Icon: Plus,            label: "Añadir",   isFab: true },
   { name: "Movimientos", href: "/movimientos", Icon: ArrowLeftRight,  label: "Historial" },
   { name: "Perfil",      href: "/settings",    Icon: UserCircle,      label: "Perfil" },
