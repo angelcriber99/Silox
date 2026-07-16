@@ -204,7 +204,7 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-full w-full">
       {/* ── Mobile View (iOS Grouped List) ──────────────────────────────── */}
-      <div className="md:hidden flex flex-col flex-1 pb-24 bg-background">
+      <div className="hidden">
         <IOSHeader title={t('title')} subtitle="Cuenta, apariencia y datos en un solo lugar" />
         
         <div className="flex flex-col gap-6 px-3 pt-4">
@@ -299,7 +299,7 @@ export default function SettingsPage() {
 
       {/* ── Desktop View ────────────────────────────────────────────── */}
       <div
-        className="hidden md:flex max-w-6xl w-full mx-auto flex-col md:flex-row gap-6 md:gap-8 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0 animate-fade-in"
+        className="flex max-w-6xl w-full mx-auto flex-col md:flex-row gap-5 md:gap-8 min-h-[calc(100vh-5rem)] px-3 py-5 pb-24 md:px-6 md:py-8 md:pb-8 animate-fade-in"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}
       >
       

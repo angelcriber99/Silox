@@ -45,9 +45,9 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
   const colorHex = isPositive ? "#10b981" : "#f43f5e"
 
   return (
-    <div className="min-h-screen bg-background selection:bg-blue-500/30">
+    <div className="min-h-full bg-background selection:bg-blue-500/30">
       {/* ═══════════ HEADER ═══════════ */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background">
+      <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
               className="drop-shadow-sm flex md:hidden"
             />
             <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-1">
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground mb-1">
                 {position.nombre || position.ticker}
               </h1>
               <p className="text-xl text-muted-foreground font-medium">

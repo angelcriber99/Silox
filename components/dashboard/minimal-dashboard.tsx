@@ -348,7 +348,7 @@ function PositionRow({
   const dailyPositive = (position.daily_change_percent_24h ?? 0) >= 0
 
   return (
-    <article className="group grid min-h-0 items-center gap-3 border-b border-border/45 px-3 transition-colors last:border-b-0 hover:bg-muted/35 xl:grid-cols-[minmax(200px,1.5fr)_minmax(86px,.65fr)_minmax(100px,.75fr)_minmax(100px,.75fr)_minmax(105px,.8fr)_80px_64px]">
+    <article className="group grid min-h-0 items-center gap-2 border-b border-border/45 px-3 transition-colors last:border-b-0 hover:bg-muted/35 xl:grid-cols-[minmax(155px,1.4fr)_minmax(68px,.55fr)_minmax(68px,.55fr)_minmax(72px,.6fr)_minmax(88px,.72fr)_54px_52px]">
       <div className="flex min-w-0 items-center gap-3">
         <AssetLogo ticker={position.ticker} name={position.nombre} type={position.tipo} size={36} />
         <div className="min-w-0">
@@ -535,7 +535,7 @@ function MobileCommandCenter({
   const dayPositive = totals.totalPnl24h >= 0
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2.5 px-3 pb-2 pt-[calc(env(safe-area-inset-top,0px)+10px)] md:hidden">
+    <div className="flex h-full min-h-0 flex-col gap-2.5 px-3 pb-2 pt-[calc(env(safe-area-inset-top,0px)+10px)] xl:hidden">
       <header className="flex h-10 shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-emerald-400 text-slate-950 shadow-lg shadow-sky-500/15"><Gauge className="size-5" /></div>
@@ -643,7 +643,7 @@ function MobileCommandCenter({
 
 function DashboardSkeleton() {
   return (
-    <div className="h-[calc(100dvh-112px)] animate-pulse overflow-hidden bg-background p-3 md:h-[calc(100dvh-96px)] md:p-5">
+    <div className="h-[calc(100dvh-88px-env(safe-area-inset-bottom,0px))] animate-pulse overflow-hidden bg-background p-3 xl:h-dvh xl:p-5">
       <div className="mx-auto grid h-full max-w-[1720px] grid-rows-[56px_92px_minmax(0,1fr)] gap-3">
         <div className="rounded-2xl bg-muted/50" />
         <div className="grid grid-cols-4 gap-3">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="rounded-2xl bg-muted/40" />)}</div>
@@ -741,7 +741,7 @@ export function MinimalDashboard({
   }
 
   return (
-    <div className="relative h-[calc(100dvh-112px)] overflow-hidden bg-background md:h-[calc(100dvh-96px)]">
+    <div className="relative h-[calc(100dvh-88px-env(safe-area-inset-bottom,0px))] overflow-hidden bg-background xl:h-dvh">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(14,165,233,.10),transparent_34%),radial-gradient(circle_at_92%_5%,rgba(52,211,153,.08),transparent_28%)]" />
 
       <MobileCommandCenter
@@ -767,8 +767,8 @@ export function MinimalDashboard({
         onOpenAlerts={() => setAlertsOpen(true)}
       />
 
-      <div className="relative mx-auto hidden h-full w-full max-w-[1720px] grid-rows-[58px_94px_minmax(0,1fr)_22px] gap-3 px-4 py-3 md:grid lg:px-6">
-        <header className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-card/70 px-4 shadow-[0_18px_60px_-42px_rgba(0,0,0,.95)] backdrop-blur-xl">
+      <div className="relative mx-auto hidden h-full min-w-0 w-full max-w-[1720px] grid-rows-[58px_94px_minmax(0,1fr)_22px] gap-3 px-4 py-3 xl:grid xl:px-6">
+        <header className="flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/70 bg-card/70 px-4 shadow-[0_18px_60px_-42px_rgba(0,0,0,.95)] backdrop-blur-xl">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-emerald-400 text-slate-950 shadow-lg shadow-sky-500/15"><Gauge className="size-5" /></div>
             <div className="min-w-0">
@@ -779,8 +779,8 @@ export function MinimalDashboard({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <div className="relative mr-1 hidden w-48 xl:block"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => changeSearch(event.target.value)} placeholder="Buscar posición" className="h-8 bg-background/60 pl-8 text-xs" aria-label="Buscar posición" /></div>
-            <select value={typeFilter} onChange={(event) => changeType(event.target.value)} className="hidden h-8 rounded-lg border border-input bg-background/60 px-2 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring lg:block" aria-label="Filtrar posiciones por tipo">{positionTypes.map((type) => <option key={type}>{type}</option>)}</select>
+            <div className="relative mr-1 hidden w-48 2xl:block"><Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => changeSearch(event.target.value)} placeholder="Buscar posición" className="h-8 bg-background/60 pl-8 text-xs" aria-label="Buscar posición" /></div>
+            <select value={typeFilter} onChange={(event) => changeType(event.target.value)} className="hidden h-8 rounded-lg border border-input bg-background/60 px-2 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring 2xl:block" aria-label="Filtrar posiciones por tipo">{positionTypes.map((type) => <option key={type}>{type}</option>)}</select>
             {pendingTransactions.length > 0 && <Button variant="outline" size="sm" onClick={() => setPendingOpen(true)} className="border-amber-400/25 bg-amber-400/10 text-amber-400"><Activity />{pendingTransactions.length} pendientes</Button>}
             <Button variant="ghost" size="icon" onClick={onRefresh} aria-label="Actualizar precios"><RefreshCw /></Button>
             <Button variant="ghost" size="icon" onClick={() => preferences.setHideBalances(!hideBalances)} aria-label={hideBalances ? "Mostrar saldos" : "Ocultar saldos"}>{hideBalances ? <EyeOff /> : <Eye />}</Button>
@@ -805,7 +805,7 @@ export function MinimalDashboard({
           <MetricCard label="Liquidez disponible" value={hideBalances ? "••••" : formatCurrency(intelligence.cash)} detail={`${intelligence.cashPercent.toFixed(1)}% del patrimonio`} icon={Gauge} />
         </section>
 
-        <div className="grid min-h-0 grid-cols-[minmax(0,1.72fr)_minmax(330px,.82fr)] gap-3">
+        <div className="grid min-h-0 min-w-0 grid-cols-[minmax(0,1.72fr)_minmax(280px,.72fr)] gap-3">
           <PositionsPanel positions={desktopPositions} totalValue={totals.totalValue} hideBalances={hideBalances} page={safeDesktopPage} pageCount={desktopPageCount} setPage={setDesktopPage} onAddTransaction={onAddTransaction} onEditAsset={onEditAsset} onAddAsset={() => setAddAssetOpen(true)} />
           <aside className="grid min-h-0 grid-rows-[minmax(0,1.45fr)_minmax(0,.95fr)_auto] gap-3">
             <MarketPulse intelligence={intelligence} hideBalances={hideBalances} />

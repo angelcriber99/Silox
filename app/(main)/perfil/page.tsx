@@ -1,17 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Monitor, Moon, Sun, LayoutList, LogOut, User, Sparkles, Volume2, Flower2, Palette, Check } from "lucide-react"
+import { Monitor, Moon, Sun, LayoutList, LogOut, User, Sparkles, Flower2, Palette, Check, Settings2 } from "lucide-react"
 import { usePreferences, AccentColor } from "@/lib/stores/use-preferences"
 import { createClient } from "@/lib/supabase/client"
 import confetti from "canvas-confetti"
+import { PageHeading } from "@/components/layout/page-heading"
 
 export default function PerfilPage() {
   const { theme, setTheme } = useTheme()
   const { 
-    hideBalances, compactView, accentColor, celebrationMode, zenMode, amoled,
+    hideBalances, compactView, accentColor, celebrationMode, zenMode,
     setHideBalances, setCompactView, setAccentColor, setCelebrationMode, setZenMode
   } = usePreferences()
   const [email, setEmail] = useState<string | null>(null)
@@ -34,11 +36,14 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto w-full px-6 py-8 space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Perfil y Ajustes</h1>
-        <p className="text-muted-foreground mt-2">Gestiona tus preferencias de la aplicación y tu cuenta.</p>
-      </div>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-3 py-5 pb-24 animate-fade-in md:px-6 md:py-8">
+      <PageHeading
+        eyebrow="Cuenta"
+        title="Perfil personal"
+        description="Gestiona tu identidad, privacidad y preferencias personales de Silox."
+        icon={User}
+        actions={<Link href="/settings" className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-muted"><Settings2 className="size-4" />Ajustes avanzados</Link>}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Appearance Settings */}

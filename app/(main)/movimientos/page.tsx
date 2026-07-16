@@ -12,6 +12,7 @@ import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import Link from "next/link"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { IOSHeader } from "@/components/ui/ios-header"
+import { PageHeading } from "@/components/layout/page-heading"
 
 import {
   DropdownMenu,
@@ -240,25 +241,12 @@ export default function MovimientosPage() {
       <div className="hidden md:flex flex-1 max-w-7xl mx-auto w-full flex-col px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
         
         {/* ── Page Header ────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-3">
-              <div
-                className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "oklch(0.68 0.17 192 / 0.12)", border: "1px solid oklch(0.68 0.17 192 / 0.20)" }}
-              >
-                <History className="h-5 w-5" style={{ color: "var(--primary)" }} />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
-                Movimientos
-              </h1>
-            </div>
-            <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
-              Historial completo de operaciones y contabilidad personal.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5">
+        <PageHeading
+          eyebrow="Actividad"
+          title="Movimientos"
+          description="Consulta, filtra y edita todas las operaciones que construyen tu cartera."
+          icon={History}
+          actions={<>
             <ExportExcelButton
               transactions={transactions || []}
               positions={positions || []}
@@ -275,8 +263,8 @@ export default function MovimientosPage() {
               <Scale className="h-4 w-4" />
               Declarar
             </Link>
-          </div>
-        </div>
+          </>}
+        />
 
         {/* ── Filters ──────────────────────────────────────────────── */}
         <div

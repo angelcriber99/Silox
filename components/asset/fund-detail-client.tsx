@@ -95,9 +95,9 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
   const colorHex = isPositive ? "#10b981" : "#f43f5e"
 
   return (
-    <div className="min-h-screen bg-background selection:bg-purple-500/30">
+    <div className="min-h-full bg-background selection:bg-purple-500/30">
       {/* ═══════════ HEADER ═══════════ */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background">
+      <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
@@ -153,7 +153,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                   </>
                 )}
               </div>
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground mb-2">
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground mb-2">
               {position.nombre || position.ticker}
             </h1>
             <p className="text-muted-foreground/80 font-medium">
