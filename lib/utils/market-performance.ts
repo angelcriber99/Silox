@@ -79,14 +79,6 @@ export function determineMarketState(meta: ChartMeta, now = new Date()): MarketS
   return 'CLOSED'
 }
 
-export function summarizeMarketStates(states: readonly string[]): string {
-  if (states.includes('REGULAR')) return 'REGULAR'
-  if (states.includes('PRE')) return 'PRE'
-  if (states.includes('POST')) return 'POST'
-  if (states.includes('OPEN')) return 'OPEN'
-  return 'CLOSED'
-}
-
 export function extractMarketPerformance(
   meta: ChartMeta,
   quotes: ChartQuote[],
