@@ -78,7 +78,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       netSession: netSession,
-      totalValue: totals.currentValue,
+      totalValue: totals.totalValue,
       volatileAssets: topVolatile,
       updatedAt: new Date().toISOString()
     })
