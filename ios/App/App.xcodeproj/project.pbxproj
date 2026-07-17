@@ -9,6 +9,11 @@
 /* Begin PBXBuildFile section */
 		0BB04F1F2FF8696B00DAD3A9 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BB04F1E2FF8696B00DAD3A9 /* Cocoa.framework */; };
 		0BB04F212FF8696B00DAD3A9 /* XcodeKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BB04F202FF8696B00DAD3A9 /* XcodeKit.framework */; };
+		0BF5EBC1300A3FE100B06097 /* WidgetStoragePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BF5EBC0300A3FE100B06097 /* WidgetStoragePlugin.m */; };
+		0BF5EBC3300A415A00B06097 /* WidgetStoragePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF5EBC2300A415A00B06097 /* WidgetStoragePlugin.swift */; };
+		0BF5EBCF300A43B900B06097 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BF5EBAD300A3D6F00B06097 /* WidgetKit.framework */; };
+		0BF5EBD0300A43B900B06097 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BF5EBAF300A3D6F00B06097 /* SwiftUI.framework */; };
+		0BF5EBDF300A43B900B06097 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -19,10 +24,48 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		0BF5EBC8300A430200B06097 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0BF5EBCD300A43B800B06097;
+			remoteInfo = SiloxWidgetExtension;
+		};
+		0BF5EBDD300A43B900B06097 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0BF5EBCD300A43B800B06097;
+			remoteInfo = SiloxWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0BF5EBC7300A42EE00B06097 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0BF5EBDF300A43B900B06097 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		0BB04F1C2FF8696B00DAD3A9 /* GeminiExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GeminiExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0BB04F1E2FF8696B00DAD3A9 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		0BB04F202FF8696B00DAD3A9 /* XcodeKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XcodeKit.framework; path = Library/Frameworks/XcodeKit.framework; sourceTree = DEVELOPER_DIR; };
+		0BF5EBA7300A3CB800B06097 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
+		0BF5EBAD300A3D6F00B06097 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		0BF5EBAF300A3D6F00B06097 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		0BF5EBBF300A3DA500B06097 /* SiloxWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiloxWidgetExtension.entitlements; sourceTree = "<group>"; };
+		0BF5EBC0300A3FE100B06097 /* WidgetStoragePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WidgetStoragePlugin.m; sourceTree = "<group>"; };
+		0BF5EBC2300A415A00B06097 /* WidgetStoragePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStoragePlugin.swift; sourceTree = "<group>"; };
+		0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SiloxWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -43,10 +86,18 @@
 			);
 			target = 0BB04F1B2FF8696B00DAD3A9 /* GeminiExtension */;
 		};
+		0BF5EBE0300A43B900B06097 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0BB04F222FF8696B00DAD3A9 /* GeminiExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0BB04F282FF8696B00DAD3A9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GeminiExtension; sourceTree = "<group>"; };
+		0BF5EBD1300A43B900B06097 /* SiloxWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0BF5EBE0300A43B900B06097 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = SiloxWidget; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +107,15 @@
 			files = (
 				0BB04F1F2FF8696B00DAD3A9 /* Cocoa.framework in Frameworks */,
 				0BB04F212FF8696B00DAD3A9 /* XcodeKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0BF5EBCB300A43B800B06097 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0BF5EBD0300A43B900B06097 /* SwiftUI.framework in Frameworks */,
+				0BF5EBCF300A43B900B06097 /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +135,8 @@
 			children = (
 				0BB04F1E2FF8696B00DAD3A9 /* Cocoa.framework */,
 				0BB04F202FF8696B00DAD3A9 /* XcodeKit.framework */,
+				0BF5EBAD300A3D6F00B06097 /* WidgetKit.framework */,
+				0BF5EBAF300A3D6F00B06097 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -82,9 +144,11 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
+				0BF5EBBF300A3DA500B06097 /* SiloxWidgetExtension.entitlements */,
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				0BB04F222FF8696B00DAD3A9 /* GeminiExtension */,
+				0BF5EBD1300A43B900B06097 /* SiloxWidget */,
 				0BB04F1D2FF8696B00DAD3A9 /* Frameworks */,
 				504EC3051FED79650016851F /* Products */,
 			);
@@ -95,6 +159,7 @@
 			children = (
 				504EC3041FED79650016851F /* App.app */,
 				0BB04F1C2FF8696B00DAD3A9 /* GeminiExtension.appex */,
+				0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,6 +167,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				0BF5EBA7300A3CB800B06097 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -110,6 +176,8 @@
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
+				0BF5EBC0300A3FE100B06097 /* WidgetStoragePlugin.m */,
+				0BF5EBC2300A415A00B06097 /* WidgetStoragePlugin.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -139,6 +207,28 @@
 			productReference = 0BB04F1C2FF8696B00DAD3A9 /* GeminiExtension.appex */;
 			productType = "com.apple.product-type.xcode-extension";
 		};
+		0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0BF5EBE1300A43B900B06097 /* Build configuration list for PBXNativeTarget "SiloxWidgetExtension" */;
+			buildPhases = (
+				0BF5EBCA300A43B800B06097 /* Sources */,
+				0BF5EBCB300A43B800B06097 /* Frameworks */,
+				0BF5EBCC300A43B800B06097 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				0BF5EBD1300A43B900B06097 /* SiloxWidget */,
+			);
+			name = SiloxWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = SiloxWidgetExtension;
+			productReference = 0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		504EC3031FED79650016851F /* App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
@@ -146,10 +236,13 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				0BF5EBC7300A42EE00B06097 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				0BF5EBC9300A430200B06097 /* PBXTargetDependency */,
+				0BF5EBDE300A43B900B06097 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -172,9 +265,12 @@
 					0BB04F1B2FF8696B00DAD3A9 = {
 						CreatedOnToolsVersion = 26.6;
 					};
+					0BF5EBCD300A43B800B06097 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
-						LastSwiftMigration = 1100;
+						LastSwiftMigration = 2660;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -197,12 +293,20 @@
 			targets = (
 				504EC3031FED79650016851F /* App */,
 				0BB04F1B2FF8696B00DAD3A9 /* GeminiExtension */,
+				0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		0BB04F1A2FF8696B00DAD3A9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0BF5EBCC300A43B800B06097 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -232,15 +336,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		0BF5EBCA300A43B800B06097 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0BF5EBC1300A3FE100B06097 /* WidgetStoragePlugin.m in Sources */,
+				0BF5EBC3300A415A00B06097 /* WidgetStoragePlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0BF5EBC9300A430200B06097 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */;
+			targetProxy = 0BF5EBC8300A430200B06097 /* PBXContainerItemProxy */;
+		};
+		0BF5EBDE300A43B900B06097 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */;
+			targetProxy = 0BF5EBDD300A43B900B06097 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -357,6 +483,84 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		0BF5EBE2300A43B900B06097 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MVY4C25YM4;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiloxWidget/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = SiloxWidgetExtension.entitlements;
+				INFOPLIST_KEY_CFBundleDisplayName = SiloxWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.SiloxWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0BF5EBE3300A43B900B06097 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MVY4C25YM4;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SiloxWidget/Info.plist;
+				CODE_SIGN_ENTITLEMENTS = SiloxWidgetExtension.entitlements;
+				INFOPLIST_KEY_CFBundleDisplayName = SiloxWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.SiloxWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -484,6 +688,8 @@
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MVY4C25YM4;
@@ -498,6 +704,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -507,6 +714,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MVY4C25YM4;
@@ -533,6 +742,15 @@
 			buildConfigurations = (
 				0BB04F2A2FF8696B00DAD3A9 /* Debug */,
 				0BB04F2B2FF8696B00DAD3A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0BF5EBE1300A43B900B06097 /* Build configuration list for PBXNativeTarget "SiloxWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0BF5EBE2300A43B900B06097 /* Debug */,
+				0BF5EBE3300A43B900B06097 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
