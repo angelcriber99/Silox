@@ -122,8 +122,12 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
                           </Badge>
                         </div>
                         <div className="text-right">
-                          <p className="font-mono">{tx.cantidad}</p>
-                          <p className="text-xs text-muted-foreground">{tx.precio_unitario}$</p>
+                          <p className="font-mono">
+                            {tx.tipo_operacion === 'Dividendo' ? tx.precio_unitario : tx.cantidad}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {tx.tipo_operacion === 'Dividendo' ? 'Dividendo' : tx.precio_unitario} {tx.moneda || '$'}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -176,7 +180,7 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
               )}
               
               {importSummary.imported.length === 0 && importSummary.ignored.length === 0 && importSummary.skipped.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">No se encontraron operaciones de compra/venta en el extracto.</p>
+                <p className="text-sm text-muted-foreground text-center py-8">No se encontraron compraventas ni dividendos en el extracto.</p>
               )}
             </div>
           </div>

@@ -29,6 +29,7 @@ interface TransactionRow {
   precio_unitario: number
   comision: number
   fecha: string
+  created_at?: string
 }
 
 function createImportDatabase() {
@@ -102,6 +103,22 @@ function revolutRequest() {
   return { formData: async () => formData } as Request
 }
 
+function revolutInvestingStatementRequest() {
+  const csv = [
+    'Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate',
+    '2025-03-03T16:03:28.999553Z,,CASH TOP-UP,,,EUR 1000,EUR,1.0000',
+    '2025-03-03T16:03:30.810Z,RHM,BUY - MARKET,0.8624407,EUR 1159.50,EUR 1000,EUR,1.0000',
+    '2025-05-06T16:15:38.390829Z,RHM,DIVIDEND,,,EUR 1.32,EUR,1.0000',
+    '2025-05-07T16:56:26.486057Z,,CASH WITHDRAWAL,,,EUR -20.64,EUR,1.0000',
+    '2025-05-08T07:03:33.055027Z,,REWARD,,,EUR 1.16,EUR,1.0000',
+    '2025-05-09T07:55:31.556Z,RHM,SELL - MARKET,0.3,EUR 1615,EUR 484.50,EUR,1.0000',
+  ].join('\n')
+  const file = new File([csv], 'revolut-investing.csv', { type: 'text/csv' })
+  const formData = new FormData()
+  formData.append('file', file)
+  return { formData: async () => formData } as Request
+}
+
 describe('broker import route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -145,4 +162,61 @@ describe('broker import route', () => {
     expect(database.assets[0]).toMatchObject({ ticker: 'WYFI', tipo: 'Acción' })
     expect(database.transactions.map((transaction) => transaction.tipo_operacion)).toEqual(['Compra', 'Venta'])
   })
+
+  it('imports Revolut investing trades and dividends without reporting cash movements as failures', async () => {
+    const database = createImportDatabase()
+    mocks.createClient.mockResolvedValue(database.client)
+
+    const first = await (await POST(revolutInvestingStatementRequest())).json()
+    const second = await (await POST(revolutInvestingStatementRequest())).json()
+
+    expect(first).toMatchObject({
+      success: true,
+      newTransactions: 3,
+      ignoredDuplicates: 0,
+      skipped: [],
+    })
+    expect(second).toMatchObject({ success: true, newTransactions: 0, ignoredDuplicates: 3 })
+    expect(database.assets).toHaveLength(1)
+    expect(database.assets[0]).toMatchObject({ ticker: 'RHM', tipo: 'Acción', moneda: 'EUR' })
+    expect(database.transactions).toHaveLength(3)
+    expect(database.transactions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        tipo_operacion: 'Compra',
+        cantidad: 0.8624407,
+        precio_unitario: 1000 / 0.8624407,
+        created_at: '2025-03-03T16:03:30.810Z',
+      }),
+      expect.objectContaining({ tipo_operacion: 'Dividendo', cantidad: 1, precio_unitario: 1.32 }),
+      expect.objectContaining({ tipo_operacion: 'Venta', cantidad: 0.3, precio_unitario: 484.5 / 0.3 }),
+    ]))
+  })
+
+  it('does not duplicate a dividend that was already entered manually', async () => {
+    const database = createImportDatabase()
+    database.assets.push({
+      id: 'asset-manual',
+      ticker: 'RHM',
+      isin: null,
+      tipo: 'Acción',
+      sector: 'Desconocido',
+      moneda: 'EUR',
+    })
+    database.transactions.push({
+      id: 'dividend-manual',
+      activo_id: 'asset-manual',
+      tipo_operacion: 'Dividendo',
+      cantidad: 0,
+      precio_unitario: 1.32,
+      comision: 0,
+      fecha: '2025-05-06',
+    })
+    mocks.createClient.mockResolvedValue(database.client)
+
+    const result = await (await POST(revolutInvestingStatementRequest())).json()
+
+    expect(result).toMatchObject({ success: true, newTransactions: 2, ignoredDuplicates: 1 })
+    expect(database.transactions.filter((transaction) => transaction.tipo_operacion === 'Dividendo')).toHaveLength(1)
+  })
+
 })

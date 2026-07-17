@@ -38,9 +38,17 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
     return acc
   }, {} as Record<string, Transaccion[]>)
 
-  for (const [activoId, txs] of Object.entries(txByAsset)) {
-    // Sort asc by date
-    const sorted = [...txs].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+  for (const txs of Object.values(txByAsset)) {
+    // Preserve the broker execution order for operations that share a date.
+    const sorted = [...txs].sort((a, b) => {
+      const byDate = a.fecha.localeCompare(b.fecha)
+      if (byDate !== 0) return byDate
+
+      const byCreation = (a.created_at || '').localeCompare(b.created_at || '')
+      if (byCreation !== 0) return byCreation
+
+      return (a.id || '').localeCompare(b.id || '')
+    })
     
     const buyLots: BuyLot[] = []
 

@@ -2,10 +2,11 @@ import { z } from 'zod'
 
 export const revolutImportTransactionSchema = z.object({
   ticker: z.string(),
-  tipo_operacion: z.enum(['Compra', 'Venta']),
+  tipo_operacion: z.enum(['Compra', 'Venta', 'Dividendo']),
   cantidad: z.number(),
   precio_unitario: z.number(),
   fecha: z.string(),
+  moneda: z.string().optional(),
 })
 
 export const revolutImportSuccessSchema = z.object({
@@ -25,4 +26,3 @@ export const apiErrorSchema = z.object({
 
 export type RevolutImportTransaction = z.infer<typeof revolutImportTransactionSchema>
 export type RevolutImportSuccess = z.infer<typeof revolutImportSuccessSchema>
-

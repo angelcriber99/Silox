@@ -10,7 +10,7 @@ import {
 
 export const runtime = 'nodejs'
 
-type ImportOperation = 'Compra' | 'Venta'
+type ImportOperation = 'Compra' | 'Venta' | 'Dividendo'
 type AssetKind = 'Acción' | 'ETF' | 'Fondo Indexado' | 'Crypto' | 'Metal'
 
 interface ParsedImportTransaction {
@@ -26,6 +26,7 @@ interface ParsedImportTransaction {
   fecha: string
   comision: number
   isin?: string
+  sourceTimestamp?: string
 }
 
 function toDatabaseTransaction(transaction: ParsedImportTransaction) {
@@ -36,6 +37,7 @@ function toDatabaseTransaction(transaction: ParsedImportTransaction) {
     precio_unitario: transaction.precio_unitario,
     fecha: transaction.fecha,
     comision: transaction.comision,
+    ...(transaction.sourceTimestamp ? { created_at: transaction.sourceTimestamp } : {}),
   }
 }
 
@@ -196,6 +198,14 @@ function parseDate(value: unknown): string | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().split('T')[0]
 }
 
+function parseSourceTimestamp(value: unknown): string | undefined {
+  const raw = normalizeText(value)
+  if (!raw || !raw.includes('T')) return undefined
+
+  const timestamp = new Date(raw)
+  return Number.isNaN(timestamp.getTime()) ? undefined : timestamp.toISOString()
+}
+
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
   let row: string[] = []
@@ -324,7 +334,7 @@ async function resolveMyInvestorAsset(isin: string, statementName: string): Prom
   return { ticker: isin, name: statementName, type: 'Fondo Indexado', currency: 'EUR' }
 }
 
-function inferAsset(rawTicker: string, rowText: string): {
+function inferAsset(rawTicker: string, rowText: string, statementCurrency?: string): {
   ticker: string
   rawTicker: string
   nombre: string
@@ -360,12 +370,14 @@ function inferAsset(rawTicker: string, rowText: string): {
     }
   }
 
+  const currency = normalizeText(statementCurrency).toUpperCase()
+
   return {
     ticker: upper,
     rawTicker: upper,
     nombre: upper,
     tipoActivo: 'Acción',
-    moneda: 'USD',
+    moneda: FIAT_SYMBOLS.has(currency) ? currency : 'USD',
   }
 }
 
@@ -374,6 +386,8 @@ function inferOperation(typeValue: string, description: string, quantity: number
   const text = `${normalizedType} ${normalizeOperationText(description)}`
 
   if (normalizedType === 'staking') return null
+
+  if (/(^|\s)(dividend|dividendo)(\s|$)/.test(text)) return 'Dividendo'
 
   if (/(^|\s)(buy|bought|compra|comprar|comprado)(\s|$)/.test(text)) return 'Compra'
   if (/(^|\s)(sell|sold|venta|vender|vendido)(\s|$)/.test(text)) return 'Venta'
@@ -388,6 +402,11 @@ function inferOperation(typeValue: string, description: string, quantity: number
   }
 
   return null
+}
+
+function isNonInvestmentMovement(typeValue: string): boolean {
+  const type = normalizeOperationText(typeValue)
+  return /^(cash\s+(top-up|withdrawal)|reward)$/.test(type)
 }
 
 function normalizeOperationText(value: string): string {
@@ -505,6 +524,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
   const priceIdx = findIndex(headers, ['price', 'precio', 'unitprice', 'priceperunit', 'pricepershare', 'shareprice', 'averageprice', 'avgprice', 'rate'])
   const totalIdx = findIndex(headers, ['total', 'value', 'totalamount', 'totalvalue', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
   const feeIdx = findIndex(headers, ['fee', 'fees', 'commission', 'comision'])
+  const currencyIdx = findIndex(headers, ['currency', 'divisa', 'moneda'])
   const nameIdx = findIndex(headers, ['name', 'nombre', 'instrumentname', 'assetname', 'product'])
   const descriptionIdx = findIndex(headers, ['description', 'descripcion', 'details', 'concept'])
   const isCryptoAccountStatement =
@@ -532,7 +552,12 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     const description = normalizeText(row[descriptionIdx])
     const operation = inferOperation(typeValue, description, quantityRaw)
 
-    if (!rawTicker || !date || !operation || !Number.isFinite(quantity) || quantity <= 0) {
+    if (isNonInvestmentMovement(typeValue)) continue
+
+    const isDividend = operation === 'Dividendo'
+    const effectiveQuantity = isDividend ? 1 : quantity
+
+    if (!rawTicker || !date || !operation || !Number.isFinite(effectiveQuantity) || effectiveQuantity <= 0) {
       if (rawTicker || normalizeText(row[dateIdx])) {
         skipped.push({ ticker: rawTicker || 'Desconocido', fecha: normalizeText(row[dateIdx]), reason: 'Datos incompletos o cantidad inválida' })
       }
@@ -547,7 +572,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
           tipoActivo: 'Crypto' as const,
           moneda: 'USD',
         }
-      : inferAsset(rawTicker, rowText)
+      : inferAsset(rawTicker, rowText, normalizeText(row[currencyIdx]))
     const price = parseNumber(row[priceIdx])
     const total = parseNumber(row[totalIdx])
     const pairedFiatTotal = asset.tipoActivo === 'Crypto'
@@ -558,12 +583,14 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
     )
-    const precioUnitario = Number.isFinite(price) && price > 0
-      ? price
+    const precioUnitario = isDividend && Number.isFinite(total) && total !== 0
+      ? Math.abs(total)
       : Number.isFinite(total) && total !== 0
-        ? Math.abs(total) / quantity
+        ? Math.abs(total) / effectiveQuantity
+        : Number.isFinite(price) && price > 0
+          ? price
         : Number.isFinite(pairedFiatTotal) && pairedFiatTotal > 0
-          ? pairedFiatTotal / quantity
+          ? pairedFiatTotal / effectiveQuantity
           : isZeroCostCryptoInflow
             ? 0
             : Number.NaN
@@ -583,10 +610,11 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
       tipoActivo: asset.tipoActivo,
       moneda: asset.moneda,
       tipo_operacion: operation,
-      cantidad: quantity,
+      cantidad: effectiveQuantity,
       precio_unitario: precioUnitario,
       fecha: date,
       comision: Number.isFinite(parseNumber(row[feeIdx])) ? Math.abs(parseNumber(row[feeIdx])) : 0,
+      sourceTimestamp: parseSourceTimestamp(row[dateIdx]),
     })
   }
 
@@ -755,7 +783,7 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParseRe
       }
     }
 
-    let effectiveUnitPriceEur = valueEur && valueEur > 0
+    const effectiveUnitPriceEur = valueEur && valueEur > 0
       ? valueEur / quantity
       : Number.NaN
 
@@ -992,7 +1020,7 @@ export async function POST(request: Request) {
     if (parsedTransactions.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No se encontraron operaciones de compra/venta en este archivo.',
+        message: 'No se encontraron compraventas ni dividendos en este archivo.',
         newTransactions: 0,
         updatedTransactions: 0,
         ignoredDuplicates: 0,
@@ -1077,7 +1105,8 @@ export async function POST(request: Request) {
       const matchingExisting = existingTransactions?.find(existing => {
         const isSameActivo = existing.activo_id === activo_id
         const isSameType = existing.tipo_operacion === tx.tipo_operacion
-        const isSameQty = Math.abs(existing.cantidad - tx.cantidad) < 0.00000001
+        const isSameQty = tx.tipo_operacion === 'Dividendo'
+          || Math.abs(existing.cantidad - tx.cantidad) < 0.00000001
         const isSameDate = existing.fecha === tx.fecha
         return isSameActivo && isSameType && isSameQty && isSameDate
       })
