@@ -7,11 +7,12 @@ import {
   parseMyInvestorStatement,
   type ResolvedMyInvestorAsset,
 } from '@/lib/domain/imports/myinvestor'
+import { externalFlowNote } from '@/lib/domain/portfolio/contributions'
 
 export const runtime = 'nodejs'
 
 type ImportOperation = 'Compra' | 'Venta' | 'Dividendo'
-type AssetKind = 'Acción' | 'ETF' | 'Fondo Indexado' | 'Crypto' | 'Metal'
+type AssetKind = 'Acción' | 'ETF' | 'Fondo Indexado' | 'Crypto' | 'Metal' | 'Liquidity'
 
 interface ParsedImportTransaction {
   user_id: string
@@ -27,6 +28,8 @@ interface ParsedImportTransaction {
   comision: number
   isin?: string
   sourceTimestamp?: string
+  notas?: string
+  includeInSummary?: boolean
 }
 
 function toDatabaseTransaction(transaction: ParsedImportTransaction) {
@@ -37,6 +40,7 @@ function toDatabaseTransaction(transaction: ParsedImportTransaction) {
     precio_unitario: transaction.precio_unitario,
     fecha: transaction.fecha,
     comision: transaction.comision,
+    ...(transaction.notas ? { notas: transaction.notas } : {}),
     ...(transaction.sourceTimestamp ? { created_at: transaction.sourceTimestamp } : {}),
   }
 }
@@ -200,10 +204,18 @@ function parseDate(value: unknown): string | null {
 
 function parseSourceTimestamp(value: unknown): string | undefined {
   const raw = normalizeText(value)
-  if (!raw || !raw.includes('T')) return undefined
+  if (!raw || (!raw.includes('T') && !/\d{2}:\d{2}/.test(raw))) return undefined
 
-  const timestamp = new Date(raw)
+  const normalized = raw.includes('T') ? raw : `${raw.replace(' ', 'T')}Z`
+  const timestamp = new Date(normalized)
   return Number.isNaN(timestamp.getTime()) ? undefined : timestamp.toISOString()
+}
+
+function timestampsMatch(left: string | null | undefined, right: string | null | undefined): boolean {
+  if (!left || !right) return left === right
+  const leftTime = new Date(left).getTime()
+  const rightTime = new Date(right).getTime()
+  return Number.isFinite(leftTime) && Number.isFinite(rightTime) && leftTime === rightTime
 }
 
 function parseCsv(text: string): string[][] {
@@ -290,19 +302,21 @@ function getLegacyMetalTickers(symbol: string): string[] {
 }
 
 function getAssetSector(kind: AssetKind): string {
+  if (kind === 'Liquidity') return 'Liquidez'
   if (kind === 'Crypto') return 'Crypto'
   if (kind === 'Metal') return 'Metales'
   if (kind === 'ETF' || kind === 'Fondo Indexado') return 'Fondos'
   return 'Desconocido'
 }
 
-function getDatabaseAssetType(kind: AssetKind): 'Acción' | 'ETF' | 'Fondo Indexado' | 'Crypto' {
+function getDatabaseAssetType(kind: AssetKind): 'Acción' | 'ETF' | 'Fondo Indexado' | 'Fondo Monetario' | 'Crypto' {
   if (kind === 'Metal') return 'Crypto'
+  if (kind === 'Liquidity') return 'Fondo Monetario'
   return kind
 }
 
 function getAssetGeography(kind: AssetKind): string {
-  if (kind === 'Crypto' || kind === 'Metal' || kind === 'ETF' || kind === 'Fondo Indexado') return 'Global'
+  if (kind === 'Crypto' || kind === 'Metal' || kind === 'ETF' || kind === 'Fondo Indexado' || kind === 'Liquidity') return 'Global'
   return 'Desconocida'
 }
 
@@ -498,6 +512,94 @@ export interface SkippedImportTransaction {
 export interface ParseResult {
   parsed: ParsedImportTransaction[]
   skipped: SkippedImportTransaction[]
+  cashMovements?: ParsedImportTransaction[]
+}
+
+function cashTicker(currency: string): string {
+  return currency === 'EUR' ? 'CASH' : `CASH-${currency}`
+}
+
+function createCashMovement(input: {
+  userId: string
+  currency: string
+  operation: 'Compra' | 'Venta'
+  amount: number
+  date: string
+  sourceTimestamp?: string
+  notes: string
+}): ParsedImportTransaction {
+  const ticker = cashTicker(input.currency)
+  return {
+    user_id: input.userId,
+    ticker,
+    rawTicker: ticker,
+    nombre: input.currency === 'EUR' ? 'Efectivo' : `Efectivo ${input.currency}`,
+    tipoActivo: 'Liquidity',
+    moneda: input.currency,
+    tipo_operacion: input.operation,
+    cantidad: input.amount,
+    precio_unitario: 1,
+    fecha: input.date,
+    comision: 0,
+    sourceTimestamp: input.sourceTimestamp,
+    notas: input.notes,
+    includeInSummary: false,
+  }
+}
+
+function parseBrokerCashMovements(rows: string[][], userId: string): ParsedImportTransaction[] {
+  if (rows.length < 2) return []
+
+  const headers = rows[0].map(normalizeHeader)
+  const dateIdx = findIndex(headers, ['date', 'fecha'])
+  const typeIdx = findIndex(headers, ['type', 'tipo'])
+  const totalIdx = findIndex(headers, ['totalamount', 'total', 'value'])
+  const currencyIdx = findIndex(headers, ['currency', 'divisa', 'moneda'])
+  const fxIdx = findIndex(headers, ['fxrate', 'tipodecambio', 'exchangerate'])
+  if (dateIdx < 0 || typeIdx < 0 || totalIdx < 0 || currencyIdx < 0) return []
+
+  const cashMovements: ParsedImportTransaction[] = []
+  for (const row of rows.slice(1)) {
+    const date = parseDate(row[dateIdx])
+    const sourceTimestamp = parseSourceTimestamp(row[dateIdx])
+    const type = normalizeOperationText(normalizeText(row[typeIdx]))
+    const amount = Math.abs(parseNumber(row[totalIdx]))
+    const currency = normalizeText(row[currencyIdx]).toUpperCase()
+    const fxRate = parseNumber(row[fxIdx])
+    if (!date || !Number.isFinite(amount) || amount <= 0 || !FIAT_SYMBOLS.has(currency)) continue
+
+    let operation: 'Compra' | 'Venta' | null = null
+    let notes = `[REVOLUT_CASH] ${normalizeText(row[typeIdx])}`
+
+    if (type === 'cash top-up') {
+      operation = 'Compra'
+      const eurAmount = currency === 'EUR' ? amount : amount / fxRate
+      if (!Number.isFinite(eurAmount) || eurAmount <= 0) continue
+      notes = externalFlowNote(eurAmount, 'Aportación a la cuenta de inversión')
+    } else if (type === 'cash withdrawal') {
+      operation = 'Venta'
+      const eurAmount = currency === 'EUR' ? amount : amount / fxRate
+      if (!Number.isFinite(eurAmount) || eurAmount <= 0) continue
+      notes = externalFlowNote(eurAmount, 'Retirada de la cuenta de inversión')
+    } else if (type.startsWith('buy')) {
+      operation = 'Venta'
+    } else if (type.startsWith('sell') || type === 'dividend' || type === 'reward') {
+      operation = 'Compra'
+    }
+
+    if (!operation) continue
+    cashMovements.push(createCashMovement({
+      userId,
+      currency,
+      operation,
+      amount,
+      date,
+      sourceTimestamp,
+      notes,
+    }))
+  }
+
+  return cashMovements
 }
 
 async function parseRows(rows: string[][], userId: string): Promise<ParseResult> {
@@ -618,7 +720,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     })
   }
 
-  return { parsed, skipped }
+  return { parsed, skipped, cashMovements: parseBrokerCashMovements(rows, userId) }
 }
 
 function isMetalAccountStatement(headers: string[]): boolean {
@@ -698,6 +800,7 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParseRe
 
   const parsed: ParsedImportTransaction[] = []
   const skipped: SkippedImportTransaction[] = []
+  const cashMovements: ParsedImportTransaction[] = []
   const metalRateCache = new Map<string, Promise<MetalRates | null>>()
 
   for (const row of rows.slice(1)) {
@@ -711,6 +814,7 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParseRe
     const feeInUnits = Math.abs(parseNumber(row[feeIdx]))
     const rawDateKey = normalizeText(row[dateIdx])
     const date = parseDate(rawDateKey)
+    const sourceTimestamp = parseSourceTimestamp(rawDateKey)
     const description = normalizeText(row[descriptionIdx])
     const operation: ImportOperation | null = amount > 0 ? 'Compra' : amount < 0 ? 'Venta' : null
 
@@ -792,6 +896,67 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParseRe
       continue
     }
 
+    const isMetalToMetal = conversionTarget != null
+      && METAL_SYMBOLS.has(conversionTarget)
+      && (
+        conversionTarget !== metalSymbol
+        || rows.slice(1).some((candidate) => {
+          if (candidate === row) return false
+          const candidateCurrency = normalizeText(candidate[currencyIdx]).toUpperCase().replace(/[^A-Z0-9]/g, '')
+          const candidateAmount = parseNumber(candidate[amountIdx])
+          const candidateTarget = getConversionTargetCurrency(normalizeText(candidate[descriptionIdx]))
+          return candidateCurrency !== metalSymbol
+            && METAL_SYMBOLS.has(candidateCurrency)
+            && candidateAmount < 0
+            && candidateTarget === metalSymbol
+            && normalizeText(candidate[dateIdx]) === rawDateKey
+        })
+      )
+
+    if (!isMetalToMetal && conversionTarget === metalSymbol && operation === 'Compra') {
+      cashMovements.push(
+        createCashMovement({
+          userId,
+          currency: 'EUR',
+          operation: 'Compra',
+          amount: valueEur!,
+          date,
+          sourceTimestamp,
+          notes: externalFlowNote(valueEur!, `Compra de ${metalSymbol}`),
+        }),
+        createCashMovement({
+          userId,
+          currency: 'EUR',
+          operation: 'Venta',
+          amount: valueEur!,
+          date,
+          sourceTimestamp,
+          notes: `[REVOLUT_CASH] Compra de ${metalSymbol}`,
+        }),
+      )
+    } else if (!isMetalToMetal && conversionTarget && FIAT_SYMBOLS.has(conversionTarget) && operation === 'Venta') {
+      cashMovements.push(
+        createCashMovement({
+          userId,
+          currency: 'EUR',
+          operation: 'Compra',
+          amount: valueEur!,
+          date,
+          sourceTimestamp,
+          notes: `[REVOLUT_CASH] Venta de ${metalSymbol}`,
+        }),
+        createCashMovement({
+          userId,
+          currency: 'EUR',
+          operation: 'Venta',
+          amount: valueEur!,
+          date,
+          sourceTimestamp,
+          notes: externalFlowNote(valueEur!, `Retirada tras venta de ${metalSymbol}`),
+        }),
+      )
+    }
+
     parsed.push({
       user_id: userId,
       ticker: normalizeMetalTicker(metalSymbol),
@@ -804,10 +969,11 @@ async function parseMetalRows(rows: string[][], userId: string): Promise<ParseRe
       precio_unitario: effectiveUnitPriceEur,
       fecha: date,
       comision: 0,
+      sourceTimestamp,
     })
   }
 
-  return { parsed, skipped }
+  return { parsed, skipped, cashMovements }
 }
 
 function parseInternalCryptoMovements(rows: string[][], userId: string): ParseResult {
@@ -959,6 +1125,8 @@ export async function POST(request: Request) {
 
     const mainResult = await parseRows(rows, user.id)
     const parsedTransactions = mainResult.parsed
+    const cashMovements = mainResult.cashMovements ?? []
+    const transactionsToProcess = [...parsedTransactions, ...cashMovements]
     let skippedTransactions = mainResult.skipped
 
     const cryptoResult = parseInternalCryptoMovements(rows, user.id)
@@ -972,7 +1140,7 @@ export async function POST(request: Request) {
 
     let { data: existingTransactions } = await supabase
       .from('transacciones')
-      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha, created_at, notas')
       .eq('user_id', user.id)
 
     let removedInternalMovements = 0
@@ -1017,13 +1185,14 @@ export async function POST(request: Request) {
       }
     }
 
-    if (parsedTransactions.length === 0) {
+    if (transactionsToProcess.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'No se encontraron compraventas ni dividendos en este archivo.',
         newTransactions: 0,
         updatedTransactions: 0,
         ignoredDuplicates: 0,
+        accountingMovements: 0,
         removedInternalMovements,
         imported: [],
         ignored: [],
@@ -1033,11 +1202,15 @@ export async function POST(request: Request) {
     let newTxCount = 0
     let ignoredCount = 0
     let updatedTxCount = 0
+    let accountingMovementsCount = 0
+    let ignoredAccountingMovements = 0
+    let updatedAccountingMovements = 0
     const toInsert = []
     const imported = []
     const ignored = []
 
-    for (const tx of parsedTransactions) {
+    for (const tx of transactionsToProcess) {
+      const includeInSummary = tx.includeInSummary !== false
       let activo_id = null
       const existingActivo = activos?.find(a =>
         a.ticker === tx.ticker ||
@@ -1079,7 +1252,7 @@ export async function POST(request: Request) {
             isin: tx.isin ?? null,
             nombre: tx.nombre,
             tipo: dbTipo,
-            estrategia: 'Satellite',
+            estrategia: tx.tipoActivo === 'Liquidity' ? 'Core' : 'Satellite',
             moneda: tx.moneda,
             sector: getAssetSector(tx.tipoActivo),
             geografia: getAssetGeography(tx.tipoActivo),
@@ -1105,13 +1278,39 @@ export async function POST(request: Request) {
       const matchingExisting = existingTransactions?.find(existing => {
         const isSameActivo = existing.activo_id === activo_id
         const isSameType = existing.tipo_operacion === tx.tipo_operacion
-        const isSameQty = tx.tipo_operacion === 'Dividendo'
+        const isSameQty = !includeInSummary || tx.tipo_operacion === 'Dividendo'
           || Math.abs(existing.cantidad - tx.cantidad) < 0.00000001
         const isSameDate = existing.fecha === tx.fecha
-        return isSameActivo && isSameType && isSameQty && isSameDate
+        const isSameSource = includeInSummary
+          || !tx.sourceTimestamp
+          || timestampsMatch(existing.created_at, tx.sourceTimestamp)
+        return isSameActivo && isSameType && isSameQty && isSameDate && isSameSource
       })
 
-      if (matchingExisting && tx.tipoActivo === 'Metal') {
+      if (matchingExisting && !includeInSummary) {
+        const shouldUpdate = Math.abs(matchingExisting.cantidad - tx.cantidad) >= 0.00000001
+          || matchingExisting.notas !== tx.notas
+
+        if (shouldUpdate) {
+          const { error: updateError } = await supabase
+            .from('transacciones')
+            .update({ cantidad: tx.cantidad, notas: tx.notas ?? null })
+            .eq('id', matchingExisting.id)
+            .eq('user_id', user.id)
+
+          if (updateError) {
+            return NextResponse.json({
+              error: `No se pudo actualizar la conciliación de efectivo: ${updateError.message}`,
+            }, { status: 500 })
+          }
+
+          matchingExisting.cantidad = tx.cantidad
+          matchingExisting.notas = tx.notas ?? null
+          updatedAccountingMovements++
+        } else {
+          ignoredAccountingMovements++
+        }
+      } else if (matchingExisting && tx.tipoActivo === 'Metal') {
         const shouldUpdate =
           Math.abs(matchingExisting.precio_unitario - tx.precio_unitario) >= 0.01 ||
           Math.abs((matchingExisting.comision ?? 0) - tx.comision) >= 0.01
@@ -1134,23 +1333,37 @@ export async function POST(request: Request) {
 
           matchingExisting.precio_unitario = tx.precio_unitario
           matchingExisting.comision = tx.comision
-          imported.push(tx)
-          updatedTxCount++
+          if (includeInSummary) {
+            imported.push(tx)
+            updatedTxCount++
+          }
         } else {
-          ignoredCount++
-          ignored.push(tx)
+          if (includeInSummary) {
+            ignoredCount++
+            ignored.push(tx)
+          } else {
+            ignoredAccountingMovements++
+          }
         }
       } else if (matchingExisting && Math.abs(matchingExisting.precio_unitario - tx.precio_unitario) < 0.01) {
-        ignoredCount++
-        ignored.push(tx)
+        if (includeInSummary) {
+          ignoredCount++
+          ignored.push(tx)
+        } else {
+          ignoredAccountingMovements++
+        }
       } else {
         toInsert.push({
           ...toDatabaseTransaction(tx),
           activo_id,
           estado: 'Completada',
         })
-        imported.push(tx)
-        newTxCount++
+        if (includeInSummary) {
+          imported.push(tx)
+          newTxCount++
+        } else {
+          accountingMovementsCount++
+        }
       }
     }
 
@@ -1164,7 +1377,15 @@ export async function POST(request: Request) {
       }
     }
 
-    if (parsedTransactions.length > 0 && newTxCount === 0 && ignoredCount === 0) {
+    if (
+      transactionsToProcess.length > 0
+      && newTxCount === 0
+      && ignoredCount === 0
+      && updatedTxCount === 0
+      && accountingMovementsCount === 0
+      && ignoredAccountingMovements === 0
+      && updatedAccountingMovements === 0
+    ) {
       return NextResponse.json({
         error: `Se leyeron ${parsedTransactions.length} movimientos, pero no se pudo asociar ninguno a un activo.`,
       }, { status: 500 })
@@ -1175,6 +1396,9 @@ export async function POST(request: Request) {
       newTransactions: newTxCount,
       updatedTransactions: updatedTxCount,
       ignoredDuplicates: ignoredCount,
+      accountingMovements: accountingMovementsCount,
+      ignoredAccountingMovements,
+      updatedAccountingMovements,
       removedInternalMovements,
       imported,
       ignored,

@@ -11,6 +11,7 @@ vi.mock('@/lib/server/yahoo-finance', () => ({
 }))
 
 import { POST } from '@/app/api/import/revolut/route'
+import { calculateNetContributions } from '@/lib/domain/portfolio/contributions'
 
 interface AssetRow {
   id: string
@@ -30,6 +31,7 @@ interface TransactionRow {
   comision: number
   fecha: string
   created_at?: string
+  notas?: string
 }
 
 function createImportDatabase() {
@@ -122,6 +124,7 @@ function revolutInvestingStatementRequest() {
 describe('broker import route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllGlobals()
     mocks.yahooSearch.mockResolvedValue({
       quotes: [{ isYahooFinance: true, symbol: '0P0001AINF.F', quoteType: 'MUTUALFUND', longname: 'MSCI World Index Fund' }],
     })
@@ -174,12 +177,22 @@ describe('broker import route', () => {
       success: true,
       newTransactions: 3,
       ignoredDuplicates: 0,
+      accountingMovements: 6,
       skipped: [],
     })
-    expect(second).toMatchObject({ success: true, newTransactions: 0, ignoredDuplicates: 3 })
-    expect(database.assets).toHaveLength(1)
-    expect(database.assets[0]).toMatchObject({ ticker: 'RHM', tipo: 'Acción', moneda: 'EUR' })
-    expect(database.transactions).toHaveLength(3)
+    expect(second).toMatchObject({
+      success: true,
+      newTransactions: 0,
+      ignoredDuplicates: 3,
+      accountingMovements: 0,
+      ignoredAccountingMovements: 6,
+    })
+    expect(database.assets).toHaveLength(2)
+    expect(database.assets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ticker: 'RHM', tipo: 'Acción', moneda: 'EUR' }),
+      expect.objectContaining({ ticker: 'CASH', tipo: 'Fondo Monetario', estrategia: 'Core', moneda: 'EUR' }),
+    ]))
+    expect(database.transactions).toHaveLength(9)
     expect(database.transactions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         tipo_operacion: 'Compra',
@@ -190,6 +203,13 @@ describe('broker import route', () => {
       expect.objectContaining({ tipo_operacion: 'Dividendo', cantidad: 1, precio_unitario: 1.32 }),
       expect.objectContaining({ tipo_operacion: 'Venta', cantidad: 0.3, precio_unitario: 484.5 / 0.3 }),
     ]))
+
+    const cashAsset = database.assets.find((asset) => asset.ticker === 'CASH')!
+    const cashTransactions = database.transactions.filter((transaction) => transaction.activo_id === cashAsset.id)
+    const cashBalance = cashTransactions.reduce((total, transaction) =>
+      total + (transaction.tipo_operacion === 'Compra' ? transaction.cantidad : -transaction.cantidad), 0)
+    expect(cashBalance).toBeCloseTo(466.34, 8)
+    expect(calculateNetContributions(cashTransactions)).toBeCloseTo(979.36, 8)
   })
 
   it('does not duplicate a dividend that was already entered manually', async () => {
@@ -217,6 +237,33 @@ describe('broker import route', () => {
 
     expect(result).toMatchObject({ success: true, newTransactions: 2, ignoredDuplicates: 1 })
     expect(database.transactions.filter((transaction) => transaction.tipo_operacion === 'Dividendo')).toHaveLength(1)
+  })
+
+  it('reconciles external metal funding separately from metal-to-cash movements', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      date: '2026-01-01',
+      eur: { xpd: 0.001, xag: 0.02 },
+    }), { status: 200 })))
+    const database = createImportDatabase()
+    mocks.createClient.mockResolvedValue(database.client)
+    const csv = [
+      'Tipo,Producto,Fecha de inicio,Fecha de finalización,Descripción,Importe,Comisión,Divisa,State,Saldo',
+      'Cambio,Actual,2026-01-01 10:00:00,2026-01-01 10:00:00,Conversión a XPD,0.200000,0.001000,XPD,COMPLETADO,0.199000',
+      'Cambio,Actual,2026-02-01 10:00:00,2026-02-01 10:00:00,Conversión a EUR,-0.100000,0.000000,XPD,COMPLETADO,0.099000',
+      'Cambio,Actual,2026-03-01 10:00:00,2026-03-01 10:00:00,Conversión a XAG,-0.050000,0.000000,XPD,COMPLETADO,0.049000',
+      'Cambio,Actual,2026-03-01 10:00:00,2026-03-01 10:00:00,Conversión a XAG,1.000000,0.005000,XAG,COMPLETADO,0.995000',
+    ].join('\n')
+    const formData = new FormData()
+    formData.append('file', new File([csv], 'metals.csv', { type: 'text/csv' }))
+
+    const result = await (await POST({ formData: async () => formData } as Request)).json()
+
+    expect(result).toMatchObject({ success: true, newTransactions: 4, accountingMovements: 4 })
+    const cashAsset = database.assets.find((asset) => asset.ticker === 'CASH')!
+    const cashTransactions = database.transactions.filter((transaction) => transaction.activo_id === cashAsset.id)
+    expect(calculateNetContributions(cashTransactions)).toBeCloseTo(100, 8)
+    expect(cashTransactions.reduce((total, transaction) =>
+      total + (transaction.tipo_operacion === 'Compra' ? transaction.cantidad : -transaction.cantidad), 0)).toBeCloseTo(0, 8)
   })
 
 })

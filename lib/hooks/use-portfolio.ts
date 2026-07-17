@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useEffect, useRef, useState } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
-import { fetchPosiciones, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
+import { fetchPosiciones, fetchNetPortfolioContributions, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
 import { savePortfolioHistory } from '@/lib/api/assets'
 import { usePrices } from "./use-prices"
 import { createClient } from '@/lib/supabase/client'
@@ -27,6 +27,15 @@ export function usePendingTransactions(options?: { enabled?: boolean }) {
   })
 }
 
+export function useNetPortfolioContributions(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["net-portfolio-contributions"],
+    queryFn: fetchNetPortfolioContributions,
+    staleTime: 60_000,
+    enabled: options?.enabled ?? true,
+  })
+}
+
 export function usePortfolio(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true
   const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
@@ -42,14 +51,25 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     refetch: refetchPending,
   } = usePendingTransactions({ enabled })
 
+  const {
+    data: netContributions,
+    isLoading: contributionsLoading,
+    error: contributionsError,
+    refetch: refetchContributions,
+  } = useNetPortfolioContributions({ enabled })
+
   // The posiciones view is the confirmed accounting source of truth. Pending
   // orders are fetched separately for projected balances and UI badges.
   const confirmedPositions = useMemo(() => {
-    return (positions ?? []).filter(p => p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez')
+    return (positions ?? []).filter(p => p.ticker.startsWith('CASH') || (
+      p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez'
+    ))
   }, [positions])
 
   const tickers = useMemo(
-    () => confirmedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker),
+    () => confirmedPositions
+      .filter((p) => p.unidades > 0 && !p.ticker.startsWith('CASH'))
+      .map((p) => p.ticker),
     [confirmedPositions]
   )
 
@@ -66,19 +86,19 @@ export function usePortfolio(options?: { enabled?: boolean }) {
   }, [confirmedPositions, pricePayload])
 
   const totals: PortfolioTotals = useMemo(
-    () => computePortfolioTotals(enriched),
-    [enriched]
+    () => computePortfolioTotals(enriched, netContributions),
+    [enriched, netContributions]
   )
 
   const snapshotSaved = useRef(false)
 
   // Save portfolio history automatically
   useEffect(() => {
-    if (enabled && !positionsLoading && !pricesLoading && totals.totalValue > 0 && !snapshotSaved.current) {
+    if (enabled && !positionsLoading && !pricesLoading && !contributionsLoading && totals.totalValue > 0 && !snapshotSaved.current) {
       snapshotSaved.current = true
       savePortfolioHistory(totals.totalValue, totals.totalCost).catch(console.error)
     }
-  }, [enabled, totals.totalValue, totals.totalCost, positionsLoading, pricesLoading])
+  }, [enabled, totals.totalValue, totals.totalCost, positionsLoading, pricesLoading, contributionsLoading])
 
   // Supabase Realtime: Súper Tiempo Real
   useEffect(() => {
@@ -91,6 +111,7 @@ export function usePortfolio(options?: { enabled?: boolean }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transacciones' }, () => {
         refetchPositions()
         refetchPending()
+        refetchContributions()
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activos' }, () => {
         refetchPositions()
@@ -104,12 +125,13 @@ export function usePortfolio(options?: { enabled?: boolean }) {
       setRealtimeStatus('disconnected')
       supabase.removeChannel(channel)
     }
-  }, [enabled, refetchPositions, refetchPending])
+  }, [enabled, refetchPositions, refetchPending, refetchContributions])
 
   const refetch = async () => {
     await Promise.all([
       refetchPositions(),
       refetchPending(),
+      refetchContributions(),
       refetchPrices(),
     ])
   }
@@ -117,9 +139,9 @@ export function usePortfolio(options?: { enabled?: boolean }) {
   return {
     positions: enriched,
     totals,
-    isLoading: positionsLoading,
+    isLoading: positionsLoading || contributionsLoading,
     pricesLoading,
-    error: positionsError,
+    error: positionsError || contributionsError,
     refetch,
     refetchPrices,
     pricesUpdatedAt,

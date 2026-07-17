@@ -156,7 +156,7 @@ export function MobileDashboard({
           </div>
 
           <div className="mt-4 grid grid-cols-3 border-t border-border/60 pt-3">
-            <Metric label="Invertido" value={hideBalances ? "••••" : formatCurrency(totals.totalCost)} />
+            <Metric label="Aportado neto" value={hideBalances ? "••••" : formatCurrency(totals.totalCost)} />
             <Metric
               label="P&L total"
               value={hideBalances ? "••••" : `${totalPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}

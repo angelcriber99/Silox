@@ -28,7 +28,12 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
   // Agrupar transacciones por activo (excluyendo Efectivo/CASH)
   const txByAsset = transactions.reduce((acc, tx) => {
     // Skip cash/efectivo completely from capital gains calculations
-    if (tx.activo?.tipo === 'Efectivo' || tx.activo?.ticker === 'EFECTIVO' || tx.activo?.ticker === 'CASH') {
+    if (
+      tx.activo?.tipo === 'Efectivo'
+      || tx.activo?.tipo === 'Liquidez'
+      || tx.activo?.ticker === 'EFECTIVO'
+      || tx.activo?.ticker?.startsWith('CASH')
+    ) {
       return acc
     }
     

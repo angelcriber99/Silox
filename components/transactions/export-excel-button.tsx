@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner"
 import type { Transaccion, EnrichedPosition } from "@/lib/types"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
+import { calculateNetContributions } from '@/lib/domain/portfolio/contributions'
 import type { CellValue, Worksheet } from 'exceljs'
 
 // Lazy import to avoid loading exceljs unnecessarily on first render
@@ -74,7 +75,8 @@ const exportToExcel = async (
 
   // Calculate high-level stats
   const totalValor = positions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
-  const totalInvertido = positions.reduce((acc, p) => acc + (p.coste_total_eur || 0), 0)
+  const totalInvertido = calculateNetContributions(transactions)
+    ?? positions.reduce((acc, p) => acc + (p.coste_total_eur || 0), 0)
   const totalPnl = totalValor - totalInvertido
   const totalPnlPct = totalInvertido > 0 ? totalPnl / totalInvertido : 0
   const divs = filteredTxs.filter(tx => tx.tipo_operacion === 'Dividendo')
@@ -116,7 +118,7 @@ const exportToExcel = async (
   }
 
   addMetric('Patrimonio Total', totalValor, '#,##0.00" €"')
-  addMetric('Capital Invertido', totalInvertido, '#,##0.00" €"')
+  addMetric('Capital Aportado Neto', totalInvertido, '#,##0.00" €"')
   addMetric('Ganancia Latente (P&L)', totalPnl, '#,##0.00" €"', totalPnl >= 0 ? colors.posText : colors.negText)
   addMetric('Rentabilidad Latente (%)', totalPnlPct, '0.00%', totalPnlPct >= 0 ? colors.posText : colors.negText)
   addMetric('Ingresos por Dividendos Netos', totalDivsNeto, '#,##0.00" €"', colors.posText)

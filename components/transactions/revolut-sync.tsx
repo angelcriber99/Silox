@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from '@tanstack/react-query'
 import type { RevolutImportTransaction } from "@/lib/domain/imports/revolut-response"
 import type { SkippedImportTransaction } from "@/app/api/import/revolut/route"
 
@@ -22,6 +23,7 @@ interface RevolutSyncProps {
 
 export function RevolutSync({ children, className }: RevolutSyncProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importSummary, setImportSummary] = useState<{
     isOpen: boolean;
@@ -56,6 +58,12 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
           ignored: data.ignored || [],
           skipped: data.skipped || []
         })
+
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['positions'] }),
+          queryClient.invalidateQueries({ queryKey: ['net-portfolio-contributions'] }),
+          queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+        ])
         
         router.refresh()
         return data
@@ -66,7 +74,10 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
           const removed = data.removedInternalMovements
             ? ` ${data.removedInternalMovements} movimientos internos de staking limpiados.`
             : ''
-          return `¡Listo! ${data.newTransactions} nuevos importados. (${data.ignoredDuplicates} ignorados por duplicidad).${removed}`
+          const accounting = data.accountingMovements
+            ? ` ${data.accountingMovements} movimientos de efectivo conciliados.`
+            : ''
+          return `¡Listo! ${data.newTransactions} nuevos importados. (${data.ignoredDuplicates} ignorados por duplicidad).${accounting}${removed}`
         },
         error: (err) => err.message || 'Ocurrió un error al procesar el archivo.'
       }

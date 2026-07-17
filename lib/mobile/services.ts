@@ -13,6 +13,7 @@ import {
 } from './schemas'
 import { displayAssetType, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 import { enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
+import { calculateNetContributions, EXTERNAL_FLOW_NOTE_PREFIX } from '@/lib/domain/portfolio/contributions'
 import { fetchMarketPricesDirect } from '@/lib/actions/market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
@@ -192,19 +193,26 @@ export async function portfolio(context: Context) {
   databaseFailure('cargar la cartera', error)
 
   // Keep the native dashboard on the exact same accounting universe as the
-  // web usePortfolio hook. Liquidity and money-market rows remain available
-  // to transaction flows, but they are not mixed into the live portfolio.
+  // web usePortfolio hook. Imported CASH rows are part of the portfolio value;
+  // unrelated money-market/liquidity assets remain outside this dashboard.
   const positions = (rawPositions ?? []).filter((position) =>
-    position.tipo !== 'Fondo Monetario' && position.tipo !== 'Liquidez'
+    position.ticker.startsWith('CASH') || (
+      position.tipo !== 'Fondo Monetario' && position.tipo !== 'Liquidez'
+    )
   )
   const tickers = positions
-    .filter((position) => position.unidades > 0)
+    .filter((position) => position.unidades > 0 && !position.ticker.startsWith('CASH'))
     .map((position) => position.ticker)
   const market = tickers.length > 0
     ? await fetchMarketPricesDirect(tickers, true)
     : { prices: {}, fxRates: { EUR: 1 }, displayCurrency: 'EUR', marketState: 'CLOSED' }
   const enriched = enrichPositions(positions, market)
-  const totals = computePortfolioTotals(enriched)
+  const { data: externalFlows } = await context.supabase
+    .from('transacciones')
+    .select('tipo_operacion, notas')
+    .eq('user_id', context.user.id)
+    .like('notas', `${EXTERNAL_FLOW_NOTE_PREFIX}%`)
+  const totals = computePortfolioTotals(enriched, calculateNetContributions(externalFlows ?? []))
 
   return {
     asOf: new Date().toISOString(),
@@ -220,7 +228,7 @@ export async function portfolio(context: Context) {
       positionCount: totals.positionCount,
       hasAllPrices: totals.hasAllPrices,
     },
-    positions: enriched.map((position) => ({
+    positions: enriched.filter((position) => position.tipo !== 'Liquidez').map((position) => ({
       assetId: position.activo_id,
       ticker: position.ticker,
       name: position.nombre,

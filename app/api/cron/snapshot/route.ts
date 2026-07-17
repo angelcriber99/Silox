@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
+import { calculateNetContributions, EXTERNAL_FLOW_NOTE_PREFIX } from '@/lib/domain/portfolio/contributions'
 import { fetchMarketPrices } from '@/lib/actions/market'
 
 export const revalidate = 0
@@ -66,7 +67,9 @@ export async function GET(request: Request) {
         return { ...pos, unidades: newUnidades, coste_total: newCoste }
       })
 
-      const tickers = adjustedPositions.filter((p) => p.unidades > 0).map((p) => p.ticker)
+      const tickers = adjustedPositions
+        .filter((p) => p.unidades > 0 && !p.ticker.startsWith('CASH'))
+        .map((p) => p.ticker)
       if (tickers.length === 0) continue
 
       let pricePayload
@@ -78,7 +81,12 @@ export async function GET(request: Request) {
       }
 
       const enriched = enrichPositions(adjustedPositions, pricePayload)
-      const totals = computePortfolioTotals(enriched)
+      const { data: externalFlows } = await supabaseAdmin
+        .from('transacciones')
+        .select('tipo_operacion, notas')
+        .eq('user_id', user.id)
+        .like('notas', `${EXTERNAL_FLOW_NOTE_PREFIX}%`)
+      const totals = computePortfolioTotals(enriched, calculateNetContributions(externalFlows ?? []))
 
       if (totals.totalValue > 0) {
         // Get the last snapshot to prevent saving identical data (0 PnL instante)
@@ -112,8 +120,10 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ success: true, snapshotsSaved })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Cron Snapshot Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Unexpected snapshot error',
+    }, { status: 500 })
   }
 }

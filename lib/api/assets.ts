@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 import { CASH_ASSET_DEFAULTS, displayAssetType, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 import { calculateOpenCostBasis } from '@/lib/utils/open-cost-basis'
+import {
+  calculateNetContributions,
+  EXTERNAL_FLOW_NOTE_PREFIX,
+} from '@/lib/domain/portfolio/contributions'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
   const supabase = createClient()
@@ -43,6 +47,16 @@ export async function fetchActivos(): Promise<Activo[]> {
 
   if (error) throw new Error(`Error cargando activos: ${error.message}`)
   return (data ?? []).map(displayAssetType)
+}
+
+export async function fetchNetPortfolioContributions(): Promise<number | null> {
+  const { data, error } = await createClient()
+    .from('transacciones')
+    .select('tipo_operacion, notas')
+    .like('notas', `${EXTERNAL_FLOW_NOTE_PREFIX}%`)
+
+  if (error) throw new Error(`Error cargando las aportaciones de la cartera: ${error.message}`)
+  return calculateNetContributions(data ?? [])
 }
 
 export async function insertActivo(activo: {
@@ -132,7 +146,7 @@ export function enrichPositions(
     
     // Si la liquidez entra en negativo (porque se ha comprado sin registrar un ingreso previo),
     // la ignoramos forzando a 0 para que no reste del total del portfolio.
-    if ((p.tipo === 'Liquidez' || p.ticker === 'CASH') && p.unidades < 0) {
+    if ((p.tipo === 'Liquidez' || p.ticker.startsWith('CASH')) && p.unidades < 0) {
       p.unidades = 0
       p.coste_total = 0
     }
@@ -140,7 +154,7 @@ export function enrichPositions(
     const priceData = prices[p.ticker]
     const precio_medio_real = p.unidades > 0 ? p.coste_total / p.unidades : 0
 
-    const isCashAsset = p.ticker === 'CASH'
+    const isCashAsset = p.ticker.startsWith('CASH')
     const fxRate = p.moneda === 'EUR' ? 1 : (fxRates[p.moneda] || 1)
     
     // NUNCA hacer fallback al precio de compra para acciones/ETFs si falla la API, 
@@ -148,7 +162,7 @@ export function enrichPositions(
     const fallbackPriceNativo = (p.tipo === 'Fondo Monetario' || p.tipo === 'Liquidez' || isCashAsset) ? 1.00 : null
     const fallbackPriceEur = fallbackPriceNativo !== null ? fallbackPriceNativo / fxRate : null
 
-    const precio_actual = isCashAsset ? 1.00 : (priceData?.price ?? fallbackPriceEur)
+    const precio_actual = isCashAsset ? 1.00 / fxRate : (priceData?.price ?? fallbackPriceEur)
     const precio_actual_nativo = isCashAsset ? 1.00 : (priceData?.originalPrice ?? fallbackPriceNativo)
     const original_currency = priceData?.originalCurrency ?? p.moneda
     const precio_actual_usd = priceData?.priceUsd
@@ -228,7 +242,8 @@ export function enrichPositions(
 }
 
 export function computePortfolioTotals(
-  positions: EnrichedPosition[]
+  positions: EnrichedPosition[],
+  netContributions?: number | null,
 ): PortfolioTotals {
   const withValues = positions.filter((p) => p.valor_actual !== null)
   
@@ -239,7 +254,8 @@ export function computePortfolioTotals(
     0
   )
   
-  const totalCost = positions.reduce((sum, p) => sum + p.coste_total_eur, 0)
+  const openPositionCost = positions.reduce((sum, p) => sum + p.coste_total_eur, 0)
+  const totalCost = netContributions ?? openPositionCost
   const totalPnl = totalValue - totalCost
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
 
@@ -279,9 +295,9 @@ export function computePortfolioTotals(
     totalPnlPercent24h,
     totalSessionPnl,
     totalDailyPnlPercent,
-    positionCount: positions.filter((p) => p.unidades > 0).length,
+    positionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez').length,
     hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => p.valor_actual !== null),
-    estimatedPositionCount: positions.filter((p) => p.unidades > 0 && (p.valor_actual === null || p.price_is_stale)).length,
+    estimatedPositionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez' && (p.valor_actual === null || p.price_is_stale)).length,
   }
 }
 

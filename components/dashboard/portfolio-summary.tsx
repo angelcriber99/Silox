@@ -123,7 +123,7 @@ export function PortfolioSummary({
               </div>
               <span className="hidden sm:inline opacity-30 text-[10px]">•</span>
               <div className="flex items-center gap-1.5">
-                <span className="uppercase tracking-widest text-[10px]">Invertido</span>
+                <span className="uppercase tracking-widest text-[10px]">Aportado neto</span>
                 <span className="tabular-nums font-semibold text-foreground/80">
                   {hideBalances ? "••••" : formatCurrency(totals.totalCost)}
                 </span>
