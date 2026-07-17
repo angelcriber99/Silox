@@ -49,15 +49,28 @@ export default function Home() {
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col flex-1 w-full">
       {/* ── Mobile ─────────────────────────────────────────────────── */}
-      <div className="md:hidden">
-        <PullToRefresh onRefresh={async () => { await refetch() }}>
-          <MobileDashboard
-            positions={positions}
-            totals={totals}
-            isLoading={isLoading}
-            marketState={marketState}
-          />
-        </PullToRefresh>
+      <div className="md:hidden flex-1 flex flex-col w-full px-5 py-6 space-y-6">
+        <PortfolioSummary
+          totals={totals}
+          positions={positions}
+          transactions={allTransactions}
+          loading={isLoading}
+          pendingTxs={pendingTxs}
+          marketState={marketState}
+        />
+        <AllocationChart positions={positions} marketState={marketState} />
+        <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
+        <UpcomingEvents
+          positions={positions.filter(p => p.tipo !== 'Liquidez')}
+          onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
+          onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
+        />
+        <PositionsTable
+          positions={positions}
+          loading={isLoading}
+          onAddTransaction={openTransactionModal}
+          onEditAsset={openEditAssetModal}
+        />
       </div>
 
       {/* ── Desktop ─────────────────────────────────────────────────── */}

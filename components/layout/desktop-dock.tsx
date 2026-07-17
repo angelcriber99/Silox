@@ -27,40 +27,44 @@ const navItems = [
 export function DesktopDock() {
   const pathname = usePathname()
   const t = useTranslations('Navigation')
-
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-end justify-center gap-2 px-4 py-3 rounded-2xl bg-card/40 backdrop-blur-2xl border border-border/40 shadow-2xl">
-      {navItems.map((item) => {
-        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-        return (
-          <Link href={item.href} key={item.key} className="group relative">
-            <motion.div
-              whileHover={{ y: -8, scale: 1.15 }}
-              whileTap={{ scale: 0.95 }}
-              className={`relative flex items-center justify-center w-12 h-12 rounded-xl transition-colors duration-300 ${
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
-                  : "bg-transparent text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              
-              {/* Tooltip */}
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-foreground text-background text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
-                {t(item.key)}
-              </div>
-              
-              {isActive && (
-                <motion.div 
-                  layoutId="dock-indicator"
-                  className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                />
-              )}
-            </motion.div>
-          </Link>
-        )
-      })}
+    <div className="fixed bottom-0 left-0 right-0 h-24 z-50 hidden md:flex items-end justify-center pb-6 group">
+      {/* Invisible hover area expanding to bottom */}
+      <div className="absolute inset-0 z-0" />
+      
+      <div className="relative z-10 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-card/40 backdrop-blur-2xl border border-border/40 shadow-2xl translate-y-[120%] group-hover:translate-y-0 transition-transform duration-300 ease-out">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+          return (
+            <Link href={item.href} key={item.key} className="group/item relative">
+              <motion.div
+                whileHover={{ y: -8, scale: 1.15 }}
+                whileTap={{ scale: 0.95 }}
+                className={`relative flex items-center justify-center w-12 h-12 rounded-xl transition-colors duration-300 ${
+                  isActive 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
+                    : "bg-transparent text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                
+                {/* Tooltip */}
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-foreground text-background text-[11px] font-semibold opacity-0 group-hover/item:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
+                  {t(item.key)}
+                </div>
+                
+                {isActive && (
+                  <motion.div 
+                    layoutId="dock-indicator"
+                    className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-primary"
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  />
+                )}
+              </motion.div>
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
 }
