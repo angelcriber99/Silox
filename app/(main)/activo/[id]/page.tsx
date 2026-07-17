@@ -41,12 +41,13 @@ export default function ActivoPage() {
 
         const pricePayload = await fetchPrices([rawPosition.ticker])
         const enrichedPositions = enrichPositions([rawPosition], pricePayload)
-        setPosition(enrichedPositions[0])
+        
+        let pos = enrichedPositions[0]
+        let details: AssetDetails | null = null
 
         if (rawPosition.tipo === "Acción" || rawPosition.tipo === "ETF") {
           const { fetchAssetDetails } = await import('@/lib/actions/market')
-          const details = await fetchAssetDetails(rawPosition.ticker)
-          setAssetDetails(details)
+          details = await fetchAssetDetails(rawPosition.ticker)
         }
 
         // Fetch transactions
@@ -57,7 +58,49 @@ export default function ActivoPage() {
           .order('fecha', { ascending: true })
 
         if (transactionsError) throw transactionsError
-        setTransactions(txs || [])
+
+        let finalTxs = txs || []
+
+        // Convert everything to EUR for consistent display
+        if (pos.moneda !== 'EUR') {
+          const fxRate = (pos.precio_actual_nativo && pos.precio_actual && pos.precio_actual > 0)
+            ? (pos.precio_actual_nativo / pos.precio_actual)
+            : 1;
+
+          finalTxs = finalTxs.map(tx => ({
+            ...tx,
+            precio_unitario: Number(tx.precio_unitario) / fxRate,
+            comision: Number(tx.comision) / fxRate,
+          }))
+
+          if (details) {
+            details = {
+              ...details,
+              currency: 'EUR',
+              financialCurrency: 'EUR',
+              fiftyTwoWeekHigh: details.fiftyTwoWeekHigh ? details.fiftyTwoWeekHigh / fxRate : null,
+              fiftyTwoWeekLow: details.fiftyTwoWeekLow ? details.fiftyTwoWeekLow / fxRate : null,
+              fiftyDayAverage: details.fiftyDayAverage ? details.fiftyDayAverage / fxRate : null,
+              twoHundredDayAverage: details.twoHundredDayAverage ? details.twoHundredDayAverage / fxRate : null,
+              targetMeanPrice: details.targetMeanPrice ? details.targetMeanPrice / fxRate : null,
+            }
+          }
+
+          pos = {
+            ...pos,
+            moneda: 'EUR',
+            original_currency: 'EUR',
+            precio_actual_nativo: pos.precio_actual,
+            valor_actual_nativo: pos.valor_actual,
+            change_amount_24h_nativo: pos.change_amount_24h,
+            coste_total: pos.coste_total_eur,
+            precio_medio: pos.unidades > 0 ? (pos.coste_total_eur / pos.unidades) : pos.coste_total_eur,
+          }
+        }
+
+        setPosition(pos)
+        if (details) setAssetDetails(details)
+        setTransactions(finalTxs)
       } catch (error: unknown) {
         setError(error instanceof Error ? error.message : 'Error al cargar el activo')
       } finally {
