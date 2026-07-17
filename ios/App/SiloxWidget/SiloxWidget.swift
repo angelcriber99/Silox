@@ -61,9 +61,11 @@ struct Provider: AppIntentTimelineProvider {
     }
     
     private func fetchSummaryData(configuration: SiloxWidgetConfiguration) async -> SiloxEntry {
-        guard let key = configuration.widgetKey, !key.isEmpty else {
+        guard let rawKey = configuration.widgetKey, !rawKey.isEmpty else {
             return SiloxEntry(date: Date(), summary: nil, error: "Mantén pulsado para editar y pegar tu Llave.")
         }
+        
+        let key = rawKey.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard let url = URL(string: "https://silox-chi.vercel.app/api/widget/summary") else {
             return SiloxEntry(date: Date(), summary: nil, error: "URL de API inválida")
@@ -76,7 +78,7 @@ struct Provider: AppIntentTimelineProvider {
             let (data, response) = try await URLSession.shared.data(for: request)
             
             if let httpResp = response as? HTTPURLResponse, httpResp.statusCode != 200 {
-                return SiloxEntry(date: Date(), summary: nil, error: "Llave incorrecta.")
+                return SiloxEntry(date: Date(), summary: nil, error: "Llave incorrecta (\(httpResp.statusCode)).")
             }
             
             let summary = try JSONDecoder().decode(WidgetSummaryResponse.self, from: data)

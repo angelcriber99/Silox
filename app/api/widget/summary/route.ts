@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing or invalid Authorization header' }, { status: 401 })
     }
 
-    const token = authHeader.split(' ')[1]
+    const token = authHeader.split(' ')[1].trim()
 
     let targetUserId: string | null = null
     let supabase: any = null
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       // Verify user exists
       const { data: { user }, error: adminError } = await supabase.auth.admin.getUserById(targetUserId)
       if (adminError || !user) {
-        return NextResponse.json({ error: 'Invalid Widget Key' }, { status: 401 })
+        return NextResponse.json({ error: `Invalid Widget Key. Admin Error: ${adminError?.message || 'User not found'}` }, { status: 401 })
       }
       
     } else {
