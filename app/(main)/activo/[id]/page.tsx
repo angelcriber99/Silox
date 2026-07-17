@@ -78,11 +78,11 @@ export default function ActivoPage() {
               ...details,
               currency: 'EUR',
               financialCurrency: 'EUR',
-              fiftyTwoWeekHigh: details.fiftyTwoWeekHigh ? details.fiftyTwoWeekHigh / fxRate : null,
-              fiftyTwoWeekLow: details.fiftyTwoWeekLow ? details.fiftyTwoWeekLow / fxRate : null,
-              fiftyDayAverage: details.fiftyDayAverage ? details.fiftyDayAverage / fxRate : null,
-              twoHundredDayAverage: details.twoHundredDayAverage ? details.twoHundredDayAverage / fxRate : null,
-              targetMeanPrice: details.targetMeanPrice ? details.targetMeanPrice / fxRate : null,
+              fiftyTwoWeekHigh: details.fiftyTwoWeekHigh ? details.fiftyTwoWeekHigh / fxRate : undefined,
+              fiftyTwoWeekLow: details.fiftyTwoWeekLow ? details.fiftyTwoWeekLow / fxRate : undefined,
+              fiftyDayAverage: details.fiftyDayAverage ? details.fiftyDayAverage / fxRate : undefined,
+              twoHundredDayAverage: details.twoHundredDayAverage ? details.twoHundredDayAverage / fxRate : undefined,
+              targetMeanPrice: details.targetMeanPrice ? details.targetMeanPrice / fxRate : undefined,
             }
           }
 
