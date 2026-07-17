@@ -71,10 +71,16 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
               return acc
             }, {} as Record<string, RawTransaction[]>)
             
-          enrichedChart = enrichedChart.map((p: any) => {
+          const lastPointOfDay = new Map()
+          enrichedChart.forEach((p: any, index: number) => {
+            const pointDateStr = new Date(p.date).toISOString().split('T')[0]
+            lastPointOfDay.set(pointDateStr, index)
+          })
+          
+          enrichedChart = enrichedChart.map((p: any, index: number) => {
             const pointDateStr = new Date(p.date).toISOString().split('T')[0]
             const purchases = purchasesByDate[pointDateStr]
-            if (purchases) {
+            if (purchases && lastPointOfDay.get(pointDateStr) === index) {
               const totalQty = purchases.reduce((sum, t) => sum + Number(t.cantidad), 0)
               const avgPrice = purchases.reduce((sum, t) => sum + Number(t.cantidad) * Number(t.precio_unitario), 0) / totalQty
               return {
