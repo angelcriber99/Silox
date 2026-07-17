@@ -292,7 +292,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
           <div className="lg:col-span-2">
              <InteractiveAssetChart 
                ticker={position.ticker} 
-               moneda={position.moneda} 
+               moneda={position.original_currency || position.moneda} 
                colorHex={colorHex}
                transactions={transactions}
                units={position.unidades}

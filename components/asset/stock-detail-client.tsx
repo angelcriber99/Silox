@@ -116,7 +116,7 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
         <div className="mb-8 animate-fade-in stagger-1">
           <InteractiveAssetChart 
             ticker={position.ticker} 
-            moneda={position.moneda} 
+            moneda={position.original_currency || position.moneda} 
             colorHex={colorHex} 
             transactions={transactions}
             units={position.unidades}
