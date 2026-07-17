@@ -255,6 +255,35 @@ export default function SettingsPage() {
             </div>
           </section>
 
+          {/* Widget iOS */}
+          <section>
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Widget iOS</h2>
+            <div className="bg-card border border-blue-500/30 rounded-2xl overflow-hidden">
+              <div className="p-4 flex items-center justify-between bg-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Smartphone className="w-5 h-5" /></div>
+                  <div>
+                    <span className="font-semibold text-[15px] block">Llave de Widget</span>
+                    <span className="text-[12px] text-muted-foreground">Pégala en la config. del widget</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={async () => {
+                    const supabase = createClient()
+                    const { data } = await supabase.auth.getUser()
+                    if (data?.user?.id) {
+                      navigator.clipboard.writeText(`Widget-${data.user.id}`)
+                      toast.success("Llave copiada al portapapeles")
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 active:bg-blue-700 text-white rounded-xl text-sm font-bold transition-colors"
+                >
+                  Copiar
+                </button>
+              </div>
+            </div>
+          </section>
+
           {/* Peligro */}
           <section>
             <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl overflow-hidden">
@@ -577,6 +606,27 @@ export default function SettingsPage() {
                     <h3 className="text-lg font-bold">MyInvestor</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-4">Sincronización diaria de fondos indexados y efectivo.</p>
                     <button className="w-full py-2.5 rounded-xl border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
+                  </div>
+
+                  {/* Widget iOS */}
+                  <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-blue-500/30 relative overflow-hidden group shadow-sm">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center mb-4 shadow-sm">
+                      <Smartphone className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold">Widget de iOS</h3>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">Copia tu llave secreta para configurar el widget en la pantalla de inicio o bloqueo.</p>
+                    <button 
+                      onClick={async () => {
+                        const supabase = createClient()
+                        const { data } = await supabase.auth.getUser()
+                        if (data?.user?.id) {
+                          navigator.clipboard.writeText(`Widget-${data.user.id}`)
+                          toast.success("Llave copiada al portapapeles")
+                        }
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md text-sm font-semibold transition-all">
+                      Copiar Llave de Widget
+                    </button>
                   </div>
 
                   {/* Revolut */}

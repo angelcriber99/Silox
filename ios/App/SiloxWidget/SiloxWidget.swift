@@ -6,13 +6,10 @@ import AppIntents
 
 struct SiloxWidgetConfiguration: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Configuración Silox"
-    static var description = IntentDescription("Introduce tu cuenta de Silox.")
+    static var description = IntentDescription("Pega tu Llave de Widget secreta.")
 
-    @Parameter(title: "Email")
-    var email: String?
-
-    @Parameter(title: "Contraseña")
-    var password: String?
+    @Parameter(title: "Llave de Widget")
+    var widgetKey: String?
 }
 
 // MARK: - Models
@@ -64,29 +61,16 @@ struct Provider: AppIntentTimelineProvider {
     }
     
     private func fetchSummaryData(configuration: SiloxWidgetConfiguration) async -> SiloxEntry {
-        guard let email = configuration.email, !email.isEmpty,
-              let password = configuration.password, !password.isEmpty else {
-            return SiloxEntry(date: Date(), summary: nil, error: "Mantén pulsado para editar y configurar el widget.")
+        guard let key = configuration.widgetKey, !key.isEmpty else {
+            return SiloxEntry(date: Date(), summary: nil, error: "Mantén pulsado para editar y pegar tu Llave.")
         }
         
-        let supabaseUrl = "https://ffpvdttnmeeltsyptafm.supabase.co"
-        let anonKey = "sb_publishable_wSLWks3t7_fic4mpvZAX4w_BlcT8Mo_"
-        
-        // 1. Auth to get access_token
-        guard let authUrl = URL(string: "\(supabaseUrl)/auth/v1/token?grant_type=password") else {
-            return SiloxEntry(date: Date(), summary: nil, error: "Error de URL")
+        guard let url = URL(string: "https://silox-chi.vercel.app/api/widget/summary") else {
+            return SiloxEntry(date: Date(), summary: nil, error: "URL de API inválida")
         }
         
-        var authReq = URLRequest(url: authUrl)
-        authReq.httpMethod = "POST"
-        authReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        authReq.setValue(anonKey, forHTTPHeaderField: "apikey")
-        
-        let authBody: [String: String] = ["email": email, "password": password]
-        guard let authData = try? JSONEncoder().encode(authBody) else {
-            return SiloxEntry(date: Date(), summary: nil, error: "Error en credenciales")
-        }
-        authReq.httpBody = authData
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         
         do {
             let (data, response) = try await URLSession.shared.data(for: authReq)

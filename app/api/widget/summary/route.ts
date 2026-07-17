@@ -17,27 +17,52 @@ export async function GET(request: Request) {
 
     const token = authHeader.split(' ')[1]
 
-    // Create a Supabase client that uses this specific JWT
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+    let targetUserId: string | null = null
+    let supabase: any = null
+    
+    if (token.startsWith('Widget-')) {
+      targetUserId = token.replace('Widget-', '')
+      
+      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return NextResponse.json({ error: 'Server misconfiguration: No service role key' }, { status: 500 })
       }
-    )
-
-    // Verify user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      return NextResponse.json({ error: 'Invalid token or user not found' }, { status: 401 })
+      
+      // Use Service Role to bypass RLS since we don't have an active session token
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      
+      // Verify user exists
+      const { data: { user }, error: adminError } = await supabase.auth.admin.getUserById(targetUserId)
+      if (adminError || !user) {
+        return NextResponse.json({ error: 'Invalid Widget Key' }, { status: 401 })
+      }
+      
+    } else {
+      // Standard JWT Auth (from Web App)
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        }
+      )
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        return NextResponse.json({ error: 'Invalid token or user not found' }, { status: 401 })
+      }
+      targetUserId = user.id
     }
 
     // Fetch positions
     const { data: rawPositions, error: posError } = await supabase
       .from('posiciones')
       .select('*')
+      .eq('user_id', targetUserId)
 
     if (posError) {
       throw new Error(`Error fetching positions: ${posError.message}`)
