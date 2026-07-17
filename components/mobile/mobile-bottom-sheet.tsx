@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence, PanInfo } from "framer-motion"
 import { X, ArrowUpRight, ArrowDownRight, Loader2, Search, Plus, FileUp } from "lucide-react"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
+import { AssetLogo } from "@/components/ui/asset-logo"
 import { useAddTransaction, useAddInvestment } from "@/lib/hooks/use-transactions"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { toast } from "sonner"
@@ -163,7 +164,7 @@ export function MobileBottomSheet({
       } else {
         toast.error(data.error || "No se encontró el activo en Yahoo Finance")
       }
-    } catch (err) {
+    } catch {
       toast.error("Error al buscar el activo")
     } finally {
       setIsSearching(false)
@@ -230,9 +231,9 @@ export function MobileBottomSheet({
   const isPending = addTx.isPending || addInvestment.isPending
 
   // Premium Input Style
-  const premiumInputClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-xl font-bold tabular-nums placeholder:text-muted-foreground/60 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+  const premiumInputClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-xl font-bold tabular-nums placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/15 transition-all"
   const labelClass = "block text-[11px] font-bold text-muted-foreground/80 uppercase tracking-wider mb-2"
-  const selectClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-sm font-semibold focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+  const selectClass = "w-full bg-card border border-border rounded-xl px-4 py-4 text-foreground text-sm font-semibold focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/15 transition-all appearance-none"
 
   return (
     <AnimatePresence>
@@ -255,11 +256,11 @@ export function MobileBottomSheet({
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="md:hidden fixed bottom-0 left-0 right-0 z-[70] bg-background rounded-t-3xl border-t border-border max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            className="md:hidden fixed bottom-0 left-0 right-0 z-[70] flex max-h-[92dvh] flex-col overflow-hidden rounded-t-3xl border-t border-border bg-background shadow-2xl"
           >
             {/* Drag Handle */}
             <div className="flex justify-center pt-4 pb-2 w-full touch-none cursor-grab active:cursor-grabbing">
-              <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
             </div>
 
             {/* Content Container (Scrollable) */}
@@ -267,31 +268,34 @@ export function MobileBottomSheet({
               
               {/* Header & Tabs */}
               <div className="px-5 pb-4">
-                <div className="flex justify-between items-center mb-5">
-                  <h2 className="text-xl font-extrabold text-foreground">Añadir</h2>
-                  <button onClick={onClose} className="p-2 bg-card rounded-full text-muted-foreground active:scale-95 transition-transform">
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground">Añadir</h2>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Registra una operación sin salir de la cartera.</p>
+                  </div>
+                  <button type="button" onClick={onClose} className="touch-target rounded-full text-muted-foreground active:bg-muted" aria-label="Cerrar">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 {/* Segmented Control */}
                 {(step === "select" && newAssetStep === "search") && (
-                  <div className="flex p-1 bg-card rounded-xl">
+                  <div className="flex rounded-xl border border-border bg-card p-1">
                     <button 
                       onClick={() => { setActiveTab("operacion"); resetForm() }} 
-                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "operacion" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-colors ${activeTab === "operacion" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
                     >
-                      Mis Activos
+                      Mis activos
                     </button>
                     <button 
                       onClick={() => { setActiveTab("nuevo"); resetForm() }} 
-                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "nuevo" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-colors ${activeTab === "nuevo" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
                     >
-                      Buscar Nuevo
+                      Nuevo
                     </button>
                     <button 
                       onClick={() => { setActiveTab("importar"); resetForm() }} 
-                      className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "importar" ? "bg-muted text-foreground shadow-sm" : "text-muted-foreground/80"}`}
+                      className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-colors ${activeTab === "importar" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
                     >
                       Importar
                     </button>
@@ -304,12 +308,12 @@ export function MobileBottomSheet({
               {/* ========================================================= */}
               {activeTab === "importar" && (
                 <div className="px-5 pb-6 animate-fade-in space-y-6">
-                  <div className="bg-card border border-border p-5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
-                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 mb-2">
-                      <FileUp className="w-8 h-8" />
+                  <div className="flex flex-col items-center justify-center space-y-3 rounded-2xl border border-border bg-card p-5 text-center">
+                    <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <FileUp className="h-6 w-6" />
                     </div>
                     <h3 className="font-bold text-lg text-foreground">Importar Archivo</h3>
-                    <p className="text-sm text-muted-foreground">Sube un archivo PDF o CSV con tus transacciones de brokers como Revolut, DeGiro, etc.</p>
+                    <p className="text-sm text-muted-foreground">Sube un CSV o Excel con tus transacciones de Revolut o MyInvestor.</p>
                     
                     <div className="pt-4 w-full">
                       <RevolutSync className="w-full">
@@ -333,27 +337,25 @@ export function MobileBottomSheet({
                       {positions.length === 0 ? (
                          <div className="text-center py-10">
                             <p className="text-muted-foreground/80 text-sm">No tienes activos aún.</p>
-                            <button onClick={() => setActiveTab("nuevo")} className="mt-4 text-blue-400 font-bold text-sm">Buscar Nuevo Activo</button>
+                            <button onClick={() => setActiveTab("nuevo")} className="mt-4 text-sm font-bold text-primary">Buscar nuevo activo</button>
                          </div>
                       ) : (
-                        positions.map((p) => {
+                        positions.filter((position) => position.unidades > 0).map((p) => {
                           const displayTicker = p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario" ? p.nombre?.split(" ")[0]?.toUpperCase() || "FONDO" : p.ticker.split(".")[0]
                           return (
                             <motion.button
                               whileTap={{ scale: 0.96 }}
                               key={p.activo_id}
                               onClick={() => handleSelectAsset(p)}
-                              className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border text-left active:bg-muted/50 transition-colors"
+                              className="flex w-full items-center gap-3 border-b border-border/60 px-1 py-3 text-left transition-colors last:border-b-0 active:bg-muted/50"
                             >
-                              <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                <span className="text-base font-bold text-blue-400">{displayTicker.slice(0, 2)}</span>
-                              </div>
+                              <AssetLogo ticker={p.ticker} name={p.nombre} type={p.tipo} size={40} />
                               <div className="flex-1 overflow-hidden">
-                                <p className="text-base font-bold text-foreground truncate">{displayTicker}</p>
+                                <p className="truncate text-sm font-semibold text-foreground">{displayTicker}</p>
                                 <p className="text-xs text-muted-foreground/80 truncate">{p.nombre}</p>
                               </div>
                               <div className="flex-shrink-0 text-right">
-                                <p className="text-sm font-bold text-foreground tabular-nums">{(p.precio_actual_nativo ?? p.precio_actual) ? formatCurrency(p.precio_actual_nativo ?? p.precio_actual ?? 0, p.original_currency || p.moneda) : "—"}</p>
+                                <p className="text-sm font-semibold text-foreground tabular-nums">{(p.precio_actual_nativo ?? p.precio_actual) ? formatCurrency(p.precio_actual_nativo ?? p.precio_actual ?? 0, p.original_currency || p.moneda) : "—"}</p>
                               </div>
                             </motion.button>
                           )
@@ -364,12 +366,13 @@ export function MobileBottomSheet({
 
                   {step === "form" && selectedAsset && (
                     <div className="space-y-6 pb-6">
-                       <div className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border">
+                       <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+                          <AssetLogo ticker={selectedAsset.ticker} name={selectedAsset.nombre} type={selectedAsset.tipo} size={38} />
                           <div className="flex-1 min-w-0">
                              <p className="text-sm font-bold text-foreground truncate">{selectedAsset.ticker}</p>
                              <p className="text-xs text-muted-foreground/80 truncate">{selectedAsset.nombre}</p>
                           </div>
-                          <button onClick={() => setStep("select")} className="text-xs font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full">Cambiar</button>
+                          <button onClick={() => setStep("select")} className="rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">Cambiar</button>
                        </div>
 
                        {/* Buy/Sell */}
@@ -442,7 +445,7 @@ export function MobileBottomSheet({
                               placeholder="Ej: AAPL, VWCE.DE..." 
                               value={ticker} 
                               onChange={(e) => setTicker(e.target.value.toUpperCase())} 
-                              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 text-foreground text-lg font-bold placeholder:text-muted-foreground/60 placeholder:font-medium focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            className="w-full rounded-2xl border border-border bg-card py-4 pl-12 pr-4 text-lg font-bold text-foreground transition-all placeholder:font-medium placeholder:text-muted-foreground/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
                             />
                           </div>
                           
@@ -450,7 +453,7 @@ export function MobileBottomSheet({
                             whileTap={{ scale: 0.97 }}
                             onClick={handleSearchTicker}
                             disabled={!ticker.trim() || isSearching}
-                            className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-base font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground disabled:opacity-50"
                           >
                             {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
                             Buscar Activo
@@ -461,9 +464,9 @@ export function MobileBottomSheet({
 
                   {newAssetStep === "details" && (
                      <div className="space-y-6 pb-6">
-                        <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex justify-between items-center">
+                        <div className="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/10 p-4">
                           <div className="flex-1 overflow-hidden pr-2">
-                             <p className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">Activo Encontrado</p>
+                             <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">Activo encontrado</p>
                              <p className="text-foreground text-lg font-bold leading-tight truncate">{ticker}</p>
                              <p className="text-muted-foreground text-sm truncate">{nombre || "—"}</p>
                           </div>

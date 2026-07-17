@@ -18,7 +18,6 @@ import { AddEventModal } from "@/components/market/add-event-modal"
 import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { PendingOrders } from "@/components/transactions/pending-orders"
-import { PullToRefresh } from "@/components/layout/pull-to-refresh"
 import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state"
 
 export default function Home() {
@@ -49,27 +48,14 @@ export default function Home() {
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col flex-1 w-full">
       {/* ── Mobile ─────────────────────────────────────────────────── */}
-      <div className="md:hidden flex-1 flex flex-col w-full px-5 py-6 space-y-6">
-        <PortfolioSummary
+      <div className="md:hidden flex-1 w-full">
+        <MobileDashboard
+          positions={positions}
           totals={totals}
-          positions={positions}
-          transactions={allTransactions}
-          loading={isLoading}
-          pendingTxs={pendingTxs}
+          isLoading={isLoading}
           marketState={marketState}
-        />
-        <AllocationChart positions={positions} marketState={marketState} />
-        <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
-        <UpcomingEvents
-          positions={positions.filter(p => p.tipo !== 'Liquidez')}
-          onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
-          onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
-        />
-        <PositionsTable
-          positions={positions}
-          loading={isLoading}
-          onAddTransaction={openTransactionModal}
-          onEditAsset={openEditAssetModal}
+          pricesUpdatedAt={pricesUpdatedAt}
+          pendingCount={pendingTxs.length}
         />
       </div>
 
