@@ -73,29 +73,13 @@ struct Provider: AppIntentTimelineProvider {
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: authReq)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
             if let httpResp = response as? HTTPURLResponse, httpResp.statusCode != 200 {
-                return SiloxEntry(date: Date(), summary: nil, error: "Email o contraseña incorrectos.")
+                return SiloxEntry(date: Date(), summary: nil, error: "Llave incorrecta.")
             }
             
-            struct AuthResponse: Codable { let access_token: String }
-            let authResult = try JSONDecoder().decode(AuthResponse.self, from: data)
-            let token = authResult.access_token
-            
-            // 2. Fetch summary using token
-            guard let url = URL(string: "https://silox-chi.vercel.app/api/widget/summary") else {
-                return SiloxEntry(date: Date(), summary: nil, error: "URL de API inválida")
-            }
-            
-            var request = URLRequest(url: url)
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            
-            let (sumData, sumResp) = try await URLSession.shared.data(for: request)
-            if let sumHttp = sumResp as? HTTPURLResponse, sumHttp.statusCode != 200 {
-                return SiloxEntry(date: Date(), summary: nil, error: "Error al descargar datos.")
-            }
-            
-            let summary = try JSONDecoder().decode(WidgetSummaryResponse.self, from: sumData)
+            let summary = try JSONDecoder().decode(WidgetSummaryResponse.self, from: data)
             return SiloxEntry(date: Date(), summary: summary, error: nil)
             
         } catch {
