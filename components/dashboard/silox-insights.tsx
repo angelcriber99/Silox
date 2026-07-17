@@ -54,10 +54,10 @@ export function SiloxInsights({
     }
 
     // Insight 1: Daily Performance
-    if (totals.totalPnlPercent24h >= 1) {
-      list.push(`Excelente día de mercado. Tu portfolio ha subido un ${formatPercent(totals.totalPnlPercent24h)} hoy.`)
-    } else if (totals.totalPnlPercent24h <= -1) {
-      list.push(`Día complicado en el mercado. Un descenso del ${formatPercent(totals.totalPnlPercent24h)}, buena oportunidad para revisar fundamentales.`)
+    if (totals.totalDailyPnlPercent >= 1) {
+      list.push(`Excelente día de mercado. Tu portfolio ha subido un ${formatPercent(totals.totalDailyPnlPercent)} hoy.`)
+    } else if (totals.totalDailyPnlPercent <= -1) {
+      list.push(`Día complicado en el mercado. Un descenso del ${formatPercent(totals.totalDailyPnlPercent)}, buena oportunidad para revisar fundamentales.`)
     } else {
       list.push("Sesión tranquila en los mercados, sin grandes sobresaltos en tu cartera.")
     }

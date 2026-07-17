@@ -71,6 +71,11 @@ export async function fetchPrices(
         price: val.price ?? null,
         sparkline: val.sparkline ?? [],
         originalPrice: val.originalPrice ?? null,
+        priceUsd: val.originalCurrency === 'USD'
+          ? (val.originalPrice ?? null)
+          : val.price != null && data.fxRates?.USD
+            ? val.price * data.fxRates.USD
+            : null,
         originalCurrency: val.originalCurrency,
         changePercent24h: val.changePercent24h ?? null,
         dailyChangePercent24h: val.dailyChangePercent24h ?? null,

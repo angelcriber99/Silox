@@ -29,6 +29,7 @@ const position: EnrichedPosition = {
   notas: JSON.stringify({ text: 'Mantener', waves: [] }),
   precio_actual: 200,
   precio_actual_nativo: 200,
+  precio_actual_usd: 200,
   original_currency: 'USD',
   valor_actual: 200,
   valor_actual_nativo: 200,

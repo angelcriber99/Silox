@@ -7,6 +7,7 @@ import {
   convertToEur,
   FX_PAIRS,
   normalizeYahooCurrency,
+  normalizeYahooPrice,
   type FxRatesToEur,
 } from '@/lib/utils/currency'
 import {
@@ -340,10 +341,13 @@ async function _fetchMarketPrices(
       const meta = chart1m.meta
       const quotes = (chart1m.quotes as ChartQuote[]) || []
       
-      const originalCurrency = normalizeYahooCurrency(meta.currency || 'USD')
+      const yahooCurrency = meta.currency || 'USD'
+      const originalCurrency = normalizeYahooCurrency(yahooCurrency)
       const performance = extractMarketPerformance(meta as ChartMeta, quotes)
 
-      const rawPrice = performance.currentPrice
+      const rawPrice = performance.currentPrice === null
+        ? null
+        : normalizeYahooPrice(performance.currentPrice, yahooCurrency)
       const changePercent24h = performance.sessionChangePercent
       const dailyChangePercent24h = performance.dailyChangePercent
       let sparkline: number[] = cachedSparkline?.values ?? []
@@ -351,6 +355,7 @@ async function _fetchMarketPrices(
         sparkline = chart1d.quotes
           .map((q) => q.close)
           .filter((c): c is number => c !== null && c !== undefined)
+          .map((value) => normalizeYahooPrice(value, yahooCurrency))
         sparklineCache.set(ticker, { values: sparkline, expiresAt: Date.now() + 5 * 60_000 })
       }
 

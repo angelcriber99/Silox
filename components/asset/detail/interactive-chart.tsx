@@ -7,6 +7,7 @@ import {
 import { formatCurrency } from "@/lib/utils/formatters"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { RawTransaction } from "./use-asset-calculations"
+import { usePreferences } from "@/lib/stores/use-preferences"
 
 const PurchaseDot = (props: any) => {
   const { cx, cy, payload } = props
@@ -49,6 +50,7 @@ interface InteractiveAssetChartProps {
 
 export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions = [], units = 0, historicalPnl, onRangePerformanceChange }: InteractiveAssetChartProps) {
   const [range, setRange] = useState("1mo")
+  const { refreshInterval, pauseUpdatesWhenHidden } = usePreferences()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['marketData', ticker, range],
@@ -143,7 +145,11 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
       
       return { ...result, chart: enrichedChart }
     },
-    staleTime: 1000 * 60 * 5 // 5 minutes
+    staleTime: range === '1d' || range === '5d' ? Math.min(refreshInterval, 10_000) : 5 * 60_000,
+    refetchInterval: range === '1d' || range === '5d' ? refreshInterval : false,
+    refetchIntervalInBackground: !pauseUpdatesWhenHidden,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   })
 
   return (

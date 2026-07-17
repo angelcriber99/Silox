@@ -1,4 +1,5 @@
 interface CostBasisTransaction {
+  id?: string
   activo_id: string
   tipo_operacion: string
   cantidad: number
@@ -32,7 +33,11 @@ export function calculateOpenCostBasis(
   const lotsByAsset = new Map<string, OpenLot[]>()
   const orderedTransactions = transactions
     .slice()
-    .sort((a, b) => `${a.fecha}:${a.created_at}`.localeCompare(`${b.fecha}:${b.created_at}`))
+    .sort((a, b) => {
+      const left = `${a.fecha}:${a.created_at}:${a.id ?? ''}`
+      const right = `${b.fecha}:${b.created_at}:${b.id ?? ''}`
+      return left.localeCompare(right)
+    })
 
   for (const transaction of orderedTransactions) {
     const quantity = Number(transaction.cantidad)

@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   convertToEur,
   convertSeriesToEur,
-  normalizeYahooCurrency
+  normalizeYahooCurrency,
+  normalizeYahooPrice,
 } from '@/lib/utils/currency'
 
 describe('Currency Logic (Empty & Edge cases)', () => {
@@ -50,6 +51,15 @@ describe('Currency Logic (Empty & Edge cases)', () => {
     })
     it('capitalizes currencies', () => {
       expect(normalizeYahooCurrency('eur')).toBe('EUR')
+    })
+  })
+
+  describe('normalizeYahooPrice', () => {
+    it('convierte peniques británicos a libras sin alterar otras monedas', () => {
+      expect(normalizeYahooPrice(725, 'GBX')).toBe(7.25)
+      expect(normalizeYahooPrice(725, 'GBp')).toBe(7.25)
+      expect(normalizeYahooPrice(725, 'GBP')).toBe(725)
+      expect(normalizeYahooPrice(25, 'USD')).toBe(25)
     })
   })
 })

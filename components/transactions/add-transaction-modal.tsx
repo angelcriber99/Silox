@@ -78,8 +78,9 @@ export function AddTransactionModal({
 
   // Prefill price with current market price
   const handlePrefillPrice = () => {
-    if (position?.precio_actual) {
-      setPrecioUnitario(position.precio_actual.toFixed(2))
+    const nativePrice = position?.precio_actual_nativo ?? position?.precio_actual
+    if (nativePrice) {
+      setPrecioUnitario(nativePrice.toFixed(nativePrice < 10 ? 4 : 2))
     }
   }
 

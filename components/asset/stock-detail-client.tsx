@@ -23,13 +23,15 @@ interface StockDetailClientProps {
   position: EnrichedPosition
   transactions: RawTransaction[]
   assetDetails?: AssetDetails | null
+  realtimeStatus?: "connecting" | "connected" | "disconnected"
+  pricesUpdatedAt?: number
 }
 
 const TIPO_BADGE_STYLES: Record<string, string> = {
   Acción: "bg-amber-500/10 text-amber-400 border-amber-500/20",
 }
 
-export function StockDetailClient({ position, transactions, assetDetails }: StockDetailClientProps) {
+export function StockDetailClient({ position, transactions, assetDetails, realtimeStatus = "connecting", pricesUpdatedAt }: StockDetailClientProps) {
   const {
     evolutionData,
     stats,
@@ -39,10 +41,15 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
 
+  const sessionPercent = position.change_percent_24h ?? 0
+  const currentNativeValue = position.valor_actual_nativo ?? 0
+  const sessionBaseline = sessionPercent > -99.99
+    ? currentNativeValue / (1 + sessionPercent / 100)
+    : currentNativeValue
   const currentPerformance = rangePerformance || {
-    label: "Hoy",
-    absolute: position.change_amount_24h_nativo ?? position.change_amount_24h ?? 0,
-    percent: position.change_percent_24h ?? 0
+    label: position.market_state === "PRE" ? "Premercado" : position.market_state === "POST" ? "Postmercado" : "Sesión",
+    absolute: currentNativeValue - sessionBaseline,
+    percent: sessionPercent,
   }
 
   const isPositive = currentPerformance.absolute >= 0
@@ -58,6 +65,11 @@ export function StockDetailClient({ position, transactions, assetDetails }: Stoc
             <span className="text-sm font-medium">Volver</span>
           </Link>
           <div className="flex items-center gap-2.5">
+             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+               <span className={`h-2 w-2 rounded-full ${realtimeStatus === "connected" && !position.price_is_stale ? "bg-emerald-400" : realtimeStatus === "disconnected" ? "bg-rose-400" : "bg-amber-400"}`} />
+               {realtimeStatus === "connected" ? "En vivo" : realtimeStatus === "disconnected" ? "Sin conexión" : "Conectando"}
+               {pricesUpdatedAt ? ` · ${new Date(pricesUpdatedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}
+             </span>
              <Badge variant="outline" className={TIPO_BADGE_STYLES[position.tipo] || "bg-muted text-foreground/80"}>
                 {position.tipo}
              </Badge>

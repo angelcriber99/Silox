@@ -279,7 +279,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
               : "bg-rose-500/5 border-rose-500/20 text-rose-400"
           }`}>
             <ZenLiveValue
-              value={totals.totalPnlPercent24h}
+              value={totals.totalDailyPnlPercent}
               formatter={formatPercent}
               glow={false}
             />

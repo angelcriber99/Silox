@@ -12,27 +12,24 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
   if (errorPos) throw new Error(`Error cargando posiciones: ${errorPos.message}`)
 
   const normalizedPositions = (posiciones ?? []).map(displayAssetType)
-  const metalAssetIds = normalizedPositions
-    .filter((position) => position.tipo === 'Metal')
-    .map((position) => position.activo_id)
+  const assetIds = normalizedPositions.map((position) => position.activo_id)
 
-  if (metalAssetIds.length === 0) return normalizedPositions
+  if (assetIds.length === 0) return normalizedPositions
 
-  const { data: metalTransactions, error: transactionsError } = await supabase
+  const { data: completedTransactions, error: transactionsError } = await supabase
     .from('transacciones')
-    .select('activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha, created_at')
-    .in('activo_id', metalAssetIds)
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha, created_at')
+    .in('activo_id', assetIds)
     .eq('estado', 'Completada')
 
   if (transactionsError) {
-    console.error(`Error cargando operaciones de metales: ${transactionsError.message}`)
-    return normalizedPositions
+    throw new Error(`Error calculando el coste FIFO de las posiciones: ${transactionsError.message}`)
   }
 
-  const openCosts = calculateOpenCostBasis(metalTransactions ?? [])
+  const openCosts = calculateOpenCostBasis(completedTransactions ?? [])
   return normalizedPositions.map((position) => {
     const openCost = openCosts.get(position.activo_id)
-    return position.tipo === 'Metal' && openCost !== undefined
+    return openCost !== undefined
       ? { ...position, coste_total: openCost }
       : position
   })
@@ -154,6 +151,9 @@ export function enrichPositions(
     const precio_actual = isCashAsset ? 1.00 : (priceData?.price ?? fallbackPriceEur)
     const precio_actual_nativo = isCashAsset ? 1.00 : (priceData?.originalPrice ?? fallbackPriceNativo)
     const original_currency = priceData?.originalCurrency ?? p.moneda
+    const precio_actual_usd = priceData?.priceUsd
+      ?? (original_currency === 'USD' ? precio_actual_nativo : null)
+      ?? (precio_actual !== null && fxRates.USD ? precio_actual * fxRates.USD : null)
     const change_percent_24h = priceData?.changePercent24h ?? null
     const daily_change_percent_24h = priceData?.dailyChangePercent24h ?? null
     let sparkline = priceData?.sparkline ?? []
@@ -204,6 +204,7 @@ export function enrichPositions(
       ...p,
       precio_actual,
       precio_actual_nativo,
+      precio_actual_usd,
       original_currency,
       tipo: p.ticker.startsWith('CASH') || p.nombre?.toLowerCase().includes('efectivo') ? 'Liquidez' : p.tipo,
       valor_actual: valor_actual_eur,
@@ -276,9 +277,11 @@ export function computePortfolioTotals(
     totalPnlPercent,
     totalPnl24h,
     totalPnlPercent24h,
+    totalSessionPnl,
     totalDailyPnlPercent,
     positionCount: positions.filter((p) => p.unidades > 0).length,
     hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => p.valor_actual !== null),
+    estimatedPositionCount: positions.filter((p) => p.unidades > 0 && (p.valor_actual === null || p.price_is_stale)).length,
   }
 }
 

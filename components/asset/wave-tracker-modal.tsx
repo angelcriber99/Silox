@@ -6,16 +6,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Loader2, Plus, Trash2, Waves, Target, Check, RefreshCw } from "lucide-react"
+import { Loader2, Plus, Trash2, Waves, Target, Check, RefreshCw, Sparkles } from "lucide-react"
 import type { EnrichedPosition } from "@/lib/types"
 import { useUpdateAsset } from "@/lib/hooks/use-transactions"
 import { toast } from "sonner"
+import { calculatePurchasePoints } from "@/lib/utils/purchase-points"
 
 interface WaveData {
   id: string
   price: number
   type: "BUY" | "SELL"
   active: boolean
+  currency?: "USD"
+  source?: "manual" | "model"
+  confidence?: number
+  rationale?: string
 }
 
 export interface AssetNotesData {
@@ -51,6 +56,7 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
   const [notesData, setNotesData] = useState<AssetNotesData>(() => parseAssetNotes(position?.notas ?? null))
   const [newWavePrice, setNewWavePrice] = useState("")
   const [newWaveType, setNewWaveType] = useState<"BUY" | "SELL">("SELL")
+  const [isCalculating, setIsCalculating] = useState(false)
 
   const handleAddWave = () => {
     const price = parseFloat(newWavePrice.replace(",", "."))
@@ -63,7 +69,9 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
       id: crypto.randomUUID(),
       price,
       type: newWaveType,
-      active: true
+      active: true,
+      currency: "USD",
+      source: "manual",
     }
 
     setNotesData(prev => ({
@@ -101,7 +109,9 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
             id: crypto.randomUUID(),
             price,
             type: newWaveType,
-            active: true
+            active: true,
+            currency: "USD",
+            source: "manual",
           }
           finalNotesData.waves = [...finalNotesData.waves, newWave].sort((a, b) => b.price - a.price)
         }
@@ -122,8 +132,50 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
 
   if (!position) return null
 
-  const currentPrice = position.precio_actual_nativo ?? 0
-  const currencySymbol = position.moneda === 'USD' ? '$' : '€'
+  const currentPrice = position.precio_actual_usd ?? 0
+  const currencySymbol = '$'
+
+  const calculateLevels = async () => {
+    if (!currentPrice) {
+      toast.error("No hay una cotización USD actual para calcular niveles")
+      return
+    }
+    setIsCalculating(true)
+    try {
+      const response = await fetch(`/api/market/${encodeURIComponent(position.ticker)}?range=1y&type=${encodeURIComponent(position.tipo)}`)
+      if (!response.ok) throw new Error("No se pudo cargar el histórico")
+      const payload = await response.json()
+      const nativePrice = position.precio_actual_nativo ?? 0
+      const usdPerNative = nativePrice > 0 ? currentPrice / nativePrice : 1
+      const chart = (payload.chart ?? []).map((point: { date: string; price: number }) => ({
+        date: point.date,
+        price: Number(point.price) * usdPerNative,
+      }))
+      const levels = calculatePurchasePoints(chart, currentPrice)
+      if (levels.length === 0) throw new Error("No hay suficiente historial para calcular soportes")
+
+      const generated: WaveData[] = levels.map((level) => ({
+        id: crypto.randomUUID(),
+        price: level.price,
+        type: "BUY",
+        active: true,
+        currency: "USD",
+        source: "model",
+        confidence: level.confidence,
+        rationale: level.rationale,
+      }))
+      setNotesData((previous) => ({
+        ...previous,
+        waves: [...previous.waves.filter((wave) => wave.source !== "model"), ...generated]
+          .sort((left, right) => right.price - left.price),
+      }))
+      toast.success("Puntos de compra recalculados en USD")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudieron calcular los puntos")
+    } finally {
+      setIsCalculating(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,9 +194,9 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
           
           {/* Precio Actual Info */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50">
-            <span className="text-sm font-medium text-muted-foreground">Precio Actual</span>
+            <span className="text-sm font-medium text-muted-foreground">Precio actual en USD</span>
             <span className="tabular-nums font-bold text-lg">
-              {currentPrice.toFixed(2)} {currencySymbol}
+              {currencySymbol}{currentPrice.toFixed(currentPrice < 10 ? 4 : 2)}
             </span>
           </div>
 
@@ -154,6 +206,10 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
               <Target className="w-4 h-4 text-emerald-400" />
               Gestor de Olas (Targets)
             </Label>
+            <Button type="button" variant="outline" className="w-full justify-center gap-2" onClick={calculateLevels} disabled={isCalculating}>
+              {isCalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Calcular 3 puntos de compra en USD
+            </Button>
             
             {/* Add new wave */}
             <div className="flex items-center gap-2">
@@ -193,6 +249,7 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
                 notesData.waves.map(wave => {
                   const isSell = wave.type === "SELL"
                   const isHit = isSell ? currentPrice >= wave.price : currentPrice <= wave.price
+                  const distance = currentPrice > 0 ? ((wave.price / currentPrice) - 1) * 100 : 0
                   
                   return (
                     <div 
@@ -219,8 +276,13 @@ export function WaveTrackerModal({ position, open, onOpenChange, onSuccess }: Wa
                             {isSell ? 'Toma de Beneficios' : 'Comprar Caída'}
                           </span>
                           <span className="tabular-nums font-semibold">
-                            {wave.price.toFixed(2)} {currencySymbol}
+                            {currencySymbol}{wave.price.toFixed(wave.price < 10 ? 4 : 2)}
                           </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {distance >= 0 ? "+" : ""}{distance.toFixed(2)}% desde hoy
+                            {wave.confidence ? ` · confianza ${wave.confidence}%` : ""}
+                          </span>
+                          {wave.rationale && <span className="max-w-[230px] text-[10px] leading-snug text-muted-foreground/70">{wave.rationale}</span>}
                         </div>
                       </div>
                       

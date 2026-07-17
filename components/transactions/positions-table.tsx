@@ -443,11 +443,13 @@ export function PositionsTable({
                     : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
 
                   const assetNotes = parseAssetNotes(p.notas);
-                  const currentPrice = p.precio_actual_nativo !== null ? p.precio_actual_nativo : (p.precio_actual || 0);
                   const hasActiveWaves = assetNotes.waves.some(w => w.active);
-                  const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => 
-                    w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price))
-                  );
+                  const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => {
+                    const currentPrice = w.currency === "USD"
+                      ? (p.precio_actual_usd ?? 0)
+                      : (p.precio_actual_nativo ?? p.precio_actual ?? 0);
+                    return w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price));
+                  });
 
                   return (
                     <TableRow
@@ -706,11 +708,13 @@ export function PositionsTable({
                      <div className="flex items-center gap-2">
                         {(() => {
                           const assetNotes = parseAssetNotes(p.notas);
-                          const currentPrice = p.precio_actual_nativo !== null ? p.precio_actual_nativo : (p.precio_actual || 0);
                           const hasActiveWaves = assetNotes.waves.some(w => w.active);
-                          const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => 
-                            w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price))
-                          );
+                          const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => {
+                            const currentPrice = w.currency === "USD"
+                              ? (p.precio_actual_usd ?? 0)
+                              : (p.precio_actual_nativo ?? p.precio_actual ?? 0);
+                            return w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price));
+                          });
                           
                           return (
                             <Button

@@ -57,12 +57,12 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
     if (!transactions || transactions.length === 0) return []
 
     const sorted = [...transactions].sort((a, b) =>
-      new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+      `${a.fecha}:${a.created_at}:${a.id}`.localeCompare(`${b.fecha}:${b.created_at}:${b.id}`)
     )
 
     let accUnits = 0
-    let accCost = 0
     let accDividends = 0
+    const openLots: Array<{ quantity: number; unitCost: number }> = []
     const points: { date: string; invested: number; value: number; profit: number; isPurchase?: boolean }[] = []
 
     for (const tx of sorted) {
@@ -71,16 +71,24 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
       const comision = Number(tx.comision) || 0
       const total = qty * price
 
-      if (tx.tipo_operacion === "Compra") {
+      if (tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada") {
         accUnits += qty
-        accCost += total
-      } else if (tx.tipo_operacion === "Venta") {
+        if (qty > 0) openLots.push({ quantity: qty, unitCost: (total + comision) / qty })
+      } else if (tx.tipo_operacion === "Venta" || tx.tipo_operacion === "Traspaso Salida" || tx.tipo_operacion === "Retirada") {
         accUnits -= qty
-        accCost -= total
+        let remaining = qty
+        while (remaining > 0.00000001 && openLots.length > 0) {
+          const lot = openLots[0]
+          const consumed = Math.min(lot.quantity, remaining)
+          lot.quantity -= consumed
+          remaining -= consumed
+          if (lot.quantity <= 0.00000001) openLots.shift()
+        }
       } else if (tx.tipo_operacion === "Dividendo") {
         accDividends += (total - comision)
       }
 
+      const accCost = openLots.reduce((sum, lot) => sum + lot.quantity * lot.unitCost, 0)
       const inv = Math.max(0, Math.round(accCost * 100) / 100)
       const val = Math.max(0, Math.round(accUnits * price * 100) / 100)
       points.push({
@@ -88,11 +96,12 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
         invested: inv,
         value: val,
         profit: Math.round((val - inv + accDividends) * 100) / 100,
-        isPurchase: tx.tipo_operacion === "Compra",
+        isPurchase: tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada",
       })
     }
 
     if (position.precio_actual !== null && accUnits > 0) {
+      const accCost = openLots.reduce((sum, lot) => sum + lot.quantity * lot.unitCost, 0)
       const inv = Math.max(0, Math.round(accCost * 100) / 100)
       const currentNativePrice = position.precio_actual_nativo ?? position.precio_actual
       const val = Math.max(0, Math.round(accUnits * currentNativePrice * 100) / 100)
@@ -106,7 +115,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
     }
 
     return points
-  }, [transactions, position.precio_actual])
+  }, [transactions, position.precio_actual, position.precio_actual_nativo])
 
   // ── Aportaciones por Mes ──
   const monthlyContributionsData = useMemo(() => {
@@ -172,8 +181,8 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
       ? (calculationTime - firstTxDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
       : 0
     const monthsInvested = Math.round(yearsInvested * 12)
-    const cagr = yearsInvested > 0 && position.valor_actual && position.coste_total > 0
-      ? (Math.pow(position.valor_actual / position.coste_total, 1 / yearsInvested) - 1) * 100
+    const cagr = yearsInvested > 0 && position.valor_actual_nativo && position.coste_total > 0
+      ? (Math.pow(position.valor_actual_nativo / position.coste_total, 1 / yearsInvested) - 1) * 100
       : 0
 
     const avgMonthly = monthsInvested > 0 ? totalCompras / monthsInvested : 0

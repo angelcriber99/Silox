@@ -19,6 +19,7 @@ export interface Posicion {
 export interface EnrichedPosition extends Posicion {
   precio_actual: number | null
   precio_actual_nativo: number | null
+  precio_actual_usd?: number | null
   original_currency: string | null
   valor_actual: number | null // in EUR
   valor_actual_nativo: number | null
@@ -96,16 +97,20 @@ export interface PortfolioTotals {
   totalPnl: number
   totalPnlPercent: number
   totalPnl24h: number
+  /** Rendimiento del periodo activo (pre, regular o post). */
   totalPnlPercent24h: number
+  totalSessionPnl: number
   totalDailyPnlPercent: number
   positionCount: number
   hasAllPrices: boolean
+  estimatedPositionCount: number
 }
 
 export interface PriceData {
   price: number | null
   sparkline: number[]
   originalPrice?: number | null
+  priceUsd?: number | null
   originalCurrency?: string
   changePercent24h?: number | null // active market-session percentage
   dailyChangePercent24h?: number | null // cumulative trading-day percentage

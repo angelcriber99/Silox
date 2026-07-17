@@ -15,6 +15,19 @@ export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
   return data
 }
 
+export async function fetchAssetTransactions(assetId: string): Promise<Transaccion[]> {
+  const { data, error } = await createClient()
+    .from('transacciones')
+    .select('*')
+    .eq('activo_id', assetId)
+    .order('fecha', { ascending: true })
+    .order('created_at', { ascending: true })
+    .overrideTypes<Transaccion[], { merge: false }>()
+
+  if (error) throw new Error(`Error cargando las operaciones del activo: ${error.message}`)
+  return data
+}
+
 export async function fetchPendingTransactions(): Promise<Transaccion[]> {
   const { data, error } = await createClient()
     .from('transacciones')

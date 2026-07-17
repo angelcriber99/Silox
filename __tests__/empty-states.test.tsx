@@ -26,9 +26,11 @@ describe('Empty States UI Verification', () => {
     totalPnlPercent: 0,
     totalPnl24h: 0,
     totalPnlPercent24h: 0,
+    totalSessionPnl: 0,
     totalDailyPnlPercent: 0,
     positionCount: 0,
     hasAllPrices: true,
+    estimatedPositionCount: 0,
   }
 
   describe('PositionsTable', () => {

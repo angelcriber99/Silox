@@ -41,3 +41,18 @@ export function normalizeYahooCurrency(currency: string | undefined): string {
   if (upper === 'GBX' || upper === 'GBP') return 'GBP'
   return upper
 }
+
+/**
+ * Yahoo expresa algunos valores de Londres en peniques (GBX/GBp), aunque la
+ * divisa contable de la posición sea GBP. Normalizar solo la etiqueta provoca
+ * un error de valoración de 100x, por lo que precio y divisa deben tratarse a
+ * la vez.
+ */
+export function normalizeYahooPrice(
+  amount: number,
+  currency: string | undefined,
+): number {
+  return currency?.toUpperCase() === 'GBX' || currency === 'GBp'
+    ? amount / 100
+    : amount
+}

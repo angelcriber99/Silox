@@ -187,8 +187,8 @@ export function DistributionExtended({ positions, pendingTxs, marketState = 'CLO
             <span className={`text-sm font-bold ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {formatPnl(totals.totalPnl24h)}
             </span>
-            <span className={`text-[11px] font-medium opacity-80 ${totals.totalPnlPercent24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              ({formatPercent(totals.totalPnlPercent24h).replace('+', '')})
+            <span className={`text-[11px] font-medium opacity-80 ${totals.totalDailyPnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              ({formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
             </span>
           </div>
         )}

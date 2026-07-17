@@ -19,6 +19,10 @@ interface MobileBottomSheetProps {
 const TIPOS = ["ETF", "Fondo Indexado", "Fondo Monetario", "Acción", "Crypto"] as const
 const MONEDAS = ["EUR", "USD", "GBP"] as const
 
+function toPriceInput(value: number) {
+  return value.toFixed(value < 10 ? 4 : 2).replace(/0+$/, '').replace(/\.$/, '')
+}
+
 export function MobileBottomSheet({
   open,
   onClose,
@@ -92,7 +96,8 @@ export function MobileBottomSheet({
       setActiveTab("operacion")
       setSelectedAsset(preselectedAsset)
       setStep("form")
-      if (preselectedAsset.precio_actual) setPrecio(preselectedAsset.precio_actual.toFixed(2))
+      const nativePrice = preselectedAsset.precio_actual_nativo ?? preselectedAsset.precio_actual
+      if (nativePrice) setPrecio(toPriceInput(nativePrice))
     }, 0)
     return () => window.clearTimeout(selectTimer)
   }, [open, preselectedAsset])
@@ -103,7 +108,8 @@ export function MobileBottomSheet({
   const handleSelectAsset = (p: EnrichedPosition) => {
     setSelectedAsset(p)
     setStep("form")
-    if (p.precio_actual) setPrecio(p.precio_actual.toFixed(2))
+    const nativePrice = p.precio_actual_nativo ?? p.precio_actual
+    if (nativePrice) setPrecio(toPriceInput(nativePrice))
   }
 
   const handleSubmitTx = async () => {
@@ -122,6 +128,8 @@ export function MobileBottomSheet({
         cantidad: cantNum,
         precio_unitario: precioNum,
         comision: comision ? parseFloat(comision) : 0,
+        precio_moneda: selectedAsset.original_currency || selectedAsset.moneda,
+        comision_moneda: selectedAsset.original_currency || selectedAsset.moneda,
         fecha,
       })
       toast.success(`${tipoOp} de ${selectedAsset.ticker} registrada correctamente`)
@@ -191,6 +199,8 @@ export function MobileBottomSheet({
           cantidad: cantNum,
           precio_unitario: precioNum,
           comision: comision ? parseFloat(comision) : 0,
+          precio_moneda: moneda,
+          comision_moneda: moneda,
           fecha,
         },
       })
@@ -215,6 +225,7 @@ export function MobileBottomSheet({
   }
 
   const totalEst = (parseFloat(cantidad) || 0) * (parseFloat(precio) || 0)
+  const operationCurrency = selectedAsset?.original_currency || selectedAsset?.moneda || "EUR"
   const isCompra = tipoOp === "Compra"
   const isPending = addTx.isPending || addInvestment.isPending
 
@@ -342,7 +353,7 @@ export function MobileBottomSheet({
                                 <p className="text-xs text-muted-foreground/80 truncate">{p.nombre}</p>
                               </div>
                               <div className="flex-shrink-0 text-right">
-                                <p className="text-sm font-bold text-foreground tabular-nums">{p.precio_actual ? formatCurrency(p.precio_actual) : "—"}</p>
+                                <p className="text-sm font-bold text-foreground tabular-nums">{(p.precio_actual_nativo ?? p.precio_actual) ? formatCurrency(p.precio_actual_nativo ?? p.precio_actual ?? 0, p.original_currency || p.moneda) : "—"}</p>
                               </div>
                             </motion.button>
                           )
@@ -382,12 +393,12 @@ export function MobileBottomSheet({
                             <input type="number" inputMode="decimal" placeholder="0" value={cantidad} onChange={(e) => setCantidad(e.target.value)} className={premiumInputClass} />
                           </div>
                           <div>
-                            <label className={labelClass}>Precio Unitario (€)</label>
+                            <label className={labelClass}>Precio unitario ({operationCurrency})</label>
                             <input type="number" inputMode="decimal" placeholder="0.00" value={precio} onChange={(e) => setPrecio(e.target.value)} className={premiumInputClass} />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                              <div>
-                               <label className={labelClass}>Comisión (€)</label>
+                               <label className={labelClass}>Comisión ({operationCurrency})</label>
                                <input type="number" inputMode="decimal" placeholder="0.00" value={comision} onChange={(e) => setComision(e.target.value)} className={`${premiumInputClass} !text-base !py-3`} />
                              </div>
                              <div>
@@ -406,7 +417,7 @@ export function MobileBottomSheet({
                            {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                              <>
                                <span>{isCompra ? "Confirmar Compra" : "Confirmar Venta"}</span>
-                               {totalEst > 0 && <span className="text-xs font-medium opacity-80 mt-0.5">Total: {formatCurrency(totalEst)}</span>}
+                               {totalEst > 0 && <span className="text-xs font-medium opacity-80 mt-0.5">Total: {formatCurrency(totalEst, operationCurrency)}</span>}
                              </>
                            )}
                         </motion.button>
@@ -513,7 +524,7 @@ export function MobileBottomSheet({
                            {isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                              <>
                                <span>Guardar Activo e Inversión</span>
-                               {totalEst > 0 && <span className="text-xs font-medium opacity-80 mt-0.5">Total: {formatCurrency(totalEst)}</span>}
+                               {totalEst > 0 && <span className="text-xs font-medium opacity-80 mt-0.5">Total: {formatCurrency(totalEst, moneda)}</span>}
                              </>
                            )}
                         </motion.button>

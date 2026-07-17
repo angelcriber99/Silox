@@ -49,7 +49,11 @@ export async function GET(
     const shouldFetchSummary = type === 'Acción' || type === 'Stock'
     const [quoteResult, chartResult, summaryResult] = await Promise.allSettled([
       yahooFinance.quote(ticker),
-      yahooFinance.chart(ticker, { period1: getPeriod1ForRange(range), interval: getInterval(range) }),
+      yahooFinance.chart(ticker, {
+        period1: getPeriod1ForRange(range),
+        interval: getInterval(range),
+        includePrePost: range === '1d' || range === '5d',
+      }),
       shouldFetchSummary
         ? yahooFinance.quoteSummary(ticker, { modules: ['summaryProfile', 'financialData'] })
         : Promise.resolve(null),

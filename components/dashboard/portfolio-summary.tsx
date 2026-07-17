@@ -110,7 +110,7 @@ export function PortfolioSummary({
                 {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}
               </span>
               <span className="text-sm font-semibold opacity-90">
-                ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h).replace('+', '')})
+                ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
               </span>
             </div>
             
@@ -214,7 +214,7 @@ export function PortfolioSummary({
               >
                 <span className="text-muted-foreground font-normal">Hoy</span>
                 <span className="font-semibold tabular-nums">
-                  {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+                  {hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent)}
                 </span>
                 {!hideBalances && (
                   <span className="opacity-70">
@@ -272,7 +272,7 @@ export function PortfolioSummary({
         {/* Invested */}
         <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Invertido</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Capital aportado</span>
             <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">
               <Briefcase className="w-4 h-4" />
             </div>
@@ -336,7 +336,7 @@ export function PortfolioSummary({
             className="text-xs"
             style={{ color: daily24Positive ? "oklch(0.65 0.19 155 / 0.8)" : "oklch(0.62 0.20 20 / 0.8)" }}
           >
-            Hoy: {hideBalances ? "•••" : formatPercent(totals.totalPnlPercent24h)}
+            Hoy: {hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent)}
           </p>
         </div>
 
