@@ -12,7 +12,7 @@ type CalendarEvent = {
   id: string
   ticker: string
   date: string
-  type: 'EARNINGS' | 'DIVIDEND' | 'EX_DIVIDEND' | 'AI_EVENT'
+  type: 'EARNINGS' | 'DIVIDEND' | 'EX_DIVIDEND' | 'AI_EVENT' | 'AI_EVENT_SPECULATIVE'
   title: string
   description?: string
 }

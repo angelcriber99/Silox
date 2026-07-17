@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireApiUser } from '@/lib/server/api-auth'
-import Parser from 'rss-parser'
+import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 const NoticiasSchema = z.object({
   items: z.array(z.object({
@@ -9,8 +9,6 @@ const NoticiasSchema = z.object({
     displayName: z.string().trim().min(1).max(50)
   })).min(1).max(20),
 })
-
-const parser = new Parser()
 
 export async function POST(request: Request) {
   const auth = await requireApiUser()
@@ -31,21 +29,23 @@ export async function POST(request: Request) {
     const selectedItems = items.slice(0, 10) // Limit to 10 tickers
     
     const noticias: any[] = []
+    const yahooFinance = getYahooFinance()
     
     for (const item of selectedItems) {
       try {
-        const query = encodeURIComponent(`${item.displayName} stock`)
-        const feed = await parser.parseURL(`https://news.google.com/rss/search?q=${query}&hl=es&gl=ES&ceid=ES:es`)
+        const searchResult = await yahooFinance.search(item.displayName)
         
-        // Take top 3 news for this ticker
-        const recentNews = feed.items.slice(0, 3)
+        // Take top 4 news for this ticker
+        const recentNews = (searchResult.news || []).slice(0, 4)
         for (const article of recentNews) {
           noticias.push({
-            uuid: `google-news-${article.guid || Date.now()}-${Math.random()}`,
+            uuid: article.uuid || `yahoo-news-${Date.now()}-${Math.random()}`,
             title: article.title || "Noticia sin título",
-            publisher: article.creator || article.source || "Google News",
+            publisher: article.publisher || "Yahoo Finance",
             link: article.link || "",
-            providerPublishTime: article.isoDate || new Date().toISOString(),
+            providerPublishTime: article.providerPublishTime 
+              ? new Date(article.providerPublishTime).toISOString() 
+              : new Date().toISOString(),
             relatedTicker: item.displayName,
             sentiment: "NEUTRAL"
           })
@@ -70,19 +70,21 @@ export async function POST(request: Request) {
         
         const tickersStr = selectedItems.map(i => i.displayName).join(", ")
         const prompt = `Actúa como un analista financiero experto. 
-Basándote en tu conocimiento y proyecciones, enumera los eventos corporativos clave y muy relevantes programados para los próximos 6 meses (del año 2026) para los siguientes tickers: ${tickersStr}.
-(Ejemplo: ASTS lanzamiento de satélites Bluebird en agosto, Apple Keynote, Aprobaciones de la FDA, conferencias clave, etc.). 
-NO incluyas simples presentaciones de resultados trimestrales (earnings) ni pagos de dividendos; céntrate en eventos puntuales de negocio.
-Si un evento no tiene fecha exacta (ej. "Agosto 2026" o "Primera quincena"), estima el día más razonable (ej. el día 1 o 15 del mes) e indica "isSpeculative": true.
+Basándote en tu conocimiento y proyecciones, enumera los eventos corporativos clave y catalizadores programados o rumoreados para los próximos 6 meses (del año 2026) para los siguientes tickers: ${tickersStr}.
+(Ejemplo: ASTS lanzamiento de satélites Bluebird, Apple Keynote, Aprobaciones de la FDA, rumores de M&A, etc.). 
+NO incluyas simples presentaciones de resultados trimestrales (earnings) ni dividendos.
 
-Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS (sin texto antes o después del JSON):
+MUY IMPORTANTE: INCLUYE obligatoriamente eventos especulativos, rumores fuertes o eventos que aún no tengan fecha confirmada exacta, marcándolos como especulativos.
+Si un evento no tiene fecha exacta (ej. "Agosto 2026" o "Q3"), estima el día más razonable (ej. el día 15 del mes) e indica "isSpeculative": true.
+
+Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS:
 {
   "events": [
     {
       "title": "Breve título del evento",
       "date": "Fecha estimada YYYY-MM-DD",
       "ticker": "Ticker exacto relacionado",
-      "isSpeculative": true o false
+      "isSpeculative": true
     }
   ]
 }`
