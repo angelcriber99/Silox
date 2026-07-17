@@ -88,10 +88,8 @@ export default function ActivoPage() {
           pos = {
             ...pos,
             moneda: 'EUR',
-            original_currency: 'EUR',
-            precio_actual_nativo: pos.precio_actual,
             valor_actual_nativo: pos.valor_actual,
-            change_amount_24h_nativo: pos.change_amount_24h,
+            // Keep change_amount_24h_nativo intact for the header
             coste_total: pos.coste_total_eur,
             precio_medio: pos.unidades > 0 ? (pos.coste_total_eur / pos.unidades) : pos.coste_total_eur,
           }

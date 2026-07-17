@@ -44,7 +44,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
 
   const currentPerformance = rangePerformance || {
     label: "Hoy",
-    absolute: position.change_amount_24h ?? 0,
+    absolute: position.change_amount_24h_nativo ?? position.change_amount_24h ?? 0,
     percent: position.change_percent_24h ?? 0
   }
 
@@ -99,7 +99,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
           <div className="text-left md:text-right">
             <div className="flex items-center md:justify-end gap-3">
               <p className="text-5xl md:text-6xl font-bold text-foreground tabular-nums drop-shadow-md">
-                {position.precio_actual !== null ? formatCurrency(position.precio_actual, position.moneda) : "—"}
+                {position.precio_actual !== null ? formatCurrency(position.precio_actual_nativo ?? position.precio_actual, position.original_currency || position.moneda) : "—"}
               </p>
               {position.price_is_stale && (
                 <div title="Precio desactualizado, se actualizará en la próxima sesión" className="w-3 h-3 rounded-full bg-amber-500 animate-pulse mt-2 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
@@ -107,7 +107,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
             </div>
             <div className="flex items-center md:justify-end gap-2 mt-2">
               <p className={`text-lg font-bold tabular-nums flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                {isPositive ? "+" : ""}{formatCurrency(currentPerformance.absolute, position.moneda)} 
+                {isPositive ? "+" : ""}{formatCurrency(currentPerformance.absolute, position.original_currency || position.moneda)} 
                 <span className="ml-1 opacity-80">({isPositive ? "+" : ""}{currentPerformance.percent.toFixed(2)}%)</span>
                 <span className="text-muted-foreground text-sm ml-2 font-medium">{currentPerformance.label}</span>
               </p>
