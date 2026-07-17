@@ -49,8 +49,7 @@ export async function GET(request: Request) {
 
     const tickers = filteredPositions.map(p => p.ticker)
 
-    // Fetch prices using the server function
-    let pricePayload = {}
+    let pricePayload: any = { prices: {} }
     if (tickers.length > 0) {
       pricePayload = await fetchMarketPrices(tickers, true) // true = convert to EUR
     }
