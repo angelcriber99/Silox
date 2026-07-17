@@ -1,5 +1,19 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
+
+// MARK: - App Intent
+
+struct SiloxWidgetConfiguration: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Configuración Silox"
+    static var description = IntentDescription("Introduce tu cuenta de Silox.")
+
+    @Parameter(title: "Email")
+    var email: String?
+
+    @Parameter(title: "Contraseña")
+    var password: String?
+}
 
 // MARK: - Models
 
@@ -19,7 +33,7 @@ struct WidgetSummaryResponse: Codable {
 
 // MARK: - Provider
 
-struct Provider: TimelineProvider {
+struct Provider: AppIntentTimelineProvider {
     
     // Default mock data for previews
     func placeholder(in context: Context) -> SiloxEntry {
@@ -38,44 +52,70 @@ struct Provider: TimelineProvider {
         )
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (SiloxEntry) -> ()) {
-        let entry = placeholder(in: context)
-        completion(entry)
+    func snapshot(for configuration: SiloxWidgetConfiguration, in context: Context) async -> SiloxEntry {
+        placeholder(in: context)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        Task {
-            let entry = await fetchSummaryData()
-            // Refresh every 30 minutes
-            let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: Date())!
-            let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-            completion(timeline)
-        }
+    func timeline(for configuration: SiloxWidgetConfiguration, in context: Context) async -> Timeline<SiloxEntry> {
+        let entry = await fetchSummaryData(configuration: configuration)
+        // Refresh every 30 minutes
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: Date())!
+        return Timeline(entries: [entry], policy: .after(nextUpdate))
     }
     
-    private func fetchSummaryData() async -> SiloxEntry {
-        guard let defaults = UserDefaults(suiteName: "group.com.angelcriber.silox"),
-              let token = defaults.string(forKey: "supabase_token") else {
-            return SiloxEntry(date: Date(), summary: nil, error: "Inicia sesión en Silox para ver tus datos.")
+    private func fetchSummaryData(configuration: SiloxWidgetConfiguration) async -> SiloxEntry {
+        guard let email = configuration.email, !email.isEmpty,
+              let password = configuration.password, !password.isEmpty else {
+            return SiloxEntry(date: Date(), summary: nil, error: "Mantén pulsado para editar y configurar el widget.")
         }
         
-        guard let url = URL(string: "https://silox-chi.vercel.app/api/widget/summary") else {
-            return SiloxEntry(date: Date(), summary: nil, error: "URL inválida")
+        let supabaseUrl = "https://ffpvdttnmeeltsyptafm.supabase.co"
+        let anonKey = "sb_publishable_wSLWks3t7_fic4mpvZAX4w_BlcT8Mo_"
+        
+        // 1. Auth to get access_token
+        guard let authUrl = URL(string: "\(supabaseUrl)/auth/v1/token?grant_type=password") else {
+            return SiloxEntry(date: Date(), summary: nil, error: "Error de URL")
         }
         
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        var authReq = URLRequest(url: authUrl)
+        authReq.httpMethod = "POST"
+        authReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        authReq.setValue(anonKey, forHTTPHeaderField: "apikey")
+        
+        let authBody: [String: String] = ["email": email, "password": password]
+        guard let authData = try? JSONEncoder().encode(authBody) else {
+            return SiloxEntry(date: Date(), summary: nil, error: "Error en credenciales")
+        }
+        authReq.httpBody = authData
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: authReq)
             if let httpResp = response as? HTTPURLResponse, httpResp.statusCode != 200 {
-                return SiloxEntry(date: Date(), summary: nil, error: "Abre Silox para refrescar tu sesión.")
+                return SiloxEntry(date: Date(), summary: nil, error: "Email o contraseña incorrectos.")
             }
             
-            let summary = try JSONDecoder().decode(WidgetSummaryResponse.self, from: data)
+            struct AuthResponse: Codable { let access_token: String }
+            let authResult = try JSONDecoder().decode(AuthResponse.self, from: data)
+            let token = authResult.access_token
+            
+            // 2. Fetch summary using token
+            guard let url = URL(string: "https://silox-chi.vercel.app/api/widget/summary") else {
+                return SiloxEntry(date: Date(), summary: nil, error: "URL de API inválida")
+            }
+            
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            
+            let (sumData, sumResp) = try await URLSession.shared.data(for: request)
+            if let sumHttp = sumResp as? HTTPURLResponse, sumHttp.statusCode != 200 {
+                return SiloxEntry(date: Date(), summary: nil, error: "Error al descargar datos.")
+            }
+            
+            let summary = try JSONDecoder().decode(WidgetSummaryResponse.self, from: sumData)
             return SiloxEntry(date: Date(), summary: summary, error: nil)
+            
         } catch {
-            return SiloxEntry(date: Date(), summary: nil, error: "Sin conexión")
+            return SiloxEntry(date: Date(), summary: nil, error: "Sin conexión a internet")
         }
     }
 }
@@ -277,7 +317,7 @@ struct SiloxWidget: Widget {
     let kind: String = "SiloxWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: SiloxWidgetConfiguration.self, provider: Provider()) { entry in
             SiloxWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Resumen Silox")
