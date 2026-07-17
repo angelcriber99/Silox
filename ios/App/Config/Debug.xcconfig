@@ -1,0 +1,5 @@
+#include "Base.xcconfig"
+SILOX_API_BASE_URL = https:/$()/silox-chi.vercel.app
+SILOX_SUPABASE_URL = https:/$()/ffpvdttnmeeltsyptafm.supabase.co
+SILOX_SUPABASE_ANON_KEY = sb_publishable_wSLWks3t7_fic4mpvZAX4w_BlcT8Mo_
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG

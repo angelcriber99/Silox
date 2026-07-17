@@ -1,0 +1,71 @@
+{
+  "portfolio": {
+    "data": {
+      "asOf": "2026-07-17T12:00:00Z",
+      "displayCurrency": "EUR",
+      "marketState": "REGULAR_OPEN",
+      "totals": {
+        "value": "12540.20",
+        "cost": "10000",
+        "profitLoss": "2540.20",
+        "profitLossPercent": 25.402,
+        "dailyProfitLoss": "145.50"
+      },
+      "positions": [{
+        "assetId": "11111111-1111-4111-8111-111111111111",
+        "ticker": "AAPL",
+        "name": "Apple",
+        "type": "Acción",
+        "currency": "USD",
+        "units": "10",
+        "totalCost": "1000",
+        "currentValue": "1250",
+        "profitLoss": "250",
+        "profitLossPercent": 25,
+        "dailyChangePercent": 1.5
+      }]
+    }
+  },
+  "transactions": {
+    "data": {
+      "items": [{
+        "id": "22222222-2222-4222-8222-222222222222",
+        "assetId": "11111111-1111-4111-8111-111111111111",
+        "operation": "Compra",
+        "quantity": "10",
+        "unitPrice": "100",
+        "status": "Completada",
+        "date": "2026-07-16",
+        "notes": null,
+        "asset": { "ticker": "AAPL", "name": "Apple", "type": "Acción", "currency": "USD" }
+      }],
+      "page": 1,
+      "pageSize": 50,
+      "total": 1
+    }
+  },
+  "news": {
+    "data": [{
+      "id": "news-1",
+      "title": "Apple publica resultados",
+      "source": "Reuters",
+      "publishedAt": "2026-07-17T10:30:00Z",
+      "url": "https://example.com/apple-results",
+      "ticker": "AAPL"
+    }]
+  },
+  "widgetSummary": {
+    "netSession": 145.5,
+    "totalValue": 12540.2,
+    "volatileAssets": [{
+      "ticker": "AAPL",
+      "name": "Apple",
+      "changePercent": 1.5,
+      "isPositive": true
+    }],
+    "updatedAt": "2026-07-17T12:00:00Z"
+  },
+  "widgetCredential": {
+    "token": "swx_widget_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG"
+  }
+}

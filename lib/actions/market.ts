@@ -153,6 +153,10 @@ function getMetalPriceEntry(
   const metrics = buildMetalPriceMetrics(metalCode, market.latest, market.history)
   if (!metrics) return null
 
+  const providerTime = new Date(`${market.latest.date}T23:59:59.000Z`)
+  const isStale = Number.isNaN(providerTime.getTime())
+    || Date.now() - providerTime.getTime() > 72 * 60 * 60 * 1000
+
   return {
     price: metrics.price,
     sparkline: metrics.sparkline,
@@ -162,8 +166,8 @@ function getMetalPriceEntry(
     originalPrice: metrics.price,
     originalCurrency: 'EUR',
     marketState: 'OPEN',
-    latestTime: new Date().toISOString(),
-    isStale: false,
+    latestTime: Number.isNaN(providerTime.getTime()) ? undefined : providerTime.toISOString(),
+    isStale,
   }
 }
 
@@ -222,6 +226,7 @@ interface ActionCacheEntry {
   expiresAt: number
 }
 const actionCache = new Map<string, ActionCacheEntry>()
+const lastKnownPriceCache = new Map<string, PriceEntry>()
 const ACTIVE_CACHE_TTL = 8_000
 const CLOSED_CACHE_TTL = 60_000
 const sparklineCache = new Map<string, { values: number[]; expiresAt: number }>()
@@ -245,7 +250,22 @@ export async function fetchMarketPricesDirect(
     return cached.data
   }
 
-  const data = await _fetchMarketPrices(tickers, convertToEurFlag)
+  const freshData = await _fetchMarketPrices(tickers, convertToEurFlag)
+  const prices = { ...freshData.prices }
+  for (const ticker of tickers) {
+    const current = prices[ticker]
+    const previous = lastKnownPriceCache.get(`${ticker}:${convertToEurFlag}`)
+    if (current?.price == null && previous?.price != null) {
+      prices[ticker] = { ...previous, isStale: true }
+    } else if (current?.price != null) {
+      lastKnownPriceCache.set(`${ticker}:${convertToEurFlag}`, current)
+    }
+  }
+  if (lastKnownPriceCache.size > 500) {
+    const oldest = lastKnownPriceCache.keys().next().value
+    if (oldest) lastKnownPriceCache.delete(oldest)
+  }
+  const data = { ...freshData, prices }
   
   // Cleanup old entries
   if (actionCache.size > 200) {
@@ -395,6 +415,8 @@ async function _fetchMarketPrices(
         globalMarketState = 'POST'
       } else if (marketState === 'REGULAR' && globalMarketState !== 'PRE' && globalMarketState !== 'POST') {
         globalMarketState = 'REGULAR'
+      } else if (marketState === 'OPEN' && globalMarketState === 'CLOSED') {
+        globalMarketState = 'OPEN'
       }
     } else if (ticker) {
       prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null, dailyChangePercent24h: null }

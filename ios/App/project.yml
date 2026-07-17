@@ -1,0 +1,115 @@
+name: App
+options:
+  bundleIdPrefix: com.angelcriber
+  deploymentTarget:
+    iOS: "18.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    SUPPORTS_MACCATALYST: NO
+    DEVELOPMENT_TEAM: MVY4C25YM4
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+configs:
+  Debug: debug
+  Staging: release
+  Release: release
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Staging: Config/Staging.xcconfig
+  Release: Config/Release.xcconfig
+targets:
+  Silox:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - AppDelegate.swift
+          - WidgetStoragePlugin.m
+          - WidgetStoragePlugin.swift
+          - Base.lproj
+          - public
+          - "config*.xml"
+          - capacitor.config.json
+          - Info.plist
+          - App.entitlements
+      - path: Shared
+    resources:
+      - App/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.angelcriber.silox
+        PRODUCT_NAME: Silox
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/App.entitlements
+    dependencies:
+      - target: SiloxWidgetExtension
+        embed: true
+  SiloxWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: SiloxWidget
+      - path: Shared
+    resources:
+      - SiloxWidget/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.angelcriber.silox.SiloxWidget
+        PRODUCT_NAME: SiloxWidgetExtension
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: SiloxWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SiloxWidgetExtension.entitlements
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+  SiloxTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [SiloxTests]
+    dependencies:
+      - target: Silox
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.angelcriber.silox.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Silox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Silox"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+  SiloxUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [SiloxUITests]
+    dependencies:
+      - target: Silox
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.angelcriber.silox.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Silox
+schemes:
+  Silox:
+    build:
+      targets:
+        Silox: all
+        SiloxTests: [test]
+        SiloxUITests: [test]
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - SiloxTests
+        - SiloxUITests
+    run:
+      config: Debug
+    archive:
+      config: Release

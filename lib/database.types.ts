@@ -9,6 +9,33 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      widget_access_tokens: {
+        Row: {
+          id: string
+          user_id: string
+          token_hash: string
+          created_at: string
+          last_used_at: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          token_hash: string
+          created_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          token_hash?: string
+          created_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
       activos: {
         Row: {
           id: string
@@ -370,6 +397,48 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      mobile_api_idempotency: {
+        Row: {
+          id: string
+          user_id: string
+          idempotency_key: string
+          request_method: string
+          request_path: string
+          request_hash: string
+          status: 'processing' | 'completed'
+          response_status: number | null
+          response_body: Json | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          idempotency_key: string
+          request_method: string
+          request_path: string
+          request_hash: string
+          status?: 'processing' | 'completed'
+          response_status?: number | null
+          response_body?: Json | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          status?: 'processing' | 'completed'
+          response_status?: number | null
+          response_body?: Json | null
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_api_idempotency_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]

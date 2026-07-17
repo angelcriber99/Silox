@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
+import { hashWidgetToken, isOpaqueWidgetToken } from '@/lib/server/widget-tokens'
+import type { Database } from '@/lib/database.types'
 
 // We need an absolute URL for internal fetch if fetchPrices uses API routes
 // However, fetchPrices from lib/api/market calls /api/market-data
@@ -17,25 +20,33 @@ export async function GET(request: Request) {
 
     const token = authHeader.split(' ')[1].trim()
 
-    let targetUserId: string | null = null
-    let supabase: any = null
-    
-    if (token.startsWith('Widget-')) {
-      targetUserId = token.replace('Widget-', '')
-      
-      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        return NextResponse.json({ error: 'Server misconfiguration: No service role key' }, { status: 500 })
+    let targetUserId: string
+    let supabase: SupabaseClient<Database>
+
+    if (isOpaqueWidgetToken(token)) {
+      const tokenHash = hashWidgetToken(token)
+      const supabaseAdmin = getSupabaseAdmin()
+      const { data: widgetCredential, error: credentialError } = await supabaseAdmin
+        .from('widget_access_tokens')
+        .select('user_id')
+        .eq('token_hash', tokenHash)
+        .is('revoked_at', null)
+        .maybeSingle()
+
+      if (credentialError) throw credentialError
+      if (!widgetCredential) {
+        return NextResponse.json({ error: 'Invalid widget token' }, { status: 401 })
       }
-      
-      // Use Service Role to bypass RLS since we don't have an active session token
-      supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      )
-      
-      // Bypass explicit user verification and trust the UUID
-      // The UUID is 128-bit secure, functioning perfectly as an API Key
-      
+
+      targetUserId = widgetCredential.user_id
+      supabase = supabaseAdmin
+
+      const { error: usageError } = await supabaseAdmin
+        .from('widget_access_tokens')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('token_hash', tokenHash)
+
+      if (usageError) throw usageError
     } else {
       // Standard JWT Auth (from Web App)
       supabase = createClient(
@@ -65,18 +76,20 @@ export async function GET(request: Request) {
       throw new Error(`Error fetching positions: ${posError.message}`)
     }
 
-    const rawPositions = (rawPositionsData || []) as any[]
+    const rawPositions = rawPositionsData ?? []
 
     const filteredPositions = rawPositions.filter(
-      (p: any) => p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez' && p.ticker !== 'CASH' && Math.abs(p.unidades) > 0.000001
+      (position) => position.tipo !== 'Fondo Monetario'
+        && position.tipo !== 'Liquidez'
+        && position.ticker !== 'CASH'
+        && Math.abs(position.unidades) > 0.000001
     )
 
-    const tickers = filteredPositions.map((p: any) => p.ticker)
+    const tickers = filteredPositions.map((position) => position.ticker)
 
-    let pricePayload: any = { prices: {} }
-    if (tickers.length > 0) {
-      pricePayload = await fetchMarketPrices(tickers, true) // true = convert to EUR
-    }
+    const pricePayload = tickers.length > 0
+      ? await fetchMarketPrices(tickers, true)
+      : { prices: {} }
 
     // Enrich positions
     const enriched = enrichPositions(rawPositions || [], pricePayload)
@@ -87,14 +100,14 @@ export async function GET(request: Request) {
 
     // Find top volatile assets
     const sortedMovers = [...confirmedPositions]
-      .filter((p: any) => p.change_percent_24h !== null && p.precio_actual !== null)
-      .sort((a: any, b: any) => Math.abs(b.change_percent_24h || 0) - Math.abs(a.change_percent_24h || 0))
+      .filter((position) => position.change_percent_24h !== null && position.precio_actual !== null)
+      .sort((a, b) => Math.abs(b.change_percent_24h || 0) - Math.abs(a.change_percent_24h || 0))
 
-    const topVolatile = sortedMovers.slice(0, 2).map((p: any) => ({
-      ticker: p.ticker,
-      name: p.nombre,
-      changePercent: p.change_percent_24h,
-      isPositive: (p.change_percent_24h || 0) >= 0
+    const topVolatile = sortedMovers.slice(0, 2).map((position) => ({
+      ticker: position.ticker,
+      name: position.nombre,
+      changePercent: position.change_percent_24h,
+      isPositive: (position.change_percent_24h || 0) >= 0
     }))
 
     // Construct response
@@ -107,7 +120,7 @@ export async function GET(request: Request) {
       updatedAt: new Date().toISOString()
     })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Widget API Error:', err)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }

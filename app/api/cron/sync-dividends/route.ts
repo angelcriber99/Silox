@@ -4,10 +4,19 @@ import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { serverLogger } from '@/lib/server/logger'
 import { getErrorMessage } from '@/lib/utils/errors'
+import { authorizeCronRequest } from '@/lib/server/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authorization = authorizeCronRequest(request)
+  if (!authorization.authorized) {
+    return NextResponse.json(
+      { error: authorization.error },
+      { status: authorization.status },
+    )
+  }
+
   try {
     const yahooFinance = getYahooFinance()
 
@@ -166,10 +175,9 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ 
-      message: 'Sync complete', 
+    return NextResponse.json({
+      message: 'Sync complete',
       dividendsAdded: addedDividends.length,
-      details: addedDividends
     })
 
   } catch (error: unknown) {

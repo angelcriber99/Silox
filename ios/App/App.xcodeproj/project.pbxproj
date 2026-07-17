@@ -3,52 +3,77 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0BB04F1F2FF8696B00DAD3A9 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BB04F1E2FF8696B00DAD3A9 /* Cocoa.framework */; };
-		0BB04F212FF8696B00DAD3A9 /* XcodeKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BB04F202FF8696B00DAD3A9 /* XcodeKit.framework */; };
-		0BF5EBC1300A3FE100B06097 /* WidgetStoragePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 0BF5EBC0300A3FE100B06097 /* WidgetStoragePlugin.m */; };
-		0BF5EBC3300A415A00B06097 /* WidgetStoragePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF5EBC2300A415A00B06097 /* WidgetStoragePlugin.swift */; };
-		0BF5EBCF300A43B900B06097 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BF5EBAD300A3D6F00B06097 /* WidgetKit.framework */; };
-		0BF5EBD0300A43B900B06097 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BF5EBAF300A3D6F00B06097 /* SwiftUI.framework */; };
-		0BF5EBDF300A43B900B06097 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
-		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
-		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
-		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
-		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
-		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
-		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
-		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		11DE16DF9E9D34B9DE6D1ED5 /* TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4633A132B8C3D866A9CA883 /* TransactionsView.swift */; };
+		156C9422768051B4421D82FF /* RadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC7E5F7DFE4B53F01FE41074 /* RadarView.swift */; };
+		244ABEF066408BD23A13779D /* ReadCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3875242D9A996BD7708D4255 /* ReadCache.swift */; };
+		2473F732A2F4D83191BE349A /* Repositories.swift in Sources */ = {isa = PBXBuildFile; fileRef = D65E9407A48E00EFA81F977D /* Repositories.swift */; };
+		25D2B119F8D6E585DAFA5316 /* AddTransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96205B90768C1AB32396E471 /* AddTransactionView.swift */; };
+		26607E44C5291B8D66D39599 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B672A04ABB6F28BE8B6F8962 /* APIClient.swift */; };
+		32F146AAD881123F5656F7BF /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CB3641B6D24D9F405D2FA58 /* MoreView.swift */; };
+		3650275793443D9FDF0B5759 /* PortfolioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B0E75AF7F19ED1D20610AF /* PortfolioView.swift */; };
+		378132BDCB39AE9EEB2DCEB9 /* NavigationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2DA7CABBC239FC19126EF52 /* NavigationUITests.swift */; };
+		38F31E27BCEB8EFCCBDEF51B /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B74CEDDC2F4659D9766FFE /* RootView.swift */; };
+		3C3100CE32449533AA357292 /* SecureKeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */; };
+		44F9B927EB33E40B83AE7D58 /* SiloxWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB591B320038C0FDA4E27F6 /* SiloxWidget.swift */; };
+		4684161E5F988E2C9EC492AA /* SiloxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993082DBBA769F8B67A0600A /* SiloxWidgetBundle.swift */; };
+		4C8CE277327CC1B797B80695 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB8DEB83D74447D2D3AD9F87 /* SiloxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		56B450A37DE7ECE3D5D21E55 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E475D55B61A657246221B32E /* SessionStoreTests.swift */; };
+		5D66D8757A890CFBBA9DCD26 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 42299223C1270749CDB36540 /* PrivacyInfo.xcprivacy */; };
+		5E5F3DDC5C17923BC39DC58D /* WireModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0EF65797D006056078E1CD4 /* WireModels.swift */; };
+		76248DDB56A99B8C656B30BD /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F326536501220D7398A2C898 /* SessionStore.swift */; };
+		7F44B0D00E2D780EEEAFF502 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B12F9403FEE14CEBDE6AA298 /* Assets.xcassets */; };
+		85F4448A7488E850D60656F0 /* SecureKeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */; };
+		91748B7A40388AEF36C0FF4E /* ModelDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371569EDD02FA61FCD5EC01D /* ModelDecodingTests.swift */; };
+		A0F0239577E225691701FA7B /* InsightsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9ED9189ECD919466A81132 /* InsightsViews.swift */; };
+		B733EF1372D395F7EFD29DD3 /* LoadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D069ACB050B6D764B67F7EB2 /* LoadState.swift */; };
+		BB24973E096A461D7DF120D8 /* ContractFixtureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B71742447A6BD2331BE3CC3 /* ContractFixtureTests.swift */; };
+		C5E63670846CB56059D40DE7 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA4E2E1ED74A894A95CD7B7 /* DesignSystem.swift */; };
+		C66819B5F84A642A6CD83796 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76989E05CECAD7B8B3C424A7 /* Assets.xcassets */; };
+		D644DD499B51E6BDD8C102DD /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266092BA6835AAD1C7C07A0D /* SignInView.swift */; };
+		D6651672AAB67CE2C1903FCE /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1CE0178B5A172679112FCFF /* DomainModels.swift */; };
+		DBDD579D5A381045FE806B28 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */; };
+		DC4A35AB36469BDEB03D9A05 /* SiloxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0671E73834E623DFE8D7E5 /* SiloxApp.swift */; };
+		EC44712307FA9C2598263492 /* OAuthWebSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04A6F1B8143ADF82E501C1E /* OAuthWebSession.swift */; };
+		F1CCF91BA87BAC6F0D74364A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14882EE7E68AFD84442C7A6D /* PrivacyInfo.xcprivacy */; };
+		F587B6624F0CE87684337A8B /* ReadCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		0BF5EBC8300A430200B06097 /* PBXContainerItemProxy */ = {
+		5948DD3EFB0492F09F42AF57 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			containerPortal = 6B590BF25178DC7D824D09CE /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 0BF5EBCD300A43B800B06097;
-			remoteInfo = SiloxWidgetExtension;
+			remoteGlobalIDString = 98CDDEBB1D512FA71823C9D3;
+			remoteInfo = Silox;
 		};
-		0BF5EBDD300A43B900B06097 /* PBXContainerItemProxy */ = {
+		D0ECA6A291F910AF37419D60 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			containerPortal = 6B590BF25178DC7D824D09CE /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 0BF5EBCD300A43B800B06097;
+			remoteGlobalIDString = 98CDDEBB1D512FA71823C9D3;
+			remoteInfo = Silox;
+		};
+		EE374371B2DBE06F3D783554 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B590BF25178DC7D824D09CE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3827A2C4481824FDFB1E92DF;
 			remoteInfo = SiloxWidgetExtension;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		0BF5EBC7300A42EE00B06097 /* Embed Foundation Extensions */ = {
+		35CD699180EED2B3A54B47A7 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				0BF5EBDF300A43B900B06097 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */,
+				4C8CE277327CC1B797B80695 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -56,517 +81,617 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0BB04F1C2FF8696B00DAD3A9 /* GeminiExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GeminiExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		0BB04F1E2FF8696B00DAD3A9 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
-		0BB04F202FF8696B00DAD3A9 /* XcodeKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XcodeKit.framework; path = Library/Frameworks/XcodeKit.framework; sourceTree = DEVELOPER_DIR; };
-		0BF5EBA7300A3CB800B06097 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
-		0BF5EBAD300A3D6F00B06097 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		0BF5EBAF300A3D6F00B06097 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		0BF5EBBF300A3DA500B06097 /* SiloxWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SiloxWidgetExtension.entitlements; sourceTree = "<group>"; };
-		0BF5EBC0300A3FE100B06097 /* WidgetStoragePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WidgetStoragePlugin.m; sourceTree = "<group>"; };
-		0BF5EBC2300A415A00B06097 /* WidgetStoragePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStoragePlugin.swift; sourceTree = "<group>"; };
-		0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SiloxWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
-		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
-		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
-		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		02B74CEDDC2F4659D9766FFE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		0C0671E73834E623DFE8D7E5 /* SiloxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxApp.swift; sourceTree = "<group>"; };
+		14882EE7E68AFD84442C7A6D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		167DEFA905358AF7F183CE44 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		17D018AA5B9EBA23AE82AD7B /* Silox.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Silox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
+		266092BA6835AAD1C7C07A0D /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		31B0E75AF7F19ED1D20610AF /* PortfolioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioView.swift; sourceTree = "<group>"; };
+		371569EDD02FA61FCD5EC01D /* ModelDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDecodingTests.swift; sourceTree = "<group>"; };
+		3875242D9A996BD7708D4255 /* ReadCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadCache.swift; sourceTree = "<group>"; };
+		3CB3641B6D24D9F405D2FA58 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
+		42299223C1270749CDB36540 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		4A496B104EA03BEF3FD03592 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
+		61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureKeychainStore.swift; sourceTree = "<group>"; };
+		6BB591B320038C0FDA4E27F6 /* SiloxWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxWidget.swift; sourceTree = "<group>"; };
+		76989E05CECAD7B8B3C424A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7C2AC2476E9B83F2B7CD0145 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		8B71742447A6BD2331BE3CC3 /* ContractFixtureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractFixtureTests.swift; sourceTree = "<group>"; };
+		8CA4E2E1ED74A894A95CD7B7 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		949C1D190D1760AF802F1DF0 /* SiloxTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SiloxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		96205B90768C1AB32396E471 /* AddTransactionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTransactionView.swift; sourceTree = "<group>"; };
+		993082DBBA769F8B67A0600A /* SiloxWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxWidgetBundle.swift; sourceTree = "<group>"; };
+		A04A6F1B8143ADF82E501C1E /* OAuthWebSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthWebSession.swift; sourceTree = "<group>"; };
+		A0EF65797D006056078E1CD4 /* WireModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireModels.swift; sourceTree = "<group>"; };
+		A2DA7CABBC239FC19126EF52 /* NavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationUITests.swift; sourceTree = "<group>"; };
+		B12F9403FEE14CEBDE6AA298 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B672A04ABB6F28BE8B6F8962 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		BAA399B137B1BADFC8357923 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		BB8DEB83D74447D2D3AD9F87 /* SiloxWidgetExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SiloxWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadCacheTests.swift; sourceTree = "<group>"; };
+		BF91941A68CB41A205012531 /* SiloxUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SiloxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C4633A132B8C3D866A9CA883 /* TransactionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionsView.swift; sourceTree = "<group>"; };
+		D069ACB050B6D764B67F7EB2 /* LoadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadState.swift; sourceTree = "<group>"; };
+		D65E9407A48E00EFA81F977D /* Repositories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Repositories.swift; sourceTree = "<group>"; };
+		E1CE0178B5A172679112FCFF /* DomainModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainModels.swift; sourceTree = "<group>"; };
+		E475D55B61A657246221B32E /* SessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStoreTests.swift; sourceTree = "<group>"; };
+		EC7E5F7DFE4B53F01FE41074 /* RadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarView.swift; sourceTree = "<group>"; };
+		F326536501220D7398A2C898 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		FC9ED9189ECD919466A81132 /* InsightsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		0BB04F282FF8696B00DAD3A9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 0BB04F1B2FF8696B00DAD3A9 /* GeminiExtension */;
-		};
-		0BF5EBE0300A43B900B06097 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		0BB04F222FF8696B00DAD3A9 /* GeminiExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0BB04F282FF8696B00DAD3A9 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GeminiExtension; sourceTree = "<group>"; };
-		0BF5EBD1300A43B900B06097 /* SiloxWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0BF5EBE0300A43B900B06097 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = SiloxWidget; sourceTree = "<group>"; };
-/* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		0BB04F192FF8696B00DAD3A9 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				0BB04F1F2FF8696B00DAD3A9 /* Cocoa.framework in Frameworks */,
-				0BB04F212FF8696B00DAD3A9 /* XcodeKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		0BF5EBCB300A43B800B06097 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				0BF5EBD0300A43B900B06097 /* SwiftUI.framework in Frameworks */,
-				0BF5EBCF300A43B900B06097 /* WidgetKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		504EC3011FED79650016851F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
-		0BB04F1D2FF8696B00DAD3A9 /* Frameworks */ = {
+		0F558DDE9F4006ECAA5AC901 /* More */ = {
 			isa = PBXGroup;
 			children = (
-				0BB04F1E2FF8696B00DAD3A9 /* Cocoa.framework */,
-				0BB04F202FF8696B00DAD3A9 /* XcodeKit.framework */,
-				0BF5EBAD300A3D6F00B06097 /* WidgetKit.framework */,
-				0BF5EBAF300A3D6F00B06097 /* SwiftUI.framework */,
+				FC9ED9189ECD919466A81132 /* InsightsViews.swift */,
+				3CB3641B6D24D9F405D2FA58 /* MoreView.swift */,
 			);
-			name = Frameworks;
+			path = More;
 			sourceTree = "<group>";
 		};
-		504EC2FB1FED79650016851F = {
+		23D2AE57956AE4B0B93DF2F1 /* Cache */ = {
 			isa = PBXGroup;
 			children = (
-				0BF5EBBF300A3DA500B06097 /* SiloxWidgetExtension.entitlements */,
-				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
-				504EC3061FED79650016851F /* App */,
-				0BB04F222FF8696B00DAD3A9 /* GeminiExtension */,
-				0BF5EBD1300A43B900B06097 /* SiloxWidget */,
-				0BB04F1D2FF8696B00DAD3A9 /* Frameworks */,
-				504EC3051FED79650016851F /* Products */,
+				3875242D9A996BD7708D4255 /* ReadCache.swift */,
+			);
+			path = Cache;
+			sourceTree = "<group>";
+		};
+		4102E3E068508DD683953C7D = {
+			isa = PBXGroup;
+			children = (
+				443E9F32F0EC65EEBF466F3B /* App */,
+				F5779219818545BA98D25F9F /* Config */,
+				9D2C6B5818429C4B03B3E455 /* Shared */,
+				8252A9E9DC4BF0E5B7415300 /* SiloxTests */,
+				DFEA11E6505426BB306BDE1A /* SiloxUITests */,
+				ABB36755F7CB83E495B89656 /* SiloxWidget */,
+				E9C3DB3EC6D7655028A9C0D3 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		504EC3051FED79650016851F /* Products */ = {
+		443E9F32F0EC65EEBF466F3B /* App */ = {
 			isa = PBXGroup;
 			children = (
-				504EC3041FED79650016851F /* App.app */,
-				0BB04F1C2FF8696B00DAD3A9 /* GeminiExtension.appex */,
-				0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */,
+				76989E05CECAD7B8B3C424A7 /* Assets.xcassets */,
+				42299223C1270749CDB36540 /* PrivacyInfo.xcprivacy */,
+				856C97B95C46D010C5DA1C7C /* App */,
+				4EC8E5579938F802B902E774 /* Core */,
+				EBC1FA4726097945D93D1BA2 /* Features */,
+				4B8DD72AD7356663EB6BAE3A /* Models */,
+				FD22E5FBD848AF5E2FB5291B /* Repositories */,
+				7048270597C4F01ABA7ABF44 /* Resources */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		45AF553A45CAD86AA12AAE5E /* Radar */ = {
+			isa = PBXGroup;
+			children = (
+				EC7E5F7DFE4B53F01FE41074 /* RadarView.swift */,
+			);
+			path = Radar;
+			sourceTree = "<group>";
+		};
+		4B8DD72AD7356663EB6BAE3A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E1CE0178B5A172679112FCFF /* DomainModels.swift */,
+				A0EF65797D006056078E1CD4 /* WireModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		4EC8E5579938F802B902E774 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				6D19D320ACD152959891ABD9 /* API */,
+				8416BFD0AD9C3A52432274BD /* Auth */,
+				23D2AE57956AE4B0B93DF2F1 /* Cache */,
+				94C2BBD4BC92AF63D86EBE11 /* Design */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		61CE44B2FDFEC05F5B885A18 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				D069ACB050B6D764B67F7EB2 /* LoadState.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		6D19D320ACD152959891ABD9 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				B672A04ABB6F28BE8B6F8962 /* APIClient.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		7048270597C4F01ABA7ABF44 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		8252A9E9DC4BF0E5B7415300 /* SiloxTests */ = {
+			isa = PBXGroup;
+			children = (
+				8B71742447A6BD2331BE3CC3 /* ContractFixtureTests.swift */,
+				371569EDD02FA61FCD5EC01D /* ModelDecodingTests.swift */,
+				BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */,
+				E475D55B61A657246221B32E /* SessionStoreTests.swift */,
+			);
+			path = SiloxTests;
+			sourceTree = "<group>";
+		};
+		8416BFD0AD9C3A52432274BD /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */,
+				A04A6F1B8143ADF82E501C1E /* OAuthWebSession.swift */,
+				F326536501220D7398A2C898 /* SessionStore.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		856C97B95C46D010C5DA1C7C /* App */ = {
+			isa = PBXGroup;
+			children = (
+				02B74CEDDC2F4659D9766FFE /* RootView.swift */,
+				0C0671E73834E623DFE8D7E5 /* SiloxApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		94C2BBD4BC92AF63D86EBE11 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				8CA4E2E1ED74A894A95CD7B7 /* DesignSystem.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		9D2C6B5818429C4B03B3E455 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		ABB36755F7CB83E495B89656 /* SiloxWidget */ = {
+			isa = PBXGroup;
+			children = (
+				B12F9403FEE14CEBDE6AA298 /* Assets.xcassets */,
+				167DEFA905358AF7F183CE44 /* Info.plist */,
+				14882EE7E68AFD84442C7A6D /* PrivacyInfo.xcprivacy */,
+				6BB591B320038C0FDA4E27F6 /* SiloxWidget.swift */,
+				993082DBBA769F8B67A0600A /* SiloxWidgetBundle.swift */,
+			);
+			path = SiloxWidget;
+			sourceTree = "<group>";
+		};
+		D23FBC238E2D78516B259273 /* Portfolio */ = {
+			isa = PBXGroup;
+			children = (
+				31B0E75AF7F19ED1D20610AF /* PortfolioView.swift */,
+			);
+			path = Portfolio;
+			sourceTree = "<group>";
+		};
+		D3B1D3AD752C6D4B99F1354F /* Authentication */ = {
+			isa = PBXGroup;
+			children = (
+				266092BA6835AAD1C7C07A0D /* SignInView.swift */,
+			);
+			path = Authentication;
+			sourceTree = "<group>";
+		};
+		DFEA11E6505426BB306BDE1A /* SiloxUITests */ = {
+			isa = PBXGroup;
+			children = (
+				A2DA7CABBC239FC19126EF52 /* NavigationUITests.swift */,
+			);
+			path = SiloxUITests;
+			sourceTree = "<group>";
+		};
+		E9C3DB3EC6D7655028A9C0D3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				17D018AA5B9EBA23AE82AD7B /* Silox.app */,
+				949C1D190D1760AF802F1DF0 /* SiloxTests.xctest */,
+				BF91941A68CB41A205012531 /* SiloxUITests.xctest */,
+				BB8DEB83D74447D2D3AD9F87 /* SiloxWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		504EC3061FED79650016851F /* App */ = {
+		EBC1FA4726097945D93D1BA2 /* Features */ = {
 			isa = PBXGroup;
 			children = (
-				0BF5EBA7300A3CB800B06097 /* App.entitlements */,
-				50379B222058CBB4000EE86E /* capacitor.config.json */,
-				504EC3071FED79650016851F /* AppDelegate.swift */,
-				504EC30B1FED79650016851F /* Main.storyboard */,
-				504EC30E1FED79650016851F /* Assets.xcassets */,
-				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
-				504EC3131FED79650016851F /* Info.plist */,
-				2FAD9762203C412B000D30F8 /* config.xml */,
-				50B271D01FEDC1A000F3C39B /* public */,
-				0BF5EBC0300A3FE100B06097 /* WidgetStoragePlugin.m */,
-				0BF5EBC2300A415A00B06097 /* WidgetStoragePlugin.swift */,
+				D3B1D3AD752C6D4B99F1354F /* Authentication */,
+				0F558DDE9F4006ECAA5AC901 /* More */,
+				D23FBC238E2D78516B259273 /* Portfolio */,
+				45AF553A45CAD86AA12AAE5E /* Radar */,
+				61CE44B2FDFEC05F5B885A18 /* Shared */,
+				FBBBEBA41986895D2769C011 /* Transactions */,
 			);
-			path = App;
+			path = Features;
+			sourceTree = "<group>";
+		};
+		F5779219818545BA98D25F9F /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				7C2AC2476E9B83F2B7CD0145 /* Debug.xcconfig */,
+				BAA399B137B1BADFC8357923 /* Release.xcconfig */,
+				4A496B104EA03BEF3FD03592 /* Staging.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		FBBBEBA41986895D2769C011 /* Transactions */ = {
+			isa = PBXGroup;
+			children = (
+				96205B90768C1AB32396E471 /* AddTransactionView.swift */,
+				C4633A132B8C3D866A9CA883 /* TransactionsView.swift */,
+			);
+			path = Transactions;
+			sourceTree = "<group>";
+		};
+		FD22E5FBD848AF5E2FB5291B /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				D65E9407A48E00EFA81F977D /* Repositories.swift */,
+			);
+			path = Repositories;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		0BB04F1B2FF8696B00DAD3A9 /* GeminiExtension */ = {
+		3827A2C4481824FDFB1E92DF /* SiloxWidgetExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0BB04F292FF8696B00DAD3A9 /* Build configuration list for PBXNativeTarget "GeminiExtension" */;
+			buildConfigurationList = 5F5E3D6976B7FFD75E055A3C /* Build configuration list for PBXNativeTarget "SiloxWidgetExtension" */;
 			buildPhases = (
-				0BB04F182FF8696B00DAD3A9 /* Sources */,
-				0BB04F192FF8696B00DAD3A9 /* Frameworks */,
-				0BB04F1A2FF8696B00DAD3A9 /* Resources */,
+				7ECA9B687B184DFA70095358 /* Sources */,
+				42914CA2B3AC7CD11401E946 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				0BB04F222FF8696B00DAD3A9 /* GeminiExtension */,
-			);
-			name = GeminiExtension;
-			packageProductDependencies = (
-			);
-			productName = GeminiExtension;
-			productReference = 0BB04F1C2FF8696B00DAD3A9 /* GeminiExtension.appex */;
-			productType = "com.apple.product-type.xcode-extension";
-		};
-		0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 0BF5EBE1300A43B900B06097 /* Build configuration list for PBXNativeTarget "SiloxWidgetExtension" */;
-			buildPhases = (
-				0BF5EBCA300A43B800B06097 /* Sources */,
-				0BF5EBCB300A43B800B06097 /* Frameworks */,
-				0BF5EBCC300A43B800B06097 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				0BF5EBD1300A43B900B06097 /* SiloxWidget */,
 			);
 			name = SiloxWidgetExtension;
 			packageProductDependencies = (
 			);
 			productName = SiloxWidgetExtension;
-			productReference = 0BF5EBCE300A43B800B06097 /* SiloxWidgetExtension.appex */;
+			productReference = BB8DEB83D74447D2D3AD9F87 /* SiloxWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		504EC3031FED79650016851F /* App */ = {
+		389310BA0305FA3BC6273C4E /* SiloxTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
+			buildConfigurationList = BAC985EC7E23D04286CD0F81 /* Build configuration list for PBXNativeTarget "SiloxTests" */;
 			buildPhases = (
-				504EC3001FED79650016851F /* Sources */,
-				504EC3011FED79650016851F /* Frameworks */,
-				504EC3021FED79650016851F /* Resources */,
-				0BF5EBC7300A42EE00B06097 /* Embed Foundation Extensions */,
+				D7574999627C9AE10F27F086 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				0BF5EBC9300A430200B06097 /* PBXTargetDependency */,
-				0BF5EBDE300A43B900B06097 /* PBXTargetDependency */,
+				6C44A3A33C5FF8D5D5C104B1 /* PBXTargetDependency */,
 			);
-			name = App;
+			name = SiloxTests;
 			packageProductDependencies = (
-				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
 			);
-			productName = App;
-			productReference = 504EC3041FED79650016851F /* App.app */;
+			productName = SiloxTests;
+			productReference = 949C1D190D1760AF802F1DF0 /* SiloxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		98CDDEBB1D512FA71823C9D3 /* Silox */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E999D124248901EB78756F4D /* Build configuration list for PBXNativeTarget "Silox" */;
+			buildPhases = (
+				626168109E318A5EC4F1DFE7 /* Sources */,
+				F94C7268C4B3EE0B47A7B4A9 /* Resources */,
+				35CD699180EED2B3A54B47A7 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				34F19F3AFD9EDBE709A2883A /* PBXTargetDependency */,
+			);
+			name = Silox;
+			packageProductDependencies = (
+			);
+			productName = Silox;
+			productReference = 17D018AA5B9EBA23AE82AD7B /* Silox.app */;
 			productType = "com.apple.product-type.application";
+		};
+		9A331DA49DA7A869B4F95144 /* SiloxUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 27A2C83FA0073C4D2BCAD64E /* Build configuration list for PBXNativeTarget "SiloxUITests" */;
+			buildPhases = (
+				3BA92016D861DD28B4A70F0C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				143137123A6AD9BBD026A19A /* PBXTargetDependency */,
+			);
+			name = SiloxUITests;
+			packageProductDependencies = (
+			);
+			productName = SiloxUITests;
+			productReference = BF91941A68CB41A205012531 /* SiloxUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		504EC2FC1FED79650016851F /* Project object */ = {
+		6B590BF25178DC7D824D09CE /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 2660;
-				LastUpgradeCheck = 2660;
+				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					0BB04F1B2FF8696B00DAD3A9 = {
-						CreatedOnToolsVersion = 26.6;
-					};
-					0BF5EBCD300A43B800B06097 = {
-						CreatedOnToolsVersion = 26.6;
-					};
-					504EC3031FED79650016851F = {
-						CreatedOnToolsVersion = 9.2;
-						LastSwiftMigration = 2660;
+					3827A2C4481824FDFB1E92DF = {
+						DevelopmentTeam = MVY4C25YM4;
 						ProvisioningStyle = Automatic;
+					};
+					389310BA0305FA3BC6273C4E = {
+						DevelopmentTeam = MVY4C25YM4;
+						ProvisioningStyle = Automatic;
+					};
+					98CDDEBB1D512FA71823C9D3 = {
+						DevelopmentTeam = MVY4C25YM4;
+						ProvisioningStyle = Automatic;
+					};
+					9A331DA49DA7A869B4F95144 = {
+						DevelopmentTeam = MVY4C25YM4;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 98CDDEBB1D512FA71823C9D3;
 					};
 				};
 			};
-			buildConfigurationList = 504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */;
-			compatibilityVersion = "Xcode 8.0";
+			buildConfigurationList = B3FD05C59F197F398A0B04AB /* Build configuration list for PBXProject "App" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
+				en,
 			);
-			mainGroup = 504EC2FB1FED79650016851F;
-			packageReferences = (
-				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
-			);
-			productRefGroup = 504EC3051FED79650016851F /* Products */;
+			mainGroup = 4102E3E068508DD683953C7D;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				504EC3031FED79650016851F /* App */,
-				0BB04F1B2FF8696B00DAD3A9 /* GeminiExtension */,
-				0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */,
+				98CDDEBB1D512FA71823C9D3 /* Silox */,
+				389310BA0305FA3BC6273C4E /* SiloxTests */,
+				9A331DA49DA7A869B4F95144 /* SiloxUITests */,
+				3827A2C4481824FDFB1E92DF /* SiloxWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0BB04F1A2FF8696B00DAD3A9 /* Resources */ = {
+		42914CA2B3AC7CD11401E946 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7F44B0D00E2D780EEEAFF502 /* Assets.xcassets in Resources */,
+				F1CCF91BA87BAC6F0D74364A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		0BF5EBCC300A43B800B06097 /* Resources */ = {
+		F94C7268C4B3EE0B47A7B4A9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		504EC3021FED79650016851F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */,
-				50B271D11FEDC1A000F3C39B /* public in Resources */,
-				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
-				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
-				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
-				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				C66819B5F84A642A6CD83796 /* Assets.xcassets in Resources */,
+				5D66D8757A890CFBBA9DCD26 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		0BB04F182FF8696B00DAD3A9 /* Sources */ = {
+		3BA92016D861DD28B4A70F0C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				378132BDCB39AE9EEB2DCEB9 /* NavigationUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		0BF5EBCA300A43B800B06097 /* Sources */ = {
+		626168109E318A5EC4F1DFE7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26607E44C5291B8D66D39599 /* APIClient.swift in Sources */,
+				25D2B119F8D6E585DAFA5316 /* AddTransactionView.swift in Sources */,
+				DBDD579D5A381045FE806B28 /* BiometricAuth.swift in Sources */,
+				C5E63670846CB56059D40DE7 /* DesignSystem.swift in Sources */,
+				D6651672AAB67CE2C1903FCE /* DomainModels.swift in Sources */,
+				A0F0239577E225691701FA7B /* InsightsViews.swift in Sources */,
+				B733EF1372D395F7EFD29DD3 /* LoadState.swift in Sources */,
+				32F146AAD881123F5656F7BF /* MoreView.swift in Sources */,
+				EC44712307FA9C2598263492 /* OAuthWebSession.swift in Sources */,
+				3650275793443D9FDF0B5759 /* PortfolioView.swift in Sources */,
+				156C9422768051B4421D82FF /* RadarView.swift in Sources */,
+				244ABEF066408BD23A13779D /* ReadCache.swift in Sources */,
+				2473F732A2F4D83191BE349A /* Repositories.swift in Sources */,
+				38F31E27BCEB8EFCCBDEF51B /* RootView.swift in Sources */,
+				85F4448A7488E850D60656F0 /* SecureKeychainStore.swift in Sources */,
+				76248DDB56A99B8C656B30BD /* SessionStore.swift in Sources */,
+				D644DD499B51E6BDD8C102DD /* SignInView.swift in Sources */,
+				DC4A35AB36469BDEB03D9A05 /* SiloxApp.swift in Sources */,
+				11DE16DF9E9D34B9DE6D1ED5 /* TransactionsView.swift in Sources */,
+				5E5F3DDC5C17923BC39DC58D /* WireModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		504EC3001FED79650016851F /* Sources */ = {
+		7ECA9B687B184DFA70095358 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0BF5EBC1300A3FE100B06097 /* WidgetStoragePlugin.m in Sources */,
-				0BF5EBC3300A415A00B06097 /* WidgetStoragePlugin.swift in Sources */,
-				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				3C3100CE32449533AA357292 /* SecureKeychainStore.swift in Sources */,
+				44F9B927EB33E40B83AE7D58 /* SiloxWidget.swift in Sources */,
+				4684161E5F988E2C9EC492AA /* SiloxWidgetBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D7574999627C9AE10F27F086 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB24973E096A461D7DF120D8 /* ContractFixtureTests.swift in Sources */,
+				91748B7A40388AEF36C0FF4E /* ModelDecodingTests.swift in Sources */,
+				F587B6624F0CE87684337A8B /* ReadCacheTests.swift in Sources */,
+				56B450A37DE7ECE3D5D21E55 /* SessionStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		0BF5EBC9300A430200B06097 /* PBXTargetDependency */ = {
+		143137123A6AD9BBD026A19A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */;
-			targetProxy = 0BF5EBC8300A430200B06097 /* PBXContainerItemProxy */;
+			target = 98CDDEBB1D512FA71823C9D3 /* Silox */;
+			targetProxy = 5948DD3EFB0492F09F42AF57 /* PBXContainerItemProxy */;
 		};
-		0BF5EBDE300A43B900B06097 /* PBXTargetDependency */ = {
+		34F19F3AFD9EDBE709A2883A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 0BF5EBCD300A43B800B06097 /* SiloxWidgetExtension */;
-			targetProxy = 0BF5EBDD300A43B900B06097 /* PBXContainerItemProxy */;
+			target = 3827A2C4481824FDFB1E92DF /* SiloxWidgetExtension */;
+			targetProxy = EE374371B2DBE06F3D783554 /* PBXContainerItemProxy */;
+		};
+		6C44A3A33C5FF8D5D5C104B1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 98CDDEBB1D512FA71823C9D3 /* Silox */;
+			targetProxy = D0ECA6A291F910AF37419D60 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
-/* Begin PBXVariantGroup section */
-		504EC30B1FED79650016851F /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				504EC30C1FED79650016851F /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		504EC3101FED79650016851F /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				504EC3111FED79650016851F /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
-		0BB04F2A2FF8696B00DAD3A9 /* Debug */ = {
+		0BC66B9A290A33C76DC91968 /* Staging */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = MVY4C25YM4;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
-				ENABLE_RESOURCE_ACCESS_USB = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = GeminiExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GeminiExtension;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
 				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.5;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.GeminiExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Silox;
 			};
-			name = Debug;
+			name = Staging;
 		};
-		0BB04F2B2FF8696B00DAD3A9 /* Release */ = {
+		18DADF997EA0EC0D0D5B1EAE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = MVY4C25YM4;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
-				ENABLE_RESOURCE_ACCESS_USB = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = GeminiExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GeminiExtension;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
 				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.5;
-				MARKETING_VERSION = 1.0;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.GeminiExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Silox;
 			};
 			name = Release;
 		};
-		0BF5EBE2300A43B900B06097 /* Debug */ = {
+		198C47C00F93B099DAA900CE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = MVY4C25YM4;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SiloxWidget/Info.plist;
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = SiloxWidgetExtension.entitlements;
-				INFOPLIST_KEY_CFBundleDisplayName = SiloxWidget;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SiloxWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.SiloxWidget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = SiloxWidgetExtension;
+				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		0BF5EBE3300A43B900B06097 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = MVY4C25YM4;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SiloxWidget/Info.plist;
-				CODE_SIGN_ENTITLEMENTS = SiloxWidgetExtension.entitlements;
-				INFOPLIST_KEY_CFBundleDisplayName = SiloxWidget;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.SiloxWidget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
-		504EC3141FED79650016851F /* Debug */ = {
+		2DD644D7907CC39B3FD4FB43 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Silox;
+			};
+			name = Debug;
+		};
+		3398A750792E24C29AA6F0F7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox;
+				PRODUCT_NAME = Silox;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		3FEEAFF89C3D1C900B79BFEC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox;
+				PRODUCT_NAME = Silox;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		5C9EF0E6AF4F9491454DE177 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BAA399B137B1BADFC8357923 /* Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -575,6 +700,7 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -597,19 +723,240 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MVY4C25YM4;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		62C09CBA57ED6C345F006DD3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Silox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Silox";
+			};
+			name = Debug;
+		};
+		80EB097A521C1D64D2339534 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Silox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Silox";
+			};
+			name = Staging;
+		};
+		87A2065D3B14DACDF42F9735 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox;
+				PRODUCT_NAME = Silox;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Staging;
+		};
+		8C4E71D47EBDE6C702FC895C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = SiloxWidgetExtension.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SiloxWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.SiloxWidget;
+				PRODUCT_NAME = SiloxWidgetExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B531F0A6AD946683E431DCD4 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4A496B104EA03BEF3FD03592 /* Staging.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MVY4C25YM4;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Staging;
+		};
+		C3A38AE2F3E435DE133B54B3 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = SiloxWidgetExtension.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SiloxWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.SiloxWidget;
+				PRODUCT_NAME = SiloxWidgetExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Staging;
+		};
+		F61063B78755D98B1B9C3697 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7C2AC2476E9B83F2B7CD0145 /* Debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = MVY4C25YM4;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
 					"DEBUG=1",
-					"$(inherited)",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -617,178 +964,91 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MTL_ENABLE_DEBUG_INFO = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
-		504EC3151FED79650016851F /* Release */ = {
+		FACD77A87297D39F725B0C19 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox.tests;
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		504EC3171FED79650016851F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = MVY4C25YM4;
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		504EC3181FED79650016851F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = MVY4C25YM4;
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.angelcriber.silox;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Silox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Silox";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0BB04F292FF8696B00DAD3A9 /* Build configuration list for PBXNativeTarget "GeminiExtension" */ = {
+		27A2C83FA0073C4D2BCAD64E /* Build configuration list for PBXNativeTarget "SiloxUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				0BB04F2A2FF8696B00DAD3A9 /* Debug */,
-				0BB04F2B2FF8696B00DAD3A9 /* Release */,
+				2DD644D7907CC39B3FD4FB43 /* Debug */,
+				18DADF997EA0EC0D0D5B1EAE /* Release */,
+				0BC66B9A290A33C76DC91968 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		0BF5EBE1300A43B900B06097 /* Build configuration list for PBXNativeTarget "SiloxWidgetExtension" */ = {
+		5F5E3D6976B7FFD75E055A3C /* Build configuration list for PBXNativeTarget "SiloxWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				0BF5EBE2300A43B900B06097 /* Debug */,
-				0BF5EBE3300A43B900B06097 /* Release */,
+				8C4E71D47EBDE6C702FC895C /* Debug */,
+				198C47C00F93B099DAA900CE /* Release */,
+				C3A38AE2F3E435DE133B54B3 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
+		B3FD05C59F197F398A0B04AB /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				504EC3141FED79650016851F /* Debug */,
-				504EC3151FED79650016851F /* Release */,
+				F61063B78755D98B1B9C3697 /* Debug */,
+				5C9EF0E6AF4F9491454DE177 /* Release */,
+				B531F0A6AD946683E431DCD4 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */ = {
+		BAC985EC7E23D04286CD0F81 /* Build configuration list for PBXNativeTarget "SiloxTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				504EC3171FED79650016851F /* Debug */,
-				504EC3181FED79650016851F /* Release */,
+				62C09CBA57ED6C345F006DD3 /* Debug */,
+				FACD77A87297D39F725B0C19 /* Release */,
+				80EB097A521C1D64D2339534 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
+		};
+		E999D124248901EB78756F4D /* Build configuration list for PBXNativeTarget "Silox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3398A750792E24C29AA6F0F7 /* Debug */,
+				3FEEAFF89C3D1C900B79BFEC /* Release */,
+				87A2065D3B14DACDF42F9735 /* Staging */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCLocalSwiftPackageReference section */
-		D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "CapApp-SPM";
-		};
-/* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		4D22ABE82AF431CB00220026 /* CapApp-SPM */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
-			productName = "CapApp-SPM";
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = 504EC2FC1FED79650016851F /* Project object */;
+	rootObject = 6B590BF25178DC7D824D09CE /* Project object */;
 }
