@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Check, LogOut, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -22,6 +22,7 @@ interface RevolutSyncProps {
 
 export function RevolutSync({ children, className }: RevolutSyncProps) {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [importSummary, setImportSummary] = useState<{
     isOpen: boolean;
     imported: RevolutImportTransaction[];
@@ -75,17 +76,24 @@ export function RevolutSync({ children, className }: RevolutSyncProps) {
     e.target.value = ''
   }
 
+  const openFilePicker = () => {
+    fileInputRef.current?.click()
+  }
+
   return (
     <>
-      <label className={`cursor-pointer ${className || ''}`}>
+      <div className={`cursor-pointer ${className || ''}`} onClick={openFilePicker}>
         {children}
-        <input 
+        <input
+          ref={fileInputRef}
           type="file" 
           accept=".csv,.xlsx"
           className="hidden" 
           onChange={handleFileChange}
+          onClick={(event) => event.stopPropagation()}
+          aria-label="Seleccionar extracto para importar"
         />
-      </label>
+      </div>
 
       <Dialog open={importSummary.isOpen} onOpenChange={(open) => setImportSummary(prev => ({ ...prev, isOpen: open }))}>
         <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden">
