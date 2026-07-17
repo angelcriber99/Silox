@@ -195,34 +195,19 @@ export default function RadarPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col pb-24 relative">
-      {/* ── Decorative Smart Calendar Header ────────────────────────── */}
-      <div className="w-full border-b border-border/50 bg-background/90 backdrop-blur-xl z-20 pt-16 pb-4">
-        <div className="px-4 mb-4">
-          <div className="relative overflow-hidden rounded-2xl bg-zinc-900/60 border border-white/5 p-6 flex flex-col items-center justify-center text-center">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent opacity-60" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/20 blur-[50px] rounded-full pointer-events-none" />
-            
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="p-2 mb-2.5 bg-primary/20 rounded-xl text-primary">
-                <Rocket className="w-5 h-5" />
-              </div>
-              <h2 className="text-xl font-bold text-white tracking-tight">
-                Radar de Inversión
-              </h2>
-              <p className="text-zinc-400 text-xs mt-2 max-w-sm">
-                Monitoriza los próximos 6 meses de eventos clave, presentaciones y noticias proyectadas para tus activos.
-              </p>
-            </div>
-
-            {selectedDate && (
-              <button 
-                onClick={() => setSelectedDate(null)}
-                className="relative z-10 mt-4 text-xs font-semibold text-primary bg-primary/10 px-4 py-1.5 rounded-lg border border-primary/20 shadow-sm hover:bg-primary/20 transition-colors"
-              >
-                Ver Todo
-              </button>
-            )}
-          </div>
+      <div className="w-full bg-background/90 backdrop-blur-xl z-20 pt-16 pb-4">
+        <div className="px-4 mb-4 relative flex items-center justify-center">
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Radar
+          </h1>
+          {selectedDate && (
+            <button 
+              onClick={() => setSelectedDate(null)}
+              className="absolute right-4 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm hover:bg-primary/20 transition-colors"
+            >
+              Ver Todo
+            </button>
+          )}
         </div>
         
         {loadingCalendar ? (
