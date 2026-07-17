@@ -58,8 +58,56 @@ export async function POST(request: Request) {
     // Sort newest first
     noticias.sort((a, b) => new Date(b.providerPublishTime).getTime() - new Date(a.providerPublishTime).getTime())
 
+    let aiEvents: any[] = []
+    
+    // Use Gemini for events (no googleSearch tools to avoid 404/400 errors with some API keys)
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const { getGeminiClient } = await import('@/lib/server/gemini')
+        const model = getGeminiClient().getGenerativeModel({ 
+          model: "gemini-2.5-flash",
+        })
+        
+        const tickersStr = selectedItems.map(i => i.displayName).join(", ")
+        const prompt = `Actúa como un analista financiero experto. 
+Basándote en tu conocimiento, enumera los eventos corporativos clave y muy relevantes programados para los próximos 6 meses (del año 2026) para los siguientes tickers: ${tickersStr}.
+(Ejemplo: ASTS lanzamiento de satélites Bluebird, Apple Keynote, Aprobaciones de la FDA, conferencias clave, etc.). 
+NO incluyas simples presentaciones de resultados trimestrales (earnings) ni pagos de dividendos; céntrate en eventos puntuales de negocio.
+
+Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS (sin texto antes o después del JSON):
+{
+  "events": [
+    {
+      "title": "Breve título del evento",
+      "date": "Fecha estimada YYYY-MM-DD",
+      "ticker": "Ticker exacto relacionado"
+    }
+  ]
+}`
+
+        const result = await model.generateContent(prompt)
+        const text = await result.response.text()
+        
+        const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+        const cleanText = jsonMatch ? jsonMatch[1] : text
+        const parsedJson = JSON.parse(cleanText)
+
+        if (parsedJson.events) {
+          aiEvents = parsedJson.events.map((e: any) => ({
+            id: `aievent-${Date.now()}-${Math.random()}`,
+            ticker: e.ticker || "UNKNOWN",
+            date: new Date(e.date).toISOString(),
+            type: 'AI_EVENT',
+            title: e.title,
+          }))
+        }
+      } catch (err: any) {
+        console.error("Error generando eventos con Gemini:", err)
+      }
+    }
+
     return NextResponse.json(
-      { noticias, aiEvents: [] },
+      { noticias, aiEvents },
       {
         headers: {
           'Cache-Control': 'private, max-age=300',
