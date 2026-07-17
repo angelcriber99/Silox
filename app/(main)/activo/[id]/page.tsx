@@ -76,11 +76,10 @@ export default function ActivoPage() {
           if (details) {
             details = {
               ...details,
-              currency: 'EUR',
-              financialCurrency: 'EUR',
+
               fiftyTwoWeekHigh: details.fiftyTwoWeekHigh ? details.fiftyTwoWeekHigh / fxRate : undefined,
               fiftyTwoWeekLow: details.fiftyTwoWeekLow ? details.fiftyTwoWeekLow / fxRate : undefined,
-              fiftyDayAverage: details.fiftyDayAverage ? details.fiftyDayAverage / fxRate : undefined,
+
               twoHundredDayAverage: details.twoHundredDayAverage ? details.twoHundredDayAverage / fxRate : undefined,
               targetMeanPrice: details.targetMeanPrice ? details.targetMeanPrice / fxRate : undefined,
             }
