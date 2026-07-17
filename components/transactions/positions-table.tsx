@@ -154,19 +154,21 @@ function LivePrice({
       : { background: "transparent", color: "rgba(255,255,255,0.8)" }
 
   return (
-    <div className="flex items-center justify-end gap-1.5">
-      {isStale && (
-        <div 
-          className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" 
-          title="El precio no se ha actualizado recientemente."
-        />
-      )}
+    <div className="flex items-center justify-end gap-2">
       <span 
         className={`${baseClasses} ${flash === 'down' ? 'animate-pulse' : ''}`}
         style={flashStyle}
       >
         {formatCurrency(value, currency || 'EUR')}
       </span>
+      <div className="w-1.5 h-1.5 shrink-0 flex items-center justify-center">
+        {isStale && (
+          <div 
+            className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" 
+            title="El precio no se ha actualizado recientemente."
+          />
+        )}
+      </div>
     </div>
   )
 }
