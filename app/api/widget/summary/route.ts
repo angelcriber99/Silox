@@ -74,7 +74,7 @@ export async function GET(request: Request) {
     }))
 
     // Construct response
-    const netSession = totals.changeAmount24h
+    const netSession = totals.totalPnl24h
 
     return NextResponse.json({
       netSession: netSession,
