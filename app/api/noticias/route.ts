@@ -70,9 +70,10 @@ export async function POST(request: Request) {
         
         const tickersStr = selectedItems.map(i => i.displayName).join(", ")
         const prompt = `Actúa como un analista financiero experto. 
-Basándote en tu conocimiento, enumera los eventos corporativos clave y muy relevantes programados para los próximos 6 meses (del año 2026) para los siguientes tickers: ${tickersStr}.
-(Ejemplo: ASTS lanzamiento de satélites Bluebird, Apple Keynote, Aprobaciones de la FDA, conferencias clave, etc.). 
+Basándote en tu conocimiento y proyecciones, enumera los eventos corporativos clave y muy relevantes programados para los próximos 6 meses (del año 2026) para los siguientes tickers: ${tickersStr}.
+(Ejemplo: ASTS lanzamiento de satélites Bluebird en agosto, Apple Keynote, Aprobaciones de la FDA, conferencias clave, etc.). 
 NO incluyas simples presentaciones de resultados trimestrales (earnings) ni pagos de dividendos; céntrate en eventos puntuales de negocio.
+Si un evento no tiene fecha exacta (ej. "Agosto 2026" o "Primera quincena"), estima el día más razonable (ej. el día 1 o 15 del mes) e indica "isSpeculative": true.
 
 Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS (sin texto antes o después del JSON):
 {
@@ -80,7 +81,8 @@ Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS (
     {
       "title": "Breve título del evento",
       "date": "Fecha estimada YYYY-MM-DD",
-      "ticker": "Ticker exacto relacionado"
+      "ticker": "Ticker exacto relacionado",
+      "isSpeculative": true o false
     }
   ]
 }`
@@ -97,7 +99,7 @@ Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS (
             id: `aievent-${Date.now()}-${Math.random()}`,
             ticker: e.ticker || "UNKNOWN",
             date: new Date(e.date).toISOString(),
-            type: 'AI_EVENT',
+            type: e.isSpeculative ? 'AI_EVENT_SPECULATIVE' : 'AI_EVENT',
             title: e.title,
           }))
         }

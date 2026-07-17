@@ -140,6 +140,7 @@ export default function RadarPage() {
       case 'DIVIDEND': return <TrendingUp className={`${cn} text-green-400`} />
       case 'EX_DIVIDEND': return <AlertTriangle className={`${cn} text-yellow-400`} />
       case 'AI_EVENT': return <Rocket className={`${cn} text-purple-400`} />
+      case 'AI_EVENT_SPECULATIVE': return <Rocket className={`${cn} text-orange-400 opacity-80`} />
       default: return null
     }
   }
@@ -150,6 +151,7 @@ export default function RadarPage() {
       case 'DIVIDEND': return 'bg-green-400/20 text-green-300 border-green-400/30'
       case 'EX_DIVIDEND': return 'bg-yellow-400/20 text-yellow-300 border-yellow-400/30'
       case 'AI_EVENT': return 'bg-purple-400/20 text-purple-300 border-purple-400/30'
+      case 'AI_EVENT_SPECULATIVE': return 'bg-orange-400/10 text-orange-300 border-orange-400/50 border-dashed opacity-90'
       default: return 'bg-zinc-800 text-zinc-300'
     }
   }
