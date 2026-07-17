@@ -3,6 +3,7 @@ import { MobileShell } from "@/components/mobile/mobile-shell"
 
 import { TwoFactorModal } from "@/components/auth/two-factor-modal"
 import { NotesModal } from "@/components/dashboard/notes-modal"
+import { ClientSessionSync } from "@/components/providers/client-session-sync"
 
 export default function MainLayout({
   children,
@@ -11,6 +12,7 @@ export default function MainLayout({
 }) {
   return (
     <div className="flex flex-col min-h-full bg-background relative">
+      <ClientSessionSync />
       {/* Desktop Dock (hidden on mobile) */}
       <DesktopDock />
       
