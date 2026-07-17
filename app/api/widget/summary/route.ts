@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch positions
-    const { data: rawPositions, error: posError } = await supabase
+    const { data: rawPositionsData, error: posError } = await supabase
       .from('posiciones')
       .select('*')
       .eq('user_id', targetUserId)
@@ -68,11 +68,13 @@ export async function GET(request: Request) {
       throw new Error(`Error fetching positions: ${posError.message}`)
     }
 
-    const filteredPositions = (rawPositions || []).filter(
-      p => p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez' && p.ticker !== 'CASH' && Math.abs(p.unidades) > 0.000001
+    const rawPositions = (rawPositionsData || []) as any[]
+
+    const filteredPositions = rawPositions.filter(
+      (p: any) => p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez' && p.ticker !== 'CASH' && Math.abs(p.unidades) > 0.000001
     )
 
-    const tickers = filteredPositions.map(p => p.ticker)
+    const tickers = filteredPositions.map((p: any) => p.ticker)
 
     let pricePayload: any = { prices: {} }
     if (tickers.length > 0) {
@@ -88,10 +90,10 @@ export async function GET(request: Request) {
 
     // Find top volatile assets
     const sortedMovers = [...confirmedPositions]
-      .filter(p => p.change_percent_24h !== null && p.precio_actual !== null)
-      .sort((a, b) => Math.abs(b.change_percent_24h || 0) - Math.abs(a.change_percent_24h || 0))
+      .filter((p: any) => p.change_percent_24h !== null && p.precio_actual !== null)
+      .sort((a: any, b: any) => Math.abs(b.change_percent_24h || 0) - Math.abs(a.change_percent_24h || 0))
 
-    const topVolatile = sortedMovers.slice(0, 2).map(p => ({
+    const topVolatile = sortedMovers.slice(0, 2).map((p: any) => ({
       ticker: p.ticker,
       name: p.nombre,
       changePercent: p.change_percent_24h,
