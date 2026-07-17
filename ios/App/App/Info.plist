@@ -45,6 +45,11 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Necesitamos tu Face ID para proteger tus datos financieros</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

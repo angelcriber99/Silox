@@ -119,7 +119,7 @@ final class AssetRepository: @unchecked Sendable {
                 ticker: ticker.uppercased(),
                 name: name?.isEmpty == true ? nil : name,
                 type: type,
-                strategy: "Crecimiento",
+                strategy: "Satellite",
                 currency: currency
             )
         )

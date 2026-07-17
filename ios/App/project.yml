@@ -94,7 +94,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.angelcriber.silox.uitests
-        GENERATE_INFOPLIST_FILE: YES
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: SiloxUITests/Info.plist
         TEST_TARGET_NAME: Silox
 schemes:
   Silox:

@@ -20,6 +20,7 @@
 		3C3100CE32449533AA357292 /* SecureKeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */; };
 		44F9B927EB33E40B83AE7D58 /* SiloxWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB591B320038C0FDA4E27F6 /* SiloxWidget.swift */; };
 		4684161E5F988E2C9EC492AA /* SiloxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993082DBBA769F8B67A0600A /* SiloxWidgetBundle.swift */; };
+		4A576E81ABE092BE5EE7B309 /* LiveSupabaseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2344CBF8716B66F84FACB2C2 /* LiveSupabaseUITests.swift */; };
 		4C8CE277327CC1B797B80695 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB8DEB83D74447D2D3AD9F87 /* SiloxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		56B450A37DE7ECE3D5D21E55 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E475D55B61A657246221B32E /* SessionStoreTests.swift */; };
 		5D66D8757A890CFBBA9DCD26 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 42299223C1270749CDB36540 /* PrivacyInfo.xcprivacy */; };
@@ -87,6 +88,7 @@
 		167DEFA905358AF7F183CE44 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		17D018AA5B9EBA23AE82AD7B /* Silox.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Silox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
+		2344CBF8716B66F84FACB2C2 /* LiveSupabaseUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveSupabaseUITests.swift; sourceTree = "<group>"; };
 		266092BA6835AAD1C7C07A0D /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		31B0E75AF7F19ED1D20610AF /* PortfolioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioView.swift; sourceTree = "<group>"; };
 		371569EDD02FA61FCD5EC01D /* ModelDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDecodingTests.swift; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 		3CB3641B6D24D9F405D2FA58 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
 		42299223C1270749CDB36540 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4A496B104EA03BEF3FD03592 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
+		4FD567DAF9B5570415C58941 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureKeychainStore.swift; sourceTree = "<group>"; };
 		6BB591B320038C0FDA4E27F6 /* SiloxWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxWidget.swift; sourceTree = "<group>"; };
 		76989E05CECAD7B8B3C424A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -296,6 +299,8 @@
 		DFEA11E6505426BB306BDE1A /* SiloxUITests */ = {
 			isa = PBXGroup;
 			children = (
+				4FD567DAF9B5570415C58941 /* Info.plist */,
+				2344CBF8716B66F84FACB2C2 /* LiveSupabaseUITests.swift */,
 				A2DA7CABBC239FC19126EF52 /* NavigationUITests.swift */,
 			);
 			path = SiloxUITests;
@@ -505,6 +510,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4A576E81ABE092BE5EE7B309 /* LiveSupabaseUITests.swift in Sources */,
 				378132BDCB39AE9EEB2DCEB9 /* NavigationUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -582,7 +588,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SiloxUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -599,7 +606,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SiloxUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -636,7 +644,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SiloxUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
