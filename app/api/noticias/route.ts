@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     if (process.env.GEMINI_API_KEY) {
       try {
         const model = getGeminiClient().getGenerativeModel({ 
-          model: "gemini-2.5-flash",
+          model: "gemini-1.5-pro",
           // @ts-ignore: googleSearch is supported by the API but missing in SDK types
           tools: [{ googleSearch: {} }]
         })
@@ -106,8 +106,13 @@ Devuelve tu respuesta EXACTAMENTE en el siguiente formato JSON y SIN NADA MÁS (
             title: e.title,
           }))
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error generando noticias con Gemini:", err)
+        return NextResponse.json({ 
+          noticias: [], 
+          aiEvents: [],
+          error: err?.message || "Unknown error occurred"
+        })
       }
     }
 

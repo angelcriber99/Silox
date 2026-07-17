@@ -6,6 +6,7 @@ import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { Newspaper, Loader2, Rocket, AlertTriangle, Briefcase, TrendingUp } from "lucide-react"
 import { startOfMonth, endOfMonth, eachDayOfInterval, addMonths, format, isSameDay, getDay, isPast, isToday } from "date-fns"
 import { es } from "date-fns/locale"
+import { toast } from "sonner"
 
 type CalendarEvent = {
   id: string
@@ -66,6 +67,10 @@ export default function RadarPage() {
         })
         if (res.ok) {
           const data = await res.json()
+          if (data.error) {
+            console.error("API returned error:", data.error)
+            toast.error("Error cargando noticias", { description: data.error })
+          }
           setNoticias(data.noticias || [])
           setAiEvents(data.aiEvents || [])
         }
@@ -190,7 +195,6 @@ export default function RadarPage() {
 
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col pb-24 relative">
-      <IOSHeader title="Radar" />
       {/* ── Decorative Smart Calendar Header ────────────────────────── */}
       <div className="w-full border-b border-border/50 bg-background/90 backdrop-blur-xl z-20 pt-16 pb-4">
         <div className="px-4 mb-4">
@@ -203,7 +207,7 @@ export default function RadarPage() {
                 <Rocket className="w-5 h-5" />
               </div>
               <h2 className="text-xl font-bold text-white tracking-tight">
-                Calendario Inteligente
+                Radar de Inversión
               </h2>
               <p className="text-zinc-400 text-xs mt-2 max-w-sm">
                 Monitoriza los próximos 6 meses de eventos clave, presentaciones y noticias proyectadas para tus activos.
