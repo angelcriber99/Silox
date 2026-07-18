@@ -29,7 +29,9 @@ final class ContractFixtureTests: XCTestCase {
 
         let portfolio = fixture.portfolio.data.domain()
         XCTAssertEqual(portfolio.totals.totalValue.amount, "12540.20")
+        XCTAssertEqual(portfolio.totals.sessionGainPercent, 0.42)
         XCTAssertEqual(portfolio.positions.first?.asset.ticker, "AAPL")
+        XCTAssertEqual(portfolio.positions.first?.sessionChangePercent, 0.4)
 
         let transactions = fixture.transactions.data.domain()
         XCTAssertEqual(transactions.items.first?.kind, .buy)

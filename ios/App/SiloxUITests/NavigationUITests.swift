@@ -6,13 +6,13 @@ final class NavigationUITests: XCTestCase {
         app.launchArguments.append("-ui-test-authenticated")
         app.launch()
 
-        XCTAssertTrue(app.tabBars.buttons["Cartera"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons["Radar"].exists)
-        XCTAssertTrue(app.tabBars.buttons["Movimientos"].exists)
-        XCTAssertTrue(app.tabBars.buttons["Más"].exists)
+        XCTAssertTrue(app.buttons["Cartera"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Radar"].exists)
+        XCTAssertTrue(app.buttons["Movimientos"].exists)
+        XCTAssertTrue(app.buttons["Más"].exists)
         XCTAssertTrue(app.buttons["Añadir"].exists)
 
-        app.tabBars.buttons["Más"].tap()
+        app.buttons["Más"].tap()
         XCTAssertTrue(app.navigationBars["Más"].waitForExistence(timeout: 2))
     }
 

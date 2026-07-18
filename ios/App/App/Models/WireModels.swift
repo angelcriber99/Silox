@@ -7,6 +7,9 @@ struct PortfolioWire: Decodable, Sendable {
         let profitLoss: String?
         let profitLossPercent: Double
         let dailyProfitLoss: String?
+        let dailyProfitLossPercent: Double?
+        let sessionProfitLoss: String?
+        let sessionProfitLossPercent: Double?
     }
     struct WirePosition: Decodable, Sendable {
         let assetId: String?
@@ -19,7 +22,9 @@ struct PortfolioWire: Decodable, Sendable {
         let currentValue: String?
         let profitLoss: String?
         let profitLossPercent: Double?
+        let dailyChange: String?
         let dailyChangePercent: Double?
+        let sessionChangePercent: Double?
         let currentPrice: String?
         let priceUpdatedAt: Date?
         let isPriceStale: Bool?
@@ -38,7 +43,10 @@ struct PortfolioWire: Decodable, Sendable {
                 totalCost: MoneyValue(amount: totals.cost ?? "0", currency: currency),
                 totalGain: MoneyValue(amount: totals.profitLoss ?? "0", currency: currency),
                 totalGainPercent: totals.profitLossPercent,
-                dailyGain: totals.dailyProfitLoss.map { MoneyValue(amount: $0, currency: currency) }
+                dailyGain: totals.dailyProfitLoss.map { MoneyValue(amount: $0, currency: currency) },
+                dailyGainPercent: totals.dailyProfitLossPercent,
+                sessionGain: totals.sessionProfitLoss.map { MoneyValue(amount: $0, currency: currency) },
+                sessionGainPercent: totals.sessionProfitLossPercent
             ),
             positions: positions.map { item in
                 let asset = Asset(
@@ -56,15 +64,29 @@ struct PortfolioWire: Decodable, Sendable {
                     openCost: MoneyValue(amount: item.totalCost ?? "0", currency: currency),
                     gain: MoneyValue(amount: item.profitLoss ?? "0", currency: currency),
                     gainPercent: item.profitLossPercent ?? 0,
+                    dailyChange: item.dailyChange.map { MoneyValue(amount: $0, currency: currency) },
                     dailyChangePercent: item.dailyChangePercent,
+                    sessionChangePercent: item.sessionChangePercent,
                     currentPrice: item.currentPrice.map { MoneyValue(amount: $0, currency: item.currency) },
                     priceUpdatedAt: item.priceUpdatedAt,
                     isPriceStale: item.isPriceStale ?? true
                 )
             },
             updatedAt: asOf,
-            marketState: MarketState(isOpen: marketState.uppercased().contains("OPEN"), label: marketState)
+            marketState: MarketState(
+                isOpen: ["PRE", "REGULAR", "POST", "OPEN", "REGULAR_OPEN"].contains { marketState.uppercased().contains($0) },
+                label: Self.marketLabel(for: marketState),
+                code: marketState
+            )
         )
+    }
+
+    private static func marketLabel(for state: String) -> String {
+        let value = state.uppercased()
+        if value.contains("PRE") { return "Premercado" }
+        if value.contains("POST") { return "Postmercado" }
+        if value.contains("REGULAR") || value.contains("OPEN") { return "Mercado regular" }
+        return "Mercado cerrado"
     }
 }
 

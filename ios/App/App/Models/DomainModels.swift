@@ -24,6 +24,9 @@ struct PortfolioTotals: Codable, Sendable, Equatable {
     let totalGain: MoneyValue
     let totalGainPercent: Double
     let dailyGain: MoneyValue?
+    let dailyGainPercent: Double?
+    let sessionGain: MoneyValue?
+    let sessionGainPercent: Double?
 }
 
 struct Position: Codable, Sendable, Equatable, Identifiable {
@@ -34,7 +37,9 @@ struct Position: Codable, Sendable, Equatable, Identifiable {
     let openCost: MoneyValue
     let gain: MoneyValue
     let gainPercent: Double
+    let dailyChange: MoneyValue?
     let dailyChangePercent: Double?
+    let sessionChangePercent: Double?
     let currentPrice: MoneyValue?
     let priceUpdatedAt: Date?
     let isPriceStale: Bool
@@ -52,6 +57,7 @@ struct Asset: Codable, Sendable, Equatable, Identifiable {
 struct MarketState: Codable, Sendable, Equatable {
     let isOpen: Bool
     let label: String
+    let code: String?
 }
 
 struct TransactionPage: Codable, Sendable, Equatable {

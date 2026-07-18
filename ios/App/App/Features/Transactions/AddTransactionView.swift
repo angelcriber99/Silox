@@ -18,6 +18,12 @@ struct AddTransactionView: View {
     @State private var showsNewAsset = false
     @State private var idempotencyKey = UUID().uuidString
 
+    init(repository: TransactionRepository, assetRepository: AssetRepository, preselectedAssetId: String? = nil) {
+        self.repository = repository
+        self.assetRepository = assetRepository
+        _assetId = State(initialValue: preselectedAssetId ?? "")
+    }
+
     var body: some View {
         NavigationStack {
             Form {

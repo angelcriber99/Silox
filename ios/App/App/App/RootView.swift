@@ -75,26 +75,90 @@ private struct LaunchView: View {
 }
 
 struct MainTabView: View {
+    private enum Section: Hashable { case portfolio, transactions, radar, more }
+
     @EnvironmentObject private var environment: AppEnvironment
     @State private var showsAdd = false
+    @State private var selectedSection: Section = .portfolio
+    @State private var preselectedAssetId: String?
 
     var body: some View {
-        TabView {
-            PortfolioView(repository: environment.portfolioRepository, onAdd: { showsAdd = true })
-                .tabItem { Label("Cartera", systemImage: "chart.pie.fill") }
+        TabView(selection: $selectedSection) {
+            PortfolioView(repository: environment.portfolioRepository, onAdd: presentAdd)
+                .tag(Section.portfolio)
+            TransactionsView(repository: environment.transactionRepository, onAdd: { presentAdd(nil) })
+                .tag(Section.transactions)
             RadarView(repository: environment.radarRepository)
-                .tabItem { Label("Radar", systemImage: "dot.radiowaves.left.and.right") }
-            TransactionsView(repository: environment.transactionRepository, onAdd: { showsAdd = true })
-                .tabItem { Label("Movimientos", systemImage: "arrow.left.arrow.right") }
+                .tag(Section.radar)
             MoreView()
-                .tabItem { Label("Más", systemImage: "ellipsis") }
+                .tag(Section.more)
         }
-        .siloxTabBarBehavior()
-        .sheet(isPresented: $showsAdd) {
+        .toolbar(.hidden, for: .tabBar)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            SiloxTabBar(selection: $selectedSection, onAdd: { presentAdd(nil) })
+        }
+        .sheet(isPresented: $showsAdd, onDismiss: { preselectedAssetId = nil }) {
             AddTransactionView(
                 repository: environment.transactionRepository,
-                assetRepository: environment.assetRepository
+                assetRepository: environment.assetRepository,
+                preselectedAssetId: preselectedAssetId
             )
+        }
+    }
+
+    private func presentAdd(_ assetId: String?) {
+        preselectedAssetId = assetId
+        showsAdd = true
+    }
+
+    private struct SiloxTabBar: View {
+        @Binding var selection: Section
+        let onAdd: () -> Void
+
+        var body: some View {
+            HStack(spacing: 0) {
+                tab(.portfolio, title: "Cartera", icon: "chart.pie")
+                tab(.transactions, title: "Movimientos", icon: "arrow.left.arrow.right")
+                Button(action: onAdd) {
+                    VStack(spacing: 1) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 19, weight: .bold))
+                            .frame(width: 42, height: 38)
+                            .foregroundStyle(.black)
+                            .background(SiloxColors.accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        Text("Añadir").font(.caption2.weight(.medium)).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Añadir")
+                tab(.radar, title: "Radar", icon: "dot.radiowaves.left.and.right")
+                tab(.more, title: "Más", icon: "line.3.horizontal")
+            }
+            .padding(.horizontal, 4)
+            .padding(.top, 7)
+            .padding(.bottom, 4)
+            .background(.ultraThinMaterial)
+            .overlay(alignment: .top) { Divider().opacity(0.45) }
+        }
+
+        private func tab(_ section: Section, title: String, icon: String) -> some View {
+            Button {
+                selection = section
+            } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: selection == section ? .semibold : .regular))
+                        .frame(width: 40, height: 24)
+                        .background(selection == section ? SiloxColors.accent.opacity(0.12) : .clear, in: Capsule())
+                    Text(title).font(.caption2.weight(.medium))
+                }
+                .foregroundStyle(selection == section ? SiloxColors.accent : .secondary)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(selection == section ? .isSelected : [])
         }
     }
 }

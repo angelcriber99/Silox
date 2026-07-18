@@ -9,7 +9,10 @@
         "cost": "10000",
         "profitLoss": "2540.20",
         "profitLossPercent": 25.402,
-        "dailyProfitLoss": "145.50"
+        "dailyProfitLoss": "145.50",
+        "dailyProfitLossPercent": 1.17,
+        "sessionProfitLoss": "52.25",
+        "sessionProfitLossPercent": 0.42
       },
       "positions": [{
         "assetId": "11111111-1111-4111-8111-111111111111",
@@ -22,7 +25,9 @@
         "currentValue": "1250",
         "profitLoss": "250",
         "profitLossPercent": 25,
-        "dailyChangePercent": 1.5
+        "dailyChange": "18.50",
+        "dailyChangePercent": 1.5,
+        "sessionChangePercent": 0.4
       }]
     }
   },

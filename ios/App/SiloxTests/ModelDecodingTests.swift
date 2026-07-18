@@ -3,7 +3,7 @@ import XCTest
 
 final class ModelDecodingTests: XCTestCase {
     func testPortfolioDecodesStringMoneyAndISODate() throws {
-        let data = Data(#"{"totals":{"totalValue":{"amount":"12540.20","currency":"EUR"},"totalCost":{"amount":"10000","currency":"EUR"},"totalGain":{"amount":"2540.20","currency":"EUR"},"totalGainPercent":25.402,"dailyGain":null},"positions":[],"updatedAt":"2026-07-17T12:00:00Z","marketState":{"isOpen":true,"label":"Mercado abierto"}}"#.utf8)
+        let data = Data(#"{"totals":{"totalValue":{"amount":"12540.20","currency":"EUR"},"totalCost":{"amount":"10000","currency":"EUR"},"totalGain":{"amount":"2540.20","currency":"EUR"},"totalGainPercent":25.402,"dailyGain":null,"dailyGainPercent":null,"sessionGain":null,"sessionGainPercent":null},"positions":[],"updatedAt":"2026-07-17T12:00:00Z","marketState":{"isOpen":true,"label":"Mercado abierto","code":null}}"#.utf8)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let response = try decoder.decode(PortfolioResponse.self, from: data)
