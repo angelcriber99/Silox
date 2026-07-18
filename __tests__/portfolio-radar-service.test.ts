@@ -19,16 +19,33 @@ describe('portfolio radar service', () => {
         earnings: { earningsDate: [new Date('2026-08-12T12:00:00.000Z')] },
       },
     })
-    search.mockImplementation(async (query: string) => ({
-      news: query === 'ASTS' ? [] : [{
+    search.mockImplementation(async (query: string) => {
+      if (query === 'AST SpaceMobile announces') return { news: [{
           uuid: 'asts-launch-news',
           title: 'AST SpaceMobile Announces BlueBird Orbital Launch in the First Half of August',
           publisher: 'Business Wire',
           link: 'https://example.com/asts-launch',
           providerPublishTime: new Date('2026-06-25T10:00:00.000Z'),
           relatedTickers: ['ASTS'],
-        }],
-    }))
+        }] }
+      if (query === 'NVO') return { news: [{
+        uuid: 'nvo-news',
+        title: 'Novo Nordisk expands its manufacturing capacity',
+        publisher: 'Reuters',
+        link: 'https://example.com/nvo-news',
+        providerPublishTime: new Date('2026-07-17T10:00:00.000Z'),
+        relatedTickers: ['NVO'],
+      }] }
+      if (query === 'MSCI') return { news: [{
+        uuid: 'msci-news',
+        title: 'MSCI World Index Fund weekly market update',
+        publisher: 'Market Data',
+        link: 'https://example.com/msci-news',
+        providerPublishTime: new Date('2026-07-16T10:00:00.000Z'),
+        relatedTickers: ['MSCI'],
+      }] }
+      return { news: [] }
+    })
   })
 
   it('derives tickers from open positions and excludes cash-like assets', async () => {
@@ -41,6 +58,8 @@ describe('portfolio radar service', () => {
         chain.gt = vi.fn(async () => ({
           data: [
             { activo_id: 'asts-id', ticker: 'ASTS', nombre: 'AST SpaceMobile', tipo: 'Acción', moneda: 'USD', unidades: 12 },
+            { activo_id: 'nvo-id', ticker: 'NVO', nombre: 'Novo Nordisk A/S ADR', tipo: 'Acción', moneda: 'USD', unidades: 4 },
+            { activo_id: 'msci-id', ticker: 'MSCI', nombre: 'MSCI World Index Fund', tipo: 'Fondo Indexado', moneda: 'EUR', unidades: 20 },
             { activo_id: 'cash-id', ticker: 'CASH', nombre: 'Efectivo', tipo: 'Liquidez', moneda: 'EUR', unidades: 800 },
           ],
           error: null,
@@ -61,11 +80,16 @@ describe('portfolio radar service', () => {
 
     const radar = await buildPortfolioRadar(context, new Date('2026-07-18T12:00:00.000Z'))
 
-    expect(radar.assets.map((asset) => asset.ticker)).toEqual(['ASTS'])
-    expect(quoteSummary).toHaveBeenCalledTimes(1)
+    expect(radar.assets.map((asset) => asset.ticker)).toEqual(['ASTS', 'NVO', 'MSCI'])
+    expect(quoteSummary).toHaveBeenCalledTimes(3)
     expect(quoteSummary).toHaveBeenCalledWith('ASTS', { modules: ['calendarEvents'] })
-    expect(search).toHaveBeenCalledWith('ASTS', { newsCount: 15 })
+    expect(search).toHaveBeenCalledWith('ASTS', { newsCount: 20 })
     expect(search).toHaveBeenCalledWith('AST SpaceMobile announces', { newsCount: 20 })
+    expect(search).toHaveBeenCalledWith('NVO', { newsCount: 20 })
+    expect(search).toHaveBeenCalledWith('Novo Nordisk A/S announces', { newsCount: 20 })
+    expect(search).toHaveBeenCalledWith('MSCI', { newsCount: 20 })
+    expect(search).toHaveBeenCalledWith('MSCI World Index Fund announces', { newsCount: 20 })
+    expect(new Set(radar.news.map((item) => item.ticker))).toEqual(new Set(['ASTS', 'NVO', 'MSCI']))
     expect(radar.events.map((event) => event.type)).toEqual(expect.arrayContaining(['EARNINGS', 'CATALYST', 'MANUAL']))
     expect(radar.events.find((event) => event.type === 'CATALYST')).toMatchObject({
       date: '2026-08-01T12:00:00.000Z',

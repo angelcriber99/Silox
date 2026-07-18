@@ -292,14 +292,12 @@ function calendarSourceUrl(ticker: string): string {
   return `https://finance.yahoo.com/quote/${encodeURIComponent(ticker)}/calendar/`
 }
 
-function announcementSearchQuery(asset: RadarAsset): string | null {
-  const type = normalized(asset.type)
-  if (!type.includes('accion') && !type.includes('stock')) return null
+function announcementSearchQuery(asset: RadarAsset): string {
   const company = asset.name
     .replace(/[,\s]+(incorporated|inc|corporation|corp|limited|ltd|plc|s\.a\.?|adr)\.?$/i, '')
     .trim()
-  if (company.length < 3 || normalized(company) === normalized(asset.ticker)) return null
-  return `${company} announces`
+  const subject = company.length >= 3 ? company : asset.ticker
+  return `${subject} announces`
 }
 
 function futureEvent(event: PortfolioRadarEvent, now: Date): boolean {
@@ -381,10 +379,8 @@ async function loadMarketData(assets: RadarAsset[], now: Date) {
     const announcementQuery = announcementSearchQuery(asset)
     const [summaryResult, newsResult, announcementResult] = await Promise.allSettled([
       yahoo.quoteSummary(asset.ticker, { modules: ['calendarEvents'] }),
-      yahoo.search(asset.ticker, { newsCount: 15 }),
-      announcementQuery
-        ? yahoo.search(announcementQuery, { newsCount: 20 })
-        : Promise.resolve({ news: [] }),
+      yahoo.search(asset.ticker, { newsCount: 20 }),
+      yahoo.search(announcementQuery, { newsCount: 20 }),
     ])
     const calendar = summaryResult.status === 'fulfilled' ? summaryResult.value.calendarEvents : undefined
     const news = [newsResult, announcementResult].flatMap((result) =>
@@ -451,7 +447,7 @@ async function loadMarketData(assets: RadarAsset[], now: Date) {
     const articles: RadarNewsCandidate[] = news.flatMap((article) => {
       if (!article.title || !validExternalUrl(article.link)) return []
       return [{
-        id: article.uuid || `news-${stableHash(article.link)}`,
+        id: `${asset.id}-${article.uuid || `news-${stableHash(article.link)}`}`,
         title: article.title,
         source: article.publisher || 'Yahoo Finance',
         publishedAt: article.providerPublishTime ? new Date(article.providerPublishTime) : now,

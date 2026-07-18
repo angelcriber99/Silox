@@ -332,7 +332,10 @@ struct RadarView: View {
 
     private func asset(ticker: String?, in radar: RadarResponse) -> Asset? {
         guard let ticker else { return nil }
-        return radar.assets?.first { $0.ticker.caseInsensitiveCompare(ticker) == .orderedSame }
+        return radar.assets?.first { asset in
+            guard let assetTicker = asset.ticker else { return false }
+            return assetTicker.caseInsensitiveCompare(ticker) == .orderedSame
+        }
     }
 
     private func eventColor(_ event: MarketEvent) -> Color {
