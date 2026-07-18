@@ -70,6 +70,8 @@ final class TransactionRepository: @unchecked Sendable {
         let quantity = NSDecimalNumber(decimal: request.quantity?.decimalValue ?? 1).doubleValue
         let amount = NSDecimalNumber(decimal: request.amount.decimalValue).doubleValue
         let commission = NSDecimalNumber(decimal: request.commission.decimalValue).doubleValue
+        let sourceWithholding = NSDecimalNumber(decimal: request.sourceWithholding.decimalValue).doubleValue
+        let destinationWithholding = NSDecimalNumber(decimal: request.destinationWithholding.decimalValue).doubleValue
         let operation: String
         switch request.kind {
         case .buy: operation = "Compra"
@@ -82,23 +84,43 @@ final class TransactionRepository: @unchecked Sendable {
         formatter.calendar = Calendar(identifier: .iso8601)
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
+        let cashImpact: CreateTransactionWire.CashImpact?
+        if request.updatesCash {
+            let cashAmount: Double
+            let cashOperation: String
+            switch request.kind {
+            case .buy:
+                cashAmount = amount + commission
+                cashOperation = "Venta"
+            case .sell:
+                cashAmount = amount - commission
+                cashOperation = "Compra"
+            case .dividend:
+                cashAmount = amount - commission - sourceWithholding - destinationWithholding
+                cashOperation = "Compra"
+            default:
+                cashAmount = 0
+                cashOperation = "Compra"
+            }
+            cashImpact = cashAmount > 0
+                ? CreateTransactionWire.CashImpact(operation: cashOperation, amount: cashAmount)
+                : nil
+        } else {
+            cashImpact = nil
+        }
+
         let wire = CreateTransactionWire(
             assetId: assetId,
             operation: operation,
             quantity: quantity,
             unitPrice: quantity == 0 ? 0 : amount / quantity,
             commission: commission,
-            sourceWithholding: 0,
-            destinationWithholding: 0,
+            sourceWithholding: sourceWithholding,
+            destinationWithholding: destinationWithholding,
             status: request.kind == .pending ? "Pendiente" : "Completada",
             date: formatter.string(from: request.occurredAt),
             notes: request.notes,
-            cashImpact: request.updatesCash && (request.kind == .buy || request.kind == .sell)
-                ? CreateTransactionWire.CashImpact(
-                    operation: request.kind == .buy ? "Compra" : "Venta",
-                    amount: amount + (request.kind == .buy ? commission : -commission)
-                )
-                : nil
+            cashImpact: cashImpact
         )
         let created: TransactionPageWire.Item = try await api.send("api/mobile/v1/transactions", method: .post, body: wire, idempotencyKey: request.idempotencyKey)
         await MainActor.run { NotificationCenter.default.post(name: .siloxPortfolioChanged, object: nil) }

@@ -12,6 +12,17 @@ struct PortfolioWire: Decodable, Sendable {
         let sessionProfitLossPercent: Double?
     }
     struct WirePosition: Decodable, Sendable {
+        struct PurchaseLot: Decodable, Sendable {
+            let transactionId: String
+            let date: String
+            let operation: String
+            let originalQuantity: String?
+            let remainingQuantity: String?
+            let purchasePrice: String?
+            let commission: String?
+            let performanceUnitCost: String?
+            let investedUnitCost: String?
+        }
         let assetId: String?
         let ticker: String
         let name: String?
@@ -19,6 +30,7 @@ struct PortfolioWire: Decodable, Sendable {
         let currency: String
         let units: String?
         let totalCost: String?
+        let investedCash: String?
         let currentValue: String?
         let profitLoss: String?
         let profitLossPercent: Double?
@@ -28,6 +40,7 @@ struct PortfolioWire: Decodable, Sendable {
         let currentPrice: String?
         let priceUpdatedAt: Date?
         let isPriceStale: Bool?
+        let openPurchaseLots: [PurchaseLot]?
     }
     let asOf: Date
     let displayCurrency: String
@@ -62,6 +75,7 @@ struct PortfolioWire: Decodable, Sendable {
                     quantity: item.units ?? "0",
                     currentValue: MoneyValue(amount: item.currentValue ?? "0", currency: currency),
                     openCost: MoneyValue(amount: item.totalCost ?? "0", currency: currency),
+                    investedCash: MoneyValue(amount: item.investedCash ?? item.totalCost ?? "0", currency: currency),
                     gain: MoneyValue(amount: item.profitLoss ?? "0", currency: currency),
                     gainPercent: item.profitLossPercent ?? 0,
                     dailyChange: item.dailyChange.map { MoneyValue(amount: $0, currency: currency) },
@@ -69,7 +83,20 @@ struct PortfolioWire: Decodable, Sendable {
                     sessionChangePercent: item.sessionChangePercent,
                     currentPrice: item.currentPrice.map { MoneyValue(amount: $0, currency: item.currency) },
                     priceUpdatedAt: item.priceUpdatedAt,
-                    isPriceStale: item.isPriceStale ?? true
+                    isPriceStale: item.isPriceStale ?? true,
+                    openPurchaseLots: (item.openPurchaseLots ?? []).map { lot in
+                        OpenPurchaseLot(
+                            id: lot.transactionId,
+                            date: Self.dayFormatter.date(from: lot.date) ?? .distantPast,
+                            operation: lot.operation,
+                            originalQuantity: lot.originalQuantity ?? "0",
+                            remainingQuantity: lot.remainingQuantity ?? "0",
+                            purchasePrice: MoneyValue(amount: lot.purchasePrice ?? "0", currency: item.currency),
+                            commission: MoneyValue(amount: lot.commission ?? "0", currency: item.currency),
+                            performanceUnitCost: MoneyValue(amount: lot.performanceUnitCost ?? "0", currency: item.currency),
+                            investedUnitCost: MoneyValue(amount: lot.investedUnitCost ?? "0", currency: item.currency)
+                        )
+                    }
                 )
             },
             updatedAt: asOf,
@@ -88,6 +115,14 @@ struct PortfolioWire: Decodable, Sendable {
         if value.contains("REGULAR") || value.contains("OPEN") { return "Mercado regular" }
         return "Mercado cerrado"
     }
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .iso8601)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
 }
 
 struct TransactionPageWire: Decodable, Sendable {
@@ -98,6 +133,9 @@ struct TransactionPageWire: Decodable, Sendable {
         let operation: String
         let quantity: String?
         let unitPrice: String?
+        let commission: String?
+        let sourceWithholding: String?
+        let destinationWithholding: String?
         let status: String
         let date: String
         let notes: String?
@@ -114,7 +152,13 @@ struct TransactionPageWire: Decodable, Sendable {
             let currency = item.asset?.currency ?? "EUR"
             let quantity = item.quantity?.decimalValue ?? .zero
             let unitPrice = item.unitPrice?.decimalValue ?? .zero
-            let amount = NSDecimalNumber(decimal: quantity * unitPrice).stringValue
+            let commission = item.commission?.decimalValue ?? .zero
+            let sourceWithholding = item.sourceWithholding?.decimalValue ?? .zero
+            let destinationWithholding = item.destinationWithholding?.decimalValue ?? .zero
+            let gross = quantity * unitPrice
+            let deductions = commission + sourceWithholding + destinationWithholding
+            let amount = NSDecimalNumber(decimal: gross).stringValue
+            let netAmount = NSDecimalNumber(decimal: max(0, gross - deductions)).stringValue
             let asset = item.asset.map {
                 Asset(id: item.assetId, ticker: $0.ticker, name: $0.name ?? $0.ticker, kind: Asset.Kind(serverValue: $0.type), currency: $0.currency)
             }
@@ -124,6 +168,10 @@ struct TransactionPageWire: Decodable, Sendable {
                 asset: asset,
                 quantity: item.quantity,
                 amount: MoneyValue(amount: amount, currency: currency),
+                netAmount: MoneyValue(amount: netAmount, currency: currency),
+                commission: MoneyValue(amount: NSDecimalNumber(decimal: commission).stringValue, currency: currency),
+                sourceWithholding: MoneyValue(amount: NSDecimalNumber(decimal: sourceWithholding).stringValue, currency: currency),
+                destinationWithholding: MoneyValue(amount: NSDecimalNumber(decimal: destinationWithholding).stringValue, currency: currency),
                 occurredAt: Self.dayFormatter.date(from: item.date) ?? .distantPast,
                 notes: item.notes,
                 version: nil

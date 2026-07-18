@@ -11,6 +11,8 @@ struct AddTransactionView: View {
     @State private var executionPrice = ""
     @State private var cashAmount = ""
     @State private var commission = "0"
+    @State private var sourceWithholding = "0"
+    @State private var destinationWithholding = "0"
     @State private var date = Date()
     @State private var notes = ""
     @State private var isSaving = false
@@ -83,6 +85,25 @@ struct AddTransactionView: View {
                     }
                     numericField("Comisiones pagadas", text: $commission, suffix: selectedAsset?.currency ?? "")
 
+                    if kind == .dividend {
+                        numericField("Retención en origen", text: $sourceWithholding, suffix: selectedAsset?.currency ?? "")
+                        numericField("Retención en destino", text: $destinationWithholding, suffix: selectedAsset?.currency ?? "")
+
+                        if let netDividend {
+                            LabeledContent("Neto en efectivo") {
+                                Text(netDividend.formatted(.currency(code: selectedAsset?.currency ?? "EUR")))
+                                    .font(.headline)
+                                    .monospacedDigit()
+                            }
+                            Label(
+                                "Se abonará en la cuenta de efectivo en \(selectedAsset?.currency ?? "EUR"); no se convertirá en acciones.",
+                                systemImage: "banknote"
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+
                     if isTrade, let total = calculatedTotal {
                         LabeledContent("Total de la operación") {
                             Text(total.formatted(.currency(code: selectedAsset?.currency ?? "EUR")))
@@ -139,14 +160,28 @@ struct AddTransactionView: View {
               let price = executionPrice.normalizedDecimal, price > 0 else { return nil }
         return quantity * price
     }
+    private var netDividend: Decimal? {
+        guard kind == .dividend,
+              let gross = cashAmount.normalizedDecimal,
+              let fee = commission.normalizedDecimal,
+              let sourceTax = sourceWithholding.normalizedDecimal,
+              let destinationTax = destinationWithholding.normalizedDecimal else { return nil }
+        return gross - fee - sourceTax - destinationTax
+    }
     private var canSave: Bool {
         !assetId.isEmpty && (isTrade ? calculatedTotal != nil : (cashAmount.normalizedDecimal ?? 0) > 0)
     }
 
     private func numericField(_ title: String, text: Binding<String>, suffix: String) -> some View {
-        HStack {
-            TextField(title, text: text).keyboardType(.decimalPad)
-            if !suffix.isEmpty { Text(suffix).foregroundStyle(.secondary) }
+        LabeledContent(title) {
+            HStack(spacing: 8) {
+                TextField("0", text: text)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .accessibilityLabel(title)
+                if !suffix.isEmpty { Text(suffix).foregroundStyle(.secondary) }
+            }
+            .frame(maxWidth: 150)
         }
     }
 
@@ -170,8 +205,16 @@ struct AddTransactionView: View {
         guard let parsedCommission = commission.normalizedDecimal, parsedCommission >= 0 else {
             errorMessage = "Introduce una comisión válida."; return
         }
+        guard let parsedSourceWithholding = sourceWithholding.normalizedDecimal, parsedSourceWithholding >= 0,
+              let parsedDestinationWithholding = destinationWithholding.normalizedDecimal, parsedDestinationWithholding >= 0 else {
+            errorMessage = "Introduce unas retenciones válidas."; return
+        }
         if kind == .sell, parsedCommission >= operationAmount {
             errorMessage = "La comisión debe ser menor que el importe de la venta."; return
+        }
+        if kind == .dividend,
+           operationAmount - parsedCommission - parsedSourceWithholding - parsedDestinationWithholding <= 0 {
+            errorMessage = "Las comisiones y retenciones deben ser menores que el dividendo bruto."; return
         }
         isSaving = true
         defer { isSaving = false }
@@ -182,7 +225,9 @@ struct AddTransactionView: View {
                 quantity: isTrade ? NSDecimalNumber(decimal: quantity.normalizedDecimal ?? 0).stringValue : nil,
                 amount: NSDecimalNumber(decimal: operationAmount).stringValue,
                 commission: NSDecimalNumber(decimal: parsedCommission).stringValue,
-                updatesCash: false,
+                sourceWithholding: NSDecimalNumber(decimal: parsedSourceWithholding).stringValue,
+                destinationWithholding: NSDecimalNumber(decimal: parsedDestinationWithholding).stringValue,
+                updatesCash: kind == .dividend,
                 occurredAt: date,
                 notes: notes.isEmpty ? nil : notes,
                 idempotencyKey: idempotencyKey

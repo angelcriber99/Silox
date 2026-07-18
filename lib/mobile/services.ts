@@ -18,6 +18,7 @@ import { fetchMarketPricesDirect } from '@/lib/actions/market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
+import { calculateOpenPositionBases, calculateOpenPurchaseLots } from '@/lib/utils/open-cost-basis'
 import type { Database } from '@/lib/database.types'
 
 type Context = MobileAuthContext
@@ -201,6 +202,7 @@ export async function portfolio(context: Context) {
     .eq('user_id', context.user.id)
     .eq('estado', 'Completada')
   databaseFailure('calcular el capital neto aportado', fundingError)
+  const openBases = calculateOpenPositionBases(fundingTransactions ?? [])
   const dailyActivity = calculateDailyPositionActivity(fundingTransactions ?? [])
 
   // Keep the native dashboard on the exact same accounting universe as web.
@@ -208,9 +210,14 @@ export async function portfolio(context: Context) {
   const positions = (rawPositions ?? [])
     .filter(isInvestablePortfolioAsset)
     .map((position) => {
+      const openBasis = openBases.get(position.activo_id)
       const activity = dailyActivity.get(position.activo_id)
       return {
         ...position,
+        ...(openBasis !== undefined ? {
+          coste_total: openBasis.performanceCost,
+          dinero_invertido: openBasis.investedCost,
+        } : {}),
         has_daily_activity: Boolean(activity),
         daily_net_units: activity?.netUnits ?? 0,
         daily_net_flow_nativo: activity?.netFlowNative ?? 0,
@@ -243,28 +250,55 @@ export async function portfolio(context: Context) {
       positionCount: totals.positionCount,
       hasAllPrices: totals.hasAllPrices,
     },
-    positions: enriched.filter((position) => position.tipo !== 'Liquidez').map((position) => ({
-      assetId: position.activo_id,
-      ticker: position.ticker,
-      name: position.nombre,
-      isin: position.isin,
-      type: position.tipo,
-      strategy: position.estrategia,
-      currency: position.moneda,
-      units: decimal(position.unidades),
-      totalCost: decimal(position.coste_total_eur),
-      currentPrice: decimal(position.precio_actual_nativo ?? position.precio_actual),
-      currentValue: decimal(position.valor_actual),
-      profitLoss: decimal(position.pnl),
-      profitLossPercent: position.pnl_percent,
-      dailyChange: decimal(position.change_amount_24h),
-      dailyChangePercent: position.daily_change_percent_24h,
-      sessionChangePercent: position.change_percent_24h,
-      sparkline: position.sparkline,
-      marketState: position.market_state ?? null,
-      priceUpdatedAt: position.price_updated_at ?? null,
-      isPriceStale: position.price_is_stale ?? true,
-    })),
+    positions: enriched.filter((position) => position.tipo !== 'Liquidez').map((position) => {
+      const currentPriceInAssetCurrency = position.moneda === 'EUR'
+        ? position.precio_actual
+        : position.original_currency === position.moneda
+          ? position.precio_actual_nativo
+          : position.precio_actual_nativo ?? position.precio_actual
+      const assetTransactions = (fundingTransactions ?? []).filter(
+        (transaction) => transaction.activo_id === position.activo_id,
+      )
+      const openPurchaseLots = calculateOpenPurchaseLots(assetTransactions)
+        .slice()
+        .reverse()
+        .map((lot) => ({
+          transactionId: lot.transactionId ?? `${lot.date}:${lot.createdAt}:${lot.originalQuantity}`,
+          date: lot.date,
+          operation: lot.operation,
+          originalQuantity: decimal(lot.originalQuantity),
+          remainingQuantity: decimal(lot.remainingQuantity),
+          purchasePrice: decimal(lot.purchasePrice),
+          commission: decimal(lot.commission),
+          performanceUnitCost: decimal(lot.performanceUnitCost),
+          investedUnitCost: decimal(lot.investedUnitCost),
+        }))
+
+      return {
+        assetId: position.activo_id,
+        ticker: position.ticker,
+        name: position.nombre,
+        isin: position.isin,
+        type: position.tipo,
+        strategy: position.estrategia,
+        currency: position.moneda,
+        units: decimal(position.unidades),
+        totalCost: decimal(position.coste_total_eur),
+        investedCash: decimal(position.dinero_invertido_eur),
+        currentPrice: decimal(currentPriceInAssetCurrency),
+        currentValue: decimal(position.valor_actual),
+        profitLoss: decimal(position.pnl),
+        profitLossPercent: position.pnl_percent,
+        dailyChange: decimal(position.change_amount_24h),
+        dailyChangePercent: position.daily_change_percent_24h,
+        sessionChangePercent: position.change_percent_24h,
+        openPurchaseLots,
+        sparkline: position.sparkline,
+        marketState: position.market_state ?? null,
+        priceUpdatedAt: position.price_updated_at ?? null,
+        isPriceStale: position.price_is_stale ?? true,
+      }
+    }),
   }
 }
 

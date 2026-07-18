@@ -32,10 +32,13 @@ final class ContractFixtureTests: XCTestCase {
         XCTAssertEqual(portfolio.totals.sessionGainPercent, 0.42)
         XCTAssertEqual(portfolio.positions.first?.asset.ticker, "AAPL")
         XCTAssertEqual(portfolio.positions.first?.sessionChangePercent, 0.4)
+        XCTAssertEqual(portfolio.positions.first?.investedCash.amount, "1000")
+        XCTAssertEqual(portfolio.positions.first?.openPurchaseLots.first?.remainingQuantity, "10")
 
         let transactions = fixture.transactions.data.domain()
         XCTAssertEqual(transactions.items.first?.kind, .buy)
         XCTAssertEqual(transactions.items.first?.amount.amount, "1000")
+        XCTAssertEqual(transactions.items.first?.netAmount?.amount, "1000")
 
         XCTAssertEqual(fixture.news.data.first?.domain().source, "Reuters")
         XCTAssertEqual(fixture.widgetSummary.volatileAssets.first?.ticker, "AAPL")

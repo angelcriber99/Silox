@@ -22,12 +22,25 @@
         "currency": "USD",
         "units": "10",
         "totalCost": "1000",
+        "investedCash": "1000",
         "currentValue": "1250",
         "profitLoss": "250",
         "profitLossPercent": 25,
         "dailyChange": "18.50",
         "dailyChangePercent": 1.5,
-        "sessionChangePercent": 0.4
+        "sessionChangePercent": 0.4,
+        "currentPrice": "125",
+        "openPurchaseLots": [{
+          "transactionId": "22222222-2222-4222-8222-222222222222",
+          "date": "2026-07-16",
+          "operation": "Compra",
+          "originalQuantity": "10",
+          "remainingQuantity": "10",
+          "purchasePrice": "100",
+          "commission": "0",
+          "performanceUnitCost": "100",
+          "investedUnitCost": "100"
+        }]
       }]
     }
   },
@@ -39,6 +52,9 @@
         "operation": "Compra",
         "quantity": "10",
         "unitPrice": "100",
+        "commission": "0",
+        "sourceWithholding": "0",
+        "destinationWithholding": "0",
         "status": "Completada",
         "date": "2026-07-16",
         "notes": null,

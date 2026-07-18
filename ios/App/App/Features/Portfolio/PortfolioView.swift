@@ -446,6 +446,7 @@ private struct PositionRow: View {
 
 private struct PositionDetailView: View {
     @State private var position: Position
+    @State private var showAllPurchaseLots = false
     @AppStorage("hideBalances") private var hideBalances = false
     @AppStorage("quantityPrecision") private var quantityPrecision = 4
     @AppStorage("liveRefreshSeconds") private var liveRefreshSeconds = 5
@@ -478,8 +479,8 @@ private struct PositionDetailView: View {
                         color: performanceColor(position.gain.amount.decimalValue)
                     )
                     DetailMetric(
-                        title: "Coste abierto",
-                        value: hiddenMoney(position.openCost),
+                        title: "Dinero invertido",
+                        value: hiddenMoney(position.investedCash),
                         icon: "banknote",
                         color: .primary
                     )
@@ -490,6 +491,7 @@ private struct PositionDetailView: View {
                         color: .primary
                     )
                 }
+                purchaseLotsCard
                 quoteInformation
 
                 Button(action: onAdd) {
@@ -517,6 +519,88 @@ private struct PositionDetailView: View {
                 catch { return }
                 guard !Task.isCancelled, scenePhase == .active else { return }
                 await refresh()
+            }
+        }
+    }
+
+    private var purchaseLotsCard: some View {
+        let lots = showAllPurchaseLots
+            ? position.openPurchaseLots
+            : Array(position.openPurchaseLots.prefix(8))
+        let hiddenCount = max(0, position.openPurchaseLots.count - 8)
+
+        return SiloxCard {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .foregroundStyle(.blue)
+                        .frame(width: 30, height: 30)
+                        .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Rendimiento por compra")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Lotes abiertos tras aplicar FIFO. Las ventas consumen primero las compras más antiguas.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    Text("\(position.openPurchaseLots.count)")
+                        .font(.caption.weight(.bold))
+                        .monospacedDigit()
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 5)
+                        .background(Color.blue.opacity(0.12), in: Capsule())
+                        .foregroundStyle(.blue)
+                }
+
+                HStack {
+                    Text("Base de rendimiento")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(hiddenMoney(position.openCost))
+                        .fontWeight(.semibold)
+                        .monospacedDigit()
+                }
+                .font(.caption)
+
+                Divider().opacity(0.5)
+
+                if lots.isEmpty {
+                    ContentUnavailableView(
+                        "No hay compras abiertas",
+                        systemImage: "tray",
+                        description: Text("Los lotes anteriores ya se consumieron mediante ventas FIFO o todavía no hay compras completadas.")
+                    )
+                    .frame(maxWidth: .infinity)
+                } else {
+                    LazyVStack(spacing: 0) {
+                        ForEach(Array(lots.enumerated()), id: \.element.id) { index, lot in
+                            PurchaseLotRow(
+                                lot: lot,
+                                currentPrice: position.currentPrice,
+                                hideBalances: hideBalances,
+                                quantityPrecision: quantityPrecision
+                            )
+                            if index < lots.count - 1 { Divider().padding(.leading, 42).opacity(0.45) }
+                        }
+                    }
+                }
+
+                if hiddenCount > 0 {
+                    Button {
+                        withAnimation(.snappy) { showAllPurchaseLots.toggle() }
+                    } label: {
+                        Label(
+                            showAllPurchaseLots ? "Mostrar menos" : "Ver \(hiddenCount) lotes más",
+                            systemImage: showAllPurchaseLots ? "chevron.up" : "chevron.down"
+                        )
+                        .font(.caption.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -625,6 +709,111 @@ private struct PositionDetailView: View {
         guard let response = try? await repository.refresh(),
               let updated = response.positions.first(where: { $0.id == position.id }) else { return }
         position = updated
+    }
+}
+
+private struct PurchaseLotRow: View {
+    let lot: OpenPurchaseLot
+    let currentPrice: MoneyValue?
+    let hideBalances: Bool
+    let quantityPrecision: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(lot.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption.weight(.semibold))
+                if lot.isPartial { lotBadge("Parcial", color: SiloxColors.warning) }
+                if lot.isReward { lotBadge("Recompensa", color: .purple) }
+                Spacer()
+                performanceLabel
+            }
+
+            HStack(alignment: .bottom, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Unidades abiertas")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(openQuantityLabel)
+                        .font(.caption.weight(.medium))
+                        .monospacedDigit()
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Compra · Valor actual")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(hideBalances ? "••••" : valueLabel)
+                        .font(.caption.weight(.medium))
+                        .monospacedDigit()
+                }
+            }
+        }
+        .padding(.vertical, 12)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var openQuantityLabel: String {
+        let remaining = SiloxFormatters.quantity(lot.remainingQuantity, precision: quantityPrecision)
+        guard lot.isPartial else { return remaining }
+        return "\(remaining) de \(SiloxFormatters.quantity(lot.originalQuantity, precision: quantityPrecision))"
+    }
+
+    private var valueLabel: String {
+        let purchase = SiloxFormatters.money(lot.purchasePrice.amount, currency: lot.purchasePrice.currency)
+        guard let value = currentValue else { return "\(purchase) · —" }
+        return "\(purchase) · \(SiloxFormatters.money(decimalString(value), currency: lot.purchasePrice.currency))"
+    }
+
+    @ViewBuilder private var performanceLabel: some View {
+        if hideBalances {
+            Text("••••")
+                .font(.caption.weight(.bold))
+        } else if let pnl, let percent {
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(SiloxFormatters.signedMoney(decimalString(pnl), currency: lot.purchasePrice.currency))
+                Text(SiloxFormatters.percentage(percent))
+                    .font(.caption2)
+            }
+            .font(.caption.weight(.bold))
+            .foregroundStyle(pnl >= 0 ? SiloxColors.positive : SiloxColors.negative)
+            .monospacedDigit()
+        } else {
+            Text("Sin cotización")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func lotBadge(_ title: String, color: Color) -> some View {
+        Text(title)
+            .font(.system(size: 9, weight: .semibold))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(color.opacity(0.12), in: Capsule())
+            .foregroundStyle(color)
+    }
+
+    private var currentValue: Decimal? {
+        guard let currentPrice else { return nil }
+        return lot.remainingQuantity.decimalValue * currentPrice.amount.decimalValue
+    }
+
+    private var referenceValue: Decimal {
+        lot.remainingQuantity.decimalValue * lot.performanceUnitCost.amount.decimalValue
+    }
+
+    private var pnl: Decimal? {
+        currentValue.map { $0 - referenceValue }
+    }
+
+    private var percent: Double? {
+        guard let pnl, referenceValue > 0 else { return nil }
+        return NSDecimalNumber(decimal: pnl / referenceValue * 100).doubleValue
+    }
+
+    private func decimalString(_ value: Decimal) -> String {
+        NSDecimalNumber(decimal: value).stringValue
     }
 }
 

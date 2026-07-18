@@ -211,14 +211,27 @@ struct TransactionsView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 3) {
-                Text(SiloxFormatters.money(transaction.amount.amount, currency: transaction.amount.currency))
+                Text(SiloxFormatters.money(
+                    transaction.kind == .dividend ? (transaction.netAmount?.amount ?? transaction.amount.amount) : transaction.amount.amount,
+                    currency: transaction.amount.currency
+                ))
                     .font(.subheadline.weight(.semibold)).monospacedDigit()
-                if let quantity = transaction.quantity {
+                if transaction.kind == .dividend, dividendDeductions(transaction) > 0 {
+                    Text("Bruto \(SiloxFormatters.money(transaction.amount.amount, currency: transaction.amount.currency))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else if let quantity = transaction.quantity {
                     Text(SiloxFormatters.quantity(quantity, precision: 6) + " uds.").font(.caption2).foregroundStyle(.secondary)
                 }
             }
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private func dividendDeductions(_ transaction: InvestmentTransaction) -> Decimal {
+        (transaction.commission?.amount.decimalValue ?? 0)
+            + (transaction.sourceWithholding?.amount.decimalValue ?? 0)
+            + (transaction.destinationWithholding?.amount.decimalValue ?? 0)
     }
 
     private func icon(for kind: InvestmentTransaction.Kind) -> String {

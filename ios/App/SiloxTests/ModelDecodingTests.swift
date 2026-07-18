@@ -35,7 +35,8 @@ final class ModelDecodingTests: XCTestCase {
     }
 
     func testPortfolioRadarDecodesEventWindowsAndSources() throws {
-        let data = Data(#"{
+        let data = Data(#"""
+        {
           "assets":[{"id":"asts-id","ticker":"ASTS","name":"AST SpaceMobile","type":"Acción","currency":"USD"}],
           "events":[{
             "id":"launch-1","assetId":"asts-id","ticker":"ASTS",
@@ -45,7 +46,8 @@ final class ModelDecodingTests: XCTestCase {
             "sourceName":"Business Wire","sourceUrl":"https://example.com/asts","sourcePublishedAt":"2026-06-25T10:00:00.000Z"
           }],
           "news":[],"updatedAt":"2026-07-18T12:00:00.000Z"
-        }"#.utf8)
+        }
+        """#.utf8)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let radar = try decoder.decode(PortfolioRadarWire.self, from: data).domain()

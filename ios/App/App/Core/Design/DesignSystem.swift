@@ -145,8 +145,19 @@ extension String {
     var normalizedDecimal: Decimal? {
         let cleaned = trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: ",", with: ".")
-        return Decimal(string: cleaned, locale: Locale(identifier: "en_US_POSIX"))
+        guard !cleaned.isEmpty else { return nil }
+
+        let unsigned = cleaned.first == "+" || cleaned.first == "-"
+            ? cleaned.dropFirst()
+            : Substring(cleaned)
+        guard !unsigned.isEmpty,
+              unsigned.allSatisfy({ $0.isNumber || $0 == "," || $0 == "." }),
+              unsigned.filter({ $0 == "," || $0 == "." }).count <= 1 else { return nil }
+
+        return Decimal(
+            string: cleaned.replacingOccurrences(of: ",", with: "."),
+            locale: Locale(identifier: "en_US_POSIX")
+        )
     }
 
     var decimalValue: Decimal { normalizedDecimal ?? .zero }

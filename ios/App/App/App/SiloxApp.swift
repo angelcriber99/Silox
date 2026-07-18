@@ -46,6 +46,18 @@ final class AppEnvironment: ObservableObject {
                 UserDefaults(suiteName: group)?.removeObject(forKey: "widget.summary.v1")
             }
         })
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-test-fixtures") {
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.protocolClasses = [UITestURLProtocol.self]
+            let api = APIClient(
+                configuration: APIConfiguration(baseURL: URL(string: "https://ui-test.silox.local")!),
+                session: URLSession(configuration: configuration),
+                tokenProvider: { await session.validAccessToken() }
+            )
+            return AppEnvironment(api: api, session: session, cache: cache)
+        }
+        #endif
         let api = APIClient(configuration: .fromBundle, tokenProvider: { await session.validAccessToken() })
         return AppEnvironment(api: api, session: session, cache: cache)
     }

@@ -35,6 +35,7 @@ struct Position: Codable, Sendable, Equatable, Identifiable {
     let quantity: String
     let currentValue: MoneyValue
     let openCost: MoneyValue
+    let investedCash: MoneyValue
     let gain: MoneyValue
     let gainPercent: Double
     let dailyChange: MoneyValue?
@@ -43,6 +44,25 @@ struct Position: Codable, Sendable, Equatable, Identifiable {
     let currentPrice: MoneyValue?
     let priceUpdatedAt: Date?
     let isPriceStale: Bool
+    let openPurchaseLots: [OpenPurchaseLot]
+}
+
+struct OpenPurchaseLot: Codable, Sendable, Equatable, Identifiable {
+    let id: String
+    let date: Date
+    let operation: String
+    let originalQuantity: String
+    let remainingQuantity: String
+    let purchasePrice: MoneyValue
+    let commission: MoneyValue
+    let performanceUnitCost: MoneyValue
+    let investedUnitCost: MoneyValue
+
+    var isReward: Bool { investedUnitCost.amount.decimalValue == 0 }
+    var isPartial: Bool {
+        let epsilon = Decimal(sign: .plus, exponent: -8, significand: 1)
+        return remainingQuantity.decimalValue < originalQuantity.decimalValue - epsilon
+    }
 }
 
 struct Asset: Codable, Sendable, Equatable, Identifiable {
@@ -86,6 +106,10 @@ struct InvestmentTransaction: Codable, Sendable, Equatable, Identifiable {
     let asset: Asset?
     let quantity: String?
     let amount: MoneyValue
+    let netAmount: MoneyValue?
+    let commission: MoneyValue?
+    let sourceWithholding: MoneyValue?
+    let destinationWithholding: MoneyValue?
     let occurredAt: Date
     let notes: String?
     let version: Int?
@@ -97,6 +121,8 @@ struct CreateTransactionRequest: Codable, Sendable {
     let quantity: String?
     let amount: String
     let commission: String
+    let sourceWithholding: String
+    let destinationWithholding: String
     let updatesCash: Bool
     let occurredAt: Date
     let notes: String?
