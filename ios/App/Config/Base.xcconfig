@@ -1,6 +1,7 @@
 SILOX_API_BASE_URL = https:/$()/example.invalid
 SILOX_APP_GROUP = group.com.angelcriber.silox
 SILOX_KEYCHAIN_GROUP = $(AppIdentifierPrefix)com.angelcriber.silox.shared
+SILOX_OAUTH_CALLBACK_SCHEME = com.angelcriber.silox
 SILOX_SUPABASE_URL = https:/$()/example.invalid
 SILOX_SUPABASE_ANON_KEY = CONFIGURE_IN_LOCAL_OR_CI_XCCONFIG
 SWIFT_STRICT_CONCURRENCY = targeted

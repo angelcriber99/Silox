@@ -22,10 +22,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.angelcriber.silox</string>
+			<string>$(SILOX_OAUTH_CALLBACK_SCHEME)</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.angelcriber.silox</string>
+				<string>$(SILOX_OAUTH_CALLBACK_SCHEME)</string>
 				<string>silox</string>
 			</array>
 		</dict>
@@ -36,6 +36,8 @@
 	<string>$(SILOX_APP_GROUP)</string>
 	<key>SILOX_KEYCHAIN_GROUP</key>
 	<string>$(SILOX_KEYCHAIN_GROUP)</string>
+	<key>SILOX_OAUTH_CALLBACK_SCHEME</key>
+	<string>$(SILOX_OAUTH_CALLBACK_SCHEME)</string>
 	<key>SILOX_SUPABASE_URL</key>
 	<string>$(SILOX_SUPABASE_URL)</string>
 	<key>SILOX_SUPABASE_ANON_KEY</key>

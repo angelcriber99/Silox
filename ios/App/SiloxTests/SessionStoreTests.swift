@@ -107,9 +107,11 @@ final class SessionStoreTests: XCTestCase {
 
     func testGoogleOAuthUsesPKCEAndNativeCallback() throws {
         let verifier = try SessionStore.pkceVerifier()
+        let callbackScheme = "com.angelcriber.silox"
         let url = try SessionStore.googleAuthorizeURL(
             baseURL: URL(string: "https://project.supabase.co")!,
-            verifier: verifier
+            verifier: verifier,
+            callbackScheme: callbackScheme
         )
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let values = Dictionary(uniqueKeysWithValues: items.compactMap { item in
@@ -118,9 +120,27 @@ final class SessionStoreTests: XCTestCase {
 
         XCTAssertGreaterThanOrEqual(verifier.count, 43)
         XCTAssertEqual(values["provider"], "google")
-        XCTAssertEqual(values["redirect_to"], "com.angelcriber.silox://auth/callback")
+        XCTAssertEqual(values["redirect_to"], "\(callbackScheme)://auth/callback")
         XCTAssertEqual(values["code_challenge_method"], "s256")
         XCTAssertFalse(values["code_challenge", default: ""].isEmpty)
+    }
+
+    func testOAuthCallbackSchemeMatchesARegisteredURLScheme() {
+        XCTAssertEqual(OAuthCallbackConfiguration.scheme(), "com.angelcriber.silox")
+        let urlTypes = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]] ?? []
+        let schemes = urlTypes.flatMap { $0["CFBundleURLSchemes"] as? [String] ?? [] }
+        XCTAssertTrue(schemes.contains(OAuthCallbackConfiguration.scheme()))
+    }
+
+    func testGoogleOAuthUsesTheExplicitCallbackScheme() throws {
+        let url = try SessionStore.googleAuthorizeURL(
+            baseURL: URL(string: "https://project.supabase.co")!,
+            verifier: "test-verifier",
+            callbackScheme: "silox.oauth.test"
+        )
+        let redirect = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+            .first(where: { $0.name == "redirect_to" })?.value
+        XCTAssertEqual(redirect, "silox.oauth.test://auth/callback")
     }
 
     func testConcurrentForcedTokenRequestsShareOneRefresh() async throws {

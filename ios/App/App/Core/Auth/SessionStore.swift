@@ -35,6 +35,19 @@ private struct SupabaseSessionPayload: Decodable {
     }
 }
 
+enum OAuthCallbackConfiguration {
+    static let fallbackScheme = "com.angelcriber.silox"
+
+    static func scheme(in bundle: Bundle = .main) -> String {
+        guard let configured = bundle.object(forInfoDictionaryKey: "SILOX_OAUTH_CALLBACK_SCHEME") as? String,
+              !configured.isEmpty,
+              configured.range(of: #"^[A-Za-z][A-Za-z0-9+.-]*$"#, options: .regularExpression) != nil else {
+            return fallbackScheme
+        }
+        return configured
+    }
+}
+
 @MainActor
 final class SessionStore: ObservableObject {
     enum State: Equatable { case restoring, signedOut, signedIn(UserProfile) }
@@ -45,6 +58,7 @@ final class SessionStore: ObservableObject {
     private let secureStore: SecureStoring
     private let urlSession: URLSession
     private let authConfigurationProvider: (() throws -> (URL, String))?
+    private let oauthCallbackScheme: String
     private let onSignOut: @Sendable () -> Void
     private var oauthWebSession: OAuthWebSession?
     private let sessionKey = "auth.session"
@@ -56,11 +70,13 @@ final class SessionStore: ObservableObject {
         secureStore: SecureStoring = SecureKeychainStore(),
         urlSession: URLSession = .shared,
         authConfigurationProvider: (() throws -> (URL, String))? = nil,
+        oauthCallbackScheme: String = OAuthCallbackConfiguration.scheme(),
         onSignOut: @escaping @Sendable () -> Void = {}
     ) {
         self.secureStore = secureStore
         self.urlSession = urlSession
         self.authConfigurationProvider = authConfigurationProvider
+        self.oauthCallbackScheme = oauthCallbackScheme
         self.onSignOut = onSignOut
     }
 
@@ -115,12 +131,16 @@ final class SessionStore: ObservableObject {
             errorMessage = nil
             let (baseURL, anonKey) = try authConfiguration()
             let verifier = try Self.pkceVerifier()
-            let authorizeURL = try Self.googleAuthorizeURL(baseURL: baseURL, verifier: verifier)
+            let authorizeURL = try Self.googleAuthorizeURL(
+                baseURL: baseURL,
+                verifier: verifier,
+                callbackScheme: oauthCallbackScheme
+            )
 
             let webSession = OAuthWebSession()
             oauthWebSession = webSession
             defer { oauthWebSession = nil }
-            let callback = try await webSession.authenticate(url: authorizeURL, callbackURLScheme: "com.angelcriber.silox")
+            let callback = try await webSession.authenticate(url: authorizeURL, callbackURLScheme: oauthCallbackScheme)
             try await acceptOAuthCallback(callback, verifier: verifier, baseURL: baseURL, anonKey: anonKey)
         } catch {
             let nsError = error as NSError
@@ -265,12 +285,12 @@ final class SessionStore: ObservableObject {
         return base64URL(Data(bytes))
     }
 
-    static func googleAuthorizeURL(baseURL: URL, verifier: String) throws -> URL {
+    static func googleAuthorizeURL(baseURL: URL, verifier: String, callbackScheme: String) throws -> URL {
         let challenge = base64URL(Data(SHA256.hash(data: Data(verifier.utf8))))
         var components = URLComponents(url: baseURL.appending(path: "auth/v1/authorize"), resolvingAgainstBaseURL: false)
         components?.queryItems = [
             URLQueryItem(name: "provider", value: "google"),
-            URLQueryItem(name: "redirect_to", value: "com.angelcriber.silox://auth/callback"),
+            URLQueryItem(name: "redirect_to", value: "\(callbackScheme)://auth/callback"),
             URLQueryItem(name: "code_challenge", value: challenge),
             URLQueryItem(name: "code_challenge_method", value: "s256"),
         ]
