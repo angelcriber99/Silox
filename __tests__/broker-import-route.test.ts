@@ -30,6 +30,8 @@ interface TransactionRow {
   cantidad: number
   precio_unitario: number
   comision: number
+  retencion_origen?: number
+  retencion_destino?: number
   fecha: string
   created_at?: string
   notas?: string
@@ -132,6 +134,18 @@ function revolutCryptoStatementRequest() {
     'SOL,Recompensa de Aprende,"2,00",,,,"1 mar 2026, 20:47:32"',
   ].join('\n')
   const file = new File([csv], 'crypto-account-statement.csv', { type: 'text/csv' })
+  const formData = new FormData()
+  formData.append('file', file)
+  return { formData: async () => formData } as Request
+}
+
+function revolutDividendStatementRequest() {
+  const csv = [
+    'Date,Ticker,Type,Quantity,Price per share,Net Amount,Gross Amount,Fees,Withholding Tax,Destination Tax,Currency,FX Rate',
+    '2026-06-01T10:00:00.000Z,SAP,DIVIDEND,,,EUR 6.50,EUR 10.00,EUR 1.00,EUR 2.00,EUR 0.50,EUR,1.0000',
+    '2026-06-02T10:00:00.000Z,MSFT,DIVIDEND,,,USD 16.00,USD 20.00,USD 1.00,USD 3.00,USD 0.00,USD,1.1500',
+  ].join('\n')
+  const file = new File([csv], 'revolut-dividends.csv', { type: 'text/csv' })
   const formData = new FormData()
   formData.append('file', file)
   return { formData: async () => formData } as Request
@@ -255,6 +269,43 @@ describe('broker import route', () => {
       expect.objectContaining({ cantidad: 2, precio_unitario: 75, notas: '[REVOLUT_REWARD] Recompensa de Aprende' }),
     ]))
     expect(database.transactions.some((transaction) => transaction.cantidad === 1 && transaction.precio_unitario === 1_600)).toBe(false)
+  })
+
+  it('records dividend deductions and credits the net amount to cash in its original currency', async () => {
+    const database = createImportDatabase()
+    mocks.createClient.mockResolvedValue(database.client)
+
+    const result = await (await POST(revolutDividendStatementRequest())).json()
+
+    expect(result).toMatchObject({
+      success: true,
+      newTransactions: 2,
+      accountingMovements: 2,
+      skipped: [],
+    })
+    expect(database.transactions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        tipo_operacion: 'Dividendo',
+        precio_unitario: 10,
+        comision: 1,
+        retencion_origen: 2,
+        retencion_destino: 0.5,
+      }),
+      expect.objectContaining({
+        tipo_operacion: 'Dividendo',
+        precio_unitario: 20,
+        comision: 1,
+        retencion_origen: 3,
+        retencion_destino: 0,
+      }),
+    ]))
+
+    const euroCash = database.assets.find((asset) => asset.ticker === 'CASH')!
+    const dollarCash = database.assets.find((asset) => asset.ticker === 'CASH-USD')!
+    expect(database.transactions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ activo_id: euroCash.id, tipo_operacion: 'Compra', cantidad: 6.5 }),
+      expect.objectContaining({ activo_id: dollarCash.id, tipo_operacion: 'Compra', cantidad: 16 }),
+    ]))
   })
 
   it('does not duplicate a dividend that was already entered manually', async () => {

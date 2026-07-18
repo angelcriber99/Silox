@@ -30,6 +30,8 @@ interface ParsedImportTransaction {
   precio_unitario: number
   fecha: string
   comision: number
+  retencion_origen?: number
+  retencion_destino?: number
   isin?: string
   sourceTimestamp?: string
   notas?: string
@@ -44,6 +46,8 @@ function toDatabaseTransaction(transaction: ParsedImportTransaction) {
     precio_unitario: transaction.precio_unitario,
     fecha: transaction.fecha,
     comision: transaction.comision,
+    ...(transaction.retencion_origen !== undefined ? { retencion_origen: transaction.retencion_origen } : {}),
+    ...(transaction.retencion_destino !== undefined ? { retencion_destino: transaction.retencion_destino } : {}),
     ...(transaction.notas ? { notas: transaction.notas } : {}),
     ...(transaction.sourceTimestamp ? { created_at: transaction.sourceTimestamp } : {}),
   }
@@ -288,6 +292,62 @@ async function parseWorkbook(buffer: ArrayBuffer): Promise<string[][]> {
 
 function findIndex(headers: string[], candidates: string[]): number {
   return headers.findIndex(header => candidates.includes(header))
+}
+
+interface DividendAmounts {
+  gross: number
+  net: number
+  commission: number
+  withholdingOrigin: number
+  withholdingDestination: number
+  netOnly: boolean
+}
+
+function parseOptionalAmount(row: string[], index: number): number {
+  if (index < 0) return 0
+  const amount = Math.abs(parseNumber(row[index]))
+  return Number.isFinite(amount) ? amount : 0
+}
+
+function parseDividendAmounts(headers: string[], row: string[]): DividendAmounts | null {
+  const grossIdx = findIndex(headers, ['grossamount', 'grossdividend', 'grossvalue', 'importebruto', 'dividendobruto', 'bruto'])
+  const netIdx = findIndex(headers, ['netamount', 'netdividend', 'netvalue', 'importeneto', 'dividendoneto', 'neto'])
+  const totalIdx = findIndex(headers, ['totalamount', 'total', 'value', 'totalvalue', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
+  const feeIdx = findIndex(headers, ['fee', 'fees', 'commission', 'comision'])
+  const originIdx = findIndex(headers, [
+    'withholdingtax', 'withholding', 'taxwithheld', 'foreigntax', 'sourcetax',
+    'retencion', 'retencionorigen', 'impuestoorigen', 'impuestoextranjero', 'tax', 'taxes',
+  ])
+  const destinationIdx = findIndex(headers, [
+    'destinationtax', 'domestictax', 'retenciondestino', 'impuestodestino', 'impuestonacional',
+  ])
+
+  const commission = parseOptionalAmount(row, feeIdx)
+  const withholdingOrigin = parseOptionalAmount(row, originIdx)
+  const withholdingDestination = parseOptionalAmount(row, destinationIdx)
+  const deductions = commission + withholdingOrigin + withholdingDestination
+  const explicitGross = grossIdx >= 0 ? Math.abs(parseNumber(row[grossIdx])) : Number.NaN
+  const explicitNet = netIdx >= 0 ? Math.abs(parseNumber(row[netIdx])) : Number.NaN
+  const reportedTotal = totalIdx >= 0 ? Math.abs(parseNumber(row[totalIdx])) : Number.NaN
+
+  if (Number.isFinite(explicitGross) && explicitGross > 0) {
+    const net = Number.isFinite(explicitNet) && explicitNet >= 0
+      ? explicitNet
+      : Math.max(0, explicitGross - deductions)
+    return { gross: explicitGross, net, commission, withholdingOrigin, withholdingDestination, netOnly: false }
+  }
+
+  const net = Number.isFinite(explicitNet) && explicitNet > 0 ? explicitNet : reportedTotal
+  if (!Number.isFinite(net) || net <= 0) return null
+
+  return {
+    gross: net + deductions,
+    net,
+    commission,
+    withholdingOrigin,
+    withholdingDestination,
+    netOnly: deductions === 0,
+  }
 }
 
 function normalizeCryptoTicker(symbol: string): string {
@@ -562,7 +622,7 @@ function parseBrokerCashMovements(rows: string[][], userId: string): ParsedImpor
   const headers = rows[0].map(normalizeHeader)
   const dateIdx = findIndex(headers, ['date', 'fecha'])
   const typeIdx = findIndex(headers, ['type', 'tipo'])
-  const totalIdx = findIndex(headers, ['totalamount', 'total', 'value'])
+  const totalIdx = findIndex(headers, ['totalamount', 'netamount', 'grossamount', 'total', 'value'])
   const currencyIdx = findIndex(headers, ['currency', 'divisa', 'moneda'])
   const fxIdx = findIndex(headers, ['fxrate', 'tipodecambio', 'exchangerate'])
   if (dateIdx < 0 || typeIdx < 0 || totalIdx < 0 || currencyIdx < 0) return []
@@ -572,7 +632,8 @@ function parseBrokerCashMovements(rows: string[][], userId: string): ParsedImpor
     const date = parseDate(row[dateIdx])
     const sourceTimestamp = parseSourceTimestamp(row[dateIdx])
     const type = normalizeOperationText(normalizeText(row[typeIdx]))
-    const amount = Math.abs(parseNumber(row[totalIdx]))
+    const dividendAmounts = type === 'dividend' ? parseDividendAmounts(headers, row) : null
+    const amount = dividendAmounts?.net ?? Math.abs(parseNumber(row[totalIdx]))
     const currency = normalizeText(row[currencyIdx]).toUpperCase()
     const fxRate = parseNumber(row[fxIdx])
     if (!date || !Number.isFinite(amount) || amount <= 0 || !FIAT_SYMBOLS.has(currency)) continue
@@ -690,7 +751,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
   const typeIdx = findIndex(headers, ['type', 'tipo', 'transactiontype', 'operation', 'operacion'])
   const qtyIdx = findIndex(headers, ['quantity', 'cantidad', 'units', 'shares', 'amount'])
   const priceIdx = findIndex(headers, ['price', 'precio', 'unitprice', 'priceperunit', 'pricepershare', 'shareprice', 'averageprice', 'avgprice', 'rate'])
-  const totalIdx = findIndex(headers, ['total', 'value', 'totalamount', 'totalvalue', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
+  const totalIdx = findIndex(headers, ['total', 'value', 'totalamount', 'netamount', 'grossamount', 'totalvalue', 'fiatamount', 'fiatamountincfees', 'amountfiat', 'executedvalue'])
   const feeIdx = findIndex(headers, ['fee', 'fees', 'commission', 'comision'])
   const currencyIdx = findIndex(headers, ['currency', 'divisa', 'moneda'])
   const nameIdx = findIndex(headers, ['name', 'nombre', 'instrumentname', 'assetname', 'product'])
@@ -728,6 +789,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
 
     const isDividend = operation === 'Dividendo'
     const effectiveQuantity = isDividend ? 1 : quantity
+    const dividendAmounts = isDividend ? parseDividendAmounts(headers, row) : null
 
     if (!rawTicker || !date || !operation || !Number.isFinite(effectiveQuantity) || effectiveQuantity <= 0) {
       if (rawTicker || normalizeText(row[dateIdx])) {
@@ -754,8 +816,8 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     const historicalRewardPrice = isNonCashCryptoReward
       ? cryptoRewardPricesEur.get(`${asset.rawTicker}:${date}`)
       : undefined
-    const precioUnitario = isDividend && Number.isFinite(total) && total !== 0
-      ? Math.abs(total)
+    const precioUnitario = isDividend && dividendAmounts
+      ? dividendAmounts.gross
       : Number.isFinite(total) && total !== 0
         ? Math.abs(total) / effectiveQuantity
         : Number.isFinite(price) && price > 0
@@ -784,7 +846,15 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
       cantidad: effectiveQuantity,
       precio_unitario: precioUnitario,
       fecha: date,
-      comision: Number.isFinite(parseNumber(row[feeIdx])) ? Math.abs(parseNumber(row[feeIdx])) : 0,
+      comision: dividendAmounts?.commission
+        ?? (Number.isFinite(parseNumber(row[feeIdx])) ? Math.abs(parseNumber(row[feeIdx])) : 0),
+      ...(dividendAmounts ? {
+        retencion_origen: dividendAmounts.withholdingOrigin,
+        retencion_destino: dividendAmounts.withholdingDestination,
+        notas: dividendAmounts.netOnly
+          ? '[REVOLUT_DIVIDEND_NET] Importe neto; el CSV no desglosa comisiones ni retenciones.'
+          : `[REVOLUT_DIVIDEND] Neto ${dividendAmounts.net.toFixed(8)} ${asset.moneda}`,
+      } : {}),
       sourceTimestamp: parseSourceTimestamp(row[dateIdx]),
       ...(isNonCashCryptoReward ? { notas: nonCashRewardNote(typeValue) } : {}),
     })
@@ -1210,7 +1280,7 @@ export async function POST(request: Request) {
 
     let { data: existingTransactions } = await supabase
       .from('transacciones')
-      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha, created_at, notas')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas')
       .eq('user_id', user.id)
 
     let removedInternalMovements = 0
@@ -1380,11 +1450,13 @@ export async function POST(request: Request) {
         } else {
           ignoredAccountingMovements++
         }
-      } else if (matchingExisting && (tx.tipoActivo === 'Metal' || isNonCashReward(tx))) {
+      } else if (matchingExisting && (tx.tipoActivo === 'Metal' || isNonCashReward(tx) || tx.tipo_operacion === 'Dividendo')) {
         const shouldUpdate =
           Math.abs(matchingExisting.precio_unitario - tx.precio_unitario) >= 0.01 ||
           Math.abs((matchingExisting.comision ?? 0) - tx.comision) >= 0.01 ||
-          matchingExisting.notas !== tx.notas
+          Math.abs((matchingExisting.retencion_origen ?? 0) - (tx.retencion_origen ?? 0)) >= 0.01 ||
+          Math.abs((matchingExisting.retencion_destino ?? 0) - (tx.retencion_destino ?? 0)) >= 0.01 ||
+          (tx.tipo_operacion !== 'Dividendo' && matchingExisting.notas !== tx.notas)
 
         if (shouldUpdate) {
           const { error: updateError } = await supabase
@@ -1392,6 +1464,8 @@ export async function POST(request: Request) {
             .update({
               precio_unitario: tx.precio_unitario,
               comision: tx.comision,
+              retencion_origen: tx.retencion_origen ?? 0,
+              retencion_destino: tx.retencion_destino ?? 0,
               notas: tx.notas ?? null,
             })
             .eq('id', matchingExisting.id)
@@ -1405,6 +1479,8 @@ export async function POST(request: Request) {
 
           matchingExisting.precio_unitario = tx.precio_unitario
           matchingExisting.comision = tx.comision
+          matchingExisting.retencion_origen = tx.retencion_origen ?? 0
+          matchingExisting.retencion_destino = tx.retencion_destino ?? 0
           matchingExisting.notas = tx.notas ?? null
           if (includeInSummary) {
             imported.push(tx)

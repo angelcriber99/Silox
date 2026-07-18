@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { nonCashRewardNote } from '@/lib/domain/portfolio/contributions'
-import { calculateOpenCostBasis, calculateOpenPositionBases } from '@/lib/utils/open-cost-basis'
+import {
+  calculateOpenCostBasis,
+  calculateOpenPositionBases,
+  calculateOpenPurchaseLots,
+} from '@/lib/utils/open-cost-basis'
 
 const transaction = (
   overrides: Partial<{
+    id: string
     activo_id: string
     tipo_operacion: 'Compra' | 'Venta' | 'Traspaso Entrada' | 'Traspaso Salida' | 'Retirada'
     cantidad: number
@@ -13,6 +18,7 @@ const transaction = (
     fecha: string
     created_at: string
     notas: string | null
+    estado: string
   }>,
 ) => ({
   activo_id: 'silver',
@@ -23,6 +29,7 @@ const transaction = (
   fecha: '2026-01-01',
   created_at: '2026-01-01T00:00:00.000Z',
   notas: null,
+  estado: 'Completada',
   ...overrides,
 })
 
@@ -98,5 +105,41 @@ describe('calculateOpenCostBasis', () => {
       performanceCost: 120,
       investedCost: 0,
     })
+  })
+
+  it('returns only the remaining portion of each purchase after FIFO sales', () => {
+    const lots = calculateOpenPurchaseLots([
+      transaction({ id: 'first', cantidad: 10, precio_unitario: 10, comision: 2, fecha: '2026-01-01' }),
+      transaction({ id: 'second', cantidad: 5, precio_unitario: 20, comision: 1, fecha: '2026-02-01' }),
+      transaction({ id: 'sale', tipo_operacion: 'Venta', cantidad: 12, precio_unitario: 30, fecha: '2026-03-01' }),
+    ])
+
+    expect(lots).toHaveLength(1)
+    expect(lots[0]).toMatchObject({
+      transactionId: 'second',
+      originalQuantity: 5,
+      remainingQuantity: 3,
+      purchasePrice: 20,
+      performanceUnitCost: 20.2,
+    })
+  })
+
+  it('keeps a partially consumed oldest purchase visible', () => {
+    const lots = calculateOpenPurchaseLots([
+      transaction({ id: 'buy', cantidad: 10, precio_unitario: 15 }),
+      transaction({ id: 'sale', tipo_operacion: 'Venta', cantidad: 4, precio_unitario: 20, fecha: '2026-02-01' }),
+    ])
+
+    expect(lots).toHaveLength(1)
+    expect(lots[0]).toMatchObject({ transactionId: 'buy', originalQuantity: 10, remainingQuantity: 6 })
+  })
+
+  it('does not include pending purchases in open FIFO lots', () => {
+    const lots = calculateOpenPurchaseLots([
+      transaction({ id: 'completed', cantidad: 2, precio_unitario: 10 }),
+      transaction({ id: 'pending', cantidad: 3, precio_unitario: 11, estado: 'Pendiente' }),
+    ])
+
+    expect(lots.map((lot) => lot.transactionId)).toEqual(['completed'])
   })
 })

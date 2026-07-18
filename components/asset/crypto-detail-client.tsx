@@ -17,6 +17,7 @@ import { AssetNews } from "./detail/asset-news"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { MarketStats } from "./detail/market-stats"
+import { PurchaseLotsCard } from "./detail/purchase-lots-card"
 
 interface CryptoDetailClientProps {
   position: EnrichedPosition
@@ -152,6 +153,8 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
             </p>
           </div>
         </div>
+
+        <PurchaseLotsCard position={position} transactions={transactions} />
 
         {/* ═══════════ ESTADÍSTICAS Y ALERTAS ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-3">

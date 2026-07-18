@@ -1,8 +1,8 @@
 import { isNonCashReward } from '@/lib/domain/portfolio/contributions'
 
-interface CostBasisTransaction {
+export interface CostBasisTransaction {
   id?: string
-  activo_id: string
+  activo_id?: string
   tipo_operacion: string
   cantidad: number
   precio_unitario: number
@@ -10,12 +10,21 @@ interface CostBasisTransaction {
   fecha: string
   created_at: string
   notas?: string | null
+  estado?: string | null
 }
 
-interface OpenLot {
-  quantity: number
+export interface OpenPurchaseLot {
+  transactionId?: string
+  date: string
+  createdAt: string
+  operation: string
+  originalQuantity: number
+  remainingQuantity: number
+  purchasePrice: number
+  commission: number
   performanceUnitCost: number
   investedUnitCost: number
+  notes?: string | null
 }
 
 export interface OpenPositionBasis {
@@ -36,11 +45,17 @@ const SALE_OPERATIONS = new Set([
 
 const EPSILON = 0.00000001
 
-export function calculateOpenPositionBases(
+function isCompletedTransaction(transaction: CostBasisTransaction): boolean {
+  if (!transaction.estado) return true
+  return transaction.estado.toLowerCase() === 'completada'
+}
+
+export function calculateOpenPurchaseLots(
   transactions: CostBasisTransaction[],
-): Map<string, OpenPositionBasis> {
-  const lotsByAsset = new Map<string, OpenLot[]>()
+): OpenPurchaseLot[] {
+  const lots: OpenPurchaseLot[] = []
   const orderedTransactions = transactions
+    .filter(isCompletedTransaction)
     .slice()
     .sort((a, b) => {
       const left = `${a.fecha}:${a.created_at}:${a.id ?? ''}`
@@ -52,18 +67,24 @@ export function calculateOpenPositionBases(
     const quantity = Number(transaction.cantidad)
     if (!Number.isFinite(quantity) || quantity <= EPSILON) continue
 
-    const lots = lotsByAsset.get(transaction.activo_id) ?? []
-
     if (BUY_OPERATIONS.has(transaction.tipo_operacion)) {
-      const fee = Math.max(0, Number(transaction.comision) || 0)
-      const unitCost = ((quantity * transaction.precio_unitario) + fee) / quantity
-      if (Number.isFinite(unitCost) && unitCost >= 0) {
+      const purchasePrice = Number(transaction.precio_unitario)
+      const commission = Math.max(0, Number(transaction.comision) || 0)
+      const performanceUnitCost = ((quantity * purchasePrice) + commission) / quantity
+      if (Number.isFinite(performanceUnitCost) && performanceUnitCost >= 0) {
         lots.push({
-          quantity,
-          performanceUnitCost: unitCost,
-          investedUnitCost: isNonCashReward(transaction) ? 0 : unitCost,
+          transactionId: transaction.id,
+          date: transaction.fecha,
+          createdAt: transaction.created_at,
+          operation: transaction.tipo_operacion,
+          originalQuantity: quantity,
+          remainingQuantity: quantity,
+          purchasePrice,
+          commission,
+          performanceUnitCost,
+          investedUnitCost: isNonCashReward(transaction) ? 0 : performanceUnitCost,
+          notes: transaction.notas,
         })
-        lotsByAsset.set(transaction.activo_id, lots)
       }
       continue
     }
@@ -73,24 +94,39 @@ export function calculateOpenPositionBases(
     let quantityToDispose = quantity
     while (quantityToDispose > EPSILON && lots.length > 0) {
       const oldestLot = lots[0]
-      const consumed = Math.min(oldestLot.quantity, quantityToDispose)
-      oldestLot.quantity -= consumed
+      const consumed = Math.min(oldestLot.remainingQuantity, quantityToDispose)
+      oldestLot.remainingQuantity -= consumed
       quantityToDispose -= consumed
 
-      if (oldestLot.quantity <= EPSILON) lots.shift()
+      if (oldestLot.remainingQuantity <= EPSILON) lots.shift()
     }
+  }
 
-    lotsByAsset.set(transaction.activo_id, lots)
+  return lots
+}
+
+export function calculateOpenPositionBases(
+  transactions: CostBasisTransaction[],
+): Map<string, OpenPositionBasis> {
+  const transactionsByAsset = new Map<string, CostBasisTransaction[]>()
+  for (const transaction of transactions) {
+    if (!transaction.activo_id) continue
+    const assetTransactions = transactionsByAsset.get(transaction.activo_id) ?? []
+    assetTransactions.push(transaction)
+    transactionsByAsset.set(transaction.activo_id, assetTransactions)
   }
 
   return new Map(
-    Array.from(lotsByAsset, ([assetId, lots]) => [
-      assetId,
-      {
-        performanceCost: lots.reduce((total, lot) => total + (lot.quantity * lot.performanceUnitCost), 0),
-        investedCost: lots.reduce((total, lot) => total + (lot.quantity * lot.investedUnitCost), 0),
-      },
-    ]),
+    Array.from(transactionsByAsset, ([assetId, assetTransactions]) => {
+      const lots = calculateOpenPurchaseLots(assetTransactions)
+      return [
+        assetId,
+        {
+          performanceCost: lots.reduce((total, lot) => total + (lot.remainingQuantity * lot.performanceUnitCost), 0),
+          investedCost: lots.reduce((total, lot) => total + (lot.remainingQuantity * lot.investedUnitCost), 0),
+        },
+      ]
+    }),
   )
 }
 

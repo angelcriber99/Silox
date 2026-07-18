@@ -28,6 +28,7 @@ import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { MarketStats } from "./detail/market-stats"
 import { TraspasoModal } from "@/components/transactions/traspaso-modal"
 import { ArrowRightLeft } from "lucide-react"
+import { PurchaseLotsCard } from "./detail/purchase-lots-card"
 
 const AssetEvolutionChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetEvolutionChart), { ssr: false })
 const AssetCapitalDonut = dynamic(() => import('./detail/asset-charts').then(m => m.AssetCapitalDonut), { ssr: false })
@@ -343,6 +344,8 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
             </div>
           </CardContent>
         </Card>
+
+        <PurchaseLotsCard position={position} transactions={transactions} />
 
         {/* ═══════════ TU DINERO vs INTERESES (DONUT GRANDE) + EVOLUCIÓN ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">

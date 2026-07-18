@@ -32,7 +32,12 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
       const total = tx.cantidad * tx.precio_unitario
       if (tx.tipo_operacion === 'Compra') invertido += total + (tx.comision || 0)
       if (tx.tipo_operacion === 'Venta') retirado += total - (tx.comision || 0)
-      if (tx.tipo_operacion === 'Dividendo') dividendos += total - (tx.comision || 0)
+      if (tx.tipo_operacion === 'Dividendo') {
+        dividendos += total
+          - (tx.comision || 0)
+          - (tx.retencion_origen || 0)
+          - (tx.retencion_destino || 0)
+      }
     })
 
     let ganancias = 0
@@ -80,7 +85,12 @@ export function HistoryDashboard({ transactions, taxEvents, year }: HistoryDashb
       
       if (tx.tipo_operacion === 'Compra') entry.comprado += total + (tx.comision || 0)
       if (tx.tipo_operacion === 'Venta') entry.vendido += total - (tx.comision || 0)
-      if (tx.tipo_operacion === 'Dividendo') entry.dividendos += total - (tx.comision || 0)
+      if (tx.tipo_operacion === 'Dividendo') {
+        entry.dividendos += total
+          - (tx.comision || 0)
+          - (tx.retencion_origen || 0)
+          - (tx.retencion_destino || 0)
+      }
     })
 
     // Process tax events for realized gains

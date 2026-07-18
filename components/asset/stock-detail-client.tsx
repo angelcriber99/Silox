@@ -17,6 +17,7 @@ import { AssetLogo } from "@/components/ui/asset-logo"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { StockExtendedStats } from "./detail/stock-extended-stats"
+import { PurchaseLotsCard } from "./detail/purchase-lots-card"
 import type { AssetDetails } from '@/lib/actions/market'
 
 interface StockDetailClientProps {
@@ -165,6 +166,8 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
             </p>
           </div>
         </div>
+
+        <PurchaseLotsCard position={position} transactions={transactions} />
 
         {/* ═══════════ ESTADÍSTICAS EXTENDIDAS DE ACCIÓN ═══════════ */}
         <div className="mb-10 animate-fade-in stagger-3">
