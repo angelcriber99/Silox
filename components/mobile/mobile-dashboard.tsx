@@ -14,9 +14,9 @@ import {
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
-import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useQuickAdd } from "@/lib/stores/use-quick-add"
+import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 
 interface MobileDashboardProps {
@@ -28,20 +28,29 @@ interface MobileDashboardProps {
   pendingCount?: number
 }
 
+type PerformanceMode = "session" | "day"
 type SortMode = "value" | "day"
 
 const MARKET_LABELS: Record<string, string> = {
   PRE: "Premercado",
-  REGULAR: "Mercado abierto",
+  REGULAR: "Mercado regular",
   POST: "Postmercado",
   OPEN: "Mercado abierto",
   CLOSED: "Mercado cerrado",
 }
 
+const SESSION_LABELS: Record<string, string> = {
+  PRE: "Pre",
+  REGULAR: "Regular",
+  POST: "Post",
+  OPEN: "Sesión",
+  CLOSED: "Última sesión",
+}
+
 const ALLOCATION_COLORS: Record<string, string> = {
   "Fondo Indexado": "bg-violet-500",
   ETF: "bg-blue-500",
-  "Acción": "bg-amber-400",
+  Acción: "bg-amber-400",
   Crypto: "bg-cyan-400",
   Metal: "bg-zinc-400",
 }
@@ -59,6 +68,7 @@ export function MobileDashboard({
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [sortMode, setSortMode] = useState<SortMode>("value")
+  const [performanceMode, setPerformanceMode] = useState<PerformanceMode>("session")
 
   const activePositions = useMemo(
     () => positions.filter((position) => position.unidades > 0),
@@ -67,56 +77,64 @@ export function MobileDashboard({
 
   const visiblePositions = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("es")
+
     return activePositions
-      .filter((position) => !term || `${position.ticker} ${position.nombre ?? ""}`.toLocaleLowerCase("es").includes(term))
+      .filter((position) =>
+        !term || `${position.ticker} ${position.nombre ?? ""}`.toLocaleLowerCase("es").includes(term),
+      )
       .slice()
-      .sort((left, right) => sortMode === "day"
-        ? Math.abs(right.change_amount_24h ?? 0) - Math.abs(left.change_amount_24h ?? 0)
-        : (right.valor_actual ?? 0) - (left.valor_actual ?? 0))
+      .sort((left, right) =>
+        sortMode === "day"
+          ? Math.abs(right.change_amount_24h ?? 0) - Math.abs(left.change_amount_24h ?? 0)
+          : (right.valor_actual ?? 0) - (left.valor_actual ?? 0),
+      )
   }, [activePositions, search, sortMode])
 
   const allocation = useMemo(() => {
     const byType = new Map<string, number>()
+
     for (const position of activePositions) {
       const value = position.valor_actual ?? position.coste_total_eur
       byType.set(position.tipo, (byType.get(position.tipo) ?? 0) + value)
     }
+
     const total = Array.from(byType.values()).reduce((sum, value) => sum + value, 0)
     return Array.from(byType, ([type, value]) => ({
       type,
-      value,
       weight: total > 0 ? (value / total) * 100 : 0,
       color: ALLOCATION_COLORS[type] ?? "bg-primary",
-    })).sort((left, right) => right.value - left.value)
+    })).sort((left, right) => right.weight - left.weight)
   }, [activePositions])
 
-  const dayPositive = totals.totalPnl24h >= 0
-  const totalPositive = totals.totalPnl >= 0
   const marketOpen = ["PRE", "REGULAR", "POST", "OPEN"].includes(marketState)
+  const sessionMode = performanceMode === "session"
+  const performanceAmount = sessionMode ? totals.totalSessionPnl : totals.totalPnl24h
+  const performancePercent = sessionMode ? totals.totalPnlPercent24h : totals.totalDailyPnlPercent
+  const performancePositive = performanceAmount >= 0
+  const totalPositive = totals.totalPnl >= 0
   const updatedLabel = pricesUpdatedAt
-    ? new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(pricesUpdatedAt)
+    ? new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(pricesUpdatedAt)
     : null
 
   return (
-    <div className="min-h-full bg-background pb-3 text-foreground">
-      <span className="sr-only">Patrimonio total</span>
-      <header className="px-4 pb-4 pt-[max(18px,env(safe-area-inset-top))]">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-black text-primary-foreground">
+    <div className="min-h-full bg-background pb-4 text-foreground">
+      <header className="px-4 pb-4 pt-[max(14px,env(safe-area-inset-top))]">
+        <div className="flex h-11 items-center justify-between">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-primary text-sm font-black text-primary-foreground">
               S
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-semibold leading-none">Silox</p>
-              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <span className={`h-1.5 w-1.5 rounded-full ${marketOpen ? "bg-emerald-400" : "bg-zinc-500"}`} />
-                <span>{MARKET_LABELS[marketState] ?? "Mercado cerrado"}</span>
-                {updatedLabel && <span>· {updatedLabel}</span>}
+              <div className="mt-1.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${marketOpen ? "bg-emerald-400" : "bg-zinc-500"}`} />
+                <span className="truncate">{MARKET_LABELS[marketState] ?? "Mercado cerrado"}</span>
+                {updatedLabel && <span className="shrink-0">· {updatedLabel}</span>}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
             <button
               type="button"
               onClick={() => setHideBalances(!hideBalances)}
@@ -132,27 +150,48 @@ export function MobileDashboard({
               aria-label="Abrir alertas"
             >
               <Bell className="h-[18px] w-[18px]" />
-              {pendingCount > 0 && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-amber-400" />}
+              {pendingCount > 0 && (
+                <span className="absolute right-2 top-2 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-amber-400 px-0.5 text-[8px] font-bold text-black">
+                  {pendingCount > 9 ? "9+" : pendingCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-border/70 bg-card px-4 py-4 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Valor del portfolio</p>
-              <p className="mt-2 truncate text-[34px] font-bold leading-none tracking-[-0.045em] tabular-nums">
-                {isLoading || hideBalances ? "••••••" : formatCurrency(totals.totalValue)}
-              </p>
-              <div className={`mt-3 flex items-center gap-2 text-sm font-semibold ${dayPositive ? "text-emerald-500" : "text-rose-500"}`}>
-                <span>{hideBalances ? "•••" : `${dayPositive ? "+" : ""}${formatCurrency(totals.totalPnl24h)}`}</span>
-                <span>{hideBalances ? "••" : formatPercent(totals.totalDailyPnlPercent)}</span>
-                <span className="font-normal text-muted-foreground">hoy</span>
-              </div>
-            </div>
-            <span className={`mt-1 rounded-full px-2 py-1 text-[10px] font-semibold ${marketOpen ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
+        <section className="mt-3 rounded-2xl border border-border/80 bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-medium uppercase tracking-[0.13em] text-muted-foreground">Valor de la cartera</p>
+            <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${marketOpen ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"}`}>
               {marketOpen ? "En directo" : "Cerrado"}
             </span>
+          </div>
+
+          <p className="mt-2 truncate text-[34px] font-bold leading-none tracking-[-0.045em] tabular-nums">
+            {isLoading || hideBalances ? "••••••" : formatCurrency(totals.totalValue)}
+          </p>
+
+          <div className="mt-4 flex rounded-xl bg-muted/70 p-1" aria-label="Periodo del rendimiento">
+            <PerformanceTab
+              active={sessionMode}
+              label={SESSION_LABELS[marketState] ?? "Sesión"}
+              onClick={() => setPerformanceMode("session")}
+            />
+            <PerformanceTab active={!sessionMode} label="Día completo" onClick={() => setPerformanceMode("day")} />
+          </div>
+
+          <div className="mt-3 flex items-end justify-between gap-4" aria-live="polite">
+            <div>
+              <p className="text-[11px] text-muted-foreground">
+                {sessionMode ? "Rendimiento del periodo activo" : "Acumulado de pre, regular y post"}
+              </p>
+              <div className={`mt-1 flex items-baseline gap-2 font-semibold tabular-nums ${performancePositive ? "text-emerald-500" : "text-rose-500"}`}>
+                <span className="text-base">
+                  {hideBalances ? "••••" : `${performancePositive ? "+" : ""}${formatCurrency(performanceAmount)}`}
+                </span>
+                <span className="text-sm">{hideBalances ? "••" : formatPercent(performancePercent)}</span>
+              </div>
+            </div>
           </div>
 
           <div className="mt-4 grid grid-cols-3 border-t border-border/60 pt-3">
@@ -167,24 +206,23 @@ export function MobileDashboard({
         </section>
 
         {allocation.length > 0 && (
-          <section className="mt-3 rounded-2xl border border-border/70 bg-card px-4 py-3.5">
-            <div className="mb-2.5 flex items-center justify-between">
-              <p className="text-xs font-semibold">Distribución</p>
-              <p className="text-[11px] text-muted-foreground">por tipo</p>
-            </div>
-            <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+          <section className="mt-3 rounded-2xl border border-border/70 bg-card px-4 py-3.5" aria-label="Distribución de la cartera">
+            <div className="flex h-1.5 overflow-hidden rounded-full bg-muted">
               {allocation.map((item) => (
                 <span key={item.type} className={item.color} style={{ width: `${item.weight}%` }} />
               ))}
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5">
-              {allocation.slice(0, 4).map((item) => (
-                <div key={item.type} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <span className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
-                  <span>{item.type}</span>
-                  <span className="font-medium tabular-nums text-foreground">{item.weight.toFixed(0)}%</span>
-                </div>
-              ))}
+            <div className="mt-2.5 flex items-center justify-between gap-2 overflow-hidden">
+              <p className="shrink-0 text-xs font-semibold">Distribución</p>
+              <div className="flex min-w-0 items-center justify-end gap-2.5 overflow-hidden">
+                {allocation.slice(0, 3).map((item) => (
+                  <span key={item.type} className="flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground">
+                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${item.color}`} />
+                    <span className="truncate">{item.type}</span>
+                    <strong className="font-semibold tabular-nums text-foreground">{item.weight.toFixed(0)}%</strong>
+                  </span>
+                ))}
+              </div>
             </div>
           </section>
         )}
@@ -206,19 +244,15 @@ export function MobileDashboard({
       </header>
 
       <section aria-labelledby="positions-title" className="border-t border-border/50 pt-4">
-        <div className="flex items-center justify-between px-4">
+        <div className="flex items-end justify-between px-4">
           <div>
             <h1 id="positions-title" className="text-lg font-semibold tracking-tight">Posiciones</h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">{visiblePositions.length} activos en cartera</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{visiblePositions.length} activos</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setSortMode(sortMode === "value" ? "day" : "value")}
-            className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-xs font-medium text-muted-foreground"
-            aria-label="Cambiar orden de activos"
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" /> {sortMode === "value" ? "Valor" : "Día"}
-          </button>
+          <div className="flex rounded-lg bg-muted/70 p-1" aria-label="Orden de activos">
+            <SortTab active={sortMode === "value"} label="Valor" onClick={() => setSortMode("value")} />
+            <SortTab active={sortMode === "day"} label="Día" onClick={() => setSortMode("day")} />
+          </div>
         </div>
 
         <div className="relative mx-4 mt-3">
@@ -226,14 +260,15 @@ export function MobileDashboard({
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por nombre o símbolo"
-            className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary/60"
+            placeholder="Buscar activo"
+            className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-10 text-sm outline-none placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/10"
           />
+          <SlidersHorizontal className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
         </div>
 
         <div className="mt-3 border-y border-border/60 bg-card/40">
           {isLoading ? (
-            <div className="space-y-3 p-4">
+            <div className="space-y-2 p-4">
               {[0, 1, 2, 3].map((item) => <div key={item} className="h-[72px] animate-pulse rounded-xl bg-muted" />)}
             </div>
           ) : visiblePositions.length === 0 ? (
@@ -246,6 +281,7 @@ export function MobileDashboard({
               key={position.activo_id}
               position={position}
               totalPortfolioValue={totals.totalValue}
+              performanceMode={performanceMode}
             />
           ))}
         </div>
@@ -253,6 +289,38 @@ export function MobileDashboard({
 
       <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
     </div>
+  )
+}
+
+interface ToggleTabProps {
+  active: boolean
+  label: string
+  onClick: () => void
+}
+
+function PerformanceTab({ active, label, onClick }: ToggleTabProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-8 flex-1 rounded-lg px-2 text-xs font-semibold transition-colors ${active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+      aria-pressed={active}
+    >
+      {label}
+    </button>
+  )
+}
+
+function SortTab({ active, label, onClick }: ToggleTabProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-7 rounded-md px-2.5 text-[11px] font-semibold transition-colors ${active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+      aria-pressed={active}
+    >
+      {label}
+    </button>
   )
 }
 

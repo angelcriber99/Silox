@@ -37,10 +37,7 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-2xl md:hidden"
       aria-label="Navegación principal"
     >
-      <div
-        className="grid grid-cols-5 px-1"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
+      <div className="grid grid-cols-5 px-1" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         {tabs.map((tab) => {
           const isActive = tab.isMore
             ? SECONDARY_ROUTES.some((route) => pathname.startsWith(route))
@@ -50,6 +47,7 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
 
           if (tab.isAction || tab.isMore) {
             const handlePress = tab.isAction ? onAddPress : onMorePress
+
             return (
               <button
                 key={tab.name}
@@ -63,13 +61,15 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
                 aria-current={isActive ? "page" : undefined}
               >
                 {tab.isAction ? (
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+                  <span className="grid h-10 w-10 -translate-y-1 place-items-center rounded-[14px] bg-primary text-primary-foreground shadow-lg shadow-primary/20">
                     <Plus className="h-5 w-5" strokeWidth={2.4} />
                   </span>
                 ) : (
-                  <tab.Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.8} />
+                  <span className={`grid h-7 min-w-10 place-items-center rounded-full px-2 ${isActive ? "bg-primary/10" : ""}`}>
+                    <tab.Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.8} />
+                  </span>
                 )}
-                <span>{tab.name}</span>
+                <span className={tab.isAction ? "-mt-1" : ""}>{tab.name}</span>
               </button>
             )
           }
@@ -82,9 +82,10 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
               className={`relative flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
               aria-current={isActive ? "page" : undefined}
             >
-              <tab.Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.8} />
+              <span className={`grid h-7 min-w-10 place-items-center rounded-full px-2 ${isActive ? "bg-primary/10" : ""}`}>
+                <tab.Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.8} />
+              </span>
               <span>{tab.name}</span>
-              {isActive && <span className="absolute bottom-1 h-0.5 w-4 rounded-full bg-primary" />}
             </Link>
           )
         })}

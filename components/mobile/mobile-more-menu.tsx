@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FileText, History, PieChart, Settings, TrendingUp } from "lucide-react"
+import { ChevronRight, FileText, History, PieChart, Settings, TrendingUp } from "lucide-react"
 
 import {
   Sheet,
@@ -19,9 +19,9 @@ interface MobileMoreMenuProps {
 }
 
 const routes = [
-  { href: "/analisis", label: "Análisis", description: "Riesgo y distribución", Icon: PieChart },
-  { href: "/historial", label: "Rendimiento", description: "Histórico y fiscalidad", Icon: TrendingUp },
-  { href: "/declarar", label: "Declarar", description: "Resumen para la renta", Icon: FileText },
+  { href: "/analisis", label: "Análisis", description: "Distribución y riesgo", Icon: PieChart },
+  { href: "/historial", label: "Rendimiento", description: "Evolución histórica", Icon: TrendingUp },
+  { href: "/declarar", label: "Declarar", description: "Fiscalidad y exportación", Icon: FileText },
   { href: "/settings", label: "Ajustes", description: "Cuenta y preferencias", Icon: Settings },
 ] as const
 
@@ -35,14 +35,15 @@ export function MobileMoreMenu({ open, onOpenChange }: MobileMoreMenuProps) {
         className="rounded-t-3xl border-border bg-background px-4 pb-[calc(18px+env(safe-area-inset-bottom,0px))] pt-2 md:hidden"
       >
         <div className="mx-auto mt-1 h-1 w-9 rounded-full bg-muted-foreground/30" />
-        <SheetHeader className="px-0 pb-2 pt-3">
+        <SheetHeader className="px-0 pb-3 pt-3">
           <SheetTitle className="text-xl font-semibold">Más</SheetTitle>
-          <SheetDescription>Accede a todas las herramientas de la versión web.</SheetDescription>
+          <SheetDescription>Todas las herramientas de tu cartera.</SheetDescription>
         </SheetHeader>
 
-        <div className="grid grid-cols-2 gap-2">
+        <nav className="overflow-hidden rounded-2xl border border-border bg-card" aria-label="Herramientas secundarias">
           {routes.map(({ href, label, description, Icon }) => {
             const isActive = pathname.startsWith(href)
+
             return (
               <Link
                 key={href}
@@ -51,22 +52,26 @@ export function MobileMoreMenu({ open, onOpenChange }: MobileMoreMenuProps) {
                   hapticFeedback.light()
                   onOpenChange(false)
                 }}
-                className={`rounded-2xl border p-3.5 transition-colors active:bg-muted ${isActive ? "border-primary/40 bg-primary/8" : "border-border bg-card"}`}
+                className="flex min-h-[64px] items-center gap-3 border-b border-border/60 px-3.5 py-2.5 transition-colors last:border-b-0 active:bg-muted"
+                aria-current={isActive ? "page" : undefined}
               >
-                <div className={`mb-3 grid h-9 w-9 place-items-center rounded-xl ${isActive ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${isActive ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                   <Icon className="h-[18px] w-[18px]" />
-                </div>
-                <p className="text-sm font-semibold">{label}</p>
-                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{description}</p>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">{label}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
               </Link>
             )
           })}
-        </div>
+        </nav>
 
         <Link
           href="/movimientos"
           onClick={() => onOpenChange(false)}
-          className="mt-1 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border text-sm font-medium text-muted-foreground active:bg-muted"
+          className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border text-sm font-medium text-muted-foreground active:bg-muted"
         >
           <History className="h-4 w-4" /> Ver todos los movimientos
         </Link>
