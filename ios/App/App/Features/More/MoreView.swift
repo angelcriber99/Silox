@@ -12,79 +12,158 @@ struct MoreView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("Aplicación") {
-                    NavigationLink { MobilePreferencesView() } label: {
-                        Label("Visualización y comportamiento", systemImage: "slider.horizontal.3")
-                    }
-                    NavigationLink { NotificationPreferencesView(repository: environment.settingsRepository) } label: {
-                        Label("Notificaciones", systemImage: "bell.badge")
-                    }
-                }
-
-                Section("Inversión") {
-                    NavigationLink {
-                        PortfolioHistoryView(repository: environment.insightsRepository)
-                    } label: {
-                        Label("Rendimiento", systemImage: "chart.line.uptrend.xyaxis")
-                    }
-                    NavigationLink {
-                        AlertsView(repository: environment.insightsRepository)
-                    } label: {
-                        Label("Alertas", systemImage: "bell")
-                    }
-                }
-
-                Section("Privacidad") {
-                    Toggle(isOn: $hideBalances) {
-                        Label("Ocultar saldos", systemImage: hideBalances ? "eye.slash" : "eye")
-                    }
-                    if useBiometrics {
-                        Button(role: .destructive) { useBiometrics = false } label: {
-                            Label("Desactivar Face ID", systemImage: "faceid")
+            ScrollView {
+                LazyVStack(spacing: 18) {
+                    settingsSection("Experiencia") {
+                        NavigationLink { MobilePreferencesView() } label: {
+                            SettingsDestinationLabel(
+                                title: "Apariencia y cartera",
+                                subtitle: "Tema, densidad, orden y tiempo real",
+                                icon: "slider.horizontal.3",
+                                tint: .blue
+                            )
                         }
-                    } else {
-                        Button {
-                            Task {
-                                if await BiometricAuth.authenticate(reason: "Activa la protección de Silox") {
-                                    useBiometrics = true
-                                    biometricMessage = nil
-                                } else {
-                                    biometricMessage = "Face ID no está disponible o no se autorizó."
-                                }
+                        Divider().padding(.leading, 54)
+                        NavigationLink { NotificationPreferencesView(repository: environment.settingsRepository) } label: {
+                            SettingsDestinationLabel(
+                                title: "Notificaciones",
+                                subtitle: "Precios, dividendos y resúmenes",
+                                icon: "bell.badge",
+                                tint: .orange
+                            )
+                        }
+                    }
+
+                    settingsSection("Análisis") {
+                        NavigationLink { PortfolioHistoryView(repository: environment.insightsRepository) } label: {
+                            SettingsDestinationLabel(
+                                title: "Rendimiento",
+                                subtitle: "Histórico de patrimonio y capital",
+                                icon: "chart.line.uptrend.xyaxis",
+                                tint: SiloxColors.positive
+                            )
+                        }
+                        Divider().padding(.leading, 54)
+                        NavigationLink { AlertsView(repository: environment.insightsRepository) } label: {
+                            SettingsDestinationLabel(
+                                title: "Alertas de precio",
+                                subtitle: "Objetivos y avisos configurados",
+                                icon: "bell",
+                                tint: .purple
+                            )
+                        }
+                    }
+
+                    settingsSection("Privacidad") {
+                        SettingsToggleRow(
+                            title: "Ocultar saldos",
+                            subtitle: "Protege los importes en todas las pantallas",
+                            icon: hideBalances ? "eye.slash" : "eye",
+                            tint: .indigo,
+                            isOn: $hideBalances
+                        )
+                        Divider().padding(.leading, 54)
+                        Button { Task { await toggleBiometrics() } } label: {
+                            SettingsActionLabel(
+                                title: useBiometrics ? "Desactivar Face ID" : "Activar Face ID",
+                                subtitle: useBiometrics ? "Protección biométrica activa" : "Solicitar Face ID al volver a Silox",
+                                icon: "faceid",
+                                tint: SiloxColors.accent
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        if let biometricMessage {
+                            Text(biometricMessage)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 14)
+                                .padding(.bottom, 12)
+                        }
+                    }
+
+                    settingsSection("Widget") {
+                        HStack(spacing: 12) {
+                            SettingsIcon(symbol: "rectangle.3.group", tint: .cyan)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Widget de cartera").font(.subheadline.weight(.semibold))
+                                Text(widgetStatus).font(.caption).foregroundStyle(.secondary)
                             }
-                        } label: {
-                            Label("Activar Face ID", systemImage: "faceid")
+                            Spacer()
+                            if isUpdatingWidget {
+                                ProgressView()
+                            } else {
+                                Button("Renovar") { Task { await updateWidgetCredential() } }
+                                    .font(.caption.weight(.semibold))
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                            }
                         }
+                        .padding(14)
                     }
-                    if let biometricMessage {
-                        Text(biometricMessage).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
 
-                Section("Widget") {
-                    LabeledContent("Credencial", value: widgetStatus)
-                    Button { Task { await updateWidgetCredential() } } label: {
-                        Label("Renovar acceso del widget", systemImage: "rectangle.3.group")
+                    settingsSection("Cuenta") {
+                        Button(role: .destructive) { Task { await signOut() } } label: {
+                            SettingsActionLabel(
+                                title: "Cerrar sesión",
+                                subtitle: "Elimina la sesión y los datos cacheados del dispositivo",
+                                icon: "rectangle.portrait.and.arrow.right",
+                                tint: SiloxColors.negative,
+                                showsChevron: false
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .disabled(isUpdatingWidget)
-                    Text("La credencial se guarda en Keychain compartido. El App Group solo contiene la última respuesta cacheada.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
 
-                Section("Cuenta") {
-                    Button(role: .destructive) { Task { await signOut() } } label: {
-                        Label("Cerrar sesión", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
+                    Text(appVersion)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .padding(.top, 2)
                 }
-
-                Section {
-                    Text("Silox iOS 1.1 · Build 2").font(.caption).foregroundStyle(.secondary)
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
-            .navigationTitle("Más")
+            .background(SiloxColors.background.ignoresSafeArea())
+            .navigationTitle("Ajustes")
             .task { await refreshWidgetStatus() }
+        }
+    }
+
+    private func settingsSection<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(0.8)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 4)
+            VStack(spacing: 0) { content() }
+                .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.primary.opacity(0.07), lineWidth: 0.5)
+                }
+        }
+    }
+
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+        return "Silox iOS \(version) · Build \(build)"
+    }
+
+    private func toggleBiometrics() async {
+        if useBiometrics {
+            useBiometrics = false
+            biometricMessage = nil
+            return
+        }
+        if await BiometricAuth.authenticate(reason: "Activa la protección de Silox") {
+            useBiometrics = true
+            biometricMessage = nil
+        } else {
+            biometricMessage = "Face ID no está disponible o no se autorizó."
         }
     }
 
@@ -132,52 +211,167 @@ struct MoreView: View {
 
 private struct WidgetRevocationResponse: Decodable, Sendable { let revoked: Bool }
 
+private struct SettingsIcon: View {
+    let symbol: String
+    let tint: Color
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(tint)
+            .frame(width: 34, height: 34)
+            .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+private struct SettingsDestinationLabel: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsIcon(symbol: icon, tint: tint)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+        }
+        .padding(14)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct SettingsActionLabel: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let tint: Color
+    var showsChevron = true
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsIcon(symbol: icon, tint: tint)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(tint)
+                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            }
+            Spacer()
+            if showsChevron {
+                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+            }
+        }
+        .padding(14)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct SettingsToggleRow: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let tint: Color
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsIcon(symbol: icon, tint: tint)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.subheadline.weight(.semibold))
+                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            }
+            Spacer()
+            Toggle("", isOn: $isOn).labelsHidden()
+        }
+        .padding(14)
+    }
+}
+
 private struct MobilePreferencesView: View {
     @AppStorage("appearanceMode") private var appearanceMode = "system"
     @AppStorage("compactPositions") private var compactPositions = false
-    @AppStorage("portfolioSort") private var portfolioSort = "value"
+    @AppStorage("showDailyAmount") private var showDailyAmount = true
+    @AppStorage("portfolioSort") private var portfolioSort = "day"
     @AppStorage("quantityPrecision") private var quantityPrecision = 4
     @AppStorage("defaultCurrency") private var defaultCurrency = "EUR"
     @AppStorage("liveRefreshSeconds") private var liveRefreshSeconds = 5
 
     var body: some View {
         Form {
-            Section("Apariencia") {
+            Section {
                 Picker("Tema", selection: $appearanceMode) {
-                    Text("Sistema").tag("system")
-                    Text("Claro").tag("light")
-                    Text("Oscuro").tag("dark")
+                    Label("Sistema", systemImage: "circle.lefthalf.filled").tag("system")
+                    Label("Claro", systemImage: "sun.max").tag("light")
+                    Label("Oscuro", systemImage: "moon").tag("dark")
                 }
-                Picker("Densidad de posiciones", selection: $compactPositions) {
+                .pickerStyle(.segmented)
+            } header: {
+                Text("Apariencia")
+            } footer: {
+                Text("Silox mantiene la misma jerarquía visual y colores de rendimiento que la versión web.")
+            }
+
+            Section("Lista de posiciones") {
+                Picker("Densidad", selection: $compactPositions) {
                     Text("Cómoda").tag(false)
                     Text("Compacta").tag(true)
                 }
-            }
-
-            Section("Cartera") {
+                .pickerStyle(.segmented)
+                Toggle("Mostrar importe diario", isOn: $showDailyAmount)
                 Picker("Orden predeterminado", selection: $portfolioSort) {
-                    Text("Valor").tag("value")
-                    Text("Movimiento diario").tag("day")
+                    Text("Movimiento de hoy").tag("day")
+                    Text("Valor de la posición").tag("value")
                 }
                 Stepper("Decimales en unidades: \(quantityPrecision)", value: $quantityPrecision, in: 0...8)
+            }
+
+            Section {
+                Picker("Actualizar cada", selection: $liveRefreshSeconds) {
+                    Text("3 segundos").tag(3)
+                    Text("5 segundos · recomendado").tag(5)
+                    Text("10 segundos").tag(10)
+                    Text("30 segundos").tag(30)
+                }
+                LabeledContent("Estado") {
+                    HStack(spacing: 5) {
+                        Circle().fill(SiloxColors.positive).frame(width: 6, height: 6)
+                        Text("Tiempo real activo")
+                    }
+                    .foregroundStyle(SiloxColors.positive)
+                }
+            } header: {
+                Text("Datos en tiempo real")
+            } footer: {
+                Text("La actualización se pausa cuando Silox está en segundo plano para proteger batería y datos móviles.")
+            }
+
+            Section("Operaciones") {
                 Picker("Moneda para nuevos activos", selection: $defaultCurrency) {
                     ForEach(["EUR", "USD", "GBP", "CHF"], id: \.self) { Text($0) }
                 }
             }
 
-            Section("Datos en tiempo real") {
-                Picker("Actualizar cada", selection: $liveRefreshSeconds) {
-                    Text("3 segundos").tag(3)
-                    Text("5 segundos").tag(5)
-                    Text("10 segundos").tag(10)
-                    Text("30 segundos").tag(30)
-                }
-                Text("Una frecuencia más alta consume más batería y datos móviles.")
-                    .font(.caption).foregroundStyle(.secondary)
+            Section {
+                Button("Restaurar ajustes recomendados", role: .destructive, action: resetDefaults)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(SiloxColors.background)
         .navigationTitle("Experiencia móvil")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func resetDefaults() {
+        appearanceMode = "system"
+        compactPositions = false
+        showDailyAmount = true
+        portfolioSort = "day"
+        quantityPrecision = 4
+        defaultCurrency = "EUR"
+        liveRefreshSeconds = 5
     }
 }
 
@@ -194,27 +388,47 @@ private struct NotificationPreferencesView: View {
 
     var body: some View {
         Form {
-            Section("Canales") {
-                Toggle("Notificaciones push", isOn: $pushNotifications)
-                Toggle("Notificaciones por email", isOn: $emailNotifications)
+            Section {
+                Toggle(isOn: $pushNotifications) {
+                    Label("Notificaciones push", systemImage: "app.badge")
+                }
+                Toggle(isOn: $emailNotifications) {
+                    Label("Notificaciones por email", systemImage: "envelope")
+                }
+            } header: {
+                Text("Canales")
+            } footer: {
+                Text("Elige cómo quieres recibir los avisos importantes de tu cartera.")
             }
+
             Section("Contenido") {
-                Toggle("Alertas de precio", isOn: $priceAlerts)
-                Toggle("Dividendos", isOn: $dividendAlerts)
-                Toggle("Resumen semanal", isOn: $weeklyReport)
+                Toggle(isOn: $priceAlerts) { Label("Alertas de precio", systemImage: "bell") }
+                Toggle(isOn: $dividendAlerts) { Label("Dividendos", systemImage: "banknote") }
+                Toggle(isOn: $weeklyReport) { Label("Resumen semanal", systemImage: "calendar") }
             }
-            if let message { Section { Text(message).font(.caption).foregroundStyle(.secondary) } }
+
+            if let message {
+                Section {
+                    Label(message, systemImage: message == "Preferencias guardadas." ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(message == "Preferencias guardadas." ? SiloxColors.positive : SiloxColors.negative)
+                }
+            }
+
             Section {
                 Button { Task { await save() } } label: {
                     HStack {
                         Spacer()
-                        if isSaving { ProgressView() } else { Text("Guardar preferencias").fontWeight(.semibold) }
+                        if isSaving { ProgressView() }
+                        else { Text("Guardar preferencias").fontWeight(.semibold) }
                         Spacer()
                     }
                 }
                 .disabled(isLoading || isSaving)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(SiloxColors.background)
         .navigationTitle("Notificaciones")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }

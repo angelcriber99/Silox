@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 import { CASH_ASSET_DEFAULTS, displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 import { calculateOpenCostBasis } from '@/lib/utils/open-cost-basis'
+import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
 import {
   calculateNetInvestmentByCurrency,
   type PortfolioFundingSummary,
@@ -22,7 +23,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   const { data: completedTransactions, error: transactionsError } = await supabase
     .from('transacciones')
-    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, fecha, created_at')
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at')
     .in('activo_id', assetIds)
     .eq('estado', 'Completada')
 
@@ -31,11 +32,19 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
   }
 
   const openCosts = calculateOpenCostBasis(completedTransactions ?? [])
+  const dailyActivity = calculateDailyPositionActivity(completedTransactions ?? [])
   return normalizedPositions.map((position) => {
     const openCost = openCosts.get(position.activo_id)
-    return openCost !== undefined
-      ? { ...position, coste_total: openCost }
-      : position
+    const activity = dailyActivity.get(position.activo_id)
+    return {
+      ...position,
+      ...(openCost !== undefined ? { coste_total: openCost } : {}),
+      ...(activity ? {
+        has_daily_activity: true,
+        daily_net_units: activity.netUnits,
+        daily_net_flow_nativo: activity.netFlowNative,
+      } : {}),
+    }
   })
 }
 
@@ -201,15 +210,28 @@ export function enrichPositions(
         : null
         
     let change_amount_24h = null
-    if (valor_actual_eur !== null && daily_change_percent_24h !== null) {
-      const vAyer = valor_actual_eur / (1 + daily_change_percent_24h / 100)
-      change_amount_24h = valor_actual_eur - vAyer
-    }
-
     let change_amount_24h_nativo = null
-    if (valor_actual_nativo !== null && daily_change_percent_24h !== null) {
-      const valorAnterior = valor_actual_nativo / (1 + daily_change_percent_24h / 100)
-      change_amount_24h_nativo = valor_actual_nativo - valorAnterior
+    let daily_performance_base_eur = null
+    if (precio_actual !== null && precio_actual_nativo !== null && daily_change_percent_24h !== null) {
+      const dailyFactor = 1 + daily_change_percent_24h / 100
+      if (Number.isFinite(dailyFactor) && dailyFactor > 0) {
+        const currentUnits = Math.max(0, p.unidades)
+        const previousUnits = p.has_daily_activity
+          ? Math.max(0, currentUnits - (p.daily_net_units ?? 0))
+          : currentUnits
+        const previousPriceEur = precio_actual / dailyFactor
+        const previousPriceNative = precio_actual_nativo / dailyFactor
+        const netFlowNative = p.has_daily_activity ? (p.daily_net_flow_nativo ?? 0) : 0
+        const netFlowEur = netFlowNative / fxRate
+        const currentValueEur = currentUnits * precio_actual
+        const currentValueNative = currentUnits * precio_actual_nativo
+        const previousValueEur = previousUnits * previousPriceEur
+        const previousValueNative = previousUnits * previousPriceNative
+
+        change_amount_24h = currentValueEur - previousValueEur - netFlowEur
+        change_amount_24h_nativo = currentValueNative - previousValueNative - netFlowNative
+        daily_performance_base_eur = previousValueEur + Math.max(0, netFlowEur)
+      }
     }
 
     const precio_medio = precio_medio_real
@@ -232,6 +254,7 @@ export function enrichPositions(
       daily_change_percent_24h,
       change_amount_24h,
       change_amount_24h_nativo,
+      daily_performance_base_eur,
       market_state: priceData?.marketState,
       price_updated_at: priceData?.latestTime,
       price_is_stale: priceData?.isStale ?? true,
@@ -263,19 +286,25 @@ export function computePortfolioTotals(
   let totalSessionPnl = 0
   let totalSessionBaseline = 0
   let totalDailyBaseline = 0
+  let dailyPerformancePositionCount = 0
   
   withValues.forEach((p) => {
-    const cp = p.change_percent_24h ?? 0
     const v = p.valor_actual ?? 0
+    if (p.change_amount_24h !== null) {
+      totalPnl24h += p.change_amount_24h
+      const dailyBase = p.daily_performance_base_eur ?? 0
+      if (Number.isFinite(dailyBase) && dailyBase > 0) totalDailyBaseline += dailyBase
+      if (p.unidades > 0 && dailyBase > 0) dailyPerformancePositionCount += 1
+    }
+
     if (v > 0) {
-      totalPnl24h += p.change_amount_24h ?? 0
-
-      const dailyPercent = p.daily_change_percent_24h ?? 0
-      totalDailyBaseline += v / (1 + dailyPercent / 100)
-
-      const sessionBaseline = v / (1 + cp / 100)
-      totalSessionPnl += v - sessionBaseline
-      totalSessionBaseline += sessionBaseline
+      const sessionPercent = p.change_percent_24h
+      const sessionFactor = sessionPercent === null ? 0 : 1 + sessionPercent / 100
+      if (Number.isFinite(sessionFactor) && sessionFactor > 0) {
+        const sessionBaseline = v / sessionFactor
+        totalSessionPnl += v - sessionBaseline
+        totalSessionBaseline += sessionBaseline
+      }
     }
   })
   
@@ -295,13 +324,16 @@ export function computePortfolioTotals(
     totalPnlPercent24h,
     totalSessionPnl,
     totalDailyPnlPercent,
+    dailyPerformancePositionCount,
     positionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez').length,
     hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => p.valor_actual !== null),
     estimatedPositionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez' && (p.valor_actual === null || p.price_is_stale)).length,
   }
 }
 
-export async function savePortfolioHistory(totalValue: number, totalInvested: number): Promise<void> {
+let portfolioHistoryWriteInFlight: Promise<void> | null = null
+
+async function persistPortfolioHistory(totalValue: number, totalInvested: number): Promise<void> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
@@ -311,25 +343,39 @@ export async function savePortfolioHistory(totalValue: number, totalInvested: nu
   // Throttle: Check if we saved a point in the last 15 minutes
   const fifteenMinsAgo = new Date(Date.now() - 15 * 60000).toISOString()
   
-  const { data: recent } = await supabase
+  const { data: recent, error: recentError } = await supabase
     .from('portfolio_history')
     .select('id')
     .eq('user_id', user.id)
     .gte('timestamp', fifteenMinsAgo)
     .limit(1)
 
+  if (recentError) throw new Error(`Error comprobando el histórico: ${recentError.message}`)
+
   if (recent && recent.length > 0) {
     // Already saved recently, skip
     return
   }
 
-  await supabase
+  const { error: insertError } = await supabase
     .from('portfolio_history')
     .insert({
       user_id: user.id,
       total_value: totalValue,
       total_invested: totalInvested,
     })
+
+  if (insertError) throw new Error(`Error guardando el histórico: ${insertError.message}`)
+}
+
+export function savePortfolioHistory(totalValue: number, totalInvested: number): Promise<void> {
+  if (portfolioHistoryWriteInFlight) return portfolioHistoryWriteInFlight
+
+  const request = persistPortfolioHistory(totalValue, totalInvested)
+  portfolioHistoryWriteInFlight = request
+  return request.finally(() => {
+    if (portfolioHistoryWriteInFlight === request) portfolioHistoryWriteInFlight = null
+  })
 }
 
 export async function fetchHistory(): Promise<{ timestamp: string, total_value: number, total_invested: number }[]> {

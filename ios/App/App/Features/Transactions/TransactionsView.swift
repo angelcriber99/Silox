@@ -205,7 +205,7 @@ struct TransactionsView: View {
                 .frame(width: 34, height: 34)
                 .background(color(for: transaction.kind).opacity(0.10), in: Circle())
             VStack(alignment: .leading, spacing: 3) {
-                Text(transaction.asset?.shortLabel ?? transaction.kind.title).font(.headline)
+                Text(transaction.asset?.displayName ?? transaction.kind.title).font(.headline)
                 Text(transaction.kind.title + " · " + transaction.occurredAt.formatted(date: .abbreviated, time: .omitted))
                     .font(.caption).foregroundStyle(.secondary)
             }

@@ -58,8 +58,8 @@ struct AddTransactionView: View {
                                 if let selectedAsset {
                                     SiloxAssetMark(asset: selectedAsset, size: 38)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(selectedAsset.shortLabel).font(.headline).foregroundStyle(.primary)
-                                        Text(selectedAsset.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                        Text(selectedAsset.displayName).font(.headline).foregroundStyle(.primary)
+                                        Text(selectedAsset.metadataLabel).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                     }
                                 } else {
                                     Image(systemName: "magnifyingglass").frame(width: 38, height: 38)
@@ -104,6 +104,8 @@ struct AddTransactionView: View {
             }
             .navigationTitle("Añadir movimiento")
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(SiloxColors.background)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -117,9 +119,15 @@ struct AddTransactionView: View {
                     assets.insert(asset, at: 0)
                     assetId = asset.id
                 }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(28)
             }
             .sheet(isPresented: $showsAssetPicker) {
                 AssetSelectionView(assets: assets, selection: $assetId)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(28)
             }
         }
     }
@@ -193,8 +201,14 @@ private struct AssetSelectionView: View {
     private var visibleAssets: [Asset] {
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
         return assets
-            .filter { term.isEmpty || $0.name.localizedCaseInsensitiveContains(term) || $0.shortLabel.localizedCaseInsensitiveContains(term) }
-            .sorted { $0.shortLabel < $1.shortLabel }
+            .filter {
+                term.isEmpty
+                    || $0.displayName.localizedCaseInsensitiveContains(term)
+                    || $0.metadataLabel.localizedCaseInsensitiveContains(term)
+            }
+            .sorted {
+                $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
+            }
     }
 
     var body: some View {
@@ -207,8 +221,8 @@ private struct AssetSelectionView: View {
                     HStack(spacing: 12) {
                         SiloxAssetMark(asset: asset, size: 38)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(asset.shortLabel).font(.headline).foregroundStyle(.primary)
-                            Text(asset.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            Text(asset.displayName).font(.headline).foregroundStyle(.primary)
+                            Text(asset.metadataLabel).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                         }
                         Spacer()
                         if selection == asset.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(SiloxColors.accent) }
@@ -216,6 +230,8 @@ private struct AssetSelectionView: View {
                 }
                 .buttonStyle(.plain)
             }
+            .scrollContentBackground(.hidden)
+            .background(SiloxColors.background)
             .navigationTitle("Seleccionar activo")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $query, prompt: "Nombre o símbolo")
@@ -250,6 +266,8 @@ private struct NewAssetView: View {
                 }
                 if let errorMessage { Section { Text(errorMessage).foregroundStyle(.red) } }
             }
+            .scrollContentBackground(.hidden)
+            .background(SiloxColors.background)
             .navigationTitle("Nuevo activo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

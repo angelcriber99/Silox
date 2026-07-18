@@ -113,6 +113,9 @@ struct MainTabView: View {
                 assetRepository: environment.assetRepository,
                 preselectedAssetId: preselectedAssetId
             )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
         }
     }
 
@@ -143,7 +146,7 @@ struct MainTabView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Añadir")
                 tab(.radar, title: "Radar", icon: "dot.radiowaves.left.and.right")
-                tab(.more, title: "Más", icon: "line.3.horizontal")
+                tab(.more, title: "Ajustes", icon: "gearshape")
             }
             .padding(.horizontal, 4)
             .padding(.top, 7)

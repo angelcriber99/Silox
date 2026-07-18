@@ -39,6 +39,151 @@ describe('portfolio contributions', () => {
     })
   })
 
+  it('does not dilute daily return with positions that lack a daily baseline', () => {
+    const positions = [
+      {
+        valor_actual: 110,
+        coste_total_eur: 100,
+        unidades: 1,
+        tipo: 'Acción',
+        change_amount_24h: 10,
+        daily_change_percent_24h: 10,
+        daily_performance_base_eur: 100,
+        change_percent_24h: 1,
+      },
+      {
+        valor_actual: 100,
+        coste_total_eur: 100,
+        unidades: 1,
+        tipo: 'Acción',
+        change_amount_24h: null,
+        daily_change_percent_24h: null,
+        change_percent_24h: null,
+      },
+    ] as EnrichedPosition[]
+
+    const totals = computePortfolioTotals(positions)
+    expect(totals).toMatchObject({
+      totalPnl24h: 10,
+      dailyPerformancePositionCount: 1,
+      positionCount: 2,
+    })
+    expect(totals.totalDailyPnlPercent).toBeCloseTo(10)
+  })
+
+  it('rejects an invalid minus-one-hundred-percent daily baseline', () => {
+    const position = {
+      activo_id: 'asset',
+      ticker: 'TEST',
+      isin: null,
+      nombre: 'Test',
+      tipo: 'Acción',
+      estrategia: 'Core',
+      moneda: 'EUR',
+      sector: 'Otros',
+      geografia: 'Global',
+      unidades: 1,
+      coste_total: 100,
+      comisiones_total: 0,
+      num_operaciones: 1,
+      ultima_operacion: '2026-07-18',
+      notas: null,
+    } satisfies Posicion
+
+    const [enriched] = enrichPositions([position], {
+      prices: {
+        TEST: {
+          price: 1,
+          originalPrice: 1,
+          sparkline: [],
+          dailyChangePercent24h: -100,
+        },
+      },
+    })
+
+    expect(enriched.change_amount_24h).toBeNull()
+    expect(computePortfolioTotals([enriched]).dailyPerformancePositionCount).toBe(0)
+  })
+
+  it('measures a same-day purchase from its execution price instead of the previous close', () => {
+    const position = {
+      activo_id: 'asset',
+      ticker: 'TEST',
+      isin: null,
+      nombre: 'Test',
+      tipo: 'Acción',
+      estrategia: 'Core',
+      moneda: 'EUR',
+      sector: 'Otros',
+      geografia: 'Global',
+      unidades: 10,
+      coste_total: 1_002,
+      comisiones_total: 2,
+      num_operaciones: 1,
+      ultima_operacion: '2026-07-18',
+      notas: null,
+      has_daily_activity: true,
+      daily_net_units: 10,
+      daily_net_flow_nativo: 1_002,
+    } satisfies Posicion
+
+    const [enriched] = enrichPositions([position], {
+      prices: {
+        TEST: {
+          price: 110,
+          originalPrice: 110,
+          originalCurrency: 'EUR',
+          sparkline: [],
+          dailyChangePercent24h: (110 / 90 - 1) * 100,
+        },
+      },
+    })
+
+    expect(enriched.change_amount_24h).toBeCloseTo(98)
+    expect(enriched.daily_performance_base_eur).toBeCloseTo(1_002)
+    expect(computePortfolioTotals([enriched]).totalDailyPnlPercent).toBeCloseTo((98 / 1_002) * 100)
+  })
+
+  it('retains realized daily P&L when a position is fully sold today', () => {
+    const soldPosition = {
+      activo_id: 'asset',
+      ticker: 'TEST',
+      isin: null,
+      nombre: 'Test',
+      tipo: 'Acción',
+      estrategia: 'Core',
+      moneda: 'EUR',
+      sector: 'Otros',
+      geografia: 'Global',
+      unidades: 0,
+      coste_total: 0,
+      comisiones_total: 1,
+      num_operaciones: 2,
+      ultima_operacion: '2026-07-18',
+      notas: null,
+      has_daily_activity: true,
+      daily_net_units: -10,
+      daily_net_flow_nativo: -1_049,
+    } satisfies Posicion
+
+    const [enriched] = enrichPositions([soldPosition], {
+      prices: {
+        TEST: {
+          price: 110,
+          originalPrice: 110,
+          originalCurrency: 'EUR',
+          sparkline: [],
+          dailyChangePercent24h: (110 / 90 - 1) * 100,
+        },
+      },
+    })
+    const totals = computePortfolioTotals([enriched])
+
+    expect(enriched.change_amount_24h).toBeCloseTo(149)
+    expect(totals.totalPnl24h).toBeCloseTo(149)
+    expect(totals.totalDailyPnlPercent).toBeCloseTo((149 / 900) * 100)
+  })
+
   it('subtracts sales, fees and net dividends from invested capital by currency', () => {
     const asset = { ticker: 'ASTS', tipo: 'Acción', moneda: 'USD' }
     const funding = calculateNetInvestmentByCurrency([

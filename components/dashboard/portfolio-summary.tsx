@@ -2,18 +2,14 @@
 
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import {
-  TrendingUp, TrendingDown, Wallet, Briefcase,
-  BarChart2, Target, ArrowUpRight, ArrowDownRight,
-  Activity, Minus, Sparkles, PiggyBank,
+  TrendingUp, TrendingDown, Briefcase,
+  BarChart2, Target, Sparkles,
 } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { calculateFIFO } from "@/lib/utils/fifo-calculator"
 import type { PortfolioTotals, EnrichedPosition, Transaccion } from "@/lib/types"
 import { useState, useMemo } from "react"
 import Link from "next/link"
 import { AnimatedNumber } from "@/components/ui/animated-number"
-import { useTranslations } from "next-intl"
-import { WithdrawCashModal } from "@/components/transactions/withdraw-cash-modal"
 import { useNotes } from "@/lib/stores/use-notes"
 import Marquee from "react-fast-marquee"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
@@ -35,17 +31,12 @@ function Skeleton({ className = "" }: { className?: string }) {
 export function PortfolioSummary({
   totals,
   positions = [],
-  transactions = [],
-  pendingTxs = [],
   loading = false,
   variant = 'default',
   marketState = 'REGULAR',
 }: PortfolioSummaryProps) {
   const { hideBalances } = usePreferences()
-  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [chartsOpen, setChartsOpen] = useState(false)
-  const [cashAssetId, setCashAssetId] = useState<string | null>(null)
-  const t = useTranslations("Dashboard")
 
   const isPositive = totals.totalPnl >= 0
   const daily24Positive = totals.totalPnl24h >= 0
@@ -138,6 +129,7 @@ export function PortfolioSummary({
 
         <div className="flex gap-2 w-full mt-1">
           <button
+            type="button"
             onClick={() => useNotes.getState().setIsOpen(true)}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[13px] font-semibold shadow-sm"
           >
@@ -145,6 +137,7 @@ export function PortfolioSummary({
             Plan Estratégico
           </button>
           <button
+            type="button"
             onClick={() => setChartsOpen(true)}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-[13px] font-semibold shadow-sm"
           >
@@ -153,20 +146,18 @@ export function PortfolioSummary({
           </button>
         </div>
         
-        <WithdrawCashModal
-          open={withdrawModalOpen}
-          onOpenChange={setWithdrawModalOpen}
-          cashAssetId={cashAssetId || ""}
-          sourceAssetType={positions.find(p => p.activo_id === cashAssetId)?.tipo}
-        />
-
         <PerformanceModal
           open={chartsOpen}
           onOpenChange={setChartsOpen}
           positions={positions}
-          currentPnl24h={totals.totalPnl24h}
+          currentDailyPnl={totals.totalPnl24h}
+          currentDailyPnlPercent={totals.totalDailyPnlPercent}
+          currentDailyCoverage={totals.dailyPerformancePositionCount}
+          currentPositionCount={totals.positionCount}
           currentTotalValue={totals.totalValue}
           currentTotalCost={totals.totalCost}
+          currentTotalPnl={totals.totalPnl}
+          currentTotalPnlPercent={totals.totalPnlPercent}
         />
       </div>
     )
@@ -249,6 +240,7 @@ export function PortfolioSummary({
 
 
             <button
+              type="button"
               onClick={() => useNotes.getState().setIsOpen(true)}
               className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm"
             >
@@ -256,6 +248,7 @@ export function PortfolioSummary({
               Plan Estratégico
             </button>
             <button
+              type="button"
               onClick={() => setChartsOpen(true)}
               className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-all text-[13px] font-semibold backdrop-blur-md shadow-sm w-full md:w-auto"
             >
@@ -397,12 +390,18 @@ export function PortfolioSummary({
           </Marquee>
         </div>
       )}
-      <WithdrawCashModal
-        open={withdrawModalOpen}
-        onOpenChange={setWithdrawModalOpen}
-        cashAssetId={cashAssetId || ""}
-        sourceAssetType={positions.find(p => p.activo_id === cashAssetId)?.tipo}
-
+      <PerformanceModal
+        open={chartsOpen}
+        onOpenChange={setChartsOpen}
+        positions={positions}
+        currentDailyPnl={totals.totalPnl24h}
+        currentDailyPnlPercent={totals.totalDailyPnlPercent}
+        currentDailyCoverage={totals.dailyPerformancePositionCount}
+        currentPositionCount={totals.positionCount}
+        currentTotalValue={totals.totalValue}
+        currentTotalCost={totals.totalCost}
+        currentTotalPnl={totals.totalPnl}
+        currentTotalPnlPercent={totals.totalPnlPercent}
       />
     </div>
   )

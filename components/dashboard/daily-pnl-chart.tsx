@@ -1,12 +1,17 @@
 "use client"
 
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell, ReferenceLine, CartesianGrid } from "recharts"
-import { formatCurrency } from "@/lib/utils/formatters"
+import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import type { ChartDataPoint } from "./performance-modal"
-import { aggregateDailyPnl } from "@/lib/utils/performance-history"
+import {
+  aggregateDailyPnl,
+  filterPerformanceSeries,
+  type PerformanceRange,
+} from "@/lib/utils/performance-history"
+import { getMarketDateKey } from "@/lib/utils/market-performance"
 
 interface DailyTooltipProps {
   active?: boolean
@@ -27,10 +32,13 @@ function DailyTooltip({ active, payload, label }: DailyTooltipProps) {
         <p className="text-muted-foreground text-xs mb-3 font-medium uppercase tracking-wider border-b border-border/50 pb-2">{formattedDate}</p>
         <div>
           <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
-            PnL Diario
+            P&amp;L diario completo
           </p>
           <p className={`font-bold text-xl tabular-nums leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
             {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.pnl)}`}
+          </p>
+          <p className={`mt-1 text-xs font-semibold tabular-nums ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {hideBalances ? "***" : formatPercent(data.pnlPercent)}
           </p>
         </div>
       </div>
@@ -40,17 +48,42 @@ function DailyTooltip({ active, payload, label }: DailyTooltipProps) {
   return null
 }
 
-export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
-  const dailyData = aggregateDailyPnl(chartData)
+interface DailyPnlChartProps {
+  chartData: ChartDataPoint[]
+  range: PerformanceRange
+  currentDailyPnl?: number
+  currentDailyPnlPercent?: number
+}
+
+export function DailyPnlChart({
+  chartData,
+  range,
+  currentDailyPnl,
+  currentDailyPnlPercent,
+}: DailyPnlChartProps) {
+  const currentMarketDate = getMarketDateKey(new Date())
+  const dailyData = filterPerformanceSeries(aggregateDailyPnl(chartData), range).map((point) => (
+    getMarketDateKey(point.timestamp) === currentMarketDate && currentDailyPnl !== undefined
+      ? {
+          ...point,
+          pnl: currentDailyPnl,
+          pnlPercent: currentDailyPnlPercent ?? point.pnlPercent,
+        }
+      : point
+  ))
 
   if (dailyData.length === 0) {
     return null
   }
 
   return (
-    <div className="w-full h-[320px]">
+    <div
+      className="h-[360px] w-full"
+      role="img"
+      aria-label="Beneficio o pérdida diario de la cartera, incluyendo premercado, mercado regular y postmercado"
+    >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={dailyData} margin={{ top: 10, right: 0, left: 0, bottom: 20 }}>
+        <BarChart data={dailyData} margin={{ top: 10, right: 6, left: 6, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
           <XAxis 
             dataKey="timestamp" 
@@ -61,12 +94,21 @@ export function DailyPnlChart({ chartData }: { chartData: ChartDataPoint[] }) {
             tickMargin={10}
             minTickGap={30}
           />
-          <YAxis hide />
-          <ReferenceLine y={0} stroke="#27272a" />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(value: number) => `${value >= 0 ? "+" : ""}${Math.abs(value) >= 1_000 ? `${(value / 1_000).toFixed(1)}k` : value.toFixed(0)} €`}
+            tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontWeight: 500 }}
+            width={64}
+          />
+          <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.45} />
           <Tooltip content={<DailyTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
           <Bar dataKey="pnl" radius={[4, 4, 4, 4]} isAnimationActive={false}>
             {dailyData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'} />
+              <Cell
+                key={entry.timestamp || `cell-${index}`}
+                fill={entry.pnl > 0 ? '#30d158' : entry.pnl < 0 ? '#ff453a' : 'var(--muted-foreground)'}
+              />
             ))}
           </Bar>
         </BarChart>

@@ -30,5 +30,7 @@ final class ModelDecodingTests: XCTestCase {
             currency: "EUR"
         )
         XCTAssertEqual(asset.shortLabel, "MSCI")
+        XCTAssertEqual(asset.displayName, "MSCI World")
+        XCTAssertEqual(asset.metadataLabel, "MSCI")
     }
 }

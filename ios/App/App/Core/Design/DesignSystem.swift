@@ -110,6 +110,26 @@ extension String {
 }
 
 extension Asset {
+    var displayName: String {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedName = cleanName.folding(options: .diacriticInsensitive, locale: .current).uppercased()
+
+        // MyInvestor exposes this fund with its ISIN as ticker. Keep the name
+        // users recognize in the list and leave the identifier as metadata.
+        if normalizedName.contains("MSCI WORLD") { return "MSCI World" }
+        if !cleanName.isEmpty, cleanName.caseInsensitiveCompare(ticker ?? "") != .orderedSame {
+            return cleanName
+        }
+        return shortLabel
+    }
+
+    var metadataLabel: String {
+        let tickerLabel = shortLabel
+        return tickerLabel.caseInsensitiveCompare(displayName) == .orderedSame
+            ? kind.displayName
+            : tickerLabel
+    }
+
     var shortLabel: String {
         let rawTicker = ticker?.split(separator: ".").first.map(String.init) ?? ""
         let looksLikeISIN = rawTicker.count == 12
@@ -123,6 +143,20 @@ extension Asset {
             .map { String($0).uppercased() }
             .filter { $0.count > 1 && !ignored.contains($0) }
         return words.first.map { String($0.prefix(8)) } ?? String(rawTicker.prefix(8)).uppercased()
+    }
+}
+
+extension Asset.Kind {
+    var displayName: String {
+        switch self {
+        case .stock: "Acción"
+        case .etf: "ETF"
+        case .fund: "Fondo"
+        case .crypto: "Cripto"
+        case .metal: "Metal"
+        case .cash: "Liquidez"
+        case .other: "Activo"
+        }
     }
 }
 

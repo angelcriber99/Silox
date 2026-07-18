@@ -14,6 +14,9 @@ export interface Posicion {
   num_operaciones: number
   ultima_operacion: string | null
   notas: string | null
+  has_daily_activity?: boolean
+  daily_net_units?: number
+  daily_net_flow_nativo?: number
 }
 
 export interface EnrichedPosition extends Posicion {
@@ -32,6 +35,7 @@ export interface EnrichedPosition extends Posicion {
   daily_change_percent_24h: number | null // cumulative trading-day percentage
   change_amount_24h: number | null // cumulative trading-day amount
   change_amount_24h_nativo?: number | null
+  daily_performance_base_eur?: number | null
   market_state?: string
   price_updated_at?: string
   price_is_stale?: boolean
@@ -101,6 +105,8 @@ export interface PortfolioTotals {
   totalPnlPercent24h: number
   totalSessionPnl: number
   totalDailyPnlPercent: number
+  /** Positions with a valid full-day baseline, used to expose partial daily P&L. */
+  dailyPerformancePositionCount: number
   positionCount: number
   hasAllPrices: boolean
   estimatedPositionCount: number

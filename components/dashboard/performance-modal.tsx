@@ -1,335 +1,287 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { useMemo, useState } from "react"
+import { Activity, BarChart2, CircleDollarSign, Landmark, TrendingUp, WalletCards } from "lucide-react"
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DailyPnlChart } from "./daily-pnl-chart"
-import { PortfolioHistoryChart } from "./portfolio-history-chart"
-import { BarChart2, Activity } from "lucide-react"
 import { useHistory } from "@/lib/hooks/use-portfolio"
-import { format, parseISO, subDays, subMonths, subYears, isAfter } from "date-fns"
-import { es } from "date-fns/locale"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { getMarketDateKey } from "@/lib/utils/market-performance"
+import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import {
+  buildPerformanceSeries,
+  filterPerformanceSeries,
+  summarizePerformance,
+  type PerformancePoint,
+  type PerformanceRange,
+} from "@/lib/utils/performance-history"
 import type { EnrichedPosition } from "@/lib/types"
-import { computePortfolioTotals } from "@/lib/api/assets"
+
+import { DailyPnlChart } from "./daily-pnl-chart"
+import { DistributionExtended } from "./distribution-extended"
+import { PortfolioHistoryChart } from "./portfolio-history-chart"
 
 interface PerformanceModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   positions?: EnrichedPosition[]
-  marketState?: string
-  currentPnl24h?: number
+  currentDailyPnl?: number
+  currentDailyPnlPercent?: number
+  currentDailyCoverage?: number
+  currentPositionCount?: number
   currentTotalValue?: number
   currentTotalCost?: number
+  currentTotalPnl?: number
+  currentTotalPnlPercent?: number
 }
 
-export type TimeRange = "1D" | "1W" | "1M" | "1Y" | "ALL"
+export type TimeRange = PerformanceRange
+export type ChartDataPoint = PerformancePoint
 
-export interface ChartDataPoint {
-  timestamp: string
-  value: number
-  totalInvested: number
-  pnl: number
-  totalPnl: number
-  isFirstPoint: boolean
+const RANGES: TimeRange[] = ["1D", "1W", "1M", "1Y", "ALL"]
+
+function pnlTone(value: number): "positive" | "negative" | "neutral" {
+  return value > 0 ? "positive" : value < 0 ? "negative" : "neutral"
 }
 
-import { DistributionExtended } from "./distribution-extended"
+function pnlTextClass(value: number): string {
+  return value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-foreground"
+}
 
-export function PerformanceModal({ open, onOpenChange, positions = [], marketState = 'CLOSED', currentPnl24h, currentTotalValue, currentTotalCost }: PerformanceModalProps) {
+function RangeSelector({ value, onChange }: { value: TimeRange; onChange: (range: TimeRange) => void }) {
+  return (
+    <div className="flex items-center rounded-xl border border-border/60 bg-background/80 p-1">
+      {RANGES.map((range) => (
+        <button
+          key={range}
+          type="button"
+          aria-pressed={value === range}
+          onClick={() => onChange(range)}
+          className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            value === range
+              ? "bg-foreground text-background shadow-sm"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          {range === "1W" ? "1S" : range === "ALL" ? "TODO" : range}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  tone = "neutral",
+}: {
+  label: string
+  value: string
+  detail: string
+  icon: typeof WalletCards
+  tone?: "positive" | "negative" | "neutral"
+}) {
+  const toneClass = tone === "positive"
+    ? "text-emerald-400"
+    : tone === "negative"
+      ? "text-rose-400"
+      : "text-foreground"
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+      </div>
+      <p className={`truncate text-xl font-bold tabular-nums ${toneClass}`}>{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+    </div>
+  )
+}
+
+export function PerformanceModal({
+  open,
+  onOpenChange,
+  positions = [],
+  currentDailyPnl = 0,
+  currentDailyPnlPercent = 0,
+  currentDailyCoverage = 0,
+  currentPositionCount = 0,
+  currentTotalValue = 0,
+  currentTotalCost = 0,
+  currentTotalPnl = currentTotalValue - currentTotalCost,
+  currentTotalPnlPercent = currentTotalCost > 0 ? ((currentTotalValue - currentTotalCost) / currentTotalCost) * 100 : 0,
+}: PerformanceModalProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M")
   const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null)
-  const { data: snapshots, isLoading } = useHistory()
+  const { data: snapshots = [], isLoading } = useHistory({ enabled: open })
   const { hideBalances } = usePreferences()
 
-  const processedData = useMemo(() => {
-    if (!snapshots || snapshots.length === 0) {
-      if (currentTotalValue !== undefined && currentPnl24h !== undefined) {
-        const todayStr = new Date().toISOString()
-        return [{
-          timestamp: todayStr,
-          value: currentTotalValue,
-          totalInvested: currentTotalValue - currentPnl24h,
-          pnl: currentPnl24h,
-          totalPnl: currentPnl24h,
-          isFirstPoint: true,
-        }]
-      }
-      return []
-    }
+  const processedData = useMemo(() => buildPerformanceSeries(snapshots, {
+    timestamp: new Date().toISOString(),
+    total_value: currentTotalValue,
+    total_invested: currentTotalCost,
+  }), [snapshots, currentTotalValue, currentTotalCost])
 
-    const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-    
-    // Add current real-time point at the end
-    if (currentTotalValue !== undefined && currentTotalCost !== undefined) {
-       sorted.push({
-         timestamp: new Date().toISOString(),
-         total_value: currentTotalValue,
-         total_invested: currentTotalCost
-       })
-    }
-    
-    // Aggregate by day to prevent chart duplication (unless viewing 1D)
-    let aggregatedSnaps = sorted
-    if (timeRange !== "1D") {
-      const byDate = new Map<string, typeof sorted[0]>()
-      sorted.forEach(snap => {
-        const dateStr = getMarketDateKey(snap.timestamp)
-        byDate.set(dateStr, snap) // Keeps the latest snap for each day
-      })
-      aggregatedSnaps = Array.from(byDate.values())
-    }
+  const filteredData = useMemo(
+    () => filterPerformanceSeries(processedData, timeRange),
+    [processedData, timeRange],
+  )
 
-    const allDataPoints: ChartDataPoint[] = []
-    
-    for (let i = 0; i < aggregatedSnaps.length; i++) {
-      const snap = aggregatedSnaps[i]
-      const pnlToday = snap.total_value - snap.total_invested
-      let pnl = 0
-      
-      if (i > 0) {
-        const prev = allDataPoints[i - 1]
-        pnl = pnlToday - prev.totalPnl
-      }
+  const selectedData = useMemo(() => {
+    if (!hoveredPoint) return filteredData
+    const hoveredTime = new Date(hoveredPoint.timestamp).getTime()
+    return filteredData.filter((point) => new Date(point.timestamp).getTime() <= hoveredTime)
+  }, [filteredData, hoveredPoint])
 
-      allDataPoints.push({
-        timestamp: snap.timestamp,
-        value: snap.total_value,
-        totalInvested: snap.total_invested,
-        pnl: pnl,
-        totalPnl: pnlToday,
-        isFirstPoint: i === 0,
-      })
-    }
-    
-    return allDataPoints
-  }, [snapshots, currentTotalValue, currentPnl24h, currentTotalCost, timeRange])
+  const period = useMemo(
+    () => summarizePerformance(selectedData, timeRange),
+    [selectedData, timeRange],
+  )
+  const displayedPeriod = timeRange === "1D" && !hoveredPoint
+    ? { ...period, profit: currentDailyPnl, profitPercent: currentDailyPnlPercent }
+    : period
 
-  const filteredData = useMemo(() => {
-    if (processedData.length === 0) return []
-    if (timeRange === "ALL") return processedData
-    
-    const now = new Date()
-    let startDate = now
-    if (timeRange === "1D") {
-      const currentMarketDate = getMarketDateKey(now)
-      return processedData.filter((point) => getMarketDateKey(point.timestamp) === currentMarketDate)
-    }
-    if (timeRange === "1W") startDate = subDays(now, 7)
-    if (timeRange === "1M") startDate = subMonths(now, 1)
-    if (timeRange === "1Y") startDate = subYears(now, 1)
+  const dailyCoverageDetail = currentPositionCount > 0 && currentDailyCoverage < currentPositionCount
+    ? `Día completo · cobertura ${currentDailyCoverage}/${currentPositionCount} posiciones`
+    : "Premercado + regular + postmercado"
+  const rangeLabel = timeRange === "1D"
+    ? "Día completo: pre + regular + post"
+    : timeRange === "ALL"
+      ? "Desde la primera aportación registrada"
+      : `Resultado ajustado por flujos · ${timeRange === "1W" ? "1 semana" : timeRange === "1M" ? "1 mes" : "1 año"}`
 
-    const filtered = processedData.filter(d => isAfter(parseISO(d.timestamp), startDate))
-    
-    const oldestData = processedData[0]
-    if (oldestData && isAfter(parseISO(oldestData.timestamp), startDate)) {
-      const fakePoint: ChartDataPoint = {
-        timestamp: startDate.toISOString(),
-        value: oldestData.totalInvested,
-        totalInvested: oldestData.totalInvested,
-        pnl: 0,
-        totalPnl: 0,
-        isFirstPoint: true
-      }
-      return [fakePoint, ...filtered]
-    }
-    
-    if (filtered.length < 2 && processedData.length >= 2) {
-      return processedData.slice(-2)
-    }
-    
-    return filtered
-  }, [processedData, timeRange])
-
-  // Calculate period summary
-  const displayData = useMemo(() => {
-    if (filteredData.length === 0) return { endValue: 0, pnl: 0, pnlPercent: 0, dateLabel: "En este periodo" }
-    
-    const first = filteredData[0]
-    const target = hoveredPoint || filteredData[filteredData.length - 1]
-    
-    const pnl = timeRange === 'ALL' 
-      ? target.totalPnl 
-      : target.totalPnl - first.totalPnl
-      
-    const startValue = timeRange === 'ALL' ? first.totalInvested : first.value
-      
-    const pnlPercent = startValue > 0 ? (pnl / startValue) * 100 : 0
-    
-    let dateLabel = "En este periodo"
-    if (hoveredPoint) {
-      dateLabel = format(parseISO(hoveredPoint.timestamp), "d MMM yyyy, HH:mm", { locale: es })
-    } else if (timeRange === "1D") {
-      dateLabel = "Hoy"
-    }
-    
-    return {
-      endValue: target.value,
-      pnl,
-      pnlPercent,
-      dateLabel
-    }
-  }, [filteredData, timeRange, hoveredPoint])
+  const money = (value: number, signed = false) => hideBalances
+    ? "••••"
+    : `${signed && value >= 0 ? "+" : ""}${formatCurrency(value)}`
+  const percent = (value: number) => hideBalances ? "•••" : formatPercent(value)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl bg-background/95 backdrop-blur-xl border-border/50 p-0 overflow-hidden">
-        <Tabs defaultValue="distribucion" className="w-full h-full flex flex-col">
-          <div className="p-6 pb-4 border-b border-border/40">
-            <DialogHeader className="mb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <DialogContent className="max-h-[92vh] overflow-y-auto border-border/60 bg-background/98 p-0 sm:max-w-6xl">
+        <Tabs defaultValue="evolucion" className="flex min-h-[680px] w-full flex-col">
+          <div className="border-b border-border/50 px-5 pb-5 pt-6 sm:px-7">
+            <DialogHeader>
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
-                    <BarChart2 className="w-6 h-6 text-blue-500" />
-                    Análisis de Cartera
+                  <DialogTitle className="flex items-center gap-2.5 text-2xl font-bold tracking-tight">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/12 text-primary">
+                      <BarChart2 className="h-5 w-5" />
+                    </span>
+                    Evolución de la cartera
                   </DialogTitle>
-                  <DialogDescription className="text-muted-foreground mt-1">
-                    Visualiza la distribución y métricas avanzadas de tu portfolio.
+                  <DialogDescription className="mt-2 max-w-2xl">
+                    Valor, capital aportado y rendimiento contrastados. Las entradas y salidas de dinero no se contabilizan como P&amp;L.
                   </DialogDescription>
                 </div>
-                <TabsList className="grid grid-cols-3 w-full sm:w-[450px]">
+                <TabsList className="grid h-10 w-full grid-cols-3 lg:w-[430px]">
+                  <TabsTrigger value="evolucion">Evolución</TabsTrigger>
+                  <TabsTrigger value="diario">P&amp;L diario</TabsTrigger>
                   <TabsTrigger value="distribucion">Distribución</TabsTrigger>
-                  <TabsTrigger value="patrimonio">Patrimonio</TabsTrigger>
-                  <TabsTrigger value="pnl">PnL Diario</TabsTrigger>
                 </TabsList>
               </div>
             </DialogHeader>
+
+            <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <MetricCard
+                label="Patrimonio actual"
+                value={money(currentTotalValue)}
+                detail="Valor de mercado en EUR"
+                icon={WalletCards}
+              />
+              <MetricCard
+                label="P&L de hoy"
+                value={`${money(currentDailyPnl, true)} · ${percent(currentDailyPnlPercent)}`}
+                detail={dailyCoverageDetail}
+                icon={TrendingUp}
+                tone={pnlTone(currentDailyPnl)}
+              />
+              <MetricCard
+                label="P&L total"
+                value={`${money(currentTotalPnl, true)} · ${percent(currentTotalPnlPercent)}`}
+                detail="Frente al capital neto aportado"
+                icon={CircleDollarSign}
+                tone={pnlTone(currentTotalPnl)}
+              />
+              <MetricCard
+                label="Capital neto"
+                value={money(currentTotalCost)}
+                detail="Compras − ventas − dividendos netos"
+                icon={Landmark}
+              />
+            </div>
           </div>
 
-          <div className="p-6 pt-4 bg-muted/10 h-full">
-            <TabsContent value="distribucion" className="mt-0 h-full">
-              <div className="bg-card/40 border border-border/40 backdrop-blur-md rounded-xl p-4 sm:p-6 shadow-sm min-h-[400px]">
-                 <DistributionExtended 
-                   positions={positions} 
-                   marketState={marketState}
-                 />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="patrimonio" className="mt-0">
-               <div className="bg-card/40 border border-border/40 backdrop-blur-md rounded-xl p-4 sm:p-6 shadow-sm min-h-[400px]">
-                 {/* Period Summary Header for historical views */}
-                  {!isLoading && processedData.length > 0 && (
-                    <div className="flex items-end justify-between gap-6 mb-6">
-                      <div className="flex items-end gap-6">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Patrimonio</p>
-                          <p className="text-3xl font-bold tabular-nums text-foreground">
-                            {hideBalances ? "****" : formatCurrency(displayData.endValue)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">{displayData.dateLabel}</p>
-                          <div className="flex items-baseline gap-2">
-                            <p className={`text-xl font-bold tabular-nums ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {displayData.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayData.pnl)}
-                            </p>
-                            <p className={`text-sm font-medium ${displayData.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              ({displayData.pnlPercent >= 0 ? '+' : ''}{formatPercent(displayData.pnlPercent).replace('+', '')})
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Time Range Selector */}
-                      <div className="flex bg-background p-1 rounded-lg border border-border/50 self-start sm:self-auto">
-                        {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
-                          <button
-                            key={tr}
-                            onClick={() => setTimeRange(tr)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                              timeRange === tr 
-                                ? "bg-muted text-foreground shadow-sm" 
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                            }`}
-                          >
-                            {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
-                          </button>
-                        ))}
-                      </div>
+          <div className="flex-1 bg-muted/10 p-4 sm:p-6">
+            <TabsContent value="evolucion" className="mt-0">
+              <section className="rounded-2xl border border-border/60 bg-card/55 p-4 shadow-sm sm:p-6">
+                <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Resultado del periodo</p>
+                    <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                      <p className={`text-2xl font-bold tabular-nums ${pnlTextClass(displayedPeriod.profit)}`}>
+                        {money(displayedPeriod.profit, true)}
+                      </p>
+                      <p className={`text-sm font-semibold ${pnlTextClass(displayedPeriod.profit)}`}>
+                        {percent(displayedPeriod.profitPercent)}
+                      </p>
                     </div>
-                  )}
-
-                 {isLoading ? (
-                  <div className="h-[400px] w-full flex items-center justify-center">
-                    <div className="animate-pulse flex flex-col items-center gap-3 text-muted-foreground/80">
-                      <Activity className="h-8 w-8 animate-bounce" />
-                      <p>Calculando evolución...</p>
-                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{rangeLabel}</p>
                   </div>
-                ) : processedData.length === 0 ? (
-                   <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                      Añade activos a tu portfolio y espera un día para ver tu evolución.
-                   </div>
+                  <RangeSelector value={timeRange} onChange={(range) => { setTimeRange(range); setHoveredPoint(null) }} />
+                </div>
+
+                {isLoading ? (
+                  <div className="grid h-[360px] place-items-center text-muted-foreground">
+                    <div className="flex items-center gap-2"><Activity className="h-4 w-4 animate-spin" /> Verificando el histórico…</div>
+                  </div>
+                ) : filteredData.length === 0 ? (
+                  <div className="grid h-[360px] place-items-center text-center text-sm text-muted-foreground">
+                    Todavía no hay puntos reales para este periodo. No se mostrarán datos inventados.
+                  </div>
                 ) : (
-                  <div className="h-[300px] w-full mt-4">
+                  <div className="h-[380px] w-full">
                     <PortfolioHistoryChart chartData={filteredData} onHoverChange={setHoveredPoint} />
                   </div>
                 )}
-               </div>
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-2"><span className="h-0.5 w-5 bg-primary" /> Valor de cartera</span>
+                  <span className="flex items-center gap-2"><span className="h-0 w-5 border-t border-dashed border-muted-foreground" /> Capital neto aportado</span>
+                  <span>Último punto en tiempo real; histórico cada 15 min mientras Silox está abierto.</span>
+                </div>
+              </section>
             </TabsContent>
-            
-            <TabsContent value="pnl" className="mt-0">
-               <div className="bg-card/40 border border-border/40 backdrop-blur-md rounded-xl p-4 sm:p-6 shadow-sm min-h-[400px]">
-                 {/* Period Summary Header for historical views */}
-                  {!isLoading && processedData.length > 0 && (
-                    <div className="flex items-end justify-between gap-6 mb-6">
-                      <div className="flex items-end gap-6">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">Patrimonio</p>
-                          <p className="text-3xl font-bold tabular-nums text-foreground">
-                            {hideBalances ? "****" : formatCurrency(displayData.endValue)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">{displayData.dateLabel}</p>
-                          <div className="flex items-baseline gap-2">
-                            <p className={`text-xl font-bold tabular-nums ${displayData.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {displayData.pnl >= 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(displayData.pnl)}
-                            </p>
-                            <p className={`text-sm font-medium ${displayData.pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              ({displayData.pnlPercent >= 0 ? '+' : ''}{formatPercent(displayData.pnlPercent).replace('+', '')})
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Time Range Selector */}
-                      <div className="flex bg-background p-1 rounded-lg border border-border/50 self-start sm:self-auto">
-                        {(["1D", "1W", "1M", "1Y", "ALL"] as TimeRange[]).map((tr) => (
-                          <button
-                            key={tr}
-                            onClick={() => setTimeRange(tr)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                              timeRange === tr 
-                                ? "bg-muted text-foreground shadow-sm" 
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                            }`}
-                          >
-                            {tr === '1W' ? '1S' : tr === 'ALL' ? 'TODO' : tr}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
-                 {isLoading ? (
-                  <div className="h-[400px] w-full flex items-center justify-center">
-                    <div className="animate-pulse flex flex-col items-center gap-3 text-muted-foreground/80">
-                      <Activity className="h-8 w-8 animate-bounce" />
-                      <p>Calculando evolución...</p>
-                    </div>
+            <TabsContent value="diario" className="mt-0">
+              <section className="rounded-2xl border border-border/60 bg-card/55 p-4 shadow-sm sm:p-6">
+                <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-lg font-semibold">Beneficio o pérdida por día</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Cada barra suma premercado, sesión regular y postmercado, descontando aportaciones y retiradas.</p>
                   </div>
-                ) : processedData.length === 0 ? (
-                   <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                      Añade activos a tu portfolio y espera un día para ver tu evolución.
-                   </div>
+                  <RangeSelector value={timeRange} onChange={(range) => { setTimeRange(range); setHoveredPoint(null) }} />
+                </div>
+                {isLoading ? (
+                  <div className="grid h-[360px] place-items-center text-muted-foreground">Calculando resultados diarios…</div>
+                ) : filteredData.length === 0 ? (
+                  <div className="grid h-[360px] place-items-center text-sm text-muted-foreground">Sin cierres reales en este periodo.</div>
                 ) : (
-                  <DailyPnlChart chartData={filteredData} />
+                  <DailyPnlChart
+                    chartData={processedData}
+                    range={timeRange}
+                    currentDailyPnl={currentDailyPnl}
+                    currentDailyPnlPercent={currentDailyPnlPercent}
+                  />
                 )}
-               </div>
+              </section>
+            </TabsContent>
+
+            <TabsContent value="distribucion" className="mt-0">
+              <section className="min-h-[470px] rounded-2xl border border-border/60 bg-card/55 p-4 shadow-sm sm:p-6">
+                <DistributionExtended positions={positions} />
+              </section>
             </TabsContent>
           </div>
         </Tabs>

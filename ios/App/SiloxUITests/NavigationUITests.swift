@@ -9,11 +9,11 @@ final class NavigationUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Cartera"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Radar"].exists)
         XCTAssertTrue(app.buttons["Movimientos"].exists)
-        XCTAssertTrue(app.buttons["Más"].exists)
+        XCTAssertTrue(app.buttons["Ajustes"].exists)
         XCTAssertTrue(app.buttons["Añadir"].exists)
 
-        app.buttons["Más"].tap()
-        XCTAssertTrue(app.navigationBars["Más"].waitForExistence(timeout: 2))
+        app.buttons["Ajustes"].tap()
+        XCTAssertTrue(app.navigationBars["Ajustes"].waitForExistence(timeout: 2))
     }
 
     func testAddFlowUsesAssetSelectionInsteadOfInternalIdentifier() {

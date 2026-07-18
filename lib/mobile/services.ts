@@ -17,6 +17,7 @@ import { calculateNetInvestmentByCurrency, convertNetInvestmentToEur } from '@/l
 import { fetchMarketPricesDirect } from '@/lib/actions/market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
+import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
 import type { Database } from '@/lib/database.types'
 
 type Context = MobileAuthContext
@@ -194,22 +195,34 @@ export async function portfolio(context: Context) {
     .eq('user_id', context.user.id)
   databaseFailure('cargar la cartera', error)
 
+  const { data: fundingTransactions, error: fundingError } = await context.supabase
+    .from('transacciones')
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, activo:activos(ticker, tipo, moneda)')
+    .eq('user_id', context.user.id)
+    .eq('estado', 'Completada')
+  databaseFailure('calcular el capital neto aportado', fundingError)
+  const dailyActivity = calculateDailyPositionActivity(fundingTransactions ?? [])
+
   // Keep the native dashboard on the exact same accounting universe as web.
   // Cash and money-market bookkeeping never belongs to the visible portfolio.
-  const positions = (rawPositions ?? []).filter(isInvestablePortfolioAsset)
+  const positions = (rawPositions ?? [])
+    .filter(isInvestablePortfolioAsset)
+    .map((position) => {
+      const activity = dailyActivity.get(position.activo_id)
+      return {
+        ...position,
+        has_daily_activity: Boolean(activity),
+        daily_net_units: activity?.netUnits ?? 0,
+        daily_net_flow_nativo: activity?.netFlowNative ?? 0,
+      }
+    })
   const tickers = positions
-    .filter((position) => position.unidades > 0)
+    .filter((position) => position.unidades > 0 || position.has_daily_activity)
     .map((position) => position.ticker)
   const market = tickers.length > 0
     ? await fetchMarketPricesDirect(tickers, true)
     : { prices: {}, fxRates: { EUR: 1 }, displayCurrency: 'EUR', marketState: 'CLOSED' }
   const enriched = enrichPositions(positions, market)
-  const { data: fundingTransactions, error: fundingError } = await context.supabase
-    .from('transacciones')
-    .select('tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, notas, activo:activos(ticker, tipo, moneda)')
-    .eq('user_id', context.user.id)
-    .eq('estado', 'Completada')
-  databaseFailure('calcular el capital neto aportado', fundingError)
   const funding = calculateNetInvestmentByCurrency(fundingTransactions ?? [])
   const netContributions = convertNetInvestmentToEur(funding, market.fxRates)
   const totals = computePortfolioTotals(enriched, netContributions)

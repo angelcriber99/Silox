@@ -68,7 +68,7 @@ export function usePortfolio(options?: { enabled?: boolean }) {
 
   const tickers = useMemo(
     () => confirmedPositions
-      .filter((p) => p.unidades > 0)
+      .filter((p) => p.unidades > 0 || p.has_daily_activity)
       .map((p) => p.ticker),
     [confirmedPositions]
   )
@@ -95,15 +95,26 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     [enriched, netContributions]
   )
 
-  const snapshotSaved = useRef(false)
-
-  // Save portfolio history automatically
+  const latestSnapshot = useRef({ totalValue: totals.totalValue, totalCost: totals.totalCost })
   useEffect(() => {
-    if (enabled && !positionsLoading && !pricesLoading && !contributionsLoading && totals.totalValue > 0 && !snapshotSaved.current) {
-      snapshotSaved.current = true
-      savePortfolioHistory(totals.totalValue, totals.totalCost).catch(console.error)
+    latestSnapshot.current = { totalValue: totals.totalValue, totalCost: totals.totalCost }
+  }, [totals.totalValue, totals.totalCost])
+
+  const historyReady = enabled && !positionsLoading && !pricesLoading && !contributionsLoading
+
+  // Persist a real intraday point every 15 minutes while the dashboard is open.
+  // The write function also enforces the same persistence window, so remounts do
+  // not create duplicate points.
+  useEffect(() => {
+    if (!historyReady) return
+    const persist = () => {
+      const { totalValue, totalCost } = latestSnapshot.current
+      if (totalValue > 0) savePortfolioHistory(totalValue, totalCost).catch(console.error)
     }
-  }, [enabled, totals.totalValue, totals.totalCost, positionsLoading, pricesLoading, contributionsLoading])
+    persist()
+    const timer = window.setInterval(persist, 15 * 60 * 1000)
+    return () => window.clearInterval(timer)
+  }, [historyReady])
 
   // Supabase Realtime: Súper Tiempo Real
   useEffect(() => {
@@ -156,10 +167,13 @@ export function usePortfolio(options?: { enabled?: boolean }) {
   }
 }
 
-export function useHistory() {
+export function useHistory(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["portfolio-history"],
     queryFn: () => import('@/lib/api/assets').then(m => m.fetchHistory()),
     staleTime: 5 * 60 * 1000,
+    enabled: options?.enabled ?? true,
+    refetchOnMount: 'always',
+    refetchInterval: options?.enabled === false ? false : 15 * 60 * 1000,
   })
 }
