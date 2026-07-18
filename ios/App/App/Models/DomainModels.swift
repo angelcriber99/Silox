@@ -85,6 +85,60 @@ struct TransactionPage: Codable, Sendable, Equatable {
     let nextCursor: String?
 }
 
+struct TransactionQuery: Sendable, Equatable {
+    var cursor: String?
+    var limit: Int
+    var search: String?
+    var year: Int?
+    var kind: InvestmentTransaction.Kind?
+    var assetId: String?
+    var from: Date?
+    var to: Date?
+
+    init(
+        cursor: String? = nil,
+        limit: Int = 50,
+        search: String? = nil,
+        year: Int? = nil,
+        kind: InvestmentTransaction.Kind? = nil,
+        assetId: String? = nil,
+        from: Date? = nil,
+        to: Date? = nil
+    ) {
+        self.cursor = cursor
+        self.limit = min(max(limit, 1), 100)
+        self.search = search
+        self.year = year
+        self.kind = kind
+        self.assetId = assetId
+        self.from = from
+        self.to = to
+    }
+
+    var queryItems: [URLQueryItem] {
+        var items = [URLQueryItem(name: "limit", value: String(limit))]
+        if let cursor, !cursor.isEmpty {
+            items.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let search = search?.trimmingCharacters(in: .whitespacesAndNewlines), !search.isEmpty {
+            items.append(URLQueryItem(name: "query", value: search))
+        }
+        if let year { items.append(URLQueryItem(name: "year", value: String(year))) }
+        if let kind { items.append(URLQueryItem(name: "operation", value: kind.title)) }
+        if let assetId, !assetId.isEmpty { items.append(URLQueryItem(name: "assetId", value: assetId)) }
+        if let from { items.append(URLQueryItem(name: "from", value: Self.dayString(from))) }
+        if let to { items.append(URLQueryItem(name: "to", value: Self.dayString(to))) }
+        return items
+    }
+
+    private static func dayString(_ date: Date) -> String {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
+    }
+}
+
 struct InvestmentTransaction: Codable, Sendable, Equatable, Identifiable {
     enum Kind: String, Codable, Sendable, CaseIterable {
         case buy, sell, dividend, deposit, withdrawal, transfer, pending
@@ -144,6 +198,32 @@ struct PriceAlert: Codable, Sendable, Equatable, Identifiable {
     let condition: String
     let triggered: Bool
     let createdAt: Date
+}
+
+struct CreatePriceAlertRequest: Codable, Sendable, Equatable {
+    let ticker: String
+    let targetPrice: String
+    let condition: String
+}
+
+struct UpdatePriceAlertRequest: Codable, Sendable, Equatable {
+    let targetPrice: String?
+    let condition: String?
+    let triggered: Bool?
+
+    init(targetPrice: String? = nil, condition: String? = nil, triggered: Bool? = nil) {
+        self.targetPrice = targetPrice
+        self.condition = condition
+        self.triggered = triggered
+    }
+}
+
+struct RevolutDirectImportResult: Codable, Sendable, Equatable {
+    let importedCount: Int
+    let ignoredDuplicates: Int
+    let updatedCount: Int
+    let accountingMovements: Int
+    let skippedCount: Int
 }
 
 struct RadarResponse: Codable, Sendable, Equatable {

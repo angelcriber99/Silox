@@ -12,7 +12,9 @@ export interface MobileAuthContext {
 }
 
 function bearerToken(request: Request): string | null {
-  const header = request.headers.get('authorization')
+  // Route unit tests may provide a minimal Request-shaped object; real Fetch
+  // requests always expose Headers.
+  const header = request.headers?.get?.('authorization')
   if (!header) return null
   const match = /^Bearer\s+(\S+)$/i.exec(header.trim())
   if (!match) throw new MobileApiError(401, 'invalid_authorization', 'Cabecera Authorization inválida')

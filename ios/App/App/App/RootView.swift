@@ -7,6 +7,7 @@ struct RootView: View {
     @AppStorage("useBiometrics") private var useBiometrics = false
     @AppStorage("appearanceMode") private var appearanceMode = "system"
     @State private var isUnlocked = false
+    @State private var router = AppRouter()
 
     var body: some View {
         Group {
@@ -19,7 +20,7 @@ struct RootView: View {
                 if requiresUnlock {
                     BiometricLockView(unlock: unlock, signOut: session.signOut)
                 } else {
-                    MainTabView()
+                    MainTabView(router: router)
                 }
             }
         }
@@ -30,6 +31,8 @@ struct RootView: View {
             if phase != .active, useBiometrics { isUnlocked = false }
             if phase == .active { Task { await unlockIfNeeded() } }
         }
+        .onOpenURL { url in _ = router.handle(url) }
+        .task { routeUITestLaunchArgumentIfNeeded() }
     }
 
     private var preferredColorScheme: ColorScheme? {
@@ -51,6 +54,16 @@ struct RootView: View {
 
     private func unlock() async {
         isUnlocked = await BiometricAuth.authenticate(reason: "Desbloquea tu cartera Silox")
+    }
+
+    private func routeUITestLaunchArgumentIfNeeded() {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let marker = arguments.firstIndex(of: "-ui-test-deep-link"),
+              arguments.indices.contains(marker + 1),
+              let url = URL(string: arguments[marker + 1]) else { return }
+        _ = router.handle(url)
+        #endif
     }
 }
 
@@ -85,93 +98,47 @@ private struct LaunchView: View {
 }
 
 struct MainTabView: View {
-    private enum Section: Hashable { case portfolio, transactions, radar, more }
-
     @EnvironmentObject private var environment: AppEnvironment
-    @State private var showsAdd = false
-    @State private var selectedSection: Section = .portfolio
-    @State private var preselectedAssetId: String?
+    @Bindable var router: AppRouter
 
     var body: some View {
-        TabView(selection: $selectedSection) {
+        TabView(selection: $router.selectedTab) {
             PortfolioView(repository: environment.portfolioRepository, onAdd: presentAdd)
-                .tag(Section.portfolio)
+                .tabItem { Label(AppTab.portfolio.title, systemImage: AppTab.portfolio.systemImage) }
+                .tag(AppTab.portfolio)
             TransactionsView(repository: environment.transactionRepository, onAdd: { presentAdd(nil) })
-                .tag(Section.transactions)
+                .tabItem { Label(AppTab.transactions.title, systemImage: AppTab.transactions.systemImage) }
+                .tag(AppTab.transactions)
             RadarView(repository: environment.radarRepository)
-                .tag(Section.radar)
+                .tabItem { Label(AppTab.radar.title, systemImage: AppTab.radar.systemImage) }
+                .tag(AppTab.radar)
             MoreView()
-                .tag(Section.more)
+                .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.systemImage) }
+                .tag(AppTab.settings)
         }
-        .toolbar(.hidden, for: .tabBar)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            SiloxTabBar(selection: $selectedSection, onAdd: { presentAdd(nil) })
+        .siloxTabBarBehavior()
+        .sheet(item: $router.presentedSheet) { sheet in
+            switch sheet {
+            case .addMovement(let assetID):
+                AddTransactionView(
+                    repository: environment.transactionRepository,
+                    assetRepository: environment.assetRepository,
+                    preselectedAssetId: assetID
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
         }
-        .sheet(isPresented: $showsAdd, onDismiss: { preselectedAssetId = nil }) {
-            AddTransactionView(
-                repository: environment.transactionRepository,
-                assetRepository: environment.assetRepository,
-                preselectedAssetId: preselectedAssetId
+        .fullScreenCover(item: $router.presentedAsset) { asset in
+            RoutedAssetView(
+                assetID: asset.id,
+                repository: environment.portfolioRepository,
+                onAdd: { router.presentAddMovement(assetID: $0) }
             )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(28)
         }
     }
 
-    private func presentAdd(_ assetId: String?) {
-        preselectedAssetId = assetId
-        showsAdd = true
-    }
-
-    private struct SiloxTabBar: View {
-        @Binding var selection: Section
-        let onAdd: () -> Void
-
-        var body: some View {
-            HStack(spacing: 0) {
-                tab(.portfolio, title: "Cartera", icon: "chart.pie")
-                tab(.transactions, title: "Movimientos", icon: "arrow.left.arrow.right")
-                Button(action: onAdd) {
-                    VStack(spacing: 1) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 19, weight: .bold))
-                            .frame(width: 42, height: 38)
-                            .foregroundStyle(.black)
-                            .background(SiloxColors.accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        Text("Añadir").font(.caption2.weight(.medium)).foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Añadir")
-                tab(.radar, title: "Radar", icon: "dot.radiowaves.left.and.right")
-                tab(.more, title: "Ajustes", icon: "gearshape")
-            }
-            .padding(.horizontal, 4)
-            .padding(.top, 7)
-            .padding(.bottom, 4)
-            .background(.ultraThinMaterial)
-            .overlay(alignment: .top) { Divider().opacity(0.45) }
-        }
-
-        private func tab(_ section: Section, title: String, icon: String) -> some View {
-            Button {
-                selection = section
-            } label: {
-                VStack(spacing: 4) {
-                    Image(systemName: icon)
-                        .font(.system(size: 18, weight: selection == section ? .semibold : .regular))
-                        .frame(width: 40, height: 24)
-                        .background(selection == section ? SiloxColors.accent.opacity(0.12) : .clear, in: Capsule())
-                    Text(title).font(.caption2.weight(.medium))
-                }
-                .foregroundStyle(selection == section ? SiloxColors.accent : .secondary)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(selection == section ? .isSelected : [])
-        }
+    private func presentAdd(_ assetID: String?) {
+        router.presentAddMovement(assetID: assetID)
     }
 }

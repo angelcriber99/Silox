@@ -1,7 +1,15 @@
 import Foundation
+import MetricKit
+import os
 
 struct APIConfiguration: Sendable {
     let baseURL: URL
+    let requestTimeout: TimeInterval
+
+    init(baseURL: URL, requestTimeout: TimeInterval = 30) {
+        self.baseURL = baseURL
+        self.requestTimeout = requestTimeout
+    }
 
     static var fromBundle: APIConfiguration {
         let raw = Bundle.main.object(forInfoDictionaryKey: "SILOX_API_BASE_URL") as? String
@@ -25,6 +33,8 @@ private struct APIDataEnvelope<Value: Decodable>: Decodable { let data: Value }
 enum APIError: LocalizedError, Equatable {
     case invalidResponse
     case unauthorized
+    case timedOut
+    case transport(String)
     case server(status: Int, code: String?, message: String)
     case decoding(String)
 
@@ -32,6 +42,8 @@ enum APIError: LocalizedError, Equatable {
         switch self {
         case .invalidResponse: "Respuesta inválida del servidor."
         case .unauthorized: "La sesión ha caducado."
+        case .timedOut: "La solicitud ha tardado demasiado."
+        case .transport: "No se pudo conectar con el servidor."
         case .server(_, _, let message): message
         case .decoding: "No se pudieron interpretar los datos."
         }
@@ -39,13 +51,15 @@ enum APIError: LocalizedError, Equatable {
 }
 
 actor APIClient {
-    typealias TokenProvider = @Sendable () async -> String?
+    typealias TokenProvider = @Sendable (_ forceRefresh: Bool) async -> String?
 
     private let configuration: APIConfiguration
     private let session: URLSession
     private let tokenProvider: TokenProvider
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let logger = Logger(subsystem: "com.angelcriber.silox", category: "APIClient")
+    private let signposter = OSSignposter(subsystem: "com.angelcriber.silox", category: "APIClient")
 
     init(configuration: APIConfiguration, session: URLSession = .shared, tokenProvider: @escaping TokenProvider) {
         self.configuration = configuration
@@ -53,6 +67,14 @@ actor APIClient {
         self.tokenProvider = tokenProvider
         decoder.dateDecodingStrategy = .iso8601
         encoder.dateEncodingStrategy = .iso8601
+    }
+
+    init(
+        configuration: APIConfiguration,
+        session: URLSession = .shared,
+        tokenProvider: @escaping @Sendable () async -> String?
+    ) {
+        self.init(configuration: configuration, session: session, tokenProvider: { _ in await tokenProvider() })
     }
 
     func get<Response: Decodable & Sendable>(_ path: String, query: [URLQueryItem] = []) async throws -> Response {
@@ -86,6 +108,37 @@ actor APIClient {
         )
     }
 
+    func upload<Response: Decodable & Sendable>(
+        _ path: String,
+        fileData: Data,
+        fileName: String,
+        mimeType: String = "text/csv",
+        unwrapEnvelope: Bool = true
+    ) async throws -> Response {
+        let boundary = "Silox-\(UUID().uuidString)"
+        let safeFileName = fileName
+            .replacingOccurrences(of: "\"", with: "_")
+            .replacingOccurrences(of: "\r", with: "_")
+            .replacingOccurrences(of: "\n", with: "_")
+        var body = Data()
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"file\"; filename=\"\(safeFileName)\"\r\n".utf8))
+        body.append(Data("Content-Type: \(mimeType)\r\n\r\n".utf8))
+        body.append(fileData)
+        body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+
+        let url = configuration.baseURL.appending(path: path)
+        return try await perform(
+            url: url,
+            method: .post,
+            encodedBody: body,
+            contentType: "multipart/form-data; boundary=\(boundary)",
+            idempotencyKey: nil,
+            allowsUnauthorizedRetry: true,
+            unwrapEnvelope: unwrapEnvelope
+        )
+    }
+
     private func request<Body: Encodable, Response: Decodable>(
         _ path: String,
         method: HTTPMethod,
@@ -97,17 +150,82 @@ actor APIClient {
         var components = URLComponents(url: configuration.baseURL.appending(path: path), resolvingAgainstBaseURL: false)
         if !query.isEmpty { components?.queryItems = query }
         guard let url = components?.url else { throw APIError.invalidResponse }
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let token = await tokenProvider() { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
-        if let idempotencyKey { request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key") }
-        if let body {
-            request.httpBody = try encoder.encode(body)
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let encodedBody = try body.map { try encoder.encode($0) }
+        return try await perform(
+            url: url,
+            method: method,
+            encodedBody: encodedBody,
+            contentType: encodedBody == nil ? nil : "application/json",
+            idempotencyKey: idempotencyKey,
+            allowsUnauthorizedRetry: method.isIdempotent || idempotencyKey != nil,
+            unwrapEnvelope: unwrapEnvelope
+        )
+    }
+
+    private func perform<Response: Decodable>(
+        url: URL,
+        method: HTTPMethod,
+        encodedBody: Data?,
+        contentType: String?,
+        idempotencyKey: String?,
+        allowsUnauthorizedRetry: Bool,
+        unwrapEnvelope: Bool
+    ) async throws -> Response {
+        let startedAt = Date()
+        let interval = signposter.beginInterval("API request")
+        defer { signposter.endInterval("API request", interval) }
+        var forceRefresh = false
+
+        for attempt in 0...1 {
+            logger.debug("request method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public) attempt=\(attempt + 1)")
+            var request = URLRequest(url: url, timeoutInterval: configuration.requestTimeout)
+            request.httpMethod = method.rawValue
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            if let token = await tokenProvider(forceRefresh) {
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            }
+            if let idempotencyKey { request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key") }
+            if let encodedBody {
+                request.httpBody = encodedBody
+                request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            }
+
+            let data: Data
+            let response: URLResponse
+            do {
+                (data, response) = try await session.data(for: request)
+            } catch is CancellationError {
+                logger.debug("cancelled method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                throw CancellationError()
+            } catch let error as URLError where error.code == .cancelled {
+                logger.debug("cancelled method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                throw CancellationError()
+            } catch let error as URLError where error.code == .timedOut {
+                logger.error("timeout method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                throw APIError.timedOut
+            } catch {
+                logger.error("transport_error method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                throw APIError.transport(String(describing: error))
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else { throw APIError.invalidResponse }
+            if httpResponse.statusCode == 401, attempt == 0, allowsUnauthorizedRetry {
+                logger.notice("retry_after_401 method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                forceRefresh = true
+                continue
+            }
+            let durationMilliseconds = Date().timeIntervalSince(startedAt) * 1_000
+            logger.info("response method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public) status=\(httpResponse.statusCode) duration_ms=\(durationMilliseconds, format: .fixed(precision: 2))")
+            return try decode(data: data, response: httpResponse, unwrapEnvelope: unwrapEnvelope)
         }
-        let (data, response) = try await session.data(for: request)
-        guard let response = response as? HTTPURLResponse else { throw APIError.invalidResponse }
+        throw APIError.unauthorized
+    }
+
+    private func decode<Response: Decodable>(
+        data: Data,
+        response: HTTPURLResponse,
+        unwrapEnvelope: Bool
+    ) throws -> Response {
         if response.statusCode == 401 { throw APIError.unauthorized }
         guard (200..<300).contains(response.statusCode) else {
             let envelope = try? decoder.decode(APIErrorEnvelope.self, from: data)
@@ -122,9 +240,50 @@ actor APIClient {
             if unwrapEnvelope { return try decoder.decode(APIDataEnvelope<Response>.self, from: data).data }
             return try decoder.decode(Response.self, from: data)
         }
-        catch { throw APIError.decoding(String(describing: error)) }
+        catch {
+            logger.error("decoding_error status=\(response.statusCode)")
+            throw APIError.decoding(String(describing: error))
+        }
+    }
+}
+
+private extension HTTPMethod {
+    var isIdempotent: Bool {
+        switch self {
+        case .get, .put, .delete: true
+        case .post, .patch: false
+        }
     }
 }
 
 private struct EmptyBody: Encodable {}
 struct EmptyResponse: Codable, Sendable { init() {} }
+
+/// Opt-in MetricKit bridge. The app lifecycle can call `start()` and `stop()`
+/// when telemetry policy is decided; constructing it has no side effects.
+final class PerformanceMonitor: NSObject, MXMetricManagerSubscriber {
+    private let logger = Logger(subsystem: "com.angelcriber.silox", category: "MetricKit")
+    private var isStarted = false
+
+    func start() {
+        guard !isStarted else { return }
+        isStarted = true
+        MXMetricManager.shared.add(self)
+        logger.info("MetricKit monitor started")
+    }
+
+    func stop() {
+        guard isStarted else { return }
+        isStarted = false
+        MXMetricManager.shared.remove(self)
+        logger.info("MetricKit monitor stopped")
+    }
+
+    func didReceive(_ payloads: [MXMetricPayload]) {
+        logger.info("MetricKit metric payloads=\(payloads.count)")
+    }
+
+    func didReceive(_ payloads: [MXDiagnosticPayload]) {
+        logger.notice("MetricKit diagnostic payloads=\(payloads.count)")
+    }
+}

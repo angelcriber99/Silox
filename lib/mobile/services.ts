@@ -1,14 +1,19 @@
 import 'server-only'
 
+import { z } from 'zod'
 import type { MobileAuthContext } from './auth'
 import { MobileApiError } from './api'
 import {
   AlertInputSchema,
   AlertPatchSchema,
   AssetInputSchema,
+  DecimalInputSchema,
   EventInputSchema,
+  IdSchema,
   SettingsInputSchema,
   TransactionInputSchema,
+  TransactionPatchSchema,
+  type TransactionListQuery,
   TransferInputSchema,
 } from './schemas'
 import { displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
@@ -320,21 +325,187 @@ export async function portfolioHistory(context: Context, from?: string | null, t
   }))
 }
 
-export async function listTransactions(context: Context, page: number, pageSize: number) {
-  const start = (page - 1) * pageSize
-  const { data, error, count } = await context.supabase
+type DecimalParts = { coefficient: bigint; scale: number }
+
+function decimalParts(value: string): DecimalParts {
+  const [integer, fraction = ''] = value.split('.')
+  return { coefficient: BigInt(`${integer}${fraction}`), scale: fraction.length }
+}
+
+function decimalString(parts: DecimalParts): string {
+  if (parts.coefficient === BigInt(0)) return '0'
+  const negative = parts.coefficient < BigInt(0)
+  const digits = (negative ? -parts.coefficient : parts.coefficient).toString()
+  const padded = parts.scale >= digits.length ? digits.padStart(parts.scale + 1, '0') : digits
+  const split = padded.length - parts.scale
+  const raw = parts.scale === 0 ? padded : `${padded.slice(0, split)}.${padded.slice(split)}`
+  const normalized = raw.includes('.') ? raw.replace(/0+$/, '').replace(/\.$/, '') : raw
+  return negative ? `-${normalized}` : normalized
+}
+
+function addDecimals(left: DecimalParts, right: DecimalParts, subtract = false): DecimalParts {
+  const scale = Math.max(left.scale, right.scale)
+  const leftCoefficient = left.coefficient * BigInt(10) ** BigInt(scale - left.scale)
+  const rightCoefficient = right.coefficient * BigInt(10) ** BigInt(scale - right.scale)
+  return {
+    coefficient: leftCoefficient + (subtract ? -rightCoefficient : rightCoefficient),
+    scale,
+  }
+}
+
+function multiplyDecimals(left: DecimalParts, right: DecimalParts): DecimalParts {
+  return { coefficient: left.coefficient * right.coefficient, scale: left.scale + right.scale }
+}
+
+function derivedCashImpact(input: ReturnType<typeof TransactionInputSchema.parse>) {
+  const commission = decimalParts(input.commission)
+  const sourceWithholding = decimalParts(input.sourceWithholding)
+  const destinationWithholding = decimalParts(input.destinationWithholding)
+  let operation: 'Compra' | 'Venta'
+  let amount: DecimalParts
+
+  switch (input.operation) {
+    case 'Compra':
+      operation = 'Venta'
+      amount = addDecimals(
+        multiplyDecimals(decimalParts(input.quantity), decimalParts(input.unitPrice)),
+        commission,
+      )
+      break
+    case 'Venta':
+      operation = 'Compra'
+      amount = addDecimals(
+        addDecimals(
+          addDecimals(
+            multiplyDecimals(decimalParts(input.quantity), decimalParts(input.unitPrice)),
+            sourceWithholding,
+            true,
+          ),
+          destinationWithholding,
+          true,
+        ),
+        commission,
+        true,
+      )
+      break
+    case 'Dividendo':
+      operation = 'Compra'
+      amount = addDecimals(
+        addDecimals(
+          addDecimals(decimalParts(input.unitPrice), sourceWithholding, true),
+          destinationWithholding,
+          true,
+        ),
+        commission,
+        true,
+      )
+      break
+    default:
+      return null
+  }
+
+  if (amount.coefficient <= BigInt(0)) return null
+  return { operation, amount: decimalString(amount) }
+}
+
+const TransactionCursorSchema = TransactionInputSchema.pick({ date: true }).extend({
+  createdAt: z.string().datetime(),
+  id: IdSchema,
+})
+
+function encodeTransactionCursor(row: Record<string, unknown>): string {
+  return Buffer.from(JSON.stringify({
+    date: row.fecha,
+    createdAt: row.created_at,
+    id: row.id,
+  })).toString('base64url')
+}
+
+function decodeTransactionCursor(cursor: string) {
+  try {
+    return TransactionCursorSchema.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')))
+  } catch {
+    throw new MobileApiError(400, 'validation_error', 'Cursor de movimientos inválido')
+  }
+}
+
+async function transactionSearchAssetIds(context: Context, query: string): Promise<string[]> {
+  const pattern = `*${query}*`
+  const { data, error } = await context.supabase
+    .from('activos')
+    .select('id')
+    .eq('user_id', context.user.id)
+    .or(`ticker.ilike.${pattern},nombre.ilike.${pattern}`)
+    .limit(100)
+  databaseFailure('buscar activos de movimientos', error)
+  return (data ?? []).map((asset) => asset.id)
+}
+
+export async function listTransactions(context: Context, options: TransactionListQuery) {
+  let searchAssetIds: string[] = []
+  if (options.query) searchAssetIds = await transactionSearchAssetIds(context, options.query)
+
+  const cursor = options.mode === 'cursor' && options.cursor
+    ? decodeTransactionCursor(options.cursor)
+    : null
+  let request = context.supabase
     .from('transacciones')
-    .select('*, activo:activos(ticker, nombre, tipo, moneda)', { count: 'exact' })
+    .select(
+      '*, activo:activos(ticker, nombre, tipo, moneda)',
+      options.mode === 'offset' ? { count: 'exact' } : undefined,
+    )
     .eq('user_id', context.user.id)
     .is('linked_transaction_id', null)
+
+  if (options.assetId) request = request.eq('activo_id', options.assetId)
+  if (options.operation) request = request.eq('tipo_operacion', options.operation)
+  if (options.year) {
+    request = request
+      .gte('fecha', `${options.year}-01-01`)
+      .lt('fecha', `${options.year + 1}-01-01`)
+  }
+  if (options.query) {
+    const pattern = `*${options.query}*`
+    const assetFilter = searchAssetIds.length > 0 ? `,activo_id.in.(${searchAssetIds.join(',')})` : ''
+    request = request.or(`tipo_operacion.ilike.${pattern},notas.ilike.${pattern}${assetFilter}`)
+  }
+  if (cursor) {
+    request = request.or([
+      `fecha.lt.${cursor.date}`,
+      `and(fecha.eq.${cursor.date},created_at.lt.${cursor.createdAt})`,
+      `and(fecha.eq.${cursor.date},created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`,
+    ].join(','))
+  }
+
+  request = request
     .order('fecha', { ascending: false })
     .order('created_at', { ascending: false })
-    .range(start, start + pageSize - 1)
+    .order('id', { ascending: false })
+
+  const pageSize = options.mode === 'cursor' ? options.limit : options.pageSize
+  const start = options.mode === 'offset' ? (options.page - 1) * options.pageSize : 0
+  const end = options.mode === 'cursor' ? pageSize : start + pageSize - 1
+  const { data, error, count } = await request.range(start, end)
   databaseFailure('cargar los movimientos', error)
+
+  const rows = (data ?? []) as unknown as Record<string, unknown>[]
+  if (options.mode === 'cursor') {
+    const hasMore = rows.length > options.limit
+    const visibleRows = hasMore ? rows.slice(0, options.limit) : rows
+    return {
+      items: visibleRows.map(transactionDto),
+      limit: options.limit,
+      hasMore,
+      nextCursor: hasMore && visibleRows.length > 0
+        ? encodeTransactionCursor(visibleRows[visibleRows.length - 1])
+        : null,
+    }
+  }
+
   return {
-    items: (data ?? []).map((row) => transactionDto(row as unknown as Record<string, unknown>)),
-    page,
-    pageSize,
+    items: rows.map(transactionDto),
+    page: options.page,
+    pageSize: options.pageSize,
     total: count ?? 0,
   }
 }
@@ -356,10 +527,11 @@ function transactionPayload(input: ReturnType<typeof TransactionInputSchema.pars
 
 export async function createTransaction(context: Context, input: unknown) {
   const parsed = TransactionInputSchema.parse(input)
+  const cashImpact = parsed.cashImpact ?? (parsed.updateCash ? derivedCashImpact(parsed) : null)
   const { data, error } = await context.supabase.rpc('create_transaction_with_cash', {
     p_transaction: transactionPayload(parsed),
-    p_cash_operation: parsed.cashImpact?.operation ?? null,
-    p_cash_amount: parsed.cashImpact?.amount ?? null,
+    p_cash_operation: cashImpact?.operation ?? null,
+    p_cash_amount: (cashImpact?.amount ?? null) as unknown as number | null,
   })
   databaseFailure('crear el movimiento', error)
   return transactionDto(data as unknown as Record<string, unknown>)
@@ -380,9 +552,11 @@ async function getTransactionRow(context: Context, id: string) {
 
 export async function updateTransaction(context: Context, id: string, input: unknown) {
   const current = await getTransactionRow(context, id)
-  const parsed = TransactionInputSchema.partial().parse(input)
-  const explicitlyUpdatesCash = typeof input === 'object' && input !== null
-    && Object.prototype.hasOwnProperty.call(input, 'cashImpact')
+  const parsed = TransactionPatchSchema.parse(input)
+  const explicitlyUpdatesCash = typeof input === 'object' && input !== null && (
+    Object.prototype.hasOwnProperty.call(input, 'cashImpact')
+    || Object.prototype.hasOwnProperty.call(input, 'updateCash')
+  )
   let cashImpact = parsed.cashImpact
   if (!explicitlyUpdatesCash) {
     const { data: linkedCash, error: linkedCashError } = await context.supabase
@@ -393,7 +567,7 @@ export async function updateTransaction(context: Context, id: string, input: unk
       .maybeSingle()
     databaseFailure('cargar el impacto en liquidez', linkedCashError)
     cashImpact = linkedCash && (linkedCash.tipo_operacion === 'Compra' || linkedCash.tipo_operacion === 'Venta')
-      ? { operation: linkedCash.tipo_operacion, amount: linkedCash.cantidad }
+      ? { operation: linkedCash.tipo_operacion, amount: DecimalInputSchema.parse(linkedCash.cantidad) }
       : null
   }
   const merged = TransactionInputSchema.parse({
@@ -407,13 +581,17 @@ export async function updateTransaction(context: Context, id: string, input: unk
     status: parsed.status ?? current.estado,
     date: parsed.date ?? current.fecha,
     notes: parsed.notes === undefined ? current.notas : parsed.notes,
+    updateCash: parsed.updateCash ?? false,
     cashImpact,
   })
+  if (explicitlyUpdatesCash) {
+    cashImpact = parsed.cashImpact ?? (parsed.updateCash ? derivedCashImpact(merged) : null)
+  }
   const { data, error } = await context.supabase.rpc('update_transaction_with_cash', {
     p_transaction_id: id,
     p_transaction: transactionPayload(merged),
-    p_cash_operation: merged.cashImpact?.operation ?? null,
-    p_cash_amount: merged.cashImpact?.amount ?? null,
+    p_cash_operation: cashImpact?.operation ?? null,
+    p_cash_amount: (cashImpact?.amount ?? null) as unknown as number | null,
   })
   databaseFailure('actualizar el movimiento', error)
   return transactionDto(data as unknown as Record<string, unknown>)
@@ -433,8 +611,8 @@ export async function deleteTransaction(context: Context, id: string) {
 export async function createTransfer(context: Context, input: unknown) {
   const parsed = TransferInputSchema.parse(input)
   const { data, error } = await context.supabase.rpc('create_fund_transfer', {
-    p_source_transaction: transactionPayload({ ...parsed.source, cashImpact: undefined }),
-    p_destination_transaction: transactionPayload({ ...parsed.destination, cashImpact: undefined }),
+    p_source_transaction: transactionPayload({ ...parsed.source, updateCash: false, cashImpact: undefined }),
+    p_destination_transaction: transactionPayload({ ...parsed.destination, updateCash: false, cashImpact: undefined }),
   })
   databaseFailure('crear el traspaso', error)
   return data
@@ -452,7 +630,7 @@ export async function createAlert(context: Context, input: unknown) {
   const { data, error } = await context.supabase.from('alertas').insert({
     user_id: context.user.id,
     ticker: parsed.ticker,
-    target_price: parsed.targetPrice,
+    target_price: parsed.targetPrice as unknown as number,
     condition: parsed.condition,
   }).select().single()
   databaseFailure('crear la alerta', error)
@@ -463,7 +641,7 @@ export async function updateAlert(context: Context, id: string, input: unknown) 
   const parsed = AlertPatchSchema.parse(input)
   const changes = {
     ...(parsed.ticker === undefined ? {} : { ticker: parsed.ticker }),
-    ...(parsed.targetPrice === undefined ? {} : { target_price: parsed.targetPrice }),
+    ...(parsed.targetPrice === undefined ? {} : { target_price: parsed.targetPrice as unknown as number }),
     ...(parsed.condition === undefined ? {} : { condition: parsed.condition }),
     ...(parsed.triggered === undefined ? {} : { triggered: parsed.triggered }),
   }

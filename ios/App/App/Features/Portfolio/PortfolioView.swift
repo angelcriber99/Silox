@@ -42,8 +42,8 @@ struct PortfolioView: View {
     @AppStorage("liveRefreshSeconds") private var liveRefreshSeconds = 5
     @AppStorage("showDailyAmount") private var showDailyAmount = true
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var search = ""
-    @State private var showsSearch = false
 
     private let repository: PortfolioRepository
     let onAdd: (String?) -> Void
@@ -70,6 +70,7 @@ struct PortfolioView: View {
             .background(SiloxColors.background.ignoresSafeArea())
             .navigationTitle("Cartera")
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $search, prompt: "Buscar por nombre o símbolo")
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 1) {
@@ -127,11 +128,6 @@ struct PortfolioView: View {
                 portfolioSummary(portfolio)
                 positionsHeader(portfolio: portfolio, count: active.count)
 
-                if showsSearch {
-                    searchField
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
                 if visible.isEmpty {
                     ContentUnavailableView(
                         search.isEmpty ? "Sin posiciones" : "Sin resultados",
@@ -176,7 +172,6 @@ struct PortfolioView: View {
             .padding(.bottom, 14)
         }
         .refreshable { await model.refresh() }
-        .animation(.easeInOut(duration: 0.18), value: showsSearch)
     }
 
     private func portfolioSummary(_ portfolio: PortfolioResponse) -> some View {
@@ -187,36 +182,38 @@ struct PortfolioView: View {
 
         return SiloxCard {
             VStack(alignment: .leading, spacing: 15) {
-                HStack {
-                    Text("PATRIMONIO")
-                        .font(.caption2.weight(.semibold))
-                        .tracking(1.2)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if let market = portfolio.marketState {
-                        HStack(spacing: 5) {
-                            Circle().fill(market.isOpen ? SiloxColors.positive : Color.secondary).frame(width: 6, height: 6)
-                            Text(market.isOpen ? "En directo" : "Cerrado")
-                        }
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(market.isOpen ? SiloxColors.positive : .secondary)
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 6) {
+                        summaryTitle
+                        marketStatus(portfolio)
+                    }
+                } else {
+                    HStack {
+                        summaryTitle
+                        Spacer(minLength: 8)
+                        marketStatus(portfolio)
                     }
                 }
 
                 Text(hideBalances ? "••••••" : SiloxFormatters.money(totals.totalValue.amount, currency: totals.totalValue.currency))
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
-                    .tracking(-1.3)
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title.bold() : .largeTitle.bold())
+                    .fontDesign(.rounded)
                     .monospacedDigit()
                     .contentTransition(.numericText())
+                    .minimumScaleFactor(0.7)
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("HOY · PRE + MERCADO + POST")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.caption2.weight(.semibold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
-                    HStack(spacing: 8) {
-                        Text(hideBalances ? "••••" : dailyAmount.map { SiloxFormatters.signedMoney($0.amount, currency: $0.currency) } ?? "—")
-                        Text(hideBalances ? "••" : totals.dailyGainPercent.map(SiloxFormatters.percentage) ?? "—")
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 8) {
+                            dailySummaryAmount(dailyAmount, percent: totals.dailyGainPercent)
+                        }
+                        VStack(alignment: .leading, spacing: 4) {
+                            dailySummaryAmount(dailyAmount, percent: totals.dailyGainPercent)
+                        }
                     }
                     .font(.title3.weight(.semibold))
                     .monospacedDigit()
@@ -226,21 +223,57 @@ struct PortfolioView: View {
                 .accessibilityElement(children: .combine)
 
                 Divider().opacity(0.5)
-                HStack(spacing: 0) {
-                    summaryMetric("P&L total", totals.totalGain.amount, currency: totals.totalGain.currency, signed: true)
-                    Divider().padding(.horizontal, 12)
-                    summaryMetric("Aportado neto", totals.totalCost.amount, currency: totals.totalCost.currency)
-                    Divider().padding(.horizontal, 12)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Activos").font(.caption2).foregroundStyle(.secondary)
-                        Text(String(activePositions(portfolio.positions).count))
-                            .font(.caption.weight(.semibold)).monospacedDigit()
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 12) {
+                        summaryMetric("P&L total", totals.totalGain.amount, currency: totals.totalGain.currency, signed: true)
+                        summaryMetric("Aportado neto", totals.totalCost.amount, currency: totals.totalCost.currency)
+                        activeAssetsMetric(portfolio)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack(spacing: 0) {
+                        summaryMetric("P&L total", totals.totalGain.amount, currency: totals.totalGain.currency, signed: true)
+                        Divider().padding(.horizontal, 12)
+                        summaryMetric("Aportado neto", totals.totalCost.amount, currency: totals.totalCost.currency)
+                        Divider().padding(.horizontal, 12)
+                        activeAssetsMetric(portfolio)
+                    }
                 }
-                .frame(height: 38)
             }
         }
+    }
+
+    private var summaryTitle: some View {
+        Text("PATRIMONIO")
+            .font(.caption2.weight(.semibold))
+            .tracking(1.2)
+            .foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder
+    private func marketStatus(_ portfolio: PortfolioResponse) -> some View {
+        if let market = portfolio.marketState {
+            HStack(spacing: 5) {
+                Circle().fill(market.isOpen ? SiloxColors.positive : Color.secondary).frame(width: 6, height: 6)
+                Text(market.isOpen ? "En directo" : "Cerrado")
+            }
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(market.isOpen ? SiloxColors.positive : .secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func dailySummaryAmount(_ amount: MoneyValue?, percent: Double?) -> some View {
+        Text(hideBalances ? "••••" : amount.map { SiloxFormatters.signedMoney($0.amount, currency: $0.currency) } ?? "—")
+        Text(hideBalances ? "••" : percent.map(SiloxFormatters.percentage) ?? "—")
+    }
+
+    private func activeAssetsMetric(_ portfolio: PortfolioResponse) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Activos").font(.caption2).foregroundStyle(.secondary)
+            Text(String(activePositions(portfolio.positions).count))
+                .font(.caption.weight(.semibold)).monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func summaryMetric(_ title: String, _ amount: String, currency: String, signed: Bool = false) -> some View {
@@ -272,17 +305,6 @@ struct PortfolioView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button {
-                showsSearch.toggle()
-                if !showsSearch { search = "" }
-            } label: {
-                Image(systemName: showsSearch ? "xmark" : "magnifyingglass")
-                    .frame(width: 34, height: 34)
-                    .background(SiloxColors.secondaryBackground, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(showsSearch ? "Cerrar búsqueda" : "Buscar activo")
-
             Menu {
                 Picker("Orden", selection: Binding(
                     get: { PositionSort(rawValue: positionSortRaw) ?? .day },
@@ -304,29 +326,6 @@ struct PortfolioView: View {
             .accessibilityLabel("Ordenar posiciones")
         }
         .padding(.top, 2)
-    }
-
-    private var searchField: some View {
-        HStack(spacing: 9) {
-            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-            TextField("Buscar por nombre o símbolo", text: $search)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-            if !search.isEmpty {
-                Button { search = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.tertiary)
-                    .accessibilityLabel("Limpiar búsqueda")
-            }
-        }
-        .font(.subheadline)
-        .padding(.horizontal, 12)
-        .frame(height: 44)
-        .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
-        }
     }
 
     private func visiblePositions(_ positions: [Position]) -> [Position] {
@@ -354,6 +353,7 @@ struct PortfolioView: View {
 }
 
 private struct PositionRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let position: Position
     let hideBalances: Bool
     let compact: Bool
@@ -373,64 +373,9 @@ private struct PositionRow: View {
         NavigationLink {
             PositionDetailView(position: position, repository: repository, onAdd: onAdd)
         } label: {
-            HStack(spacing: 12) {
-                ZStack(alignment: .bottomTrailing) {
-                    SiloxAssetMark(asset: position.asset, size: compact ? 38 : 44)
-                    Circle()
-                        .fill(position.isPriceStale ? SiloxColors.warning : SiloxColors.positive)
-                        .frame(width: 8, height: 8)
-                        .overlay(Circle().stroke(SiloxColors.secondaryBackground, lineWidth: 2))
-                }
-
-                VStack(alignment: .leading, spacing: compact ? 2 : 4) {
-                    Text(position.asset.displayName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    HStack(spacing: 5) {
-                        Text(position.asset.metadataLabel)
-                        if !compact {
-                            Text("·")
-                            Text(position.currentPrice.map { SiloxFormatters.money($0.amount, currency: $0.currency) } ?? "Sin precio")
-                        }
-                    }
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    if !compact {
-                        Text("\(SiloxFormatters.quantity(position.quantity, precision: quantityPrecision)) uds.")
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-
-                Spacer(minLength: 6)
-
-                VStack(alignment: .trailing, spacing: compact ? 2 : 4) {
-                    Text(hideBalances ? "••••" : SiloxFormatters.money(position.currentValue.amount, currency: position.currentValue.currency))
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .monospacedDigit()
-                    HStack(spacing: 5) {
-                        if showDailyAmount, let daily = position.dailyChange {
-                            Text(hideBalances ? "••" : SiloxFormatters.signedMoney(daily.amount, currency: daily.currency))
-                        }
-                        if let percent = position.dailyChangePercent {
-                            Text(SiloxFormatters.percentage(percent))
-                        }
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(dailyColor)
-                    .monospacedDigit()
-                    if position.isPriceStale, !compact {
-                        Text("Precio retrasado")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(SiloxColors.warning)
-                    }
-                }
-
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+            Group {
+                if dynamicTypeSize.isAccessibilitySize { accessibleLayout }
+                else { regularLayout }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, compact ? 10 : 13)
@@ -442,6 +387,84 @@ private struct PositionRow: View {
         }
         .accessibilityElement(children: .combine)
     }
+
+    private var regularLayout: some View {
+        HStack(spacing: 12) {
+            assetMark
+            assetIdentity
+            Spacer(minLength: 6)
+            positionValue(alignment: .trailing)
+            Image(systemName: "chevron.right")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private var accessibleLayout: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                assetMark
+                assetIdentity
+            }
+            positionValue(alignment: .leading)
+        }
+    }
+
+    private var assetMark: some View {
+        ZStack(alignment: .bottomTrailing) {
+            SiloxAssetMark(asset: position.asset, size: compact ? 38 : 44)
+            Circle()
+                .fill(position.isPriceStale ? SiloxColors.warning : SiloxColors.positive)
+                .frame(width: 8, height: 8)
+                .overlay(Circle().stroke(SiloxColors.secondaryBackground, lineWidth: 2))
+        }
+    }
+
+    private var assetIdentity: some View {
+        VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+            Text(position.asset.displayName)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            Text(position.asset.metadataLabel)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            if !compact {
+                Text("\(SiloxFormatters.quantity(position.quantity, precision: quantityPrecision)) uds.")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    private func positionValue(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: compact ? 2 : 4) {
+            Text(hideBalances ? "••••" : SiloxFormatters.money(position.currentValue.amount, currency: position.currentValue.currency))
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 5) { dailyValue }
+                VStack(alignment: alignment, spacing: 2) { dailyValue }
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(dailyColor)
+            .monospacedDigit()
+            if position.isPriceStale, !compact {
+                Text("Precio retrasado")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(SiloxColors.warning)
+            }
+        }
+    }
+
+    @ViewBuilder private var dailyValue: some View {
+        if showDailyAmount, let daily = position.dailyChange {
+            Text(hideBalances ? "••" : SiloxFormatters.signedMoney(daily.amount, currency: daily.currency))
+        }
+        if let percent = position.dailyChangePercent {
+            Text(SiloxFormatters.percentage(percent))
+        }
+    }
 }
 
 private struct PositionDetailView: View {
@@ -451,6 +474,7 @@ private struct PositionDetailView: View {
     @AppStorage("quantityPrecision") private var quantityPrecision = 4
     @AppStorage("liveRefreshSeconds") private var liveRefreshSeconds = 5
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let repository: PortfolioRepository
     let onAdd: () -> Void
 
@@ -464,7 +488,7 @@ private struct PositionDetailView: View {
         ScrollView {
             LazyVStack(spacing: 14) {
                 detailHeader
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                LazyVGrid(columns: detailColumns, spacing: 10) {
                     DetailMetric(
                         title: "Valor actual",
                         value: hiddenMoney(position.currentValue),
@@ -521,6 +545,10 @@ private struct PositionDetailView: View {
                 await refresh()
             }
         }
+    }
+
+    private var detailColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 1 : 2)
     }
 
     private var purchaseLotsCard: some View {

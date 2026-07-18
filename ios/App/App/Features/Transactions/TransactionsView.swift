@@ -4,42 +4,78 @@ import SwiftUI
 final class TransactionsViewModel: ObservableObject {
     @Published private(set) var state: LoadState<TransactionPage> = .idle
     @Published var query = ""
+    @Published private(set) var isLoadingMore = false
     private let repository: TransactionRepository
+    private var activeQuery = TransactionQuery()
+    private var hasLoaded = false
 
     init(repository: TransactionRepository) { self.repository = repository }
 
-    var filtered: [InvestmentTransaction] {
-        let items: [InvestmentTransaction]
+    var items: [InvestmentTransaction] {
         switch state {
-        case .loaded(let page, _): items = page.items
-        case .failed(_, let page, _): items = page?.items ?? []
-        default: items = []
-        }
-        guard !query.isEmpty else { return items }
-        return items.filter { transaction in
-            transaction.kind.title.localizedCaseInsensitiveContains(query)
-                || (transaction.asset?.name.localizedCaseInsensitiveContains(query) ?? false)
-                || (transaction.asset?.ticker?.localizedCaseInsensitiveContains(query) ?? false)
+        case .loaded(let page, _): page.items
+        case .failed(_, let page, _): page?.items ?? []
+        default: []
         }
     }
 
-    func load() async {
-        if let cached = await repository.cached() { state = .loaded(cached.value, cachedAt: cached.savedAt) }
-        else { state = .loading }
-        await refresh()
+    var hasNextPage: Bool {
+        switch state {
+        case .loaded(let page, _): page.nextCursor != nil
+        case .failed(_, let page, _): page?.nextCursor != nil
+        default: false
+        }
     }
 
-    func refresh() async {
-        do { state = .loaded(try await repository.listAll(), cachedAt: nil) }
+    func load(query: TransactionQuery) async {
+        if !hasLoaded {
+            hasLoaded = true
+            if query == TransactionQuery(), let cached = await repository.cached() {
+                state = .loaded(cached.value, cachedAt: cached.savedAt)
+            } else {
+                state = .loading
+            }
+        }
+        await refresh(query: query)
+    }
+
+    func refresh(query: TransactionQuery? = nil) async {
+        if let query { activeQuery = query }
+        var firstPage = activeQuery
+        firstPage.cursor = nil
+        do { state = .loaded(try await repository.list(query: firstPage), cachedAt: nil) }
         catch {
-            let cached = await repository.cached()
-            state = .failed(error.localizedDescription, cached: cached?.value, cachedAt: cached?.savedAt)
+            let fallback = items.isEmpty ? await repository.cached() : nil
+            state = .failed(error.localizedDescription, cached: items.isEmpty ? fallback?.value : currentPage, cachedAt: fallback?.savedAt)
+        }
+    }
+
+    func loadMore() async {
+        guard !isLoadingMore, hasNextPage, let cursor = currentPage?.nextCursor else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+        var nextQuery = activeQuery
+        nextQuery.cursor = cursor
+        do {
+            let next = try await repository.list(query: nextQuery)
+            let merged = TransactionPage(items: items + next.items, nextCursor: next.nextCursor)
+            state = .loaded(merged, cachedAt: nil)
+        } catch {
+            state = .failed(error.localizedDescription, cached: currentPage, cachedAt: nil)
         }
     }
 
     func delete(_ transaction: InvestmentTransaction) async {
         do { try await repository.delete(id: transaction.id); await refresh() }
         catch { state = .failed(error.localizedDescription, cached: nil, cachedAt: nil) }
+    }
+
+    private var currentPage: TransactionPage? {
+        switch state {
+        case .loaded(let page, _): page
+        case .failed(_, let page, _): page
+        default: nil
+        }
     }
 }
 
@@ -63,6 +99,7 @@ struct TransactionsView: View {
     @State private var referenceDate = Date()
     @State private var customStart = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now
     @State private var customEnd = Date()
+    @State private var operation: InvestmentTransaction.Kind?
     let onAdd: () -> Void
     init(repository: TransactionRepository, onAdd: @escaping () -> Void = {}) {
         _model = StateObject(wrappedValue: TransactionsViewModel(repository: repository))
@@ -85,6 +122,12 @@ struct TransactionsView: View {
                         Picker("Periodo", selection: $period) {
                             ForEach(TransactionPeriod.allCases) { Text($0.title).tag($0) }
                         }
+                        Picker("Operación", selection: $operation) {
+                            Text("Todas").tag(nil as InvestmentTransaction.Kind?)
+                            ForEach(filterableKinds, id: \.self) { kind in
+                                Text(kind.title).tag(kind as InvestmentTransaction.Kind?)
+                            }
+                        }
                     } label: {
                         Label(period.title, systemImage: "line.3.horizontal.decrease.circle")
                     }
@@ -95,7 +138,14 @@ struct TransactionsView: View {
                 }
             }
             .searchable(text: $model.query, prompt: "Buscar movimiento")
-            .task { await model.load() }
+            .task(id: requestSignature) {
+                if !model.query.isEmpty {
+                    do { try await Task.sleep(for: .milliseconds(300)) }
+                    catch { return }
+                }
+                guard !Task.isCancelled else { return }
+                await model.load(query: requestQuery)
+            }
             .onReceive(NotificationCenter.default.publisher(for: .siloxPortfolioChanged)) { _ in
                 Task { await model.refresh() }
             }
@@ -123,8 +173,12 @@ struct TransactionsView: View {
         List {
             if case .loaded(_, let cachedAt) = model.state, let cachedAt { StaleBanner(date: cachedAt).listRowInsets(EdgeInsets()) }
             filterControls
-            if visibleTransactions.isEmpty {
-                ContentUnavailableView.search(text: model.query)
+            if model.items.isEmpty {
+                if model.query.isEmpty {
+                    ContentUnavailableView("Sin movimientos", systemImage: "arrow.left.arrow.right", description: Text("No hay movimientos para estos filtros."))
+                } else {
+                    ContentUnavailableView.search(text: model.query)
+                }
             } else {
                 ForEach(groupedTransactions, id: \.month) { group in
                     Section(group.month.formatted(.dateTime.month(.wide).year())) {
@@ -135,6 +189,14 @@ struct TransactionsView: View {
                                 }
                         }
                     }
+                }
+                if model.hasNextPage {
+                    HStack {
+                        Spacer()
+                        ProgressView().controlSize(.small)
+                        Spacer()
+                    }
+                    .onAppear { Task { await model.loadMore() } }
                 }
             }
         }
@@ -154,36 +216,54 @@ struct TransactionsView: View {
                     DatePicker("Desde", selection: $customStart, in: ...customEnd, displayedComponents: .date)
                     DatePicker("Hasta", selection: $customEnd, in: customStart..., displayedComponents: .date)
                 }
-                LabeledContent("Resultados", value: String(visibleTransactions.count))
-            }
-        }
-    }
-
-    private var visibleTransactions: [InvestmentTransaction] {
-        let calendar = Calendar.current
-        return model.filtered.filter { transaction in
-            switch period {
-            case .all: true
-            case .month: calendar.isDate(transaction.occurredAt, equalTo: referenceDate, toGranularity: .month)
-            case .year: calendar.component(.year, from: transaction.occurredAt) == calendar.component(.year, from: referenceDate)
-            case .custom:
-                transaction.occurredAt >= calendar.startOfDay(for: customStart)
-                    && transaction.occurredAt < (calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: customEnd)) ?? customEnd)
+                LabeledContent("Resultados cargados", value: String(model.items.count))
             }
         }
     }
 
     private var groupedTransactions: [(month: Date, items: [InvestmentTransaction])] {
         let calendar = Calendar.current
-        let groups = Dictionary(grouping: visibleTransactions) { transaction in
+        let groups = Dictionary(grouping: model.items) { transaction in
             calendar.date(from: calendar.dateComponents([.year, .month], from: transaction.occurredAt)) ?? transaction.occurredAt
         }
         return groups.map { (month: $0.key, items: $0.value) }.sorted { $0.month > $1.month }
     }
 
     private var availableYears: [Int] {
-        let years = Set(model.filtered.map { Calendar.current.component(.year, from: $0.occurredAt) })
-        return years.sorted(by: >).isEmpty ? [Calendar.current.component(.year, from: .now)] : years.sorted(by: >)
+        let current = Calendar.current.component(.year, from: .now)
+        return Array((current - 15)...current).reversed()
+    }
+
+    private var filterableKinds: [InvestmentTransaction.Kind] {
+        [.buy, .sell, .dividend, .withdrawal]
+    }
+
+    private var requestQuery: TransactionQuery {
+        let calendar = Calendar.current
+        var query = TransactionQuery(search: model.query, kind: operation)
+        switch period {
+        case .all: break
+        case .month:
+            query.from = calendar.date(from: calendar.dateComponents([.year, .month], from: referenceDate))
+            query.to = query.from.flatMap { calendar.date(byAdding: DateComponents(month: 1, day: -1), to: $0) }
+        case .year:
+            query.year = calendar.component(.year, from: referenceDate)
+        case .custom:
+            query.from = calendar.startOfDay(for: customStart)
+            query.to = calendar.startOfDay(for: customEnd)
+        }
+        return query
+    }
+
+    private var requestSignature: String {
+        [
+            model.query,
+            period.rawValue,
+            String(referenceDate.timeIntervalSince1970),
+            String(customStart.timeIntervalSince1970),
+            String(customEnd.timeIntervalSince1970),
+            operation?.rawValue ?? "all",
+        ].joined(separator: "|")
     }
 
     private var yearBinding: Binding<Int> {

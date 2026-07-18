@@ -40,12 +40,12 @@ final class ModelDecodingTests: XCTestCase {
           "assets":[{"id":"asts-id","ticker":"ASTS","name":"AST SpaceMobile","type":"Acción","currency":"USD"}],
           "events":[{
             "id":"launch-1","assetId":"asts-id","ticker":"ASTS",
-            "date":"2026-08-01T12:00:00.000Z","endDate":"2026-08-15T12:00:00.000Z",
+            "date":"2026-08-01T12:00:00Z","endDate":"2026-08-15T12:00:00Z",
             "datePrecision":"range","type":"CATALYST","title":"Lanzamiento o misión relevante",
             "description":"BlueBird launch in the first half of August","certainty":"scheduled","impact":"high",
-            "sourceName":"Business Wire","sourceUrl":"https://example.com/asts","sourcePublishedAt":"2026-06-25T10:00:00.000Z"
+            "sourceName":"Business Wire","sourceUrl":"https://example.com/asts","sourcePublishedAt":"2026-06-25T10:00:00Z"
           }],
-          "news":[],"updatedAt":"2026-07-18T12:00:00.000Z"
+          "news":[],"updatedAt":"2026-07-18T12:00:00Z"
         }
         """#.utf8)
         let decoder = JSONDecoder()
@@ -57,5 +57,74 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(radar.events.first?.impact, "high")
         XCTAssertEqual(radar.events.first?.endsAt?.ISO8601Format(), "2026-08-15T12:00:00Z")
         XCTAssertEqual(radar.events.first?.sourceURL?.host, "example.com")
+    }
+
+    func testTransactionDecimalsDecodeCurrentStringsAndLegacyNumbers() throws {
+        let data = Data(#"{"items":[{"id":"tx","assetId":"asset","operation":"Compra","quantity":0.00000001,"unitPrice":"12345.67890123456789","amount":"0.0001234567890123456789","netAmount":0.00012,"commission":0.01,"sourceWithholding":"0","destinationWithholding":0,"status":"Completada","date":"2026-07-18","notes":null,"asset":{"ticker":"BTC","name":"Bitcoin","type":"Criptomoneda","currency":"EUR"},"version":3}],"limit":50,"nextCursor":"opaque-cursor"}"#.utf8)
+        let page = try JSONDecoder().decode(TransactionPageWire.self, from: data).domain()
+
+        XCTAssertEqual(page.nextCursor, "opaque-cursor")
+        XCTAssertEqual(page.items.first?.quantity, "0.00000001")
+        XCTAssertEqual(page.items.first?.amount.amount, "0.0001234567890123456789")
+        XCTAssertEqual(page.items.first?.netAmount?.amount, "0.00012")
+        XCTAssertEqual(page.items.first?.commission?.amount, "0.01")
+        XCTAssertEqual(page.items.first?.version, 3)
+    }
+
+    func testTransactionQueryUsesCursorContractAndFilters() {
+        let query = TransactionQuery(
+            cursor: "opaque",
+            limit: 25,
+            search: "Apple",
+            year: 2026,
+            kind: .dividend,
+            assetId: "asset-id"
+        )
+        let values = Dictionary(uniqueKeysWithValues: query.queryItems.compactMap { item in
+            item.value.map { (item.name, $0) }
+        })
+
+        XCTAssertEqual(values["cursor"], "opaque")
+        XCTAssertEqual(values["limit"], "25")
+        XCTAssertEqual(values["query"], "Apple")
+        XCTAssertEqual(values["year"], "2026")
+        XCTAssertEqual(values["operation"], "Dividendo")
+        XCTAssertNil(values["page"])
+        XCTAssertNil(values["pageSize"])
+    }
+
+    func testTransactionAndAlertWritesEncodeDecimalsAsStrings() throws {
+        let transaction = CreateTransactionWire(
+            assetId: "asset",
+            operation: "Compra",
+            quantity: "0.00000001",
+            unitPrice: "12345.67890123456789",
+            commission: "0.000000001",
+            sourceWithholding: "0",
+            destinationWithholding: "0",
+            updateCash: true,
+            status: "Completada",
+            date: "2026-07-18",
+            notes: nil
+        )
+        let transactionJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(transaction)) as? [String: Any])
+        XCTAssertEqual(transactionJSON["quantity"] as? String, "0.00000001")
+        XCTAssertEqual(transactionJSON["unitPrice"] as? String, "12345.67890123456789")
+        XCTAssertEqual(transactionJSON["updateCash"] as? Bool, true)
+        XCTAssertNil(transactionJSON["cashImpact"])
+
+        let alert = CreatePriceAlertWire(ticker: "BTC", targetPrice: "98765.43210987654321", condition: "above")
+        let alertJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(alert)) as? [String: Any])
+        XCTAssertEqual(alertJSON["targetPrice"] as? String, "98765.43210987654321")
+    }
+
+    func testPriceAlertDecodesLegacyNumericTarget() throws {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let wire = try decoder.decode(
+            PriceAlertWire.self,
+            from: Data(#"{"id":"alert","ticker":"BTC","targetPrice":95000.25,"condition":"above","triggered":false,"createdAt":"2026-07-18T12:00:00Z"}"#.utf8)
+        )
+        XCTAssertEqual(wire.domain().targetPrice, "95000.25")
     }
 }

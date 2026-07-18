@@ -26,6 +26,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.angelcriber.silox</string>
+				<string>silox</string>
 			</array>
 		</dict>
 	</array>

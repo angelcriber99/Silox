@@ -4,24 +4,41 @@ extension Notification.Name {
     static let siloxPortfolioChanged = Notification.Name("silox.portfolio.changed")
 }
 
-final class PortfolioRepository: @unchecked Sendable {
+actor PortfolioRepository {
     private let api: APIClient
     private let cache: ReadCache
     private let cacheKey = "portfolio-v1"
+    private var refreshTask: (id: UUID, task: Task<PortfolioResponse, Error>)?
 
     init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
 
     func cached() async -> ReadCache.Cached<PortfolioResponse>? { await cache.load(PortfolioResponse.self, key: cacheKey) }
 
     func refresh() async throws -> PortfolioResponse {
-        let wire: PortfolioWire = try await api.get("api/mobile/v1/portfolio")
-        let response = wire.domain()
-        await cache.save(response, key: cacheKey)
-        return response
+        if let refreshTask { return try await refreshTask.task.value }
+
+        let id = UUID()
+        let task = Task { [api, cache, cacheKey] in
+            let wire: PortfolioWire = try await api.get("api/mobile/v1/portfolio")
+            try Task.checkCancellation()
+            let response = wire.domain()
+            await cache.save(response, key: cacheKey)
+            return response
+        }
+        refreshTask = (id, task)
+
+        do {
+            let response = try await task.value
+            if refreshTask?.id == id { refreshTask = nil }
+            return response
+        } catch {
+            if refreshTask?.id == id { refreshTask = nil }
+            throw error
+        }
     }
 }
 
-final class RadarRepository: @unchecked Sendable {
+final class RadarRepository: Sendable {
     private let api: APIClient
     private let cache: ReadCache
     private let cacheKey = "radar-v2"
@@ -36,30 +53,32 @@ final class RadarRepository: @unchecked Sendable {
     }
 }
 
-final class TransactionRepository: @unchecked Sendable {
+final class TransactionRepository: Sendable {
     private let api: APIClient
     private let cache: ReadCache
     private let cacheKey = "transactions-v1"
 
     init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
     func cached() async -> ReadCache.Cached<TransactionPage>? { await cache.load(TransactionPage.self, key: cacheKey) }
-    func list(cursor: String? = nil) async throws -> TransactionPage {
-        let page = cursor.flatMap(Int.init) ?? 1
-        let query = [URLQueryItem(name: "page", value: String(page)), URLQueryItem(name: "pageSize", value: "100")]
-        let wire: TransactionPageWire = try await api.get("api/mobile/v1/transactions", query: query)
+    func list(query: TransactionQuery = TransactionQuery()) async throws -> TransactionPage {
+        let wire: TransactionPageWire = try await api.get("api/mobile/v1/transactions", query: query.queryItems)
         let response = wire.domain()
-        if cursor == nil { await cache.save(response, key: cacheKey) }
+        if query == TransactionQuery() { await cache.save(response, key: cacheKey) }
         return response
+    }
+
+    func list(cursor: String? = nil) async throws -> TransactionPage {
+        try await list(query: TransactionQuery(cursor: cursor))
     }
 
     func listAll() async throws -> TransactionPage {
         var items: [InvestmentTransaction] = []
-        var cursor: String? = nil
+        var query = TransactionQuery()
         repeat {
-            let page = try await list(cursor: cursor)
+            let page = try await list(query: query)
             items.append(contentsOf: page.items)
-            cursor = page.nextCursor
-        } while cursor != nil && items.count < 10_000
+            query.cursor = page.nextCursor
+        } while query.cursor != nil && items.count < 10_000
 
         let response = TransactionPage(items: items, nextCursor: nil)
         await cache.save(response, key: cacheKey)
@@ -67,11 +86,21 @@ final class TransactionRepository: @unchecked Sendable {
     }
     func create(_ request: CreateTransactionRequest) async throws -> InvestmentTransaction {
         guard let assetId = request.assetId, !assetId.isEmpty else { throw APIError.server(status: 400, code: "asset_required", message: "Selecciona un activo.") }
-        let quantity = NSDecimalNumber(decimal: request.quantity?.decimalValue ?? 1).doubleValue
-        let amount = NSDecimalNumber(decimal: request.amount.decimalValue).doubleValue
-        let commission = NSDecimalNumber(decimal: request.commission.decimalValue).doubleValue
-        let sourceWithholding = NSDecimalNumber(decimal: request.sourceWithholding.decimalValue).doubleValue
-        let destinationWithholding = NSDecimalNumber(decimal: request.destinationWithholding.decimalValue).doubleValue
+        let quantity = try canonicalDecimal(request.quantity ?? "1", field: "cantidad", allowsZero: request.kind == .dividend)
+        let amount = try canonicalDecimal(request.amount, field: "importe", allowsZero: false)
+        let commission = try canonicalDecimal(request.commission, field: "comisión")
+        let sourceWithholding = try canonicalDecimal(request.sourceWithholding, field: "retención de origen")
+        let destinationWithholding = try canonicalDecimal(request.destinationWithholding, field: "retención de destino")
+        let unitPrice: String
+        if request.kind == .dividend {
+            unitPrice = amount
+        } else {
+            guard let quantityValue = quantity.normalizedDecimal, quantityValue > 0,
+                  let amountValue = amount.normalizedDecimal else {
+                throw APIError.server(status: 400, code: "invalid_quantity", message: "La cantidad debe ser mayor que cero.")
+            }
+            unitPrice = NSDecimalNumber(decimal: amountValue / quantityValue).stringValue
+        }
         let operation: String
         switch request.kind {
         case .buy: operation = "Compra"
@@ -84,47 +113,29 @@ final class TransactionRepository: @unchecked Sendable {
         formatter.calendar = Calendar(identifier: .iso8601)
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
-        let cashImpact: CreateTransactionWire.CashImpact?
-        if request.updatesCash {
-            let cashAmount: Double
-            let cashOperation: String
-            switch request.kind {
-            case .buy:
-                cashAmount = amount + commission
-                cashOperation = "Venta"
-            case .sell:
-                cashAmount = amount - commission
-                cashOperation = "Compra"
-            case .dividend:
-                cashAmount = amount - commission - sourceWithholding - destinationWithholding
-                cashOperation = "Compra"
-            default:
-                cashAmount = 0
-                cashOperation = "Compra"
-            }
-            cashImpact = cashAmount > 0
-                ? CreateTransactionWire.CashImpact(operation: cashOperation, amount: cashAmount)
-                : nil
-        } else {
-            cashImpact = nil
-        }
-
         let wire = CreateTransactionWire(
             assetId: assetId,
             operation: operation,
             quantity: quantity,
-            unitPrice: quantity == 0 ? 0 : amount / quantity,
+            unitPrice: unitPrice,
             commission: commission,
             sourceWithholding: sourceWithholding,
             destinationWithholding: destinationWithholding,
+            updateCash: request.updatesCash,
             status: request.kind == .pending ? "Pendiente" : "Completada",
             date: formatter.string(from: request.occurredAt),
-            notes: request.notes,
-            cashImpact: cashImpact
+            notes: request.notes
         )
         let created: TransactionPageWire.Item = try await api.send("api/mobile/v1/transactions", method: .post, body: wire, idempotencyKey: request.idempotencyKey)
         await MainActor.run { NotificationCenter.default.post(name: .siloxPortfolioChanged, object: nil) }
         return TransactionPageWire(items: [created], page: 1, pageSize: 1, total: 1).domain().items[0]
+    }
+
+    private func canonicalDecimal(_ raw: String, field: String, allowsZero: Bool = true) throws -> String {
+        guard let value = raw.normalizedDecimal, value >= 0, allowsZero || value > 0 else {
+            throw APIError.server(status: 400, code: "invalid_decimal", message: "El campo \(field) no contiene un decimal válido.")
+        }
+        return NSDecimalNumber(decimal: value).stringValue
     }
     func delete(id: String) async throws {
         try await api.delete("api/mobile/v1/transactions/\(id)", idempotencyKey: UUID().uuidString)
@@ -132,7 +143,7 @@ final class TransactionRepository: @unchecked Sendable {
     }
 }
 
-final class AssetRepository: @unchecked Sendable {
+final class AssetRepository: Sendable {
     private let api: APIClient
     init(api: APIClient) { self.api = api }
 
@@ -157,7 +168,7 @@ final class AssetRepository: @unchecked Sendable {
     }
 }
 
-final class InsightsRepository: @unchecked Sendable {
+final class InsightsRepository: Sendable {
     private let api: APIClient
     init(api: APIClient) { self.api = api }
 
@@ -166,11 +177,60 @@ final class InsightsRepository: @unchecked Sendable {
     }
 
     func alerts() async throws -> [PriceAlert] {
-        try await api.get("api/mobile/v1/alerts")
+        let wire: [PriceAlertWire] = try await api.get("api/mobile/v1/alerts")
+        return wire.map { $0.domain() }
+    }
+
+    func createAlert(_ request: CreatePriceAlertRequest) async throws -> PriceAlert {
+        let wire: PriceAlertWire = try await api.send(
+            "api/mobile/v1/alerts",
+            method: .post,
+            body: CreatePriceAlertWire(
+                ticker: request.ticker.trimmingCharacters(in: .whitespacesAndNewlines).uppercased(),
+                targetPrice: try canonicalAlertPrice(request.targetPrice),
+                condition: try validatedAlertCondition(request.condition)
+            )
+        )
+        return wire.domain()
+    }
+
+    func updateAlert(id: String, request: UpdatePriceAlertRequest) async throws -> PriceAlert {
+        guard request.targetPrice != nil || request.condition != nil || request.triggered != nil else {
+            throw APIError.server(status: 400, code: "empty_alert_update", message: "No hay cambios para la alerta.")
+        }
+        let wire: PriceAlertWire = try await api.send(
+            "api/mobile/v1/alerts/\(id)",
+            method: .patch,
+            body: UpdatePriceAlertWire(
+                targetPrice: try request.targetPrice.map(canonicalAlertPrice),
+                condition: try request.condition.map(validatedAlertCondition),
+                triggered: request.triggered
+            )
+        )
+        return wire.domain()
+    }
+
+    func deleteAlert(id: String) async throws {
+        try await api.delete("api/mobile/v1/alerts/\(id)", idempotencyKey: UUID().uuidString)
+    }
+
+    private func canonicalAlertPrice(_ raw: String) throws -> String {
+        guard let value = raw.normalizedDecimal, value > 0 else {
+            throw APIError.server(status: 400, code: "invalid_alert_price", message: "El precio objetivo no contiene un decimal válido.")
+        }
+        return NSDecimalNumber(decimal: value).stringValue
+    }
+
+    private func validatedAlertCondition(_ raw: String) throws -> String {
+        let value = raw.lowercased()
+        guard value == "above" || value == "below" else {
+            throw APIError.server(status: 400, code: "invalid_alert_condition", message: "La condición de la alerta no es válida.")
+        }
+        return value
     }
 }
 
-final class SettingsRepository: @unchecked Sendable {
+final class SettingsRepository: Sendable {
     private let api: APIClient
     init(api: APIClient) { self.api = api }
 
@@ -181,4 +241,23 @@ final class SettingsRepository: @unchecked Sendable {
     func update(_ preferences: UpdateNotificationPreferences) async throws -> NotificationPreferences {
         try await api.send("api/mobile/v1/settings", method: .patch, body: preferences)
     }
+}
+
+final class RevolutImportRepository: Sendable {
+    private let api: APIClient
+
+    init(api: APIClient) { self.api = api }
+
+    func importStatement(fileData: Data, fileName: String, mimeType: String = "text/csv") async throws -> RevolutDirectImportResult {
+        let wire: RevolutDirectImportWire = try await api.upload(
+            "api/import/revolut",
+            fileData: fileData,
+            fileName: fileName,
+            mimeType: mimeType,
+            unwrapEnvelope: false
+        )
+        await MainActor.run { NotificationCenter.default.post(name: .siloxPortfolioChanged, object: nil) }
+        return wire.domain()
+    }
+
 }

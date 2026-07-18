@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct SiloxApp: App {
     @StateObject private var environment = AppEnvironment.live()
+    private let performanceMonitor = PerformanceMonitor()
 
     var body: some Scene {
         WindowGroup {
@@ -11,6 +12,7 @@ struct SiloxApp: App {
                 .environmentObject(environment.session)
                 .tint(SiloxColors.accent)
                 .task { await environment.session.restore() }
+                .onAppear { performanceMonitor.start() }
         }
     }
 }
@@ -25,6 +27,7 @@ final class AppEnvironment: ObservableObject {
     let assetRepository: AssetRepository
     let insightsRepository: InsightsRepository
     let settingsRepository: SettingsRepository
+    let revolutImportRepository: RevolutImportRepository
 
     init(api: APIClient, session: SessionStore, cache: ReadCache) {
         self.api = api
@@ -35,6 +38,7 @@ final class AppEnvironment: ObservableObject {
         assetRepository = AssetRepository(api: api)
         insightsRepository = InsightsRepository(api: api)
         settingsRepository = SettingsRepository(api: api)
+        revolutImportRepository = RevolutImportRepository(api: api)
     }
 
     static func live() -> AppEnvironment {

@@ -12,138 +12,115 @@ struct MoreView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 18) {
-                    settingsSection("Experiencia") {
-                        NavigationLink { MobilePreferencesView() } label: {
-                            SettingsDestinationLabel(
-                                title: "Apariencia y cartera",
-                                subtitle: "Tema, densidad, orden y tiempo real",
-                                icon: "slider.horizontal.3",
-                                tint: .blue
-                            )
-                        }
-                        Divider().padding(.leading, 54)
-                        NavigationLink { NotificationPreferencesView(repository: environment.settingsRepository) } label: {
-                            SettingsDestinationLabel(
-                                title: "Notificaciones",
-                                subtitle: "Precios, dividendos y resúmenes",
-                                icon: "bell.badge",
-                                tint: .orange
-                            )
-                        }
-                    }
-
-                    settingsSection("Análisis") {
-                        NavigationLink { PortfolioHistoryView(repository: environment.insightsRepository) } label: {
-                            SettingsDestinationLabel(
-                                title: "Rendimiento",
-                                subtitle: "Histórico de patrimonio y capital",
-                                icon: "chart.line.uptrend.xyaxis",
-                                tint: SiloxColors.positive
-                            )
-                        }
-                        Divider().padding(.leading, 54)
-                        NavigationLink { AlertsView(repository: environment.insightsRepository) } label: {
-                            SettingsDestinationLabel(
-                                title: "Alertas de precio",
-                                subtitle: "Objetivos y avisos configurados",
-                                icon: "bell",
-                                tint: .purple
-                            )
-                        }
-                    }
-
-                    settingsSection("Privacidad") {
-                        SettingsToggleRow(
-                            title: "Ocultar saldos",
-                            subtitle: "Protege los importes en todas las pantallas",
-                            icon: hideBalances ? "eye.slash" : "eye",
-                            tint: .indigo,
-                            isOn: $hideBalances
+            List {
+                Section("Experiencia") {
+                    NavigationLink { MobilePreferencesView() } label: {
+                        SettingsDestinationLabel(
+                            title: "Apariencia y cartera",
+                            subtitle: "Tema, densidad, orden y tiempo real",
+                            icon: "slider.horizontal.3",
+                            tint: .blue
                         )
-                        Divider().padding(.leading, 54)
-                        Button { Task { await toggleBiometrics() } } label: {
-                            SettingsActionLabel(
-                                title: useBiometrics ? "Desactivar Face ID" : "Activar Face ID",
-                                subtitle: useBiometrics ? "Protección biométrica activa" : "Solicitar Face ID al volver a Silox",
-                                icon: "faceid",
-                                tint: SiloxColors.accent
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        if let biometricMessage {
-                            Text(biometricMessage)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 14)
-                                .padding(.bottom, 12)
-                        }
                     }
-
-                    settingsSection("Widget") {
-                        HStack(spacing: 12) {
-                            SettingsIcon(symbol: "rectangle.3.group", tint: .cyan)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Widget de cartera").font(.subheadline.weight(.semibold))
-                                Text(widgetStatus).font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            if isUpdatingWidget {
-                                ProgressView()
-                            } else {
-                                Button("Renovar") { Task { await updateWidgetCredential() } }
-                                    .font(.caption.weight(.semibold))
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
-                            }
-                        }
-                        .padding(14)
+                    NavigationLink { NotificationPreferencesView(repository: environment.settingsRepository) } label: {
+                        SettingsDestinationLabel(
+                            title: "Notificaciones",
+                            subtitle: "Precios, dividendos y resúmenes",
+                            icon: "bell.badge",
+                            tint: .orange
+                        )
                     }
-
-                    settingsSection("Cuenta") {
-                        Button(role: .destructive) { Task { await signOut() } } label: {
-                            SettingsActionLabel(
-                                title: "Cerrar sesión",
-                                subtitle: "Elimina la sesión y los datos cacheados del dispositivo",
-                                icon: "rectangle.portrait.and.arrow.right",
-                                tint: SiloxColors.negative,
-                                showsChevron: false
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    Text(appVersion)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .padding(.top, 2)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+
+                Section("Análisis") {
+                    NavigationLink { PortfolioHistoryView(repository: environment.insightsRepository) } label: {
+                        SettingsDestinationLabel(
+                            title: "Rendimiento",
+                            subtitle: "Histórico de patrimonio y capital",
+                            icon: "chart.line.uptrend.xyaxis",
+                            tint: SiloxColors.positive
+                        )
+                    }
+                    NavigationLink { AlertsView(repository: environment.insightsRepository) } label: {
+                        SettingsDestinationLabel(
+                            title: "Alertas de precio",
+                            subtitle: "Objetivos y avisos configurados",
+                            icon: "bell",
+                            tint: .purple
+                        )
+                    }
+                }
+
+                Section("Datos") {
+                    NavigationLink { RevolutImportView(repository: environment.revolutImportRepository) } label: {
+                        SettingsDestinationLabel(
+                            title: "Importar extracto",
+                            subtitle: "Revolut o MyInvestor · CSV y Excel",
+                            icon: "square.and.arrow.down",
+                            tint: .teal
+                        )
+                    }
+                }
+
+                Section("Privacidad") {
+                    SettingsToggleRow(
+                        title: "Ocultar saldos",
+                        subtitle: "Protege los importes en todas las pantallas",
+                        icon: hideBalances ? "eye.slash" : "eye",
+                        tint: .indigo,
+                        isOn: $hideBalances
+                    )
+                    Button { Task { await toggleBiometrics() } } label: {
+                        SettingsActionLabel(
+                            title: useBiometrics ? "Desactivar Face ID" : "Activar Face ID",
+                            subtitle: useBiometrics ? "Protección biométrica activa" : "Solicitar Face ID al volver a Silox",
+                            icon: "faceid",
+                            tint: SiloxColors.accent
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    if let biometricMessage {
+                        Text(biometricMessage).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+                Section("Widget") {
+                    HStack(spacing: 12) {
+                        SettingsIcon(symbol: "rectangle.3.group", tint: .cyan)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Widget de cartera").font(.subheadline.weight(.semibold))
+                            Text(widgetStatus).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if isUpdatingWidget { ProgressView() }
+                        else {
+                            Button("Renovar") { Task { await updateWidgetCredential() } }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                        }
+                    }
+                }
+
+                Section("Cuenta") {
+                    Button(role: .destructive) { Task { await signOut() } } label: {
+                        SettingsActionLabel(
+                            title: "Cerrar sesión",
+                            subtitle: "Elimina la sesión y los datos cacheados del dispositivo",
+                            icon: "rectangle.portrait.and.arrow.right",
+                            tint: SiloxColors.negative,
+                            showsChevron: false
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Section { Text(appVersion).font(.caption2).foregroundStyle(.tertiary) }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
             .background(SiloxColors.background.ignoresSafeArea())
             .navigationTitle("Ajustes")
             .task { await refreshWidgetStatus() }
-        }
-    }
-
-    private func settingsSection<Content: View>(
-        _ title: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
-                .font(.system(size: 11, weight: .semibold))
-                .tracking(0.8)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
-            VStack(spacing: 0) { content() }
-                .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color.primary.opacity(0.07), lineWidth: 0.5)
-                }
         }
     }
 
@@ -238,9 +215,7 @@ private struct SettingsDestinationLabel: View {
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
-            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
         }
-        .padding(14)
         .contentShape(Rectangle())
     }
 }
@@ -264,7 +239,6 @@ private struct SettingsActionLabel: View {
                 Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
             }
         }
-        .padding(14)
         .contentShape(Rectangle())
     }
 }
@@ -286,7 +260,6 @@ private struct SettingsToggleRow: View {
             Spacer()
             Toggle("", isOn: $isOn).labelsHidden()
         }
-        .padding(14)
     }
 }
 

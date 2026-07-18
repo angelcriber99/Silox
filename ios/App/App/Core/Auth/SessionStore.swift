@@ -43,14 +43,24 @@ final class SessionStore: ObservableObject {
     @Published private(set) var errorMessage: String?
     private var session: AuthSession?
     private let secureStore: SecureStoring
+    private let urlSession: URLSession
+    private let authConfigurationProvider: (() throws -> (URL, String))?
     private let onSignOut: @Sendable () -> Void
     private var oauthWebSession: OAuthWebSession?
     private let sessionKey = "auth.session"
+    private var refreshTask: (id: UUID, task: Task<Bool, Never>)?
 
     var accessToken: String? { session?.accessToken }
 
-    init(secureStore: SecureStoring = SecureKeychainStore(), onSignOut: @escaping @Sendable () -> Void = {}) {
+    init(
+        secureStore: SecureStoring = SecureKeychainStore(),
+        urlSession: URLSession = .shared,
+        authConfigurationProvider: (() throws -> (URL, String))? = nil,
+        onSignOut: @escaping @Sendable () -> Void = {}
+    ) {
         self.secureStore = secureStore
+        self.urlSession = urlSession
+        self.authConfigurationProvider = authConfigurationProvider
         self.onSignOut = onSignOut
     }
 
@@ -88,7 +98,8 @@ final class SessionStore: ObservableObject {
             request.setValue(anonKey, forHTTPHeaderField: "apikey")
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(Credentials(email: email, password: password))
-            let (data, response) = try await URLSession.shared.data(for: request)
+            request.timeoutInterval = 30
+            let (data, response) = try await urlSession.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
             guard (200..<300).contains(http.statusCode) else {
                 throw APIError.server(status: http.statusCode, code: "sign_in_failed", message: "Correo o contraseña incorrectos.")
@@ -124,9 +135,9 @@ final class SessionStore: ObservableObject {
     /// Returns a token that remains valid for the next request, refreshing the
     /// Supabase session before expiry. APIClient calls this for every request so
     /// foreground sessions do not fail as soon as their first JWT expires.
-    func validAccessToken() async -> String? {
+    func validAccessToken(forceRefresh: Bool = false) async -> String? {
         guard let session else { return nil }
-        if session.expiresAt.map({ $0 > Date().addingTimeInterval(60) }) ?? true {
+        if !forceRefresh, session.expiresAt.map({ $0 > Date().addingTimeInterval(60) }) ?? true {
             return session.accessToken
         }
         return await refreshSession() ? self.session?.accessToken : nil
@@ -134,6 +145,18 @@ final class SessionStore: ObservableObject {
 
     @discardableResult
     private func refreshSession() async -> Bool {
+        if let refreshTask { return await refreshTask.task.value }
+        let id = UUID()
+        let task = Task { @MainActor [weak self] in
+            await self?.performSessionRefresh() ?? false
+        }
+        refreshTask = (id, task)
+        let result = await task.value
+        if refreshTask?.id == id { refreshTask = nil }
+        return result
+    }
+
+    private func performSessionRefresh() async -> Bool {
         guard let refreshToken = session?.refreshToken, !refreshToken.isEmpty else {
             signOut()
             return false
@@ -152,7 +175,8 @@ final class SessionStore: ObservableObject {
             request.setValue(anonKey, forHTTPHeaderField: "apikey")
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(RefreshBody(refreshToken: refreshToken))
-            let (data, response) = try await URLSession.shared.data(for: request)
+            request.timeoutInterval = 30
+            let (data, response) = try await urlSession.data(for: request)
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
                 throw APIError.unauthorized
             }
@@ -167,6 +191,7 @@ final class SessionStore: ObservableObject {
     }
 
     private func authConfiguration() throws -> (URL, String) {
+        if let authConfigurationProvider { return try authConfigurationProvider() }
         guard let rawURL = Bundle.main.object(forInfoDictionaryKey: "SILOX_SUPABASE_URL") as? String,
               let baseURL = URL(string: rawURL),
               let anonKey = Bundle.main.object(forInfoDictionaryKey: "SILOX_SUPABASE_ANON_KEY") as? String,
@@ -198,7 +223,8 @@ final class SessionStore: ObservableObject {
             request.setValue(anonKey, forHTTPHeaderField: "apikey")
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(ExchangeBody(authCode: code, codeVerifier: verifier))
-            let (data, response) = try await URLSession.shared.data(for: request)
+            request.timeoutInterval = 30
+            let (data, response) = try await urlSession.data(for: request)
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
                 throw APIError.server(status: (response as? HTTPURLResponse)?.statusCode ?? 0, code: "oauth_exchange_failed", message: "No se pudo completar el acceso con Google.")
             }
@@ -215,7 +241,8 @@ final class SessionStore: ObservableObject {
         var userRequest = URLRequest(url: baseURL.appending(path: "auth/v1/user"))
         userRequest.setValue(anonKey, forHTTPHeaderField: "apikey")
         userRequest.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        let (userData, userResponse) = try await URLSession.shared.data(for: userRequest)
+            userRequest.timeoutInterval = 30
+            let (userData, userResponse) = try await urlSession.data(for: userRequest)
         guard let http = userResponse as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw APIError.unauthorized }
         let user = try JSONDecoder().decode(SupabaseUserPayload.self, from: userData)
         try accept(AuthSession(
@@ -280,8 +307,11 @@ final class SessionStore: ObservableObject {
     }
 
     func signOut() {
+        refreshTask?.task.cancel()
+        refreshTask = nil
         if let accessToken = session?.accessToken,
            let (baseURL, anonKey) = try? authConfiguration() {
+            let urlSession = self.urlSession
             Task.detached {
                 var components = URLComponents(url: baseURL.appending(path: "auth/v1/logout"), resolvingAgainstBaseURL: false)
                 components?.queryItems = [URLQueryItem(name: "scope", value: "local")]
@@ -290,7 +320,8 @@ final class SessionStore: ObservableObject {
                 request.httpMethod = "POST"
                 request.setValue(anonKey, forHTTPHeaderField: "apikey")
                 request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-                _ = try? await URLSession.shared.data(for: request)
+                request.timeoutInterval = 15
+                _ = try? await urlSession.data(for: request)
             }
         }
         try? secureStore.remove(sessionKey)

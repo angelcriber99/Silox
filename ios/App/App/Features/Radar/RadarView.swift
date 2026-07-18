@@ -24,6 +24,7 @@ final class RadarViewModel: ObservableObject {
 
 struct RadarView: View {
     @StateObject private var model: RadarViewModel
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var displayedMonth = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: .now)) ?? .now
     @State private var selectedDate = Calendar.current.startOfDay(for: .now)
 
@@ -106,14 +107,21 @@ struct RadarView: View {
                     Image(systemName: "dot.radiowaves.left.and.right")
                         .foregroundStyle(SiloxColors.accent)
                 }
-                HStack(spacing: 0) {
-                    overviewMetric("Posiciones", value: radar.assets?.count ?? 0)
-                    Divider().padding(.horizontal, 12)
-                    overviewMetric("Alto impacto", value: highImpact)
-                    Divider().padding(.horizontal, 12)
-                    overviewMetric("Por confirmar", value: uncertain)
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 10) {
+                        overviewMetric("Posiciones", value: radar.assets?.count ?? 0)
+                        overviewMetric("Alto impacto", value: highImpact)
+                        overviewMetric("Por confirmar", value: uncertain)
+                    }
+                } else {
+                    HStack(spacing: 0) {
+                        overviewMetric("Posiciones", value: radar.assets?.count ?? 0)
+                        Divider().padding(.horizontal, 12)
+                        overviewMetric("Alto impacto", value: highImpact)
+                        Divider().padding(.horizontal, 12)
+                        overviewMetric("Por confirmar", value: uncertain)
+                    }
                 }
-                .frame(height: 38)
             }
         }
     }
@@ -168,13 +176,17 @@ struct RadarView: View {
                 }
                 .buttonStyle(.plain)
 
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 8) {
-                    ForEach(weekdaySymbols, id: \.self) { symbol in
-                        Text(symbol).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
-                    }
-                    ForEach(Array(monthDays.enumerated()), id: \.offset) { _, date in
-                        if let date { dayCell(date, events: events) }
-                        else { Color.clear.frame(height: 38) }
+                if dynamicTypeSize.isAccessibilitySize {
+                    accessibilityCalendar(events)
+                } else {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 8) {
+                        ForEach(weekdaySymbols, id: \.self) { symbol in
+                            Text(symbol).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                        }
+                        ForEach(Array(monthDays.enumerated()), id: \.offset) { _, date in
+                            if let date { dayCell(date, events: events) }
+                            else { Color.clear.frame(height: 38) }
+                        }
                     }
                 }
 
@@ -183,6 +195,30 @@ struct RadarView: View {
                     legend("Estimado", color: SiloxColors.warning)
                     legend("Especulativo", color: .orange)
                     Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    private func accessibilityCalendar(_ events: [MarketEvent]) -> some View {
+        let monthEvents = events.filter { Calendar.current.isDate($0.startsAt, equalTo: displayedMonth, toGranularity: .month) }
+        return VStack(alignment: .leading, spacing: 8) {
+            if monthEvents.isEmpty {
+                Text("No hay eventos este mes").foregroundStyle(.secondary)
+            } else {
+                ForEach(monthEvents) { event in
+                    Button {
+                        selectedDate = Calendar.current.startOfDay(for: event.startsAt)
+                    } label: {
+                        HStack(alignment: .top) {
+                            Text(event.startsAt.formatted(.dateTime.day().month(.abbreviated)))
+                                .font(.headline)
+                            Text(event.title)
+                                .multilineTextAlignment(.leading)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -214,14 +250,39 @@ struct RadarView: View {
 
     private func eventCard(_ event: MarketEvent, asset: Asset?) -> some View {
         let certainty = certaintyLabel(event)
-        return HStack(alignment: .top, spacing: 12) {
-            if let asset { SiloxAssetMark(asset: asset, size: 44) }
-            else {
-                Image(systemName: eventIcon(event))
-                    .foregroundStyle(eventColor(event))
-                    .frame(width: 44, height: 44)
-                    .background(eventColor(event).opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 12) {
+                eventMark(event, asset: asset)
+                eventDescription(event, certainty: certainty)
             }
+            VStack(alignment: .leading, spacing: 12) {
+                eventMark(event, asset: asset)
+                eventDescription(event, certainty: certainty)
+            }
+        }
+        .padding(14)
+        .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(
+                    eventColor(event).opacity(event.certainty == "speculative" ? 0.45 : 0.12),
+                    style: StrokeStyle(lineWidth: 0.8, dash: event.certainty == "speculative" ? [5, 4] : [])
+                )
+        }
+    }
+
+    @ViewBuilder private func eventMark(_ event: MarketEvent, asset: Asset?) -> some View {
+        if let asset { SiloxAssetMark(asset: asset, size: 44) }
+        else {
+            Image(systemName: eventIcon(event))
+                .foregroundStyle(eventColor(event))
+                .frame(width: 44, height: 44)
+                .background(eventColor(event).opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private func eventDescription(_ event: MarketEvent, certainty: String) -> some View {
+        HStack(alignment: .top, spacing: 0) {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 6) {
                     if let ticker = event.ticker {
@@ -252,15 +313,6 @@ struct RadarView: View {
                 }
             }
             Spacer(minLength: 0)
-        }
-        .padding(14)
-        .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(
-                    eventColor(event).opacity(event.certainty == "speculative" ? 0.45 : 0.12),
-                    style: StrokeStyle(lineWidth: 0.8, dash: event.certainty == "speculative" ? [5, 4] : [])
-                )
         }
     }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AddTransactionView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let repository: TransactionRepository
     let assetRepository: AssetRepository
     @State private var kind: InvestmentTransaction.Kind = .buy
@@ -15,10 +16,10 @@ struct AddTransactionView: View {
     @State private var destinationWithholding = "0"
     @State private var date = Date()
     @State private var notes = ""
+    @State private var updatesCash = true
     @State private var isSaving = false
     @State private var errorMessage: String?
-    @State private var showsNewAsset = false
-    @State private var showsAssetPicker = false
+    @State private var presentedSheet: PresentedSheet?
     @State private var idempotencyKey = UUID().uuidString
 
     init(repository: TransactionRepository, assetRepository: AssetRepository, preselectedAssetId: String? = nil) {
@@ -55,7 +56,7 @@ struct AddTransactionView: View {
                             description: Text("Crea el primer activo antes de guardar el movimiento.")
                         )
                     } else {
-                        Button { showsAssetPicker = true } label: {
+                        Button { presentedSheet = .assetPicker } label: {
                             HStack(spacing: 12) {
                                 if let selectedAsset {
                                     SiloxAssetMark(asset: selectedAsset, size: 38)
@@ -73,7 +74,7 @@ struct AddTransactionView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    Button { showsNewAsset = true } label: { Label("Crear activo", systemImage: "plus") }
+                    Button { presentedSheet = .newAsset } label: { Label("Crear activo", systemImage: "plus") }
                 }
 
                 Section(isTrade ? "Ejecución" : "Importe") {
@@ -111,6 +112,18 @@ struct AddTransactionView: View {
                                 .monospacedDigit()
                         }
                     }
+
+                    if isTrade {
+                        Toggle("Actualizar saldo de efectivo", isOn: $updatesCash)
+                        Label(
+                            updatesCash
+                                ? "La operación actualizará automáticamente la cuenta de efectivo en \(selectedAsset?.currency ?? "la moneda del activo")."
+                                : "Úsalo cuando el saldo ya se haya registrado mediante una importación u otra cuenta.",
+                            systemImage: updatesCash ? "banknote.fill" : "banknote"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
                 }
 
                 Section("Detalles") {
@@ -135,22 +148,28 @@ struct AddTransactionView: View {
             }
             .interactiveDismissDisabled(isSaving)
             .task { await loadAssets() }
-            .sheet(isPresented: $showsNewAsset) {
-                NewAssetView(repository: assetRepository) { asset in
-                    assets.insert(asset, at: 0)
-                    assetId = asset.id
+            .sheet(item: $presentedSheet) { sheet in
+                Group {
+                    switch sheet {
+                    case .newAsset:
+                        NewAssetView(repository: assetRepository) { asset in
+                            assets.insert(asset, at: 0)
+                            assetId = asset.id
+                        }
+                    case .assetPicker:
+                        AssetSelectionView(assets: assets, selection: $assetId)
+                    }
                 }
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
             }
-            .sheet(isPresented: $showsAssetPicker) {
-                AssetSelectionView(assets: assets, selection: $assetId)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-                    .presentationCornerRadius(28)
-            }
         }
+    }
+
+    private enum PresentedSheet: String, Identifiable {
+        case newAsset, assetPicker
+        var id: String { rawValue }
     }
 
     private var isTrade: Bool { kind == .buy || kind == .sell }
@@ -173,15 +192,27 @@ struct AddTransactionView: View {
     }
 
     private func numericField(_ title: String, text: Binding<String>, suffix: String) -> some View {
-        LabeledContent(title) {
-            HStack(spacing: 8) {
-                TextField("0", text: text)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .accessibilityLabel(title)
-                if !suffix.isEmpty { Text(suffix).foregroundStyle(.secondary) }
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                Text(title)
+                Spacer(minLength: 16)
+                numericInput(title, text: text, suffix: suffix)
+                    .frame(maxWidth: 150)
             }
-            .frame(maxWidth: 150)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                numericInput(title, text: text, suffix: suffix)
+            }
+        }
+    }
+
+    private func numericInput(_ title: String, text: Binding<String>, suffix: String) -> some View {
+        HStack(spacing: 8) {
+            TextField("0", text: text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+                .accessibilityLabel(title)
+            if !suffix.isEmpty { Text(suffix).foregroundStyle(.secondary) }
         }
     }
 
@@ -227,7 +258,7 @@ struct AddTransactionView: View {
                 commission: NSDecimalNumber(decimal: parsedCommission).stringValue,
                 sourceWithholding: NSDecimalNumber(decimal: parsedSourceWithholding).stringValue,
                 destinationWithholding: NSDecimalNumber(decimal: parsedDestinationWithholding).stringValue,
-                updatesCash: kind == .dividend,
+                updatesCash: kind == .dividend || (isTrade && updatesCash),
                 occurredAt: date,
                 notes: notes.isEmpty ? nil : notes,
                 idempotencyKey: idempotencyKey

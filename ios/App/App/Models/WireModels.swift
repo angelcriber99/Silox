@@ -131,34 +131,57 @@ struct TransactionPageWire: Decodable, Sendable {
         let id: String
         let assetId: String
         let operation: String
-        let quantity: String?
-        let unitPrice: String?
-        let commission: String?
-        let sourceWithholding: String?
-        let destinationWithholding: String?
+        let quantity: DecimalStringWire?
+        let unitPrice: DecimalStringWire?
+        let amount: DecimalStringWire?
+        let netAmount: DecimalStringWire?
+        let commission: DecimalStringWire?
+        let sourceWithholding: DecimalStringWire?
+        let destinationWithholding: DecimalStringWire?
         let status: String
         let date: String
         let notes: String?
         let asset: AssetInfo?
+        let version: Int?
     }
     let items: [Item]
     let page: Int
     let pageSize: Int
     let total: Int
+    let nextCursor: String?
+
+    private enum CodingKeys: String, CodingKey { case items, page, pageSize, total, nextCursor }
+
+    init(items: [Item], page: Int, pageSize: Int, total: Int, nextCursor: String? = nil) {
+        self.items = items
+        self.page = page
+        self.pageSize = pageSize
+        self.total = total
+        self.nextCursor = nextCursor
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        items = try container.decode([Item].self, forKey: .items)
+        page = try container.decodeIfPresent(Int.self, forKey: .page) ?? 1
+        pageSize = try container.decodeIfPresent(Int.self, forKey: .pageSize) ?? max(items.count, 1)
+        total = try container.decodeIfPresent(Int.self, forKey: .total) ?? items.count
+        nextCursor = try container.decodeIfPresent(String.self, forKey: .nextCursor)
+    }
 
     func domain() -> TransactionPage {
-        let next = page * pageSize < total ? String(page + 1) : nil
+        let next = nextCursor ?? (page * pageSize < total ? String(page + 1) : nil)
         return TransactionPage(items: items.map { item in
             let currency = item.asset?.currency ?? "EUR"
-            let quantity = item.quantity?.decimalValue ?? .zero
-            let unitPrice = item.unitPrice?.decimalValue ?? .zero
-            let commission = item.commission?.decimalValue ?? .zero
-            let sourceWithholding = item.sourceWithholding?.decimalValue ?? .zero
-            let destinationWithholding = item.destinationWithholding?.decimalValue ?? .zero
+            let quantity = item.quantity?.value.decimalValue ?? .zero
+            let unitPrice = item.unitPrice?.value.decimalValue ?? .zero
+            let commission = item.commission?.value.decimalValue ?? .zero
+            let sourceWithholding = item.sourceWithholding?.value.decimalValue ?? .zero
+            let destinationWithholding = item.destinationWithholding?.value.decimalValue ?? .zero
             let gross = quantity * unitPrice
             let deductions = commission + sourceWithholding + destinationWithholding
-            let amount = NSDecimalNumber(decimal: gross).stringValue
-            let netAmount = NSDecimalNumber(decimal: max(0, gross - deductions)).stringValue
+            let amount = item.amount?.value ?? NSDecimalNumber(decimal: gross).stringValue
+            let netAmount = item.netAmount?.value ?? NSDecimalNumber(decimal: max(0, gross - deductions)).stringValue
             let asset = item.asset.map {
                 Asset(id: item.assetId, ticker: $0.ticker, name: $0.name ?? $0.ticker, kind: Asset.Kind(serverValue: $0.type), currency: $0.currency)
             }
@@ -166,15 +189,15 @@ struct TransactionPageWire: Decodable, Sendable {
                 id: item.id,
                 kind: InvestmentTransaction.Kind(serverValue: item.operation, status: item.status),
                 asset: asset,
-                quantity: item.quantity,
+                quantity: item.quantity?.value,
                 amount: MoneyValue(amount: amount, currency: currency),
                 netAmount: MoneyValue(amount: netAmount, currency: currency),
-                commission: MoneyValue(amount: NSDecimalNumber(decimal: commission).stringValue, currency: currency),
-                sourceWithholding: MoneyValue(amount: NSDecimalNumber(decimal: sourceWithholding).stringValue, currency: currency),
-                destinationWithholding: MoneyValue(amount: NSDecimalNumber(decimal: destinationWithholding).stringValue, currency: currency),
+                commission: MoneyValue(amount: item.commission?.value ?? "0", currency: currency),
+                sourceWithholding: MoneyValue(amount: item.sourceWithholding?.value ?? "0", currency: currency),
+                destinationWithholding: MoneyValue(amount: item.destinationWithholding?.value ?? "0", currency: currency),
                 occurredAt: Self.dayFormatter.date(from: item.date) ?? .distantPast,
                 notes: item.notes,
-                version: nil
+                version: item.version
             )
         }, nextCursor: next)
     }
@@ -321,19 +344,89 @@ extension InvestmentTransaction.Kind {
 }
 
 struct CreateTransactionWire: Encodable, Sendable {
-    struct CashImpact: Encodable, Sendable {
-        let operation: String
-        let amount: Double
-    }
     let assetId: String
     let operation: String
-    let quantity: Double
-    let unitPrice: Double
-    let commission: Double
-    let sourceWithholding: Double
-    let destinationWithholding: Double
+    let quantity: String
+    let unitPrice: String
+    let commission: String
+    let sourceWithholding: String
+    let destinationWithholding: String
+    let updateCash: Bool
     let status: String
     let date: String
     let notes: String?
-    let cashImpact: CashImpact?
+}
+
+struct PriceAlertWire: Decodable, Sendable {
+    let id: String
+    let ticker: String
+    let targetPrice: DecimalStringWire?
+    let condition: String
+    let triggered: Bool
+    let createdAt: Date
+
+    func domain() -> PriceAlert {
+        PriceAlert(
+            id: id,
+            ticker: ticker,
+            targetPrice: targetPrice?.value,
+            condition: condition,
+            triggered: triggered,
+            createdAt: createdAt
+        )
+    }
+}
+
+struct CreatePriceAlertWire: Encodable, Sendable {
+    let ticker: String
+    let targetPrice: String
+    let condition: String
+}
+
+struct UpdatePriceAlertWire: Encodable, Sendable {
+    let targetPrice: String?
+    let condition: String?
+    let triggered: Bool?
+}
+
+struct RevolutDirectImportWire: Decodable, Sendable {
+    let newTransactions: Int
+    let updatedTransactions: Int
+    let ignoredDuplicates: Int
+    let accountingMovements: Int?
+    let skipped: [Skipped]
+
+    struct Skipped: Decodable, Sendable {}
+
+    func domain() -> RevolutDirectImportResult {
+        RevolutDirectImportResult(
+            importedCount: newTransactions,
+            ignoredDuplicates: ignoredDuplicates,
+            updatedCount: updatedTransactions,
+            accountingMovements: accountingMovements ?? 0,
+            skippedCount: skipped.count
+        )
+    }
+}
+
+/// Decodes both the current string-based decimal contract and legacy JSON numbers.
+struct DecimalStringWire: Codable, Sendable, Equatable {
+    let value: String
+
+    init(_ value: String) { self.value = value }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let value = try? container.decode(String.self) {
+            self.value = value
+        } else {
+            let value = try container.decode(Decimal.self)
+            self.value = NSDecimalNumber(decimal: value).stringValue
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(value)
+    }
 }

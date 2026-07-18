@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { MobileApiError } from '@/lib/mobile/api'
+import { requireMobileUser } from '@/lib/mobile/auth'
 import type { CellValue } from 'exceljs'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import {
@@ -1232,11 +1233,10 @@ function parseFixedRows(rows: string[][], userId: string): ParseResult {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Keep the existing parser/persistence engine as the single accounting source
+    // of truth while allowing both cookie-authenticated web and bearer-authenticated
+    // native clients to use it.
+    const { supabase, user } = await requireMobileUser(request)
 
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -1556,6 +1556,9 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     console.error('Revolut Import Error:', error)
+    if (error instanceof MobileApiError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
+    }
     const message = error instanceof Error ? error.message : 'Unexpected import error'
     return NextResponse.json({ error: message }, { status: 500 })
   }

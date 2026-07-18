@@ -2,6 +2,7 @@ import SwiftUI
 import WidgetKit
 
 struct VolatileAsset: Codable, Hashable {
+    let id: String?
     let ticker: String
     let name: String
     let changePercent: Double?
@@ -90,7 +91,7 @@ struct SiloxWidgetEntryView: View {
             }
         }
         .containerBackground(for: .widget) { Color(red: 0.04, green: 0.05, blue: 0.06) }
-        .widgetURL(URL(string: "com.angelcriber.silox://portfolio"))
+        .widgetURL(URL(string: "silox://portfolio"))
     }
 
     private func compact(_ summary: WidgetSummaryResponse) -> some View {
@@ -119,11 +120,13 @@ struct SiloxWidgetEntryView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("EN MOVIMIENTO").font(.caption2.bold()).foregroundStyle(.secondary)
                 ForEach(summary.volatileAssets.prefix(3), id: \.ticker) { asset in
-                    HStack {
-                        Text(asset.ticker).font(.caption.bold())
-                        Spacer()
-                        Text((asset.changePercent ?? 0) / 100, format: .percent.precision(.fractionLength(1)).sign(strategy: .always()))
-                            .font(.caption).foregroundStyle(asset.isPositive ? .green : .red)
+                    Link(destination: asset.deepLink) {
+                        HStack {
+                            Text(asset.ticker).font(.caption.bold())
+                            Spacer()
+                            Text((asset.changePercent ?? 0) / 100, format: .percent.precision(.fractionLength(1)).sign(strategy: .always()))
+                                .font(.caption).foregroundStyle(asset.isPositive ? .green : .red)
+                        }
                     }
                 }
                 Spacer()
@@ -146,7 +149,15 @@ private extension WidgetSummaryResponse {
     static let preview = WidgetSummaryResponse(
         netSession: 145.50,
         totalValue: 12_540.20,
-        volatileAssets: [VolatileAsset(ticker: "NVDA", name: "NVIDIA", changePercent: 4.2, isPositive: true)],
+        volatileAssets: [VolatileAsset(id: "nvda", ticker: "NVDA", name: "NVIDIA", changePercent: 4.2, isPositive: true)],
         updatedAt: Date().ISO8601Format()
     )
+}
+
+private extension VolatileAsset {
+    var deepLink: URL {
+        let identifier = id ?? ticker
+        let encoded = identifier.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? identifier
+        return URL(string: "silox://asset/\(encoded)") ?? URL(string: "silox://portfolio")!
+    }
 }

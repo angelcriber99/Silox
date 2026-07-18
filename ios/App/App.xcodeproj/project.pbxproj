@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		11DE16DF9E9D34B9DE6D1ED5 /* TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4633A132B8C3D866A9CA883 /* TransactionsView.swift */; };
 		156C9422768051B4421D82FF /* RadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC7E5F7DFE4B53F01FE41074 /* RadarView.swift */; };
+		1D46FBC537F68A371E4C61A3 /* RoutingContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB2D6BFC5FA4E5202435128 /* RoutingContractTests.swift */; };
 		244ABEF066408BD23A13779D /* ReadCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3875242D9A996BD7708D4255 /* ReadCache.swift */; };
 		2473F732A2F4D83191BE349A /* Repositories.swift in Sources */ = {isa = PBXBuildFile; fileRef = D65E9407A48E00EFA81F977D /* Repositories.swift */; };
 		25D2B119F8D6E585DAFA5316 /* AddTransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96205B90768C1AB32396E471 /* AddTransactionView.swift */; };
@@ -23,12 +24,15 @@
 		4A576E81ABE092BE5EE7B309 /* LiveSupabaseUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2344CBF8716B66F84FACB2C2 /* LiveSupabaseUITests.swift */; };
 		4C8CE277327CC1B797B80695 /* SiloxWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB8DEB83D74447D2D3AD9F87 /* SiloxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		56B450A37DE7ECE3D5D21E55 /* SessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E475D55B61A657246221B32E /* SessionStoreTests.swift */; };
+		57804AB6DBBA5154231F1921 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3DAAC412F855525F362EAD /* AppRouter.swift */; };
 		5D66D8757A890CFBBA9DCD26 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 42299223C1270749CDB36540 /* PrivacyInfo.xcprivacy */; };
 		5E5F3DDC5C17923BC39DC58D /* WireModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0EF65797D006056078E1CD4 /* WireModels.swift */; };
 		61C702C967C6D441A3410E0F /* UITestURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9612E3568F6BFD8109C28738 /* UITestURLProtocol.swift */; };
 		76248DDB56A99B8C656B30BD /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F326536501220D7398A2C898 /* SessionStore.swift */; };
 		7F44B0D00E2D780EEEAFF502 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B12F9403FEE14CEBDE6AA298 /* Assets.xcassets */; };
+		81CDFE78E278132239D61CA3 /* SiloxAppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AA40E7E44AA6C38ECDB78E7 /* SiloxAppIntents.swift */; };
 		85F4448A7488E850D60656F0 /* SecureKeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */; };
+		8A659B8D5F3A7F2B96754FF7 /* RevolutImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE655D2D78486798B17EB368 /* RevolutImportView.swift */; };
 		91748B7A40388AEF36C0FF4E /* ModelDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371569EDD02FA61FCD5EC01D /* ModelDecodingTests.swift */; };
 		A0F0239577E225691701FA7B /* InsightsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9ED9189ECD919466A81132 /* InsightsViews.swift */; };
 		B733EF1372D395F7EFD29DD3 /* LoadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D069ACB050B6D764B67F7EB2 /* LoadState.swift */; };
@@ -39,6 +43,7 @@
 		D6651672AAB67CE2C1903FCE /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1CE0178B5A172679112FCFF /* DomainModels.swift */; };
 		DBDD579D5A381045FE806B28 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */; };
 		DC4A35AB36469BDEB03D9A05 /* SiloxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0671E73834E623DFE8D7E5 /* SiloxApp.swift */; };
+		E8195A21A5D14FC5930AA316 /* RoutedAssetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1211419248011CE9ADD0A619 /* RoutedAssetView.swift */; };
 		EC44712307FA9C2598263492 /* OAuthWebSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04A6F1B8143ADF82E501C1E /* OAuthWebSession.swift */; };
 		F1CCF91BA87BAC6F0D74364A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14882EE7E68AFD84442C7A6D /* PrivacyInfo.xcprivacy */; };
 		F587B6624F0CE87684337A8B /* ReadCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */; };
@@ -85,6 +90,7 @@
 /* Begin PBXFileReference section */
 		02B74CEDDC2F4659D9766FFE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		0C0671E73834E623DFE8D7E5 /* SiloxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxApp.swift; sourceTree = "<group>"; };
+		1211419248011CE9ADD0A619 /* RoutedAssetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutedAssetView.swift; sourceTree = "<group>"; };
 		14882EE7E68AFD84442C7A6D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		167DEFA905358AF7F183CE44 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		17D018AA5B9EBA23AE82AD7B /* Silox.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Silox.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -97,7 +103,9 @@
 		3CB3641B6D24D9F405D2FA58 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
 		42299223C1270749CDB36540 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4A496B104EA03BEF3FD03592 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
+		4AA40E7E44AA6C38ECDB78E7 /* SiloxAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxAppIntents.swift; sourceTree = "<group>"; };
 		4FD567DAF9B5570415C58941 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5CB2D6BFC5FA4E5202435128 /* RoutingContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingContractTests.swift; sourceTree = "<group>"; };
 		61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureKeychainStore.swift; sourceTree = "<group>"; };
 		6BB591B320038C0FDA4E27F6 /* SiloxWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxWidget.swift; sourceTree = "<group>"; };
 		76989E05CECAD7B8B3C424A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -111,6 +119,7 @@
 		A04A6F1B8143ADF82E501C1E /* OAuthWebSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthWebSession.swift; sourceTree = "<group>"; };
 		A0EF65797D006056078E1CD4 /* WireModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireModels.swift; sourceTree = "<group>"; };
 		A2DA7CABBC239FC19126EF52 /* NavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationUITests.swift; sourceTree = "<group>"; };
+		AE3DAAC412F855525F362EAD /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		B12F9403FEE14CEBDE6AA298 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B672A04ABB6F28BE8B6F8962 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		BAA399B137B1BADFC8357923 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
@@ -125,6 +134,7 @@
 		EC7E5F7DFE4B53F01FE41074 /* RadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarView.swift; sourceTree = "<group>"; };
 		F326536501220D7398A2C898 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		FC9ED9189ECD919466A81132 /* InsightsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsViews.swift; sourceTree = "<group>"; };
+		FE655D2D78486798B17EB368 /* RevolutImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevolutImportView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -166,10 +176,20 @@
 				856C97B95C46D010C5DA1C7C /* App */,
 				4EC8E5579938F802B902E774 /* Core */,
 				EBC1FA4726097945D93D1BA2 /* Features */,
+				DFC5D85F5D11AF2D0848E9EB /* Intents */,
 				4B8DD72AD7356663EB6BAE3A /* Models */,
 				FD22E5FBD848AF5E2FB5291B /* Repositories */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		458EFA1543D50586E04D6CC0 /* Routing */ = {
+			isa = PBXGroup;
+			children = (
+				AE3DAAC412F855525F362EAD /* AppRouter.swift */,
+				1211419248011CE9ADD0A619 /* RoutedAssetView.swift */,
+			);
+			path = Routing;
 			sourceTree = "<group>";
 		};
 		45AF553A45CAD86AA12AAE5E /* Radar */ = {
@@ -196,6 +216,7 @@
 				8416BFD0AD9C3A52432274BD /* Auth */,
 				23D2AE57956AE4B0B93DF2F1 /* Cache */,
 				94C2BBD4BC92AF63D86EBE11 /* Design */,
+				458EFA1543D50586E04D6CC0 /* Routing */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -223,6 +244,7 @@
 				8B71742447A6BD2331BE3CC3 /* ContractFixtureTests.swift */,
 				371569EDD02FA61FCD5EC01D /* ModelDecodingTests.swift */,
 				BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */,
+				5CB2D6BFC5FA4E5202435128 /* RoutingContractTests.swift */,
 				E475D55B61A657246221B32E /* SessionStoreTests.swift */,
 			);
 			path = SiloxTests;
@@ -291,6 +313,14 @@
 			path = Authentication;
 			sourceTree = "<group>";
 		};
+		DFC5D85F5D11AF2D0848E9EB /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				4AA40E7E44AA6C38ECDB78E7 /* SiloxAppIntents.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
 		DFEA11E6505426BB306BDE1A /* SiloxUITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -339,6 +369,7 @@
 			isa = PBXGroup;
 			children = (
 				96205B90768C1AB32396E471 /* AddTransactionView.swift */,
+				FE655D2D78486798B17EB368 /* RevolutImportView.swift */,
 				C4633A132B8C3D866A9CA883 /* TransactionsView.swift */,
 			);
 			path = Transactions;
@@ -516,6 +547,7 @@
 			files = (
 				26607E44C5291B8D66D39599 /* APIClient.swift in Sources */,
 				25D2B119F8D6E585DAFA5316 /* AddTransactionView.swift in Sources */,
+				57804AB6DBBA5154231F1921 /* AppRouter.swift in Sources */,
 				DBDD579D5A381045FE806B28 /* BiometricAuth.swift in Sources */,
 				C5E63670846CB56059D40DE7 /* DesignSystem.swift in Sources */,
 				D6651672AAB67CE2C1903FCE /* DomainModels.swift in Sources */,
@@ -527,11 +559,14 @@
 				156C9422768051B4421D82FF /* RadarView.swift in Sources */,
 				244ABEF066408BD23A13779D /* ReadCache.swift in Sources */,
 				2473F732A2F4D83191BE349A /* Repositories.swift in Sources */,
+				8A659B8D5F3A7F2B96754FF7 /* RevolutImportView.swift in Sources */,
 				38F31E27BCEB8EFCCBDEF51B /* RootView.swift in Sources */,
+				E8195A21A5D14FC5930AA316 /* RoutedAssetView.swift in Sources */,
 				85F4448A7488E850D60656F0 /* SecureKeychainStore.swift in Sources */,
 				76248DDB56A99B8C656B30BD /* SessionStore.swift in Sources */,
 				D644DD499B51E6BDD8C102DD /* SignInView.swift in Sources */,
 				DC4A35AB36469BDEB03D9A05 /* SiloxApp.swift in Sources */,
+				81CDFE78E278132239D61CA3 /* SiloxAppIntents.swift in Sources */,
 				11DE16DF9E9D34B9DE6D1ED5 /* TransactionsView.swift in Sources */,
 				61C702C967C6D441A3410E0F /* UITestURLProtocol.swift in Sources */,
 				5E5F3DDC5C17923BC39DC58D /* WireModels.swift in Sources */,
@@ -555,6 +590,7 @@
 				BB24973E096A461D7DF120D8 /* ContractFixtureTests.swift in Sources */,
 				91748B7A40388AEF36C0FF4E /* ModelDecodingTests.swift in Sources */,
 				F587B6624F0CE87684337A8B /* ReadCacheTests.swift in Sources */,
+				1D46FBC537F68A371E4C61A3 /* RoutingContractTests.swift in Sources */,
 				56B450A37DE7ECE3D5D21E55 /* SessionStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

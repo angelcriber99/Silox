@@ -8,6 +8,62 @@ private final class MemorySecureStore: SecureStoring, @unchecked Sendable {
     func remove(_ key: String) throws { values[key] = nil }
 }
 
+private final class LockedFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+
+    func set() {
+        lock.lock()
+        value = true
+        lock.unlock()
+    }
+
+    func get() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+}
+
+private final class AuthStubURLProtocol: URLProtocol, @unchecked Sendable {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var requestCount = 0
+
+    static func reset() {
+        lock.lock()
+        requestCount = 0
+        lock.unlock()
+    }
+
+    static func count() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return requestCount
+    }
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        Self.lock.lock()
+        Self.requestCount += 1
+        Self.lock.unlock()
+        Thread.sleep(forTimeInterval: 0.05)
+        let data = Data(#"{"access_token":"fresh-access","refresh_token":"fresh-refresh","expires_at":4102444800,"user":{"id":"user-1","email":"test@example.com","user_metadata":{"full_name":"Test"}}}"#.utf8)
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: 200,
+            httpVersion: "HTTP/1.1",
+            headerFields: ["Content-Type": "application/json"]
+        )!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+}
+
 @MainActor
 final class SessionStoreTests: XCTestCase {
     func testRestoreReadsSessionFromSecureStore() async throws {
@@ -37,14 +93,14 @@ final class SessionStoreTests: XCTestCase {
 
     func testSignOutRunsPrivacyCleanup() async throws {
         let secure = MemorySecureStore()
-        var didCleanUp = false
-        let store = SessionStore(secureStore: secure, onSignOut: { didCleanUp = true })
+        let didCleanUp = LockedFlag()
+        let store = SessionStore(secureStore: secure, onSignOut: { didCleanUp.set() })
         let user = UserProfile(id: "user-1", email: "test@example.com", displayName: nil)
         try store.accept(AuthSession(accessToken: "access", refreshToken: nil, expiresAt: nil, user: user))
 
         store.signOut()
 
-        XCTAssertTrue(didCleanUp)
+        XCTAssertTrue(didCleanUp.get())
         XCTAssertEqual(store.state, .signedOut)
         XCTAssertNil(secure.values["auth.session"])
     }
@@ -65,5 +121,33 @@ final class SessionStoreTests: XCTestCase {
         XCTAssertEqual(values["redirect_to"], "com.angelcriber.silox://auth/callback")
         XCTAssertEqual(values["code_challenge_method"], "s256")
         XCTAssertFalse(values["code_challenge", default: ""].isEmpty)
+    }
+
+    func testConcurrentForcedTokenRequestsShareOneRefresh() async throws {
+        AuthStubURLProtocol.reset()
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [AuthStubURLProtocol.self]
+        let secure = MemorySecureStore()
+        let store = SessionStore(
+            secureStore: secure,
+            urlSession: URLSession(configuration: configuration),
+            authConfigurationProvider: { (URL(string: "https://auth.silox.test")!, "anon-key") }
+        )
+        let user = UserProfile(id: "user-1", email: "test@example.com", displayName: "Test")
+        try store.accept(AuthSession(
+            accessToken: "expired",
+            refreshToken: "refresh",
+            expiresAt: .distantPast,
+            user: user
+        ))
+
+        async let first = store.validAccessToken(forceRefresh: true)
+        async let second = store.validAccessToken(forceRefresh: true)
+        async let third = store.validAccessToken(forceRefresh: true)
+        let tokens = await [first, second, third]
+
+        XCTAssertEqual(tokens, ["fresh-access", "fresh-access", "fresh-access"])
+        XCTAssertEqual(AuthStubURLProtocol.count(), 1)
+        XCTAssertEqual(store.accessToken, "fresh-access")
     }
 }
