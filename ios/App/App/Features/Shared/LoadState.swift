@@ -12,10 +12,10 @@ struct StaleBanner: View {
     var body: some View {
         Label("Datos guardados · \(date.formatted(date: .omitted, time: .shortened))", systemImage: "wifi.slash")
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(SiloxColors.textSecondary)
             .frame(maxWidth: .infinity)
             .padding(8)
-            .background(Color.orange.opacity(0.12))
+            .background(SiloxColors.warning.opacity(0.12))
             .accessibilityLabel("Datos sin conexión guardados el \(date.formatted())")
     }
 }

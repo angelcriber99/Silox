@@ -45,7 +45,7 @@ struct RadarView: View {
                     else { ErrorStateView(message: message) { Task { await model.refresh() } } }
                 }
             }
-            .background(SiloxColors.background.ignoresSafeArea())
+            .background(SiloxColors.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("Radar")
             .task { await model.load() }
         }
@@ -74,7 +74,7 @@ struct RadarView: View {
                         systemImage: "arrow.triangle.2.circlepath"
                     )
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(SiloxColors.textSecondary)
                 }
             }
             .padding(.horizontal, 16)
@@ -129,7 +129,7 @@ struct RadarView: View {
     private func overviewMetric(_ title: String, value: Int) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(String(value)).font(.headline).monospacedDigit()
-            Text(title).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            Text(title).font(.caption2).foregroundStyle(SiloxColors.textSecondary).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -142,7 +142,7 @@ struct RadarView: View {
                     Text(selectedDate.formatted(.dateTime.weekday(.wide).day().month(.wide)))
                         .font(.headline)
                     Text(dayEvents.isEmpty ? "Sin eventos" : "\(dayEvents.count) eventos de cartera")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(SiloxColors.textSecondary)
                 }
                 Spacer()
             }
@@ -165,23 +165,33 @@ struct RadarView: View {
     private func calendarCard(_ events: [MarketEvent]) -> some View {
         SiloxCard {
             VStack(spacing: 12) {
-                HStack {
-                    Button { moveMonth(-1) } label: { Image(systemName: "chevron.left") }
+                SiloxGlassEffectGroup(spacing: 10) {
+                    HStack {
+                        Button { moveMonth(-1) } label: {
+                            Image(systemName: "chevron.left")
+                                .frame(width: 34, height: 34)
+                                .siloxInteractiveGlass(cornerRadius: 17)
+                        }
                         .accessibilityLabel("Mes anterior")
-                    Spacer()
-                    Text(displayedMonth.formatted(.dateTime.month(.wide).year())).font(.headline)
-                    Spacer()
-                    Button { moveMonth(1) } label: { Image(systemName: "chevron.right") }
+                        Spacer()
+                        Text(displayedMonth.formatted(.dateTime.month(.wide).year())).font(.headline)
+                        Spacer()
+                        Button { moveMonth(1) } label: {
+                            Image(systemName: "chevron.right")
+                                .frame(width: 34, height: 34)
+                                .siloxInteractiveGlass(cornerRadius: 17)
+                        }
                         .accessibilityLabel("Mes siguiente")
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
 
                 if dynamicTypeSize.isAccessibilitySize {
                     accessibilityCalendar(events)
                 } else {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 8) {
                         ForEach(weekdaySymbols, id: \.self) { symbol in
-                            Text(symbol).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                            Text(symbol).font(.caption2.weight(.semibold)).foregroundStyle(SiloxColors.textSecondary)
                         }
                         ForEach(Array(monthDays.enumerated()), id: \.offset) { _, date in
                             if let date { dayCell(date, events: events) }
@@ -191,9 +201,9 @@ struct RadarView: View {
                 }
 
                 HStack(spacing: 10) {
-                    legend("Confirmado", color: SiloxColors.positive)
+                    legend("Confirmado", color: SiloxColors.accentSecondary)
                     legend("Estimado", color: SiloxColors.warning)
-                    legend("Especulativo", color: .orange)
+                    legend("Especulativo", color: SiloxColors.warning)
                     Spacer(minLength: 0)
                 }
             }
@@ -204,7 +214,7 @@ struct RadarView: View {
         let monthEvents = events.filter { Calendar.current.isDate($0.startsAt, equalTo: displayedMonth, toGranularity: .month) }
         return VStack(alignment: .leading, spacing: 8) {
             if monthEvents.isEmpty {
-                Text("No hay eventos este mes").foregroundStyle(.secondary)
+                Text("No hay eventos este mes").foregroundStyle(SiloxColors.textSecondary)
             } else {
                 ForEach(monthEvents) { event in
                     Button {
@@ -241,7 +251,7 @@ struct RadarView: View {
                 .frame(height: 4)
             }
             .frame(maxWidth: .infinity, minHeight: 38)
-            .foregroundStyle(isSelected ? Color.black : Color.primary)
+            .foregroundStyle(isSelected ? SiloxColors.textOnAccent : SiloxColors.textPrimary)
             .background(isSelected ? SiloxColors.accent : Color.clear, in: RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
@@ -261,7 +271,7 @@ struct RadarView: View {
             }
         }
         .padding(14)
-        .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(SiloxColors.backgroundSecondary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(
@@ -272,7 +282,7 @@ struct RadarView: View {
     }
 
     @ViewBuilder private func eventMark(_ event: MarketEvent, asset: Asset?) -> some View {
-        if let asset { SiloxAssetMark(asset: asset, size: 44) }
+        if let asset { SiloxAssetMark(asset: asset, size: 40) }
         else {
             Image(systemName: eventIcon(event))
                 .foregroundStyle(eventColor(event))
@@ -296,13 +306,15 @@ struct RadarView: View {
                         .foregroundStyle(eventColor(event))
                         .background(eventColor(event).opacity(0.12), in: Capsule())
                     if event.impact == "high" {
-                        Text("ALTO IMPACTO").font(.system(size: 8, weight: .bold)).foregroundStyle(SiloxColors.negative)
+                        Label("ALTO IMPACTO", systemImage: "exclamationmark.triangle.fill")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(SiloxColors.warning)
                     }
                 }
                 Text(event.title).font(.subheadline.weight(.semibold))
-                Text(eventWindow(event)).font(.caption).foregroundStyle(.secondary)
+                Text(eventWindow(event)).font(.caption).foregroundStyle(SiloxColors.textSecondary)
                 if let description = event.description, !description.isEmpty {
-                    Text(description).font(.caption).foregroundStyle(.secondary).lineLimit(3)
+                    Text(description).font(.caption).foregroundStyle(SiloxColors.textSecondary).lineLimit(3)
                 }
                 if let sourceURL = event.sourceURL {
                     Link(destination: sourceURL) {
@@ -322,7 +334,7 @@ struct RadarView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Noticias vigiladas").font(.headline)
                     Text("Estas fuentes alimentan la detección de nuevos catalizadores.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(SiloxColors.textSecondary)
                     ForEach(radar.news.prefix(10)) { item in
                         Link(destination: item.url) {
                             HStack(alignment: .top, spacing: 10) {
@@ -334,10 +346,10 @@ struct RadarView: View {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(item.title)
                                         .font(.subheadline.weight(.medium))
-                                        .foregroundStyle(.primary)
+                                        .foregroundStyle(SiloxColors.textPrimary)
                                         .multilineTextAlignment(.leading)
                                     Text("\(item.source) · \(item.publishedAt.formatted(.relative(presentation: .named)))")
-                                        .font(.caption).foregroundStyle(.secondary)
+                                        .font(.caption).foregroundStyle(SiloxColors.textSecondary)
                                 }
                             }
                         }
@@ -345,7 +357,7 @@ struct RadarView: View {
                     }
                 }
                 .padding(16)
-                .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .background(SiloxColors.backgroundSecondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
         }
     }
@@ -392,12 +404,12 @@ struct RadarView: View {
 
     private func eventColor(_ event: MarketEvent) -> Color {
         switch event.certainty {
-        case "confirmed": SiloxColors.positive
-        case "scheduled": .blue
+        case "confirmed": SiloxColors.accentSecondary
+        case "scheduled": SiloxColors.accent
         case "estimated": SiloxColors.warning
-        case "speculative": .orange
-        case "manual": .purple
-        default: .secondary
+        case "speculative": SiloxColors.warning
+        case "manual": SiloxColors.accentSecondary
+        default: SiloxColors.textSecondary
         }
     }
 
@@ -434,7 +446,7 @@ struct RadarView: View {
     private func legend(_ title: String, color: Color) -> some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 6, height: 6)
-            Text(title).font(.caption2).foregroundStyle(.secondary)
+            Text(title).font(.caption2).foregroundStyle(SiloxColors.textSecondary)
         }
     }
 

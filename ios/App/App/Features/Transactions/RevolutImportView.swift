@@ -31,7 +31,7 @@ struct RevolutImportView: View {
             if let result {
                 Section("Importación completada") {
                     Label("\(result.importedCount) movimientos nuevos", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(SiloxColors.positive)
+                        .foregroundStyle(SiloxColors.accentSecondary)
                     if result.updatedCount > 0 {
                         LabeledContent("Actualizados", value: String(result.updatedCount))
                     }
@@ -55,6 +55,7 @@ struct RevolutImportView: View {
                 }
             }
         }
+        .siloxContentBackground()
         .navigationTitle("Importar extracto")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(

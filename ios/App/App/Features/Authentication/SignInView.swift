@@ -17,7 +17,7 @@ struct SignInView: View {
                             .font(.system(size: 46, weight: .semibold))
                             .foregroundStyle(SiloxColors.accent)
                         Text("Silox").font(.largeTitle.bold())
-                        Text("Tu cartera de inversión, nativa y privada.").foregroundStyle(.secondary)
+                        Text("Tu cartera de inversión, nativa y privada.").foregroundStyle(SiloxColors.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
                     .listRowBackground(Color.clear)
@@ -33,10 +33,10 @@ struct SignInView: View {
                         if isGoogleLoading { ProgressView().frame(maxWidth: .infinity) }
                         else { Label("Continuar con Google", systemImage: "person.crop.circle.badge.checkmark").frame(maxWidth: .infinity) }
                     }
-                    .buttonStyle(.bordered)
+                    .siloxGlassButtonStyle()
                     .disabled(isLoading || isGoogleLoading)
 
-                    Text("O usa tu correo").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity)
+                    Text("O usa tu correo").font(.caption).foregroundStyle(SiloxColors.textSecondary).frame(maxWidth: .infinity)
                     TextField("Correo electrónico", text: $email)
                         .textContentType(.emailAddress).keyboardType(.emailAddress).textInputAutocapitalization(.never)
                     SecureField("Contraseña", text: $password).textContentType(.password)
@@ -54,13 +54,14 @@ struct SignInView: View {
                     .disabled(email.isEmpty || password.isEmpty || isLoading || isGoogleLoading)
                 }
                 if let message = session.errorMessage {
-                    Section { Text(message).foregroundStyle(.red).font(.footnote) }
+                    Section { Text(message).foregroundStyle(SiloxColors.negative).font(.footnote) }
                 }
                 Section {
                     Text("La sesión se cifra en Keychain y se renueva automáticamente. Silox no almacena tu contraseña.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(SiloxColors.textSecondary)
                 }
             }
+            .siloxContentBackground()
             .navigationTitle("Iniciar sesión")
         }
     }

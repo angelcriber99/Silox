@@ -53,13 +53,26 @@ final class NavigationUITests: XCTestCase {
     }
 
     func testAssetLogoLoadsInsideItsNativeMark() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-ui-test-authenticated", "-ui-test-fixtures"]
-        app.launch()
+        for appearance in ["Light", "Dark"] {
+            let app = XCUIApplication()
+            app.launchArguments += [
+                "-ui-test-authenticated", "-ui-test-fixtures",
+                "-AppleInterfaceStyle", appearance,
+                "-appearanceMode", appearance.lowercased()
+            ]
+            app.launch()
 
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'" )).firstMatch.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.images["asset-logo-AAPL"].waitForExistence(timeout: 3))
-        capture("logo-activo-redimensionado")
+            XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'" )).firstMatch.waitForExistence(timeout: 5))
+            XCTAssertTrue(app.descendants(matching: .any)["asset-logo-AAPL"].waitForExistence(timeout: 3))
+            capture("logo-activo-redimensionado-\(appearance.lowercased())")
+
+            let appleRow = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'" )).firstMatch
+            appleRow.tap()
+            XCTAssertTrue(app.navigationBars["Apple"].waitForExistence(timeout: 3))
+            XCTAssertTrue(app.descendants(matching: .any)["asset-logo-AAPL"].waitForExistence(timeout: 3))
+            capture("detalle-activo-semantico-\(appearance.lowercased())")
+            app.terminate()
+        }
     }
 
     func testDeepLinkSelectsSettingsTab() {

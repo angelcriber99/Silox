@@ -1,31 +1,5 @@
 import SwiftUI
 
-enum SiloxColors {
-    static let accent = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(red: 48 / 255, green: 209 / 255, blue: 88 / 255, alpha: 1)
-            : UIColor(red: 0.02, green: 0.43, blue: 0.21, alpha: 1)
-    })
-    static let positive = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 48 / 255, green: 209 / 255, blue: 88 / 255, alpha: 1) : .systemGreen
-    })
-    static let negative = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 1, green: 69 / 255, blue: 58 / 255, alpha: 1) : .systemRed
-    })
-    static let warning = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 1, green: 214 / 255, blue: 10 / 255, alpha: 1) : .systemOrange
-    })
-    static let background = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? .black : .systemGroupedBackground
-    })
-    static let secondaryBackground = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(white: 17 / 255, alpha: 1) : .secondarySystemGroupedBackground
-    })
-    static let elevatedBackground = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(white: 28 / 255, alpha: 1) : .tertiarySystemGroupedBackground
-    })
-}
-
 struct SiloxCard<Content: View>: View {
     @ViewBuilder let content: Content
 
@@ -33,10 +7,10 @@ struct SiloxCard<Content: View>: View {
         content
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(SiloxColors.backgroundSecondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                    .stroke(SiloxColors.borderSubtle, lineWidth: 0.75)
             }
     }
 }
@@ -44,6 +18,7 @@ struct SiloxCard<Content: View>: View {
 struct SiloxAssetMark: View {
     let asset: Asset
     var size: CGFloat = 42
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var logoImage: UIImage?
 
     private var symbol: String {
@@ -52,12 +27,12 @@ struct SiloxAssetMark: View {
 
     private var tint: Color {
         switch asset.kind {
-        case .stock: SiloxColors.warning
-        case .etf: .blue
-        case .fund: .purple
-        case .crypto: .orange
-        case .metal: .gray
-        case .cash: .secondary
+        case .stock: SiloxColors.accent
+        case .etf: SiloxColors.accent
+        case .fund: SiloxColors.accentSecondary
+        case .crypto: SiloxColors.accentSecondary
+        case .metal: SiloxColors.textTertiary
+        case .cash: SiloxColors.textSecondary
         case .other: SiloxColors.accent
         }
     }
@@ -68,32 +43,38 @@ struct SiloxAssetMark: View {
     }
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
-                .fill(Color.white.opacity(0.94))
+        Group {
             if let logoImage {
-                Image(uiImage: logoImage)
-                    .resizable()
-                    .interpolation(.high)
-                    .antialiased(true)
-                    .scaledToFit()
-                    .padding(size * 0.07)
-                    .transition(.opacity)
-                    .accessibilityLabel("Logo de \(asset.displayName)")
-                    .accessibilityIdentifier("asset-logo-\(logoIdentifier)")
+                AdaptiveLogoTile(
+                    image: logoImage,
+                    mode: .auto,
+                    size: size,
+                    cornerRadius: size * 0.25,
+                    accessibilityLabel: "Logo de \(asset.displayName)"
+                )
+                .transition(.opacity)
+                .accessibilityIdentifier("asset-logo-\(logoIdentifier)")
             } else {
-                fallback
+                fallbackTile
             }
-        }
-        .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: size * 0.25, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
-                .stroke(tint.opacity(0.24), lineWidth: 0.75)
         }
         .task(id: logoURL) {
             await loadLogo()
         }
+    }
+
+    private var fallbackTile: some View {
+        fallback
+            .frame(width: size, height: size)
+            .background(SiloxColors.surfaceElevated, in: tileShape)
+            .clipShape(tileShape)
+            .overlay {
+                tileShape.stroke(SiloxColors.borderSubtle, lineWidth: 0.75)
+            }
+    }
+
+    private var tileShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
     }
 
     private var fallback: some View {
@@ -101,7 +82,6 @@ struct SiloxAssetMark: View {
             .font(.system(size: size * 0.31, weight: .heavy, design: .rounded))
             .foregroundStyle(tint)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(tint.opacity(0.13))
             .accessibilityHidden(true)
     }
 
@@ -117,9 +97,8 @@ struct SiloxAssetMark: View {
             return
         }
         guard !Task.isCancelled else { return }
-        withAnimation(.easeInOut(duration: 0.15)) {
-            logoImage = image
-        }
+        if reduceMotion { logoImage = image }
+        else { withAnimation(.easeInOut(duration: 0.15)) { logoImage = image } }
     }
 }
 
@@ -217,6 +196,15 @@ private final class AssetLogoLoader {
 
 extension View {
     @ViewBuilder
+    func siloxGlassButtonStyle() -> some View {
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glass)
+        } else {
+            buttonStyle(.bordered)
+        }
+    }
+
+    @ViewBuilder
     func siloxProminentButtonStyle() -> some View {
         if #available(iOS 26.0, *) {
             buttonStyle(.glassProminent)
@@ -231,6 +219,74 @@ extension View {
             tabBarMinimizeBehavior(.onScrollDown)
         } else {
             self
+        }
+    }
+
+    func siloxContentBackground() -> some View {
+        scrollContentBackground(.hidden)
+            .background(SiloxColors.backgroundPrimary)
+    }
+
+    @ViewBuilder
+    func siloxPeriodControlSurface(cornerRadius: CGFloat = 10) -> some View {
+        if #available(iOS 26.0, *) {
+            self
+        } else {
+            modifier(SiloxMaterialFallbackModifier(cornerRadius: cornerRadius))
+        }
+    }
+
+    func siloxInteractiveGlass(cornerRadius: CGFloat = 17) -> some View {
+        modifier(SiloxInteractiveGlassModifier(cornerRadius: cornerRadius))
+    }
+}
+
+struct SiloxGlassEffectGroup<Content: View>: View {
+    let spacing: CGFloat
+    @ViewBuilder let content: Content
+
+    init(spacing: CGFloat = 8, @ViewBuilder content: () -> Content) {
+        self.spacing = spacing
+        self.content = content()
+    }
+
+    @ViewBuilder var body: some View {
+        if #available(iOS 26.0, *) {
+            GlassEffectContainer(spacing: spacing) { content }
+        } else {
+            content
+        }
+    }
+}
+
+private struct SiloxMaterialFallbackModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                reduceTransparency ? AnyShapeStyle(SiloxColors.surfaceElevated) : AnyShapeStyle(.thinMaterial),
+                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(SiloxColors.borderSubtle, lineWidth: 0.75)
+            }
+    }
+}
+
+private struct SiloxInteractiveGlassModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    let cornerRadius: CGFloat
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *), !reduceTransparency {
+            content
+                .glassEffect(.regular.tint(SiloxColors.accent.opacity(0.08)).interactive(), in: .rect(cornerRadius: cornerRadius))
+        } else {
+            content.modifier(SiloxMaterialFallbackModifier(cornerRadius: cornerRadius))
         }
     }
 }
@@ -318,13 +374,16 @@ enum SiloxFormatters {
     }
 
     static func percentage(_ value: Double) -> String {
-        value.formatted(.percent.precision(.fractionLength(2)).scale(1))
+        let prefix = value > 0 ? "+" : value < 0 ? "−" : ""
+        return prefix + abs(value).formatted(.percent.precision(.fractionLength(2)).scale(1))
     }
 
     static func signedMoney(_ value: String, currency: String = "EUR") -> String {
         let decimal = value.decimalValue
         let formatted = money(NSDecimalNumber(decimal: abs(decimal)).stringValue, currency: currency)
-        return decimal >= 0 ? "+\(formatted)" : "−\(formatted)"
+        if decimal > 0 { return "+\(formatted)" }
+        if decimal < 0 { return "−\(formatted)" }
+        return formatted
     }
 
     static func quantity(_ value: String, precision: Int) -> String {

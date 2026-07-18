@@ -67,7 +67,7 @@ struct PortfolioView: View {
                     else { ErrorStateView(message: message) { Task { await model.refresh() } } }
                 }
             }
-            .background(SiloxColors.background.ignoresSafeArea())
+            .background(SiloxColors.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("Cartera")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $search, prompt: "Buscar por nombre o símbolo")
@@ -78,9 +78,9 @@ struct PortfolioView: View {
                         if let market = currentPortfolio?.marketState {
                             HStack(spacing: 4) {
                                 Circle()
-                                    .fill(market.isOpen ? SiloxColors.positive : Color.secondary)
+                                    .fill(market.isOpen ? SiloxColors.accentSecondary : SiloxColors.textSecondary)
                                     .frame(width: 5, height: 5)
-                                Text(market.label).font(.caption2).foregroundStyle(.secondary)
+                                Text(market.label).font(.caption2).foregroundStyle(SiloxColors.textSecondary)
                             }
                         }
                     }
@@ -152,10 +152,10 @@ struct PortfolioView: View {
                             }
                         }
                     }
-                    .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .background(SiloxColors.backgroundSecondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(Color.primary.opacity(0.07), lineWidth: 0.5)
+                            .stroke(SiloxColors.textPrimary.opacity(0.07), lineWidth: 0.5)
                     }
                 }
 
@@ -164,7 +164,7 @@ struct PortfolioView: View {
                     systemImage: "arrow.triangle.2.circlepath"
                 )
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(SiloxColors.textSecondary)
                 .padding(.top, 2)
             }
             .padding(.horizontal, 16)
@@ -178,7 +178,7 @@ struct PortfolioView: View {
         let totals = portfolio.totals
         let dailyAmount = totals.dailyGain
         let dailyDecimal = dailyAmount?.amount.decimalValue ?? Decimal(totals.dailyGainPercent ?? 0)
-        let dailyColor = dailyDecimal > 0 ? SiloxColors.positive : dailyDecimal < 0 ? SiloxColors.negative : Color.primary
+        let dailyColor = dailyDecimal > 0 ? SiloxColors.positive : dailyDecimal < 0 ? SiloxColors.negative : SiloxColors.textPrimary
 
         return SiloxCard {
             VStack(alignment: .leading, spacing: 15) {
@@ -206,7 +206,7 @@ struct PortfolioView: View {
                     Text("HOY · PRE + MERCADO + POST")
                         .font(.caption2.weight(.semibold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                     ViewThatFits(in: .horizontal) {
                         HStack(spacing: 8) {
                             dailySummaryAmount(dailyAmount, percent: totals.dailyGainPercent)
@@ -246,18 +246,18 @@ struct PortfolioView: View {
         Text("PATRIMONIO")
             .font(.caption2.weight(.semibold))
             .tracking(1.2)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(SiloxColors.textSecondary)
     }
 
     @ViewBuilder
     private func marketStatus(_ portfolio: PortfolioResponse) -> some View {
         if let market = portfolio.marketState {
             HStack(spacing: 5) {
-                Circle().fill(market.isOpen ? SiloxColors.positive : Color.secondary).frame(width: 6, height: 6)
+                Image(systemName: market.isOpen ? "dot.radiowaves.left.and.right" : "moon.fill")
                 Text(market.isOpen ? "En directo" : "Cerrado")
             }
             .font(.caption2.weight(.semibold))
-            .foregroundStyle(market.isOpen ? SiloxColors.positive : .secondary)
+            .foregroundStyle(market.isOpen ? SiloxColors.accentSecondary : SiloxColors.textSecondary)
         }
     }
 
@@ -269,7 +269,7 @@ struct PortfolioView: View {
 
     private func activeAssetsMetric(_ portfolio: PortfolioResponse) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Activos").font(.caption2).foregroundStyle(.secondary)
+            Text("Activos").font(.caption2).foregroundStyle(SiloxColors.textSecondary)
             Text(String(activePositions(portfolio.positions).count))
                 .font(.caption.weight(.semibold)).monospacedDigit()
         }
@@ -278,13 +278,13 @@ struct PortfolioView: View {
 
     private func summaryMetric(_ title: String, _ amount: String, currency: String, signed: Bool = false) -> some View {
         let decimal = amount.decimalValue
-        let color = decimal > 0 ? SiloxColors.positive : decimal < 0 ? SiloxColors.negative : Color.primary
+        let color = decimal > 0 ? SiloxColors.positive : decimal < 0 ? SiloxColors.negative : SiloxColors.textPrimary
         return VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            Text(title).font(.caption2).foregroundStyle(SiloxColors.textSecondary).lineLimit(1)
             Text(hideBalances ? "••••" : signed ? SiloxFormatters.signedMoney(amount, currency: currency) : SiloxFormatters.money(amount, currency: currency))
                 .font(.caption.weight(.semibold))
                 .monospacedDigit()
-                .foregroundStyle(signed ? color : Color.primary)
+                .foregroundStyle(signed ? color : SiloxColors.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
@@ -297,12 +297,14 @@ struct PortfolioView: View {
                 HStack(spacing: 6) {
                     Text("Posiciones hoy").font(.title3.weight(.semibold))
                     if portfolio.marketState?.isOpen == true {
-                        Circle().fill(SiloxColors.positive).frame(width: 6, height: 6)
+                        Image(systemName: "dot.radiowaves.left.and.right")
+                            .font(.caption2)
+                            .foregroundStyle(SiloxColors.accentSecondary)
                     }
                 }
                 Text("\(count) activos · día completo")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(SiloxColors.textSecondary)
             }
             Spacer()
             Menu {
@@ -320,7 +322,7 @@ struct PortfolioView: View {
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 10)
                 .frame(height: 34)
-                .background(SiloxColors.secondaryBackground, in: Capsule())
+                .siloxInteractiveGlass(cornerRadius: 17)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Ordenar posiciones")
@@ -366,7 +368,7 @@ private struct PositionRow: View {
         let value = position.dailyChange?.amount.decimalValue ?? Decimal(position.dailyChangePercent ?? 0)
         if value > 0 { return SiloxColors.positive }
         if value < 0 { return SiloxColors.negative }
-        return .secondary
+        return SiloxColors.textSecondary
     }
 
     var body: some View {
@@ -396,7 +398,7 @@ private struct PositionRow: View {
             positionValue(alignment: .trailing)
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(SiloxColors.textTertiary)
         }
     }
 
@@ -412,11 +414,11 @@ private struct PositionRow: View {
 
     private var assetMark: some View {
         ZStack(alignment: .bottomTrailing) {
-            SiloxAssetMark(asset: position.asset, size: compact ? 38 : 44)
+            SiloxAssetMark(asset: position.asset, size: compact ? 38 : 40)
             Circle()
-                .fill(position.isPriceStale ? SiloxColors.warning : SiloxColors.positive)
+                .fill(position.isPriceStale ? SiloxColors.warning : SiloxColors.accentSecondary)
                 .frame(width: 8, height: 8)
-                .overlay(Circle().stroke(SiloxColors.secondaryBackground, lineWidth: 2))
+                .overlay(Circle().stroke(SiloxColors.backgroundSecondary, lineWidth: 2))
         }
     }
 
@@ -424,14 +426,14 @@ private struct PositionRow: View {
         VStack(alignment: .leading, spacing: compact ? 2 : 4) {
             Text(position.asset.displayName)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(SiloxColors.textPrimary)
             Text(position.asset.metadataLabel)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(SiloxColors.textSecondary)
             if !compact {
                 Text("\(SiloxFormatters.quantity(position.quantity, precision: quantityPrecision)) uds.")
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(SiloxColors.textTertiary)
             }
         }
     }
@@ -440,7 +442,7 @@ private struct PositionRow: View {
         VStack(alignment: alignment, spacing: compact ? 2 : 4) {
             Text(hideBalances ? "••••" : SiloxFormatters.money(position.currentValue.amount, currency: position.currentValue.currency))
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(SiloxColors.textPrimary)
                 .monospacedDigit()
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 5) { dailyValue }
@@ -493,7 +495,7 @@ private struct PositionDetailView: View {
                         title: "Valor actual",
                         value: hiddenMoney(position.currentValue),
                         icon: "wallet.bifold",
-                        color: .primary
+                        color: SiloxColors.textPrimary
                     )
                     DetailMetric(
                         title: "P&L total",
@@ -506,13 +508,13 @@ private struct PositionDetailView: View {
                         title: "Dinero invertido",
                         value: hiddenMoney(position.investedCash),
                         icon: "banknote",
-                        color: .primary
+                        color: SiloxColors.textPrimary
                     )
                     DetailMetric(
                         title: "Unidades",
                         value: SiloxFormatters.quantity(position.quantity, precision: quantityPrecision),
                         icon: "number",
-                        color: .primary
+                        color: SiloxColors.textPrimary
                     )
                 }
                 purchaseLotsCard
@@ -523,15 +525,14 @@ private struct PositionDetailView: View {
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
-                        .foregroundStyle(.black)
-                        .background(SiloxColors.accent, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .siloxProminentButtonStyle()
+                .tint(SiloxColors.accent)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .background(SiloxColors.background.ignoresSafeArea())
+        .background(SiloxColors.backgroundPrimary.ignoresSafeArea())
         .navigationTitle(position.asset.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await refresh() }
@@ -561,15 +562,15 @@ private struct PositionDetailView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "square.stack.3d.up.fill")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(SiloxColors.accent)
                         .frame(width: 30, height: 30)
-                        .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        .background(SiloxColors.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Rendimiento por compra")
                             .font(.subheadline.weight(.semibold))
                         Text("Lotes abiertos tras aplicar FIFO. Las ventas consumen primero las compras más antiguas.")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(SiloxColors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 4)
@@ -578,13 +579,13 @@ private struct PositionDetailView: View {
                         .monospacedDigit()
                         .padding(.horizontal, 9)
                         .padding(.vertical, 5)
-                        .background(Color.blue.opacity(0.12), in: Capsule())
-                        .foregroundStyle(.blue)
+                        .background(SiloxColors.accent.opacity(0.12), in: Capsule())
+                        .foregroundStyle(SiloxColors.accent)
                 }
 
                 HStack {
                     Text("Base de rendimiento")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                     Spacer()
                     Text(hiddenMoney(position.openCost))
                         .fontWeight(.semibold)
@@ -627,7 +628,7 @@ private struct PositionDetailView: View {
                         .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(SiloxColors.textSecondary)
                 }
             }
         }
@@ -640,28 +641,28 @@ private struct PositionDetailView: View {
         return SiloxCard {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
-                    SiloxAssetMark(asset: position.asset, size: 50)
+                    SiloxAssetMark(asset: position.asset, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(position.asset.displayName).font(.headline).lineLimit(2)
                         Text("\(position.asset.metadataLabel) · \(position.asset.kind.displayName)")
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(SiloxColors.textSecondary)
                     }
                     Spacer()
                     HStack(spacing: 5) {
                         Circle()
-                            .fill(position.isPriceStale ? SiloxColors.warning : SiloxColors.positive)
+                            .fill(position.isPriceStale ? SiloxColors.warning : SiloxColors.accentSecondary)
                             .frame(width: 6, height: 6)
                         Text(position.isPriceStale ? "Retrasado" : "En directo")
                     }
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(position.isPriceStale ? SiloxColors.warning : SiloxColors.positive)
+                    .foregroundStyle(position.isPriceStale ? SiloxColors.warning : SiloxColors.accentSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("PRECIO ACTUAL")
                         .font(.system(size: 10, weight: .semibold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                     Text(position.currentPrice.map { SiloxFormatters.money($0.amount, currency: $0.currency) } ?? "Sin cotización")
                         .font(.system(size: 31, weight: .bold, design: .rounded))
                         .monospacedDigit()
@@ -670,7 +671,7 @@ private struct PositionDetailView: View {
                 HStack(spacing: 8) {
                     Text("Hoy completo")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                     Spacer()
                     if let daily = position.dailyChange {
                         Text(hideBalances ? "••••" : SiloxFormatters.signedMoney(daily.amount, currency: daily.currency))
@@ -685,7 +686,7 @@ private struct PositionDetailView: View {
 
                 Text("Incluye premercado, mercado regular y postmercado.")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(SiloxColors.textSecondary)
             }
         }
     }
@@ -699,11 +700,11 @@ private struct PositionDetailView: View {
                     Spacer()
                     Text(position.asset.currency)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                 }
                 Divider().opacity(0.5)
                 HStack {
-                    Text("Última actualización").foregroundStyle(.secondary)
+                    Text("Última actualización").foregroundStyle(SiloxColors.textSecondary)
                     Spacer()
                     Text(position.priceUpdatedAt?.formatted(date: .abbreviated, time: .standard) ?? "Sin datos")
                         .multilineTextAlignment(.trailing)
@@ -711,7 +712,7 @@ private struct PositionDetailView: View {
                 .font(.caption)
                 if let daily = position.dailyChangePercent {
                     HStack {
-                        Text("Variación del día").foregroundStyle(.secondary)
+                        Text("Variación del día").foregroundStyle(SiloxColors.textSecondary)
                         Spacer()
                         Text(SiloxFormatters.percentage(daily))
                             .fontWeight(.semibold)
@@ -730,7 +731,7 @@ private struct PositionDetailView: View {
     private func performanceColor(_ value: Decimal) -> Color {
         if value > 0 { return SiloxColors.positive }
         if value < 0 { return SiloxColors.negative }
-        return .primary
+        return SiloxColors.textPrimary
     }
 
     private func refresh() async {
@@ -752,7 +753,7 @@ private struct PurchaseLotRow: View {
                 Text(lot.date.formatted(date: .abbreviated, time: .omitted))
                     .font(.caption.weight(.semibold))
                 if lot.isPartial { lotBadge("Parcial", color: SiloxColors.warning) }
-                if lot.isReward { lotBadge("Recompensa", color: .purple) }
+                if lot.isReward { lotBadge("Recompensa", color: SiloxColors.accentSecondary) }
                 Spacer()
                 performanceLabel
             }
@@ -761,7 +762,7 @@ private struct PurchaseLotRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Unidades abiertas")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                     Text(openQuantityLabel)
                         .font(.caption.weight(.medium))
                         .monospacedDigit()
@@ -770,7 +771,7 @@ private struct PurchaseLotRow: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Compra · Valor actual")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                     Text(hideBalances ? "••••" : valueLabel)
                         .font(.caption.weight(.medium))
                         .monospacedDigit()
@@ -804,12 +805,12 @@ private struct PurchaseLotRow: View {
                     .font(.caption2)
             }
             .font(.caption.weight(.bold))
-            .foregroundStyle(pnl >= 0 ? SiloxColors.positive : SiloxColors.negative)
+            .foregroundStyle(pnl > 0 ? SiloxColors.positive : pnl < 0 ? SiloxColors.negative : SiloxColors.textPrimary)
             .monospacedDigit()
         } else {
             Text("Sin cotización")
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(SiloxColors.textSecondary)
         }
     }
 
@@ -855,9 +856,9 @@ private struct DetailMetric: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Text(title).font(.caption).foregroundStyle(.secondary)
+                Text(title).font(.caption).foregroundStyle(SiloxColors.textSecondary)
                 Spacer()
-                Image(systemName: icon).font(.caption).foregroundStyle(.tertiary)
+                Image(systemName: icon).font(.caption).foregroundStyle(SiloxColors.textTertiary)
             }
             Text(value)
                 .font(.subheadline.weight(.semibold))
@@ -871,10 +872,10 @@ private struct DetailMetric: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: 95, alignment: .leading)
-        .background(SiloxColors.secondaryBackground, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+        .background(SiloxColors.backgroundSecondary, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 17, style: .continuous)
-                .stroke(Color.primary.opacity(0.07), lineWidth: 0.5)
+                .stroke(SiloxColors.textPrimary.opacity(0.07), lineWidth: 0.5)
         }
     }
 }

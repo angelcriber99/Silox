@@ -19,7 +19,7 @@ struct MoreView: View {
                             title: "Apariencia y cartera",
                             subtitle: "Tema, densidad, orden y tiempo real",
                             icon: "slider.horizontal.3",
-                            tint: .blue
+                            tint: SiloxColors.accent
                         )
                     }
                     NavigationLink { NotificationPreferencesView(repository: environment.settingsRepository) } label: {
@@ -27,7 +27,7 @@ struct MoreView: View {
                             title: "Notificaciones",
                             subtitle: "Precios, dividendos y resúmenes",
                             icon: "bell.badge",
-                            tint: .orange
+                            tint: SiloxColors.accent
                         )
                     }
                 }
@@ -38,7 +38,7 @@ struct MoreView: View {
                             title: "Rendimiento",
                             subtitle: "Histórico de patrimonio y capital",
                             icon: "chart.line.uptrend.xyaxis",
-                            tint: SiloxColors.positive
+                            tint: SiloxColors.accent
                         )
                     }
                     NavigationLink { AlertsView(repository: environment.insightsRepository) } label: {
@@ -46,7 +46,7 @@ struct MoreView: View {
                             title: "Alertas de precio",
                             subtitle: "Objetivos y avisos configurados",
                             icon: "bell",
-                            tint: .purple
+                            tint: SiloxColors.accentSecondary
                         )
                     }
                 }
@@ -57,7 +57,7 @@ struct MoreView: View {
                             title: "Importar extracto",
                             subtitle: "Revolut o MyInvestor · CSV y Excel",
                             icon: "square.and.arrow.down",
-                            tint: .teal
+                            tint: SiloxColors.accentSecondary
                         )
                     }
                 }
@@ -67,7 +67,7 @@ struct MoreView: View {
                         title: "Ocultar saldos",
                         subtitle: "Protege los importes en todas las pantallas",
                         icon: hideBalances ? "eye.slash" : "eye",
-                        tint: .indigo,
+                        tint: SiloxColors.accent,
                         isOn: $hideBalances
                     )
                     Button { Task { await toggleBiometrics() } } label: {
@@ -80,22 +80,22 @@ struct MoreView: View {
                     }
                     .buttonStyle(.plain)
                     if let biometricMessage {
-                        Text(biometricMessage).font(.caption).foregroundStyle(.secondary)
+                        Text(biometricMessage).font(.caption).foregroundStyle(SiloxColors.textSecondary)
                     }
                 }
 
                 Section("Widget") {
                     HStack(spacing: 12) {
-                        SettingsIcon(symbol: "rectangle.3.group", tint: .cyan)
+                        SettingsIcon(symbol: "rectangle.3.group", tint: SiloxColors.accentSecondary)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Widget de cartera").font(.subheadline.weight(.semibold))
-                            Text(widgetStatus).font(.caption).foregroundStyle(.secondary)
+                            Text(widgetStatus).font(.caption).foregroundStyle(SiloxColors.textSecondary)
                         }
                         Spacer()
                         if isUpdatingWidget { ProgressView() }
                         else {
                             Button("Renovar") { Task { await updateWidgetCredential() } }
-                                .buttonStyle(.bordered)
+                                .siloxGlassButtonStyle()
                                 .controlSize(.small)
                         }
                     }
@@ -114,11 +114,10 @@ struct MoreView: View {
                     .buttonStyle(.plain)
                 }
 
-                Section { Text(appVersion).font(.caption2).foregroundStyle(.tertiary) }
+                Section { Text(appVersion).font(.caption2).foregroundStyle(SiloxColors.textTertiary) }
             }
             .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .background(SiloxColors.background.ignoresSafeArea())
+            .siloxContentBackground()
             .navigationTitle("Ajustes")
             .task { await refreshWidgetStatus() }
         }
@@ -211,8 +210,8 @@ private struct SettingsDestinationLabel: View {
         HStack(spacing: 12) {
             SettingsIcon(symbol: icon, tint: tint)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(SiloxColors.textPrimary)
+                Text(subtitle).font(.caption).foregroundStyle(SiloxColors.textSecondary).lineLimit(1)
             }
             Spacer()
         }
@@ -232,11 +231,11 @@ private struct SettingsActionLabel: View {
             SettingsIcon(symbol: icon, tint: tint)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(tint)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                Text(subtitle).font(.caption).foregroundStyle(SiloxColors.textSecondary).lineLimit(2)
             }
             Spacer()
             if showsChevron {
-                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(SiloxColors.textTertiary)
             }
         }
         .contentShape(Rectangle())
@@ -255,7 +254,7 @@ private struct SettingsToggleRow: View {
             SettingsIcon(symbol: icon, tint: tint)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.subheadline.weight(.semibold))
-                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                Text(subtitle).font(.caption).foregroundStyle(SiloxColors.textSecondary).lineLimit(2)
             }
             Spacer()
             Toggle("", isOn: $isOn).labelsHidden()
@@ -281,6 +280,7 @@ private struct MobilePreferencesView: View {
                     Label("Oscuro", systemImage: "moon").tag("dark")
                 }
                 .pickerStyle(.segmented)
+                .siloxPeriodControlSurface()
             } header: {
                 Text("Apariencia")
             } footer: {
@@ -293,6 +293,7 @@ private struct MobilePreferencesView: View {
                     Text("Compacta").tag(true)
                 }
                 .pickerStyle(.segmented)
+                .siloxPeriodControlSurface()
                 Toggle("Mostrar importe diario", isOn: $showDailyAmount)
                 Picker("Orden predeterminado", selection: $portfolioSort) {
                     Text("Movimiento de hoy").tag("day")
@@ -310,10 +311,10 @@ private struct MobilePreferencesView: View {
                 }
                 LabeledContent("Estado") {
                     HStack(spacing: 5) {
-                        Circle().fill(SiloxColors.positive).frame(width: 6, height: 6)
+                        Image(systemName: "dot.radiowaves.left.and.right")
                         Text("Tiempo real activo")
                     }
-                    .foregroundStyle(SiloxColors.positive)
+                    .foregroundStyle(SiloxColors.accentSecondary)
                 }
             } header: {
                 Text("Datos en tiempo real")
@@ -331,8 +332,7 @@ private struct MobilePreferencesView: View {
                 Button("Restaurar ajustes recomendados", role: .destructive, action: resetDefaults)
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(SiloxColors.background)
+        .siloxContentBackground()
         .navigationTitle("Experiencia móvil")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -384,7 +384,7 @@ private struct NotificationPreferencesView: View {
                 Section {
                     Label(message, systemImage: message == "Preferencias guardadas." ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .font(.caption)
-                        .foregroundStyle(message == "Preferencias guardadas." ? SiloxColors.positive : SiloxColors.negative)
+                        .foregroundStyle(message == "Preferencias guardadas." ? SiloxColors.accentSecondary : SiloxColors.negative)
                 }
             }
 
@@ -400,8 +400,7 @@ private struct NotificationPreferencesView: View {
                 .disabled(isLoading || isSaving)
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(SiloxColors.background)
+        .siloxContentBackground()
         .navigationTitle("Notificaciones")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }

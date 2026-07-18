@@ -50,7 +50,7 @@ struct RoutedAssetView: View {
                                 Text(SiloxFormatters.quantity(lot.remainingQuantity, precision: 8)).monospacedDigit()
                             }
                             Text(SiloxFormatters.money(lot.performanceUnitCost.amount, currency: lot.performanceUnitCost.currency))
-                                .font(.caption).foregroundStyle(.secondary)
+                                .font(.caption).foregroundStyle(SiloxColors.textSecondary)
                         }
                     }
                 }
@@ -62,6 +62,7 @@ struct RoutedAssetView: View {
                 } label: { Label("Añadir movimiento", systemImage: "plus").frame(maxWidth: .infinity) }
             }
         }
+        .siloxContentBackground()
         .refreshable { await load(forceRefresh: true) }
     }
 

@@ -1,6 +1,7 @@
 import SwiftUI
 import Charts
 import Observation
+import Accessibility
 
 @MainActor
 private final class InsightsViewModel<Value: Sendable>: ObservableObject {
@@ -40,6 +41,7 @@ struct PortfolioHistoryView: View {
                                 ForEach(HistoryRange.allCases) { Text($0.title).tag($0) }
                             }
                             .pickerStyle(.segmented)
+                            .siloxPeriodControlSurface()
 
                             Chart(visiblePoints(points)) { point in
                                 if let date = point.chartDate {
@@ -60,11 +62,14 @@ struct PortfolioHistoryView: View {
                             }
                             .chartForegroundStyleScale([
                                 "Patrimonio": SiloxColors.accent,
-                                "Invertido": Color.secondary,
+                                "Invertido": SiloxColors.textSecondary,
                             ])
                             .chartLegend(position: .bottom, alignment: .leading)
                             .frame(height: 240)
                             .accessibilityLabel("Gráfico de patrimonio e inversión")
+                            .accessibilityChartDescriptor(
+                                PortfolioHistoryAccessibilityDescriptor(points: visiblePoints(points))
+                            )
                         }
 
                         Section("Cierres") {
@@ -77,6 +82,7 @@ struct PortfolioHistoryView: View {
                         }
                     }
                 }
+                .siloxContentBackground()
                 .refreshable { await model.load() }
             }
         }
@@ -91,7 +97,7 @@ struct PortfolioHistoryView: View {
         VStack(alignment: .trailing) {
             Text(SiloxFormatters.money(point.value ?? "0", currency: "EUR")).font(.headline).monospacedDigit()
             Text("Invertido: \(SiloxFormatters.money(point.invested ?? "0", currency: "EUR"))")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.caption).foregroundStyle(SiloxColors.textSecondary)
         }
     }
 
@@ -125,6 +131,63 @@ private extension PortfolioHistoryPoint {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+}
+
+private struct PortfolioHistoryAccessibilityDescriptor: AXChartDescriptorRepresentable {
+    let points: [PortfolioHistoryPoint]
+
+    func makeChartDescriptor() -> AXChartDescriptor {
+        let datedPoints = points.compactMap { point -> (PortfolioHistoryPoint, Date)? in
+            point.chartDate.map { (point, $0) }
+        }
+        let categories = datedPoints.map { Self.dateFormatter.string(from: $0.1) }
+        let values = datedPoints.flatMap { point, _ in
+            [point.value?.decimalValue.doubleValue, point.invested?.decimalValue.doubleValue].compactMap { $0 }
+        }
+        let minimum = values.min() ?? 0
+        let maximum = values.max() ?? 1
+        let range = minimum == maximum ? (minimum - 1)...(maximum + 1) : minimum...maximum
+
+        let xAxis = AXCategoricalDataAxisDescriptor(title: "Fecha", categoryOrder: categories)
+        let yAxis = AXNumericDataAxisDescriptor(
+            title: "Euros",
+            range: range,
+            gridlinePositions: []
+        ) { value in
+            value.formatted(.currency(code: "EUR"))
+        }
+        let portfolioSeries = AXDataSeriesDescriptor(
+            name: "Patrimonio",
+            isContinuous: true,
+            dataPoints: datedPoints.compactMap { point, date in
+                guard let value = point.value?.decimalValue.doubleValue else { return nil }
+                return AXDataPoint(x: Self.dateFormatter.string(from: date), y: value)
+            }
+        )
+        let investedSeries = AXDataSeriesDescriptor(
+            name: "Capital invertido",
+            isContinuous: true,
+            dataPoints: datedPoints.compactMap { point, date in
+                guard let value = point.invested?.decimalValue.doubleValue else { return nil }
+                return AXDataPoint(x: Self.dateFormatter.string(from: date), y: value)
+            }
+        )
+
+        return AXChartDescriptor(
+            title: "Evolución de la cartera",
+            summary: "Compara el patrimonio con el capital invertido para el periodo seleccionado.",
+            xAxis: xAxis,
+            yAxis: yAxis,
+            series: [portfolioSeries, investedSeries]
+        )
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("d MMM y")
         return formatter
     }()
 }
@@ -211,6 +274,7 @@ struct AlertsView: View {
                         }
                     }
                 }
+                .siloxContentBackground()
                 .refreshable { await model.load() }
             }
         }
@@ -232,17 +296,17 @@ struct AlertsView: View {
     private func alertRow(_ alert: PriceAlert) -> some View {
         HStack(spacing: 12) {
             Image(systemName: alert.triggered ? "bell.badge.fill" : "bell.fill")
-                .foregroundStyle(alert.triggered ? .orange : SiloxColors.accent)
+                .foregroundStyle(alert.triggered ? SiloxColors.warning : SiloxColors.accent)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(alert.ticker).font(.headline)
                 Text(alert.condition == "above" ? "Avisar por encima" : "Avisar por debajo")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(SiloxColors.textSecondary)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 3) {
                 Text(alert.targetPrice ?? "—").font(.headline).monospacedDigit()
-                Text(alert.triggered ? "Activada" : "Vigilando").font(.caption2).foregroundStyle(.secondary)
+                Text(alert.triggered ? "Activada" : "Vigilando").font(.caption2).foregroundStyle(SiloxColors.textSecondary)
             }
         }
         .accessibilityElement(children: .combine)
@@ -293,11 +357,13 @@ private struct AlertEditorView: View {
                         Text("Por debajo").tag("below")
                     }
                     .pickerStyle(.segmented)
+                    .siloxPeriodControlSurface()
                 }
                 if let errorMessage {
                     Section { Label(errorMessage, systemImage: "exclamationmark.triangle.fill").foregroundStyle(SiloxColors.negative) }
                 }
             }
+            .siloxContentBackground()
             .navigationTitle(alert == nil ? "Nueva alerta" : "Editar alerta")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

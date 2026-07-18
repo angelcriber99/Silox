@@ -37,6 +37,7 @@ struct AddTransactionView: View {
                         Text("Venta").tag(InvestmentTransaction.Kind.sell)
                     }
                     .pickerStyle(.segmented)
+                    .siloxPeriodControlSurface()
 
                     Menu {
                         Button("Dividendo") { kind = .dividend }
@@ -61,15 +62,15 @@ struct AddTransactionView: View {
                                 if let selectedAsset {
                                     SiloxAssetMark(asset: selectedAsset, size: 38)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(selectedAsset.displayName).font(.headline).foregroundStyle(.primary)
-                                        Text(selectedAsset.metadataLabel).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                        Text(selectedAsset.displayName).font(.headline).foregroundStyle(SiloxColors.textPrimary)
+                                        Text(selectedAsset.metadataLabel).font(.caption).foregroundStyle(SiloxColors.textSecondary).lineLimit(1)
                                     }
                                 } else {
                                     Image(systemName: "magnifyingglass").frame(width: 38, height: 38)
-                                    Text("Seleccionar activo").foregroundStyle(.primary)
+                                    Text("Seleccionar activo").foregroundStyle(SiloxColors.textPrimary)
                                 }
                                 Spacer()
-                                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                                Image(systemName: "chevron.right").font(.caption).foregroundStyle(SiloxColors.textTertiary)
                             }
                         }
                         .buttonStyle(.plain)
@@ -101,7 +102,7 @@ struct AddTransactionView: View {
                                 systemImage: "banknote"
                             )
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(SiloxColors.textSecondary)
                         }
                     }
 
@@ -122,7 +123,7 @@ struct AddTransactionView: View {
                             systemImage: updatesCash ? "banknote.fill" : "banknote"
                         )
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                     }
                 }
 
@@ -138,8 +139,7 @@ struct AddTransactionView: View {
             }
             .navigationTitle("Añadir movimiento")
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
-            .background(SiloxColors.background)
+            .siloxContentBackground()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -212,7 +212,7 @@ struct AddTransactionView: View {
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
                 .accessibilityLabel(title)
-            if !suffix.isEmpty { Text(suffix).foregroundStyle(.secondary) }
+            if !suffix.isEmpty { Text(suffix).foregroundStyle(SiloxColors.textSecondary) }
         }
     }
 
@@ -297,8 +297,8 @@ private struct AssetSelectionView: View {
                     HStack(spacing: 12) {
                         SiloxAssetMark(asset: asset, size: 38)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(asset.displayName).font(.headline).foregroundStyle(.primary)
-                            Text(asset.metadataLabel).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            Text(asset.displayName).font(.headline).foregroundStyle(SiloxColors.textPrimary)
+                            Text(asset.metadataLabel).font(.caption).foregroundStyle(SiloxColors.textSecondary).lineLimit(1)
                         }
                         Spacer()
                         if selection == asset.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(SiloxColors.accent) }
@@ -306,8 +306,7 @@ private struct AssetSelectionView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .scrollContentBackground(.hidden)
-            .background(SiloxColors.background)
+            .siloxContentBackground()
             .navigationTitle("Seleccionar activo")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $query, prompt: "Nombre o símbolo")
@@ -340,10 +339,9 @@ private struct NewAssetView: View {
                         ForEach(["EUR", "USD", "GBP", "CHF"], id: \.self) { Text($0) }
                     }
                 }
-                if let errorMessage { Section { Text(errorMessage).foregroundStyle(.red) } }
+                if let errorMessage { Section { Text(errorMessage).foregroundStyle(SiloxColors.negative) } }
             }
-            .scrollContentBackground(.hidden)
-            .background(SiloxColors.background)
+            .siloxContentBackground()
             .navigationTitle("Nuevo activo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

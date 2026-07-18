@@ -200,6 +200,7 @@ struct TransactionsView: View {
                 }
             }
         }
+        .siloxContentBackground()
         .refreshable { await model.refresh() }
     }
 
@@ -287,7 +288,7 @@ struct TransactionsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(transaction.asset?.displayName ?? transaction.kind.title).font(.headline)
                 Text(transaction.kind.title + " · " + transaction.occurredAt.formatted(date: .abbreviated, time: .omitted))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(SiloxColors.textSecondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 3) {
@@ -299,9 +300,9 @@ struct TransactionsView: View {
                 if transaction.kind == .dividend, dividendDeductions(transaction) > 0 {
                     Text("Bruto \(SiloxFormatters.money(transaction.amount.amount, currency: transaction.amount.currency))")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(SiloxColors.textSecondary)
                 } else if let quantity = transaction.quantity {
-                    Text(SiloxFormatters.quantity(quantity, precision: 6) + " uds.").font(.caption2).foregroundStyle(.secondary)
+                    Text(SiloxFormatters.quantity(quantity, precision: 6) + " uds.").font(.caption2).foregroundStyle(SiloxColors.textSecondary)
                 }
             }
         }
@@ -327,6 +328,11 @@ struct TransactionsView: View {
     }
 
     private func color(for kind: InvestmentTransaction.Kind) -> Color {
-        switch kind { case .sell, .dividend, .deposit: .green; case .buy, .withdrawal: .orange; default: .secondary }
+        switch kind {
+        case .sell, .dividend, .deposit: SiloxColors.accentSecondary
+        case .buy: SiloxColors.accent
+        case .withdrawal: SiloxColors.textSecondary
+        default: SiloxColors.textSecondary
+        }
     }
 }

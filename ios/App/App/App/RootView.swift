@@ -24,6 +24,8 @@ struct RootView: View {
                 }
             }
         }
+        .foregroundStyle(SiloxColors.textPrimary)
+        .background(SiloxColors.backgroundPrimary.ignoresSafeArea())
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: session.state)
         .preferredColorScheme(preferredColorScheme)
         .task(id: session.state) { await unlockIfNeeded() }
@@ -85,7 +87,7 @@ private struct BiometricLockView: View {
 private struct LaunchView: View {
     var body: some View {
         ZStack {
-            SiloxColors.background.ignoresSafeArea()
+            SiloxColors.backgroundPrimary.ignoresSafeArea()
             VStack(spacing: 16) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 42, weight: .semibold))
@@ -117,6 +119,7 @@ struct MainTabView: View {
                 .tag(AppTab.settings)
         }
         .siloxTabBarBehavior()
+        .toolbarBackground(.automatic, for: .tabBar)
         .sheet(item: $router.presentedSheet) { sheet in
             switch sheet {
             case .addMovement(let assetID):

@@ -90,25 +90,26 @@ struct SiloxWidgetEntryView: View {
                 }
             }
         }
-        .containerBackground(for: .widget) { Color(red: 0.04, green: 0.05, blue: 0.06) }
+        .foregroundStyle(SiloxColors.textPrimary)
+        .containerBackground(for: .widget) { SiloxColors.backgroundPrimary }
         .widgetURL(URL(string: "silox://portfolio"))
     }
 
     private func compact(_ summary: WidgetSummaryResponse) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("SILOX").font(.caption.bold()).foregroundStyle(.secondary)
+                Text("SILOX").font(.caption.bold()).foregroundStyle(SiloxColors.textSecondary)
                 Spacer()
                 if entry.isStale { Image(systemName: "wifi.slash").font(.caption2) }
             }
-            Text(summary.netSession, format: .currency(code: "EUR").sign(strategy: .always()))
+            Text(signedMoney(summary.netSession))
                 .font(.title2.bold()).monospacedDigit().minimumScaleFactor(0.7)
-                .foregroundStyle(summary.netSession >= 0 ? .green : .red)
+                .foregroundStyle(summary.netSession > 0 ? SiloxColors.positive : summary.netSession < 0 ? SiloxColors.negative : SiloxColors.textPrimary)
             Spacer()
             Text(summary.totalValue, format: .currency(code: "EUR"))
-                .font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                .font(.caption).monospacedDigit().foregroundStyle(SiloxColors.textSecondary)
             if let top = summary.volatileAssets.first {
-                Text("\(top.ticker)  \((top.changePercent ?? 0) / 100, format: .percent.precision(.fractionLength(1)).sign(strategy: .always()))")
+                Text("\(top.ticker)  \(signedPercentage(top.changePercent ?? 0))")
                     .font(.caption.bold()).lineLimit(1)
             }
         }
@@ -118,14 +119,15 @@ struct SiloxWidgetEntryView: View {
         HStack(spacing: 18) {
             compact(summary).frame(maxWidth: .infinity)
             VStack(alignment: .leading, spacing: 8) {
-                Text("EN MOVIMIENTO").font(.caption2.bold()).foregroundStyle(.secondary)
+                Text("EN MOVIMIENTO").font(.caption2.bold()).foregroundStyle(SiloxColors.textSecondary)
                 ForEach(summary.volatileAssets.prefix(3), id: \.ticker) { asset in
                     Link(destination: asset.deepLink) {
                         HStack {
                             Text(asset.ticker).font(.caption.bold())
                             Spacer()
-                            Text((asset.changePercent ?? 0) / 100, format: .percent.precision(.fractionLength(1)).sign(strategy: .always()))
-                                .font(.caption).foregroundStyle(asset.isPositive ? .green : .red)
+                            Text(signedPercentage(asset.changePercent ?? 0))
+                                .font(.caption)
+                                .foregroundStyle(performanceColor(asset.changePercent ?? 0))
                         }
                     }
                 }
@@ -133,6 +135,20 @@ struct SiloxWidgetEntryView: View {
             }
             .frame(maxWidth: .infinity)
         }
+    }
+
+    private func performanceColor(_ value: Double) -> Color {
+        value > 0 ? SiloxColors.positive : value < 0 ? SiloxColors.negative : SiloxColors.textPrimary
+    }
+
+    private func signedMoney(_ value: Double) -> String {
+        let formatted = abs(value).formatted(.currency(code: "EUR"))
+        return value > 0 ? "+\(formatted)" : value < 0 ? "−\(formatted)" : formatted
+    }
+
+    private func signedPercentage(_ value: Double) -> String {
+        let formatted = abs(value / 100).formatted(.percent.precision(.fractionLength(1)))
+        return value > 0 ? "+\(formatted)" : value < 0 ? "−\(formatted)" : formatted
     }
 }
 
