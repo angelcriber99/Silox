@@ -10,6 +10,7 @@ export interface Posicion {
   geografia: string
   unidades: number
   coste_total: number
+  dinero_invertido?: number
   comisiones_total: number
   num_operaciones: number
   ultima_operacion: string | null
@@ -27,6 +28,7 @@ export interface EnrichedPosition extends Posicion {
   valor_actual: number | null // in EUR
   valor_actual_nativo: number | null
   coste_total_eur: number
+  dinero_invertido_eur?: number
   pnl: number | null // in EUR
   pnl_percent: number | null // based on EUR
   precio_medio: number // in native currency

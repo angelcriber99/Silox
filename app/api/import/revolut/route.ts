@@ -7,7 +7,11 @@ import {
   parseMyInvestorStatement,
   type ResolvedMyInvestorAsset,
 } from '@/lib/domain/imports/myinvestor'
-import { externalFlowNote } from '@/lib/domain/portfolio/contributions'
+import {
+  externalFlowNote,
+  isNonCashReward,
+  nonCashRewardNote,
+} from '@/lib/domain/portfolio/contributions'
 
 export const runtime = 'nodejs'
 
@@ -423,6 +427,11 @@ function isNonInvestmentMovement(typeValue: string): boolean {
   return /^(cash\s+(top-up|withdrawal)|reward)$/.test(type)
 }
 
+function isCryptoRewardType(typeValue: string): boolean {
+  const type = normalizeOperationText(typeValue)
+  return type !== 'staking' && /recompensa|reward|learn/.test(type)
+}
+
 function normalizeOperationText(value: string): string {
   return value
     .toLowerCase()
@@ -602,6 +611,63 @@ function parseBrokerCashMovements(rows: string[][], userId: string): ParsedImpor
   return cashMovements
 }
 
+async function fetchCryptoRewardPricesEur(
+  rows: string[][],
+  tickerIdx: number,
+  typeIdx: number,
+  qtyIdx: number,
+  priceIdx: number,
+  totalIdx: number,
+  dateIdx: number,
+): Promise<Map<string, number>> {
+  const datesBySymbol = new Map<string, Set<string>>()
+
+  for (const row of rows) {
+    if (!isCryptoRewardType(normalizeText(row[typeIdx]))) continue
+
+    const quantity = Math.abs(parseNumber(row[qtyIdx]))
+    const price = parseNumber(row[priceIdx])
+    const total = parseNumber(row[totalIdx])
+    const date = parseDate(row[dateIdx])
+    const symbol = normalizeText(row[tickerIdx]).toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (
+      !symbol || !date || !Number.isFinite(quantity) || quantity <= 0
+      || (Number.isFinite(price) && price > 0)
+      || (Number.isFinite(total) && total !== 0)
+    ) continue
+
+    const dates = datesBySymbol.get(symbol) ?? new Set<string>()
+    dates.add(date)
+    datesBySymbol.set(symbol, dates)
+  }
+
+  const prices = new Map<string, number>()
+  await Promise.all(Array.from(datesBySymbol, async ([symbol, dates]) => {
+    const orderedDates = Array.from(dates).sort()
+    const period1 = new Date(`${orderedDates[0]}T00:00:00.000Z`)
+    const period2 = new Date(`${orderedDates.at(-1)}T00:00:00.000Z`)
+    period2.setUTCDate(period2.getUTCDate() + 2)
+
+    try {
+      const chart = await getYahooFinance().chart(`${symbol}-EUR`, {
+        period1,
+        period2,
+        interval: '1d',
+      })
+      for (const quote of chart.quotes) {
+        const date = quote.date.toISOString().slice(0, 10)
+        if (dates.has(date) && Number.isFinite(quote.close) && quote.close! > 0) {
+          prices.set(`${symbol}:${date}`, quote.close!)
+        }
+      }
+    } catch {
+      // The affected rewards are reported as skipped below instead of using a zero basis.
+    }
+  }))
+
+  return prices
+}
+
 async function parseRows(rows: string[][], userId: string): Promise<ParseResult> {
   if (rows.length < 2) return { parsed: [], skipped: [] }
 
@@ -642,6 +708,9 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
   const skipped: SkippedImportTransaction[] = []
 
   const dataRows = rows.slice(1)
+  const cryptoRewardPricesEur = isCryptoAccountStatement
+    ? await fetchCryptoRewardPricesEur(dataRows, tickerIdx, typeIdx, qtyIdx, priceIdx, totalIdx, dateIdx)
+    : new Map<string, number>()
 
   for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
     const row = dataRows[rowIndex]
@@ -655,6 +724,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     const operation = inferOperation(typeValue, description, quantityRaw)
 
     if (isNonInvestmentMovement(typeValue)) continue
+    if (normalizeOperationText(typeValue) === 'staking') continue
 
     const isDividend = operation === 'Dividendo'
     const effectiveQuantity = isDividend ? 1 : quantity
@@ -672,7 +742,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
           rawTicker: rawTicker.toUpperCase().replace(/[^A-Z0-9]/g, ''),
           nombre: CRYPTO_NAMES[rawTicker.toUpperCase().replace(/[^A-Z0-9]/g, '')] ?? rawTicker.toUpperCase(),
           tipoActivo: 'Crypto' as const,
-          moneda: 'USD',
+          moneda: 'EUR',
         }
       : inferAsset(rawTicker, rowText, normalizeText(row[currencyIdx]))
     const price = parseNumber(row[priceIdx])
@@ -680,11 +750,10 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
     const pairedFiatTotal = asset.tipoActivo === 'Crypto'
       ? findPairedFiatTotal(dataRows, rowIndex, dateIdx, tickerIdx, qtyIdx, descriptionIdx, date, description)
       : Number.NaN
-    const isZeroCostCryptoInflow = asset.tipoActivo === 'Crypto' && operation === 'Compra' && /recepcion|staking|recompensa|reward|learn/i.test(
-      typeValue
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-    )
+    const isNonCashCryptoReward = asset.tipoActivo === 'Crypto' && operation === 'Compra' && isCryptoRewardType(typeValue)
+    const historicalRewardPrice = isNonCashCryptoReward
+      ? cryptoRewardPricesEur.get(`${asset.rawTicker}:${date}`)
+      : undefined
     const precioUnitario = isDividend && Number.isFinite(total) && total !== 0
       ? Math.abs(total)
       : Number.isFinite(total) && total !== 0
@@ -693,8 +762,8 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
           ? price
         : Number.isFinite(pairedFiatTotal) && pairedFiatTotal > 0
           ? pairedFiatTotal / effectiveQuantity
-          : isZeroCostCryptoInflow
-            ? 0
+          : historicalRewardPrice !== undefined
+            ? historicalRewardPrice
             : Number.NaN
 
     if (!Number.isFinite(precioUnitario) || precioUnitario < 0) {
@@ -717,6 +786,7 @@ async function parseRows(rows: string[][], userId: string): Promise<ParseResult>
       fecha: date,
       comision: Number.isFinite(parseNumber(row[feeIdx])) ? Math.abs(parseNumber(row[feeIdx])) : 0,
       sourceTimestamp: parseSourceTimestamp(row[dateIdx]),
+      ...(isNonCashCryptoReward ? { notas: nonCashRewardNote(typeValue) } : {}),
     })
   }
 
@@ -1310,10 +1380,11 @@ export async function POST(request: Request) {
         } else {
           ignoredAccountingMovements++
         }
-      } else if (matchingExisting && tx.tipoActivo === 'Metal') {
+      } else if (matchingExisting && (tx.tipoActivo === 'Metal' || isNonCashReward(tx))) {
         const shouldUpdate =
           Math.abs(matchingExisting.precio_unitario - tx.precio_unitario) >= 0.01 ||
-          Math.abs((matchingExisting.comision ?? 0) - tx.comision) >= 0.01
+          Math.abs((matchingExisting.comision ?? 0) - tx.comision) >= 0.01 ||
+          matchingExisting.notas !== tx.notas
 
         if (shouldUpdate) {
           const { error: updateError } = await supabase
@@ -1321,6 +1392,7 @@ export async function POST(request: Request) {
             .update({
               precio_unitario: tx.precio_unitario,
               comision: tx.comision,
+              notas: tx.notas ?? null,
             })
             .eq('id', matchingExisting.id)
             .eq('user_id', user.id)
@@ -1333,6 +1405,7 @@ export async function POST(request: Request) {
 
           matchingExisting.precio_unitario = tx.precio_unitario
           matchingExisting.comision = tx.comision
+          matchingExisting.notas = tx.notas ?? null
           if (includeInSummary) {
             imported.push(tx)
             updatedTxCount++

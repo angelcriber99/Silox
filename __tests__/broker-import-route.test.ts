@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
   yahooSearch: vi.fn(),
+  yahooChart: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }))
 vi.mock('@/lib/server/yahoo-finance', () => ({
-  getYahooFinance: () => ({ search: mocks.yahooSearch }),
+  getYahooFinance: () => ({ search: mocks.yahooSearch, chart: mocks.yahooChart }),
 }))
 
 import { POST } from '@/app/api/import/revolut/route'
@@ -121,6 +122,21 @@ function revolutInvestingStatementRequest() {
   return { formData: async () => formData } as Request
 }
 
+function revolutCryptoStatementRequest() {
+  const csv = [
+    'Symbol,Type,Quantity,Price,Value,Fees,Date',
+    'BTC,Recepción,"0,01","60.000,00€","600,00€","0,00€","6 feb 2026, 17:11:57"',
+    'ETH,Staking,"1,00","1.600,00€","1.600,00€","0,00€","24 feb 2026, 20:47:32"',
+    'ETH,Recompensa de staking,"0,10",,,,"25 feb 2026, 20:47:32"',
+    'ETH,Compra,"0,50","1.700,00€","850,00€","1,00€","26 feb 2026, 20:47:32"',
+    'SOL,Recompensa de Aprende,"2,00",,,,"1 mar 2026, 20:47:32"',
+  ].join('\n')
+  const file = new File([csv], 'crypto-account-statement.csv', { type: 'text/csv' })
+  const formData = new FormData()
+  formData.append('file', file)
+  return { formData: async () => formData } as Request
+}
+
 describe('broker import route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -128,6 +144,11 @@ describe('broker import route', () => {
     mocks.yahooSearch.mockResolvedValue({
       quotes: [{ isYahooFinance: true, symbol: '0P0001AINF.F', quoteType: 'MUTUALFUND', longname: 'MSCI World Index Fund' }],
     })
+    mocks.yahooChart.mockImplementation(async (ticker: string) => ({
+      quotes: ticker === 'ETH-EUR'
+        ? [{ date: new Date('2026-02-25T00:00:00.000Z'), close: 1_650 }]
+        : [{ date: new Date('2026-03-01T00:00:00.000Z'), close: 75 }],
+    }))
   })
 
   it('rebuilds assets and transactions from MyInvestor and is idempotent', async () => {
@@ -210,6 +231,30 @@ describe('broker import route', () => {
       total + (transaction.tipo_operacion === 'Compra' ? transaction.cantidad : -transaction.cantidad), 0)
     expect(cashBalance).toBeCloseTo(466.34, 8)
     expect(calculateNetContributions(cashTransactions)).toBeCloseTo(979.36, 8)
+  })
+
+  it('values crypto rewards at receipt while keeping them out of invested cash', async () => {
+    const database = createImportDatabase()
+    mocks.createClient.mockResolvedValue(database.client)
+
+    const result = await (await POST(revolutCryptoStatementRequest())).json()
+
+    expect(result).toMatchObject({
+      success: true,
+      newTransactions: 4,
+      removedInternalMovements: 0,
+      skipped: [],
+    })
+    expect(database.assets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ticker: 'BTC-USD', tipo: 'Crypto', moneda: 'EUR' }),
+      expect.objectContaining({ ticker: 'ETH-USD', tipo: 'Crypto', moneda: 'EUR' }),
+      expect.objectContaining({ ticker: 'SOL-USD', tipo: 'Crypto', moneda: 'EUR' }),
+    ]))
+    expect(database.transactions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ cantidad: 0.1, precio_unitario: 1_650, notas: '[REVOLUT_REWARD] Recompensa de staking' }),
+      expect.objectContaining({ cantidad: 2, precio_unitario: 75, notas: '[REVOLUT_REWARD] Recompensa de Aprende' }),
+    ]))
+    expect(database.transactions.some((transaction) => transaction.cantidad === 1 && transaction.precio_unitario === 1_600)).toBe(false)
   })
 
   it('does not duplicate a dividend that was already entered manually', async () => {

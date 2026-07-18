@@ -1,3 +1,5 @@
+import { isNonCashReward } from '@/lib/domain/portfolio/contributions'
+
 interface CostBasisTransaction {
   id?: string
   activo_id: string
@@ -7,11 +9,18 @@ interface CostBasisTransaction {
   comision: number | null
   fecha: string
   created_at: string
+  notas?: string | null
 }
 
 interface OpenLot {
   quantity: number
-  unitCost: number
+  performanceUnitCost: number
+  investedUnitCost: number
+}
+
+export interface OpenPositionBasis {
+  performanceCost: number
+  investedCost: number
 }
 
 const BUY_OPERATIONS = new Set([
@@ -27,9 +36,9 @@ const SALE_OPERATIONS = new Set([
 
 const EPSILON = 0.00000001
 
-export function calculateOpenCostBasis(
+export function calculateOpenPositionBases(
   transactions: CostBasisTransaction[],
-): Map<string, number> {
+): Map<string, OpenPositionBasis> {
   const lotsByAsset = new Map<string, OpenLot[]>()
   const orderedTransactions = transactions
     .slice()
@@ -49,7 +58,11 @@ export function calculateOpenCostBasis(
       const fee = Math.max(0, Number(transaction.comision) || 0)
       const unitCost = ((quantity * transaction.precio_unitario) + fee) / quantity
       if (Number.isFinite(unitCost) && unitCost >= 0) {
-        lots.push({ quantity, unitCost })
+        lots.push({
+          quantity,
+          performanceUnitCost: unitCost,
+          investedUnitCost: isNonCashReward(transaction) ? 0 : unitCost,
+        })
         lotsByAsset.set(transaction.activo_id, lots)
       }
       continue
@@ -73,7 +86,21 @@ export function calculateOpenCostBasis(
   return new Map(
     Array.from(lotsByAsset, ([assetId, lots]) => [
       assetId,
-      lots.reduce((total, lot) => total + (lot.quantity * lot.unitCost), 0),
+      {
+        performanceCost: lots.reduce((total, lot) => total + (lot.quantity * lot.performanceUnitCost), 0),
+        investedCost: lots.reduce((total, lot) => total + (lot.quantity * lot.investedUnitCost), 0),
+      },
+    ]),
+  )
+}
+
+export function calculateOpenCostBasis(
+  transactions: CostBasisTransaction[],
+): Map<string, number> {
+  return new Map(
+    Array.from(calculateOpenPositionBases(transactions), ([assetId, basis]) => [
+      assetId,
+      basis.performanceCost,
     ]),
   )
 }

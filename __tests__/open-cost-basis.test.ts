@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { calculateOpenCostBasis } from '@/lib/utils/open-cost-basis'
+import { nonCashRewardNote } from '@/lib/domain/portfolio/contributions'
+import { calculateOpenCostBasis, calculateOpenPositionBases } from '@/lib/utils/open-cost-basis'
 
 const transaction = (
   overrides: Partial<{
@@ -11,6 +12,7 @@ const transaction = (
     comision: number
     fecha: string
     created_at: string
+    notas: string | null
   }>,
 ) => ({
   activo_id: 'silver',
@@ -20,6 +22,7 @@ const transaction = (
   comision: 0,
   fecha: '2026-01-01',
   created_at: '2026-01-01T00:00:00.000Z',
+  notas: null,
   ...overrides,
 })
 
@@ -60,5 +63,40 @@ describe('calculateOpenCostBasis', () => {
     ])
 
     expect(costs.get('silver')).toBe(51)
+  })
+
+  it('uses reward value for performance while excluding it from invested cash', () => {
+    const bases = calculateOpenPositionBases([
+      transaction({ cantidad: 2, precio_unitario: 100 }),
+      transaction({
+        cantidad: 1,
+        precio_unitario: 120,
+        fecha: '2026-02-01',
+        notas: nonCashRewardNote('Recompensa de staking'),
+      }),
+    ])
+
+    expect(bases.get('silver')).toEqual({
+      performanceCost: 320,
+      investedCost: 200,
+    })
+  })
+
+  it('keeps both bases aligned when FIFO disposes paid and reward lots', () => {
+    const bases = calculateOpenPositionBases([
+      transaction({ cantidad: 2, precio_unitario: 100 }),
+      transaction({
+        cantidad: 2,
+        precio_unitario: 120,
+        fecha: '2026-02-01',
+        notas: nonCashRewardNote('Recompensa gratis'),
+      }),
+      transaction({ tipo_operacion: 'Venta', cantidad: 3, precio_unitario: 150, fecha: '2026-03-01' }),
+    ])
+
+    expect(bases.get('silver')).toEqual({
+      performanceCost: 120,
+      investedCost: 0,
+    })
   })
 })

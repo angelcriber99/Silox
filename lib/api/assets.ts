@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 import { CASH_ASSET_DEFAULTS, displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
-import { calculateOpenCostBasis } from '@/lib/utils/open-cost-basis'
+import { calculateOpenPositionBases } from '@/lib/utils/open-cost-basis'
 import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
 import {
   calculateNetInvestmentByCurrency,
@@ -23,7 +23,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   const { data: completedTransactions, error: transactionsError } = await supabase
     .from('transacciones')
-    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at')
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas')
     .in('activo_id', assetIds)
     .eq('estado', 'Completada')
 
@@ -31,14 +31,17 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
     throw new Error(`Error calculando el coste FIFO de las posiciones: ${transactionsError.message}`)
   }
 
-  const openCosts = calculateOpenCostBasis(completedTransactions ?? [])
+  const openBases = calculateOpenPositionBases(completedTransactions ?? [])
   const dailyActivity = calculateDailyPositionActivity(completedTransactions ?? [])
   return normalizedPositions.map((position) => {
-    const openCost = openCosts.get(position.activo_id)
+    const openBasis = openBases.get(position.activo_id)
     const activity = dailyActivity.get(position.activo_id)
     return {
       ...position,
-      ...(openCost !== undefined ? { coste_total: openCost } : {}),
+      ...(openBasis !== undefined ? {
+        coste_total: openBasis.performanceCost,
+        dinero_invertido: openBasis.investedCost,
+      } : {}),
       ...(activity ? {
         has_daily_activity: true,
         daily_net_units: activity.netUnits,
@@ -186,6 +189,7 @@ export function enrichPositions(
     }
     
     const coste_total_eur = p.coste_total / fxRate
+    const dinero_invertido_eur = (p.dinero_invertido ?? p.coste_total) / fxRate
     
     const valor_actual_eur =
       p.unidades === 0 ? 0 :
@@ -246,6 +250,7 @@ export function enrichPositions(
       valor_actual: valor_actual_eur,
       valor_actual_nativo,
       coste_total_eur,
+      dinero_invertido_eur,
       pnl,
       pnl_percent,
       precio_medio,

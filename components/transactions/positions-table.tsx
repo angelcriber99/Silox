@@ -522,9 +522,9 @@ export function PositionsTable({
                               ? formatCurrency(p.valor_actual, 'EUR')
                               : "—")}
                           </span>
-                          {!hideBalances && p.coste_total_eur > 0 && (
+                          {!hideBalances && (p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
                             <span className="text-[10px] text-muted-foreground/70 font-normal">
-                              Inv: {formatCurrency(p.coste_total_eur, 'EUR')}
+                              Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
                             </span>
                           )}
                         </div>
@@ -678,9 +678,9 @@ export function PositionsTable({
                          <span className="text-base font-bold tabular-nums text-foreground">
                            {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
                          </span>
-                         {p.coste_total_eur > 0 && (
+                         {(p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
                            <span className="text-[10px] text-muted-foreground/70 font-normal -mt-1">
-                             Inv: {formatCurrency(p.coste_total_eur, 'EUR')}
+                             Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
                            </span>
                          )}
                        </div>

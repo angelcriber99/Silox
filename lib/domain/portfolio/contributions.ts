@@ -1,4 +1,5 @@
 export const EXTERNAL_FLOW_NOTE_PREFIX = '[REVOLUT_EXTERNAL]'
+export const NON_CASH_REWARD_NOTE_PREFIX = '[REVOLUT_REWARD]'
 
 const EUR_AMOUNT_PATTERN = /\bEUR=([0-9]+(?:\.[0-9]+)?)/
 
@@ -32,6 +33,14 @@ export function externalFlowNote(eurAmount: number, description: string): string
   return `${EXTERNAL_FLOW_NOTE_PREFIX} EUR=${eurAmount.toFixed(8)}; ${description}`
 }
 
+export function nonCashRewardNote(description: string): string {
+  return `${NON_CASH_REWARD_NOTE_PREFIX} ${description}`
+}
+
+export function isNonCashReward(transaction: ExternalFlowTransaction): boolean {
+  return transaction.notas?.startsWith(NON_CASH_REWARD_NOTE_PREFIX) ?? false
+}
+
 export function calculateNetContributions(
   transactions: ExternalFlowTransaction[],
 ): number | null {
@@ -60,6 +69,8 @@ export function calculateNetInvestmentByCurrency(
   const netByCurrency: Record<string, number> = {}
 
   for (const transaction of transactions) {
+    if (isNonCashReward(transaction)) continue
+
     const asset = Array.isArray(transaction.activo)
       ? transaction.activo[0]
       : transaction.activo

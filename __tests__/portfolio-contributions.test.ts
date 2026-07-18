@@ -5,6 +5,7 @@ import {
   calculateNetContributions,
   convertNetInvestmentToEur,
   externalFlowNote,
+  nonCashRewardNote,
 } from '@/lib/domain/portfolio/contributions'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
 import type { EnrichedPosition, Posicion } from '@/lib/types'
@@ -194,6 +195,23 @@ describe('portfolio contributions', () => {
 
     expect(funding.netByCurrency.USD).toBe(79)
     expect(convertNetInvestmentToEur(funding, { USD: 1.25 })).toBe(63.2)
+  })
+
+  it('excludes staking and free rewards from invested capital', () => {
+    const asset = { ticker: 'ETH-USD', tipo: 'Crypto', moneda: 'EUR' }
+    const funding = calculateNetInvestmentByCurrency([
+      { activo: asset, tipo_operacion: 'Compra', cantidad: 1, precio_unitario: 1_500, comision: 0 },
+      {
+        activo: asset,
+        tipo_operacion: 'Compra',
+        cantidad: 0.1,
+        precio_unitario: 1_800,
+        comision: 0,
+        notas: nonCashRewardNote('Recompensa de staking'),
+      },
+    ])
+
+    expect(funding.netByCurrency.EUR).toBe(1_500)
   })
 
   it('excludes cash and money-market bookkeeping from net invested capital', () => {
