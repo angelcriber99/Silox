@@ -9,5 +9,6 @@ describe('mobile API proxy boundary', () => {
     expect(config.matcher[0]).not.toContain('api/mobile')
     expect(middleware).toContain("startsWith('/api/mobile')")
     expect(middleware).toContain("startsWith('/api/widget')")
+    expect(middleware).toContain("request.nextUrl.pathname === '/api/logo'")
   })
 })

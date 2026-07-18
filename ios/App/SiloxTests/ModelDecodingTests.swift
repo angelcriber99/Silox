@@ -34,6 +34,18 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(asset.metadataLabel, "MSCI")
     }
 
+    func testAssetLogoRequestNormalizesMarketAndCryptoTickers() throws {
+        let baseURL = try XCTUnwrap(URL(string: "https://silox.example"))
+        let crypto = Asset(id: "btc", ticker: "BTC-USD", name: "Bitcoin", kind: .crypto, currency: "EUR")
+        let exchangeStock = Asset(id: "aapl", ticker: "AAPL.US", name: "Apple", kind: .stock, currency: "USD")
+        let shareClass = Asset(id: "brkb", ticker: "BRK.B", name: "Berkshire Hathaway", kind: .stock, currency: "USD")
+
+        XCTAssertEqual(AssetLogoRequest.identifier(for: crypto), "BTC")
+        XCTAssertEqual(AssetLogoRequest.identifier(for: exchangeStock), "AAPL")
+        XCTAssertEqual(AssetLogoRequest.identifier(for: shareClass), "BRK-B")
+        XCTAssertEqual(AssetLogoRequest.url(for: crypto, baseURL: baseURL)?.absoluteString, "https://silox.example/api/logo?ticker=BTC&kind=crypto")
+    }
+
     func testPortfolioRadarDecodesEventWindowsAndSources() throws {
         let data = Data(#"""
         {

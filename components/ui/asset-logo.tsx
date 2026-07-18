@@ -78,7 +78,7 @@ export function AssetLogo({
       />
       {/* Image layer */}
       <Image
-        src={`/api/logo?ticker=${logoTicker}`}
+        src={`/api/logo?ticker=${logoTicker}&kind=${type === "Crypto" ? "crypto" : "market"}`}
         alt={logoTicker}
         width={size}
         height={size}

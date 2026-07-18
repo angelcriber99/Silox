@@ -34,4 +34,38 @@ describe('asset logo proxy', () => {
       expect.objectContaining({ next: { revalidate: 86400 } }),
     )
   })
+
+  it('uses the crypto icon source before the equity providers', async () => {
+    const externalFetch = vi.fn().mockResolvedValue(new Response(new Uint8Array([137, 80, 78, 71]), {
+      status: 200,
+      headers: { 'content-type': 'image/png' },
+    }))
+    vi.stubGlobal('fetch', externalFetch)
+
+    const response = await GET(new NextRequest('http://localhost/api/logo?ticker=doge&kind=crypto'))
+
+    expect(response.status).toBe(200)
+    expect(externalFetch).toHaveBeenCalledWith(
+      'https://assets.coincap.io/assets/icons/doge@2x.png',
+      expect.any(Object),
+    )
+  })
+
+  it('skips invalid image responses and falls back to the next provider', async () => {
+    const externalFetch = vi.fn()
+      .mockResolvedValueOnce(new Response('{"error":"missing"}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }))
+      .mockResolvedValueOnce(new Response(new Uint8Array([137, 80, 78, 71]), {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+      }))
+    vi.stubGlobal('fetch', externalFetch)
+
+    const response = await GET(new NextRequest('http://localhost/api/logo?ticker=doge&kind=crypto'))
+
+    expect(response.status).toBe(200)
+    expect(externalFetch).toHaveBeenCalledTimes(2)
+  })
 })

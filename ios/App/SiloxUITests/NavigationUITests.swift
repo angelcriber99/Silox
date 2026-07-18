@@ -52,6 +52,16 @@ final class NavigationUITests: XCTestCase {
         capture("dividendo-retenciones-efectivo")
     }
 
+    func testAssetLogoLoadsInsideItsNativeMark() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-test-authenticated", "-ui-test-fixtures"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'" )).firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.images["asset-logo-AAPL"].waitForExistence(timeout: 3))
+        capture("logo-activo-redimensionado")
+    }
+
     func testDeepLinkSelectsSettingsTab() {
         let app = XCUIApplication()
         app.launchArguments += ["-ui-test-authenticated", "-ui-test-deep-link", "silox://settings"]

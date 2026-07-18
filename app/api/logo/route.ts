@@ -13,11 +13,15 @@ export async function GET(request: NextRequest) {
   }
   const ticker = parsedTicker.data
   const encodedTicker = encodeURIComponent(ticker)
+  const isCrypto = request.nextUrl.searchParams.get("kind") === "crypto"
 
-  const sources = [
+  const marketSources = [
     `https://financialmodelingprep.com/image-stock/${encodedTicker}.png`,
     `https://companiesmarketcap.com/img/company-logos/64/${encodedTicker}.png`
   ]
+  const sources = isCrypto
+    ? [`https://assets.coincap.io/assets/icons/${encodedTicker.toLowerCase()}@2x.png`, ...marketSources]
+    : marketSources
 
   for (const url of sources) {
     try {
@@ -30,17 +34,18 @@ export async function GET(request: NextRequest) {
 
       if (res.ok) {
         const contentType = res.headers.get("content-type")
-        
-        // Extra check: if it's returning HTML (like a 404 page masked as 200), skip
-        if (contentType && contentType.includes("text/html")) {
+        const contentLength = Number(res.headers.get("content-length") ?? 0)
+
+        if (!contentType?.match(/^image\/(png|jpeg|webp)(?:;|$)/i) || contentLength > 1_000_000) {
           continue
         }
 
         const arrayBuffer = await res.arrayBuffer()
-        
+        if (arrayBuffer.byteLength === 0 || arrayBuffer.byteLength > 1_000_000) continue
+
         return new NextResponse(arrayBuffer, {
           headers: {
-            "Content-Type": contentType || "image/png",
+            "Content-Type": contentType,
             "Cache-Control": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
           },
         })

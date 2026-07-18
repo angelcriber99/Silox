@@ -44,6 +44,7 @@ struct SiloxCard<Content: View>: View {
 struct SiloxAssetMark: View {
     let asset: Asset
     var size: CGFloat = 42
+    @State private var logoImage: UIImage?
 
     private var symbol: String {
         String(asset.shortLabel.prefix(2)).uppercased()
@@ -62,39 +63,24 @@ struct SiloxAssetMark: View {
     }
 
     private var logoURL: URL? {
-        guard asset.kind != .cash,
-              let rawBaseURL = Bundle.main.object(forInfoDictionaryKey: "SILOX_API_BASE_URL") as? String,
-              let baseURL = URL(string: rawBaseURL) else { return nil }
-        let ticker = asset.kind == .fund ? asset.shortLabel : (asset.ticker ?? asset.shortLabel)
-        let withoutExchange = ticker.split(separator: ".").first.map(String.init) ?? ticker
-        let identifier = withoutExchange.split(separator: "-").first.map(String.init) ?? withoutExchange
-        guard !identifier.isEmpty else { return nil }
-        var components = URLComponents(url: baseURL.appending(path: "api/logo"), resolvingAgainstBaseURL: false)
-        components?.queryItems = [URLQueryItem(name: "ticker", value: identifier.uppercased())]
-        return components?.url
+        guard let baseURL = AssetLogoLoader.baseURL else { return nil }
+        return AssetLogoRequest.url(for: asset, baseURL: baseURL)
     }
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
                 .fill(Color.white.opacity(0.94))
-            if let logoURL {
-                AsyncImage(url: logoURL, transaction: Transaction(animation: .easeInOut(duration: 0.15))) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFit()
-                            .padding(size * 0.12)
-                            .transition(.opacity)
-                    case .empty:
-                        ProgressView().controlSize(.mini).tint(tint)
-                    case .failure:
-                        fallback
-                    @unknown default:
-                        fallback
-                    }
-                }
+            if let logoImage {
+                Image(uiImage: logoImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .antialiased(true)
+                    .scaledToFit()
+                    .padding(size * 0.07)
+                    .transition(.opacity)
+                    .accessibilityLabel("Logo de \(asset.displayName)")
+                    .accessibilityIdentifier("asset-logo-\(logoIdentifier)")
             } else {
                 fallback
             }
@@ -105,7 +91,9 @@ struct SiloxAssetMark: View {
             RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
                 .stroke(tint.opacity(0.24), lineWidth: 0.75)
         }
-        .accessibilityHidden(true)
+        .task(id: logoURL) {
+            await loadLogo()
+        }
     }
 
     private var fallback: some View {
@@ -114,6 +102,116 @@ struct SiloxAssetMark: View {
             .foregroundStyle(tint)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(tint.opacity(0.13))
+            .accessibilityHidden(true)
+    }
+
+    private var logoIdentifier: String {
+        AssetLogoRequest.identifier(for: asset) ?? symbol
+    }
+
+    @MainActor
+    private func loadLogo() async {
+        logoImage = nil
+        guard let logoURL else { return }
+        guard let image = await AssetLogoLoader.shared.image(for: logoURL) else {
+            return
+        }
+        guard !Task.isCancelled else { return }
+        withAnimation(.easeInOut(duration: 0.15)) {
+            logoImage = image
+        }
+    }
+}
+
+enum AssetLogoRequest {
+    private static let exchangeSuffixes: Set<String> = [
+        "AS", "AX", "BR", "CO", "DE", "F", "HE", "HK", "IR", "L", "LS", "MC", "MI", "OL", "PA", "ST", "SW", "TO", "US", "VI"
+    ]
+
+    static func identifier(for asset: Asset) -> String? {
+        guard asset.kind != .cash else { return nil }
+        let raw = (asset.kind == .fund ? asset.shortLabel : (asset.ticker ?? asset.shortLabel))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
+        guard !raw.isEmpty else { return nil }
+
+        if asset.kind == .crypto {
+            return raw.split(separator: "-").first.map(String.init)
+        }
+
+        let parts = raw.split(separator: ".").map(String.init)
+        if parts.count == 2 {
+            return exchangeSuffixes.contains(parts[1]) ? parts[0] : parts.joined(separator: "-")
+        }
+        return parts.first ?? raw
+    }
+
+    static func url(for asset: Asset, baseURL: URL) -> URL? {
+        guard let identifier = identifier(for: asset) else { return nil }
+        var components = URLComponents(url: baseURL.appending(path: "api/logo"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [
+            URLQueryItem(name: "ticker", value: identifier),
+            URLQueryItem(name: "kind", value: asset.kind == .crypto ? "crypto" : "market")
+        ]
+        return components?.url
+    }
+}
+
+@MainActor
+private final class AssetLogoLoader {
+    static let shared = AssetLogoLoader()
+
+    static var baseURL: URL? {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-test-fixtures") {
+            return URL(string: "https://ui-test.silox.local")
+        }
+        #endif
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "SILOX_API_BASE_URL") as? String else { return nil }
+        return URL(string: raw)
+    }
+
+    private let memoryCache = NSCache<NSURL, UIImage>()
+    private let session: URLSession
+
+    private init() {
+        let configuration = URLSessionConfiguration.default
+        configuration.requestCachePolicy = .returnCacheDataElseLoad
+        configuration.urlCache = .shared
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-test-fixtures") {
+            configuration.protocolClasses = [UITestURLProtocol.self]
+        }
+        #endif
+        session = URLSession(configuration: configuration)
+    }
+
+    func image(for url: URL) async -> UIImage? {
+        if let cached = memoryCache.object(forKey: url as NSURL) {
+            return cached
+        }
+
+        var request = URLRequest(url: url)
+        request.cachePolicy = .returnCacheDataElseLoad
+        request.timeoutInterval = 15
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard !Task.isCancelled,
+                  data.count <= 1_000_000,
+                  let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode),
+                  httpResponse.mimeType?.hasPrefix("image/") == true,
+                  let image = UIImage(data: data),
+                  image.size.width <= 2_048,
+                  image.size.height <= 2_048 else { return nil }
+            memoryCache.setObject(image, forKey: url as NSURL, cost: data.count)
+            return image
+        } catch is CancellationError {
+            return nil
+        } catch {
+            return nil
+        }
     }
 }
 
