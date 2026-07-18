@@ -15,4 +15,20 @@ final class ModelDecodingTests: XCTestCase {
     func testTransactionKindTitlesAreComplete() {
         XCTAssertEqual(Set(InvestmentTransaction.Kind.allCases.map(\.title)).count, InvestmentTransaction.Kind.allCases.count)
     }
+
+    func testSpanishDecimalInputIsNormalized() {
+        XCTAssertEqual("1 234,56".normalizedDecimal, Decimal(string: "1234.56"))
+        XCTAssertNil("12,3,4".normalizedDecimal)
+    }
+
+    func testLongIdentifierUsesRecognizableAssetLabel() {
+        let asset = Asset(
+            id: "msci",
+            ticker: "IE00BYX5P602",
+            name: "MSCI World Index Fund P-Acc-EUR",
+            kind: .fund,
+            currency: "EUR"
+        )
+        XCTAssertEqual(asset.shortLabel, "MSCI")
+    }
 }

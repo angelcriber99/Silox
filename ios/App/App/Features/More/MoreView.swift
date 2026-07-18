@@ -13,6 +13,15 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Aplicación") {
+                    NavigationLink { MobilePreferencesView() } label: {
+                        Label("Visualización y comportamiento", systemImage: "slider.horizontal.3")
+                    }
+                    NavigationLink { NotificationPreferencesView(repository: environment.settingsRepository) } label: {
+                        Label("Notificaciones", systemImage: "bell.badge")
+                    }
+                }
+
                 Section("Inversión") {
                     NavigationLink {
                         PortfolioHistoryView(repository: environment.insightsRepository)
@@ -71,7 +80,7 @@ struct MoreView: View {
                 }
 
                 Section {
-                    Text("Silox iOS 1.0").font(.caption).foregroundStyle(.secondary)
+                    Text("Silox iOS 1.1 · Build 2").font(.caption).foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Más")
@@ -122,3 +131,120 @@ struct MoreView: View {
 }
 
 private struct WidgetRevocationResponse: Decodable, Sendable { let revoked: Bool }
+
+private struct MobilePreferencesView: View {
+    @AppStorage("appearanceMode") private var appearanceMode = "system"
+    @AppStorage("compactPositions") private var compactPositions = false
+    @AppStorage("portfolioSort") private var portfolioSort = "value"
+    @AppStorage("quantityPrecision") private var quantityPrecision = 4
+    @AppStorage("defaultCurrency") private var defaultCurrency = "EUR"
+    @AppStorage("liveRefreshSeconds") private var liveRefreshSeconds = 5
+
+    var body: some View {
+        Form {
+            Section("Apariencia") {
+                Picker("Tema", selection: $appearanceMode) {
+                    Text("Sistema").tag("system")
+                    Text("Claro").tag("light")
+                    Text("Oscuro").tag("dark")
+                }
+                Picker("Densidad de posiciones", selection: $compactPositions) {
+                    Text("Cómoda").tag(false)
+                    Text("Compacta").tag(true)
+                }
+            }
+
+            Section("Cartera") {
+                Picker("Orden predeterminado", selection: $portfolioSort) {
+                    Text("Valor").tag("value")
+                    Text("Movimiento diario").tag("day")
+                }
+                Stepper("Decimales en unidades: \(quantityPrecision)", value: $quantityPrecision, in: 0...8)
+                Picker("Moneda para nuevos activos", selection: $defaultCurrency) {
+                    ForEach(["EUR", "USD", "GBP", "CHF"], id: \.self) { Text($0) }
+                }
+            }
+
+            Section("Datos en tiempo real") {
+                Picker("Actualizar cada", selection: $liveRefreshSeconds) {
+                    Text("3 segundos").tag(3)
+                    Text("5 segundos").tag(5)
+                    Text("10 segundos").tag(10)
+                    Text("30 segundos").tag(30)
+                }
+                Text("Una frecuencia más alta consume más batería y datos móviles.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .navigationTitle("Experiencia móvil")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct NotificationPreferencesView: View {
+    let repository: SettingsRepository
+    @State private var pushNotifications = false
+    @State private var emailNotifications = true
+    @State private var priceAlerts = true
+    @State private var weeklyReport = false
+    @State private var dividendAlerts = true
+    @State private var isLoading = true
+    @State private var isSaving = false
+    @State private var message: String?
+
+    var body: some View {
+        Form {
+            Section("Canales") {
+                Toggle("Notificaciones push", isOn: $pushNotifications)
+                Toggle("Notificaciones por email", isOn: $emailNotifications)
+            }
+            Section("Contenido") {
+                Toggle("Alertas de precio", isOn: $priceAlerts)
+                Toggle("Dividendos", isOn: $dividendAlerts)
+                Toggle("Resumen semanal", isOn: $weeklyReport)
+            }
+            if let message { Section { Text(message).font(.caption).foregroundStyle(.secondary) } }
+            Section {
+                Button { Task { await save() } } label: {
+                    HStack {
+                        Spacer()
+                        if isSaving { ProgressView() } else { Text("Guardar preferencias").fontWeight(.semibold) }
+                        Spacer()
+                    }
+                }
+                .disabled(isLoading || isSaving)
+            }
+        }
+        .navigationTitle("Notificaciones")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await load() }
+    }
+
+    private func load() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let value = try await repository.get()
+            pushNotifications = value.pushNotifications
+            emailNotifications = value.emailNotifications
+            priceAlerts = value.priceAlerts
+            weeklyReport = value.weeklyReport
+            dividendAlerts = value.dividendAlerts
+        } catch { message = error.localizedDescription }
+    }
+
+    private func save() async {
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            _ = try await repository.update(UpdateNotificationPreferences(
+                pushNotifications: pushNotifications,
+                emailNotifications: emailNotifications,
+                priceAlerts: priceAlerts,
+                weeklyReport: weeklyReport,
+                dividendAlerts: dividendAlerts
+            ))
+            message = "Preferencias guardadas."
+        } catch { message = error.localizedDescription }
+    }
+}

@@ -158,6 +158,26 @@ struct RecurringEventWire: Decodable, Sendable {
     }
 }
 
+struct MarketEventsRequest: Encodable, Sendable { let tickers: [String] }
+
+struct MarketCalendarEventWire: Decodable, Sendable {
+    let id: String?
+    let ticker: String
+    let date: Date
+    let type: String
+    let title: String?
+
+    func domain() -> MarketEvent {
+        MarketEvent(
+            id: id ?? "\(ticker)-\(type)-\(date.timeIntervalSince1970)",
+            title: title ?? type,
+            startsAt: date,
+            kind: type,
+            ticker: ticker
+        )
+    }
+}
+
 struct NewsItemWire: Decodable, Sendable {
     let id: String
     let title: String

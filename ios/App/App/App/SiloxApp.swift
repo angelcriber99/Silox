@@ -24,6 +24,7 @@ final class AppEnvironment: ObservableObject {
     let transactionRepository: TransactionRepository
     let assetRepository: AssetRepository
     let insightsRepository: InsightsRepository
+    let settingsRepository: SettingsRepository
 
     init(api: APIClient, session: SessionStore, cache: ReadCache) {
         self.api = api
@@ -33,6 +34,7 @@ final class AppEnvironment: ObservableObject {
         transactionRepository = TransactionRepository(api: api, cache: cache)
         assetRepository = AssetRepository(api: api)
         insightsRepository = InsightsRepository(api: api)
+        settingsRepository = SettingsRepository(api: api)
     }
 
     static func live() -> AppEnvironment {

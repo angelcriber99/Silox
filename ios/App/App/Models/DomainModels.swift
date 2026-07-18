@@ -147,3 +147,20 @@ struct WidgetCredentialResponse: Codable, Sendable {
     let token: String
     let expiresAt: Date?
 }
+
+struct NotificationPreferences: Codable, Sendable, Equatable {
+    let pushNotifications: Bool
+    let emailNotifications: Bool
+    let priceAlerts: Bool
+    let weeklyReport: Bool
+    let dividendAlerts: Bool
+    let updatedAt: Date?
+}
+
+struct UpdateNotificationPreferences: Encodable, Sendable {
+    let pushNotifications: Bool
+    let emailNotifications: Bool
+    let priceAlerts: Bool
+    let weeklyReport: Bool
+    let dividendAlerts: Bool
+}

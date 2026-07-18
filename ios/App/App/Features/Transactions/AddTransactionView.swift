@@ -8,14 +8,15 @@ struct AddTransactionView: View {
     @State private var assets: [Asset] = []
     @State private var assetId = ""
     @State private var quantity = ""
-    @State private var amount = ""
+    @State private var executionPrice = ""
+    @State private var cashAmount = ""
     @State private var commission = "0"
-    @State private var updatesCash = true
     @State private var date = Date()
     @State private var notes = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var showsNewAsset = false
+    @State private var showsAssetPicker = false
     @State private var idempotencyKey = UUID().uuidString
 
     init(repository: TransactionRepository, assetRepository: AssetRepository, preselectedAssetId: String? = nil) {
@@ -29,8 +30,22 @@ struct AddTransactionView: View {
             Form {
                 Section("Operación") {
                     Picker("Tipo", selection: $kind) {
-                        ForEach([InvestmentTransaction.Kind.buy, .sell, .dividend, .withdrawal], id: \.self) { Text($0.title).tag($0) }
+                        Text("Compra").tag(InvestmentTransaction.Kind.buy)
+                        Text("Venta").tag(InvestmentTransaction.Kind.sell)
                     }
+                    .pickerStyle(.segmented)
+
+                    Menu {
+                        Button("Dividendo") { kind = .dividend }
+                        Button("Retirada") { kind = .withdrawal }
+                        if !isTrade { Button("Volver a compra") { kind = .buy } }
+                    } label: {
+                        Label(isTrade ? "Otros movimientos" : kind.title, systemImage: "ellipsis.circle")
+                            .font(.subheadline)
+                    }
+                }
+
+                Section("Activo") {
                     if assets.isEmpty {
                         ContentUnavailableView(
                             "No hay activos",
@@ -38,31 +53,61 @@ struct AddTransactionView: View {
                             description: Text("Crea el primer activo antes de guardar el movimiento.")
                         )
                     } else {
-                        Picker("Activo", selection: $assetId) {
-                            Text("Selecciona un activo").tag("")
-                            ForEach(assets) { asset in
-                                Text("\(asset.ticker ?? asset.name) · \(asset.name)").tag(asset.id)
+                        Button { showsAssetPicker = true } label: {
+                            HStack(spacing: 12) {
+                                if let selectedAsset {
+                                    SiloxAssetMark(asset: selectedAsset, size: 38)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(selectedAsset.shortLabel).font(.headline).foregroundStyle(.primary)
+                                        Text(selectedAsset.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                    }
+                                } else {
+                                    Image(systemName: "magnifyingglass").frame(width: 38, height: 38)
+                                    Text("Seleccionar activo").foregroundStyle(.primary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
                             }
                         }
+                        .buttonStyle(.plain)
                     }
-                    Button("Crear activo") { showsNewAsset = true }
-                    TextField("Cantidad", text: $quantity).keyboardType(.decimalPad)
-                    TextField("Importe total", text: $amount).keyboardType(.decimalPad)
-                    TextField("Comisión", text: $commission).keyboardType(.decimalPad)
-                    if kind == .buy || kind == .sell {
-                        Toggle("Actualizar saldo de liquidez", isOn: $updatesCash)
-                    }
-                    DatePicker("Fecha", selection: $date)
-                    TextField("Notas", text: $notes, axis: .vertical)
+                    Button { showsNewAsset = true } label: { Label("Crear activo", systemImage: "plus") }
                 }
-                if let errorMessage { Section { Text(errorMessage).foregroundStyle(.red) } }
+
+                Section(isTrade ? "Ejecución" : "Importe") {
+                    if isTrade {
+                        numericField("Cantidad", text: $quantity, suffix: "uds.")
+                        numericField("Precio de ejecución", text: $executionPrice, suffix: selectedAsset?.currency ?? "")
+                    } else {
+                        numericField("Importe", text: $cashAmount, suffix: selectedAsset?.currency ?? "")
+                    }
+                    numericField("Comisiones pagadas", text: $commission, suffix: selectedAsset?.currency ?? "")
+
+                    if isTrade, let total = calculatedTotal {
+                        LabeledContent("Total de la operación") {
+                            Text(total.formatted(.currency(code: selectedAsset?.currency ?? "EUR")))
+                                .font(.headline)
+                                .monospacedDigit()
+                        }
+                    }
+                }
+
+                Section("Detalles") {
+                    DatePicker("Fecha de ejecución", selection: $date, displayedComponents: [.date])
+                    TextField("Notas opcionales", text: $notes, axis: .vertical)
+                        .lineLimit(2...4)
+                }
+
+                if let errorMessage {
+                    Section { Label(errorMessage, systemImage: "exclamationmark.triangle.fill").foregroundStyle(SiloxColors.negative) }
+                }
             }
             .navigationTitle("Añadir movimiento")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") { Task { await save() } }.disabled(assetId.isEmpty || amount.isEmpty || isSaving)
+                    Button("Guardar") { Task { await save() } }.disabled(!canSave || isSaving)
                 }
             }
             .interactiveDismissDisabled(isSaving)
@@ -73,27 +118,51 @@ struct AddTransactionView: View {
                     assetId = asset.id
                 }
             }
+            .sheet(isPresented: $showsAssetPicker) {
+                AssetSelectionView(assets: assets, selection: $assetId)
+            }
+        }
+    }
+
+    private var isTrade: Bool { kind == .buy || kind == .sell }
+    private var selectedAsset: Asset? { assets.first(where: { $0.id == assetId }) }
+    private var calculatedTotal: Decimal? {
+        guard let quantity = quantity.normalizedDecimal, quantity > 0,
+              let price = executionPrice.normalizedDecimal, price > 0 else { return nil }
+        return quantity * price
+    }
+    private var canSave: Bool {
+        !assetId.isEmpty && (isTrade ? calculatedTotal != nil : (cashAmount.normalizedDecimal ?? 0) > 0)
+    }
+
+    private func numericField(_ title: String, text: Binding<String>, suffix: String) -> some View {
+        HStack {
+            TextField(title, text: text).keyboardType(.decimalPad)
+            if !suffix.isEmpty { Text(suffix).foregroundStyle(.secondary) }
         }
     }
 
     private func loadAssets() async {
         do {
-            assets = try await assetRepository.list()
+            let loaded = try await assetRepository.list()
+            assets = loaded.filter { $0.kind != .cash }
             if assetId.isEmpty, assets.count == 1 { assetId = assets[0].id }
         } catch { errorMessage = error.localizedDescription }
     }
 
     private func save() async {
-        guard Decimal(string: amount) != nil else { errorMessage = "Introduce un importe válido."; return }
-        if kind == .buy || kind == .sell {
-            guard let parsed = Decimal(string: quantity), parsed > 0 else { errorMessage = "Introduce una cantidad mayor que cero."; return }
-        } else if !quantity.isEmpty, Decimal(string: quantity) == nil {
-            errorMessage = "Introduce una cantidad válida."; return
+        let operationAmount: Decimal
+        if isTrade {
+            guard let total = calculatedTotal else { errorMessage = "Revisa la cantidad y el precio de ejecución."; return }
+            operationAmount = total
+        } else {
+            guard let parsed = cashAmount.normalizedDecimal, parsed > 0 else { errorMessage = "Introduce un importe válido."; return }
+            operationAmount = parsed
         }
-        guard let parsedCommission = Decimal(string: commission), parsedCommission >= 0 else {
+        guard let parsedCommission = commission.normalizedDecimal, parsedCommission >= 0 else {
             errorMessage = "Introduce una comisión válida."; return
         }
-        if kind == .sell, let parsedAmount = Decimal(string: amount), parsedCommission >= parsedAmount {
+        if kind == .sell, parsedCommission >= operationAmount {
             errorMessage = "La comisión debe ser menor que el importe de la venta."; return
         }
         isSaving = true
@@ -102,16 +171,56 @@ struct AddTransactionView: View {
             _ = try await repository.create(CreateTransactionRequest(
                 kind: kind,
                 assetId: assetId.isEmpty ? nil : assetId,
-                quantity: quantity.isEmpty ? nil : quantity,
-                amount: amount,
-                commission: commission,
-                updatesCash: updatesCash,
+                quantity: isTrade ? NSDecimalNumber(decimal: quantity.normalizedDecimal ?? 0).stringValue : nil,
+                amount: NSDecimalNumber(decimal: operationAmount).stringValue,
+                commission: NSDecimalNumber(decimal: parsedCommission).stringValue,
+                updatesCash: false,
                 occurredAt: date,
                 notes: notes.isEmpty ? nil : notes,
                 idempotencyKey: idempotencyKey
             ))
             dismiss()
         } catch { errorMessage = error.localizedDescription }
+    }
+}
+
+private struct AssetSelectionView: View {
+    @Environment(\.dismiss) private var dismiss
+    let assets: [Asset]
+    @Binding var selection: String
+    @State private var query = ""
+
+    private var visibleAssets: [Asset] {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return assets
+            .filter { term.isEmpty || $0.name.localizedCaseInsensitiveContains(term) || $0.shortLabel.localizedCaseInsensitiveContains(term) }
+            .sorted { $0.shortLabel < $1.shortLabel }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List(visibleAssets) { asset in
+                Button {
+                    selection = asset.id
+                    dismiss()
+                } label: {
+                    HStack(spacing: 12) {
+                        SiloxAssetMark(asset: asset, size: 38)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(asset.shortLabel).font(.headline).foregroundStyle(.primary)
+                            Text(asset.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer()
+                        if selection == asset.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(SiloxColors.accent) }
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            .navigationTitle("Seleccionar activo")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $query, prompt: "Nombre o símbolo")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cerrar") { dismiss() } } }
+        }
     }
 }
 
@@ -122,7 +231,7 @@ private struct NewAssetView: View {
     @State private var ticker = ""
     @State private var name = ""
     @State private var type = "Acción"
-    @State private var currency = "EUR"
+    @AppStorage("defaultCurrency") private var currency = "EUR"
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -133,7 +242,7 @@ private struct NewAssetView: View {
                     TextField("Ticker", text: $ticker).textInputAutocapitalization(.characters)
                     TextField("Nombre (opcional)", text: $name)
                     Picker("Tipo", selection: $type) {
-                        ForEach(["Acción", "ETF", "Fondo", "Criptomoneda", "Metal", "Liquidez"], id: \.self) { Text($0) }
+                        ForEach(["Acción", "ETF", "Fondo", "Criptomoneda", "Metal"], id: \.self) { Text($0) }
                     }
                     Picker("Moneda", selection: $currency) {
                         ForEach(["EUR", "USD", "GBP", "CHF"], id: \.self) { Text($0) }

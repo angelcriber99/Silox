@@ -29,12 +29,28 @@ final class RadarRepository: @unchecked Sendable {
     init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
     func cached() async -> ReadCache.Cached<RadarResponse>? { await cache.load(RadarResponse.self, key: cacheKey) }
     func refresh() async throws -> RadarResponse {
+        let portfolio: PortfolioWire = try await api.get("api/mobile/v1/portfolio")
+        let activeTickers = portfolio.positions
+            .filter { ($0.units?.decimalValue ?? 0) > 0 && Asset.Kind(serverValue: $0.type) != .cash }
+            .map(\.ticker)
+        let tickerSet = Set(activeTickers.map { $0.uppercased() })
         async let eventRequest: [RecurringEventWire] = api.get("api/mobile/v1/events")
         async let newsRequest: [NewsItemWire] = api.get("api/mobile/v1/news")
         let (events, news) = try await (eventRequest, newsRequest)
+        let marketEvents: [MarketCalendarEventWire] = (try? await api.send(
+            "api/mobile/v1/market/events",
+            method: .post,
+            body: MarketEventsRequest(tickers: activeTickers)
+        )) ?? []
+        let recurring = events
+            .filter { event in event.asset?.ticker.map { tickerSet.contains($0.uppercased()) } ?? false }
+            .map { $0.domain() }
+        let combined = (recurring + marketEvents.map { $0.domain() })
+            .filter { $0.startsAt >= Calendar.current.startOfDay(for: .now) }
+            .sorted { $0.startsAt < $1.startsAt }
         let response = RadarResponse(
-            news: news.map { $0.domain() },
-            events: events.map { $0.domain() },
+            news: news.map { $0.domain() }.filter { item in item.ticker.map { tickerSet.contains($0.uppercased()) } ?? false },
+            events: combined,
             updatedAt: .now
         )
         await cache.save(response, key: cacheKey)
@@ -51,10 +67,24 @@ final class TransactionRepository: @unchecked Sendable {
     func cached() async -> ReadCache.Cached<TransactionPage>? { await cache.load(TransactionPage.self, key: cacheKey) }
     func list(cursor: String? = nil) async throws -> TransactionPage {
         let page = cursor.flatMap(Int.init) ?? 1
-        let query = [URLQueryItem(name: "page", value: String(page)), URLQueryItem(name: "pageSize", value: "50")]
+        let query = [URLQueryItem(name: "page", value: String(page)), URLQueryItem(name: "pageSize", value: "100")]
         let wire: TransactionPageWire = try await api.get("api/mobile/v1/transactions", query: query)
         let response = wire.domain()
         if cursor == nil { await cache.save(response, key: cacheKey) }
+        return response
+    }
+
+    func listAll() async throws -> TransactionPage {
+        var items: [InvestmentTransaction] = []
+        var cursor: String? = nil
+        repeat {
+            let page = try await list(cursor: cursor)
+            items.append(contentsOf: page.items)
+            cursor = page.nextCursor
+        } while cursor != nil && items.count < 10_000
+
+        let response = TransactionPage(items: items, nextCursor: nil)
+        await cache.save(response, key: cacheKey)
         return response
     }
     func create(_ request: CreateTransactionRequest) async throws -> InvestmentTransaction {
@@ -137,5 +167,18 @@ final class InsightsRepository: @unchecked Sendable {
 
     func alerts() async throws -> [PriceAlert] {
         try await api.get("api/mobile/v1/alerts")
+    }
+}
+
+final class SettingsRepository: @unchecked Sendable {
+    private let api: APIClient
+    init(api: APIClient) { self.api = api }
+
+    func get() async throws -> NotificationPreferences {
+        try await api.get("api/mobile/v1/settings")
+    }
+
+    func update(_ preferences: UpdateNotificationPreferences) async throws -> NotificationPreferences {
+        try await api.send("api/mobile/v1/settings", method: .patch, body: preferences)
     }
 }

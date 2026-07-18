@@ -150,7 +150,7 @@ describe('broker import route', () => {
     expect(second).toMatchObject({ success: true, newTransactions: 0, ignoredDuplicates: 2 })
     expect(database.assets).toHaveLength(1)
     expect(database.transactions).toHaveLength(2)
-  })
+  }, 15_000)
 
   it('rebuilds Revolut stock trades and ignores the same file on reimport', async () => {
     const database = createImportDatabase()

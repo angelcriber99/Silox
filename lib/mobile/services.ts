@@ -582,12 +582,24 @@ export async function marketNews(context: Context, ticker?: string | null) {
 
 export async function marketEvents(tickers: string[]) {
   if (!Array.isArray(tickers) || tickers.length > 100) throw new MobileApiError(400, 'validation_error', 'Tickers inválidos')
-  const events: Array<{ ticker: string; date: string; type: string }> = []
+  const events: Array<{ id: string; ticker: string; date: string; type: string; title: string }> = []
   await mapSettledWithConcurrency(tickers, 6, async (ticker) => {
     if (typeof ticker !== 'string' || ticker.length > 30) return
     const result = await getYahooFinance().quoteSummary(ticker, { modules: ['calendarEvents'] })
-    if (result.calendarEvents?.exDividendDate) events.push({ ticker, date: result.calendarEvents.exDividendDate.toISOString(), type: 'Ex-Dividendo' })
-    if (result.calendarEvents?.dividendDate) events.push({ ticker, date: result.calendarEvents.dividendDate.toISOString(), type: 'Pago Dividendo' })
+    const calendar = result.calendarEvents
+    const earningsDate = calendar?.earnings?.earningsDate?.[0]
+    if (earningsDate) {
+      const date = new Date(earningsDate).toISOString()
+      events.push({ id: `${ticker}-earnings-${date}`, ticker, date, type: 'EARNINGS', title: 'Resultados financieros' })
+    }
+    if (calendar?.exDividendDate) {
+      const date = calendar.exDividendDate.toISOString()
+      events.push({ id: `${ticker}-ex-dividend-${date}`, ticker, date, type: 'EX_DIVIDEND', title: 'Fecha ex-dividendo' })
+    }
+    if (calendar?.dividendDate) {
+      const date = calendar.dividendDate.toISOString()
+      events.push({ id: `${ticker}-dividend-${date}`, ticker, date, type: 'DIVIDEND', title: 'Pago de dividendo' })
+    }
   })
   return events.sort((left, right) => left.date.localeCompare(right.date))
 }

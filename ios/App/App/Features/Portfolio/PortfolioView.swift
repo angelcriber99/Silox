@@ -43,13 +43,15 @@ private enum PositionSort: String, CaseIterable, Identifiable {
 struct PortfolioView: View {
     @StateObject private var model: PortfolioViewModel
     @AppStorage("hideBalances") private var hideBalances = false
+    @AppStorage("portfolioSort") private var positionSortRaw = PositionSort.value.rawValue
+    @AppStorage("compactPositions") private var compactPositions = false
+    @AppStorage("quantityPrecision") private var quantityPrecision = 4
+    @AppStorage("liveRefreshSeconds") private var liveRefreshSeconds = 5
     @Environment(\.scenePhase) private var scenePhase
     @State private var performancePeriod: PerformancePeriod = .session
-    @State private var positionSort: PositionSort = .value
     @State private var search = ""
 
     private let repository: PortfolioRepository
-    private let liveRefreshSeconds: UInt64 = 5
     let onAdd: (String?) -> Void
 
     init(repository: PortfolioRepository, onAdd: @escaping (String?) -> Void = { _ in }) {
@@ -99,7 +101,7 @@ struct PortfolioView: View {
             .task(id: scenePhase) {
                 guard scenePhase == .active else { return }
                 while !Task.isCancelled {
-                    do { try await Task.sleep(for: .seconds(liveRefreshSeconds)) }
+                    do { try await Task.sleep(for: .seconds(Double(liveRefreshSeconds))) }
                     catch { return }
                     guard !Task.isCancelled, scenePhase == .active else { return }
                     await model.refresh()
@@ -120,11 +122,12 @@ struct PortfolioView: View {
     }
 
     private func portfolioContent(_ portfolio: PortfolioResponse, cachedAt: Date?) -> some View {
-        ScrollView {
+        let active = activePositions(portfolio.positions)
+        return ScrollView {
             LazyVStack(spacing: 12) {
                 if let cachedAt { StaleBanner(date: cachedAt) }
                 portfolioSummary(portfolio)
-                allocationCard(portfolio.positions)
+                allocationCard(active)
 
                 Button { onAdd(nil) } label: {
                     Label("Añadir movimiento", systemImage: "plus")
@@ -136,9 +139,9 @@ struct PortfolioView: View {
                 }
                 .buttonStyle(.plain)
 
-                positionsHeader(portfolio)
+                positionsHeader(active.count)
 
-                let positions = visiblePositions(portfolio.positions)
+                let positions = visiblePositions(active)
                 if positions.isEmpty {
                     ContentUnavailableView(
                         search.isEmpty ? "Sin posiciones" : "Sin resultados",
@@ -152,6 +155,8 @@ struct PortfolioView: View {
                             position: position,
                             period: performancePeriod,
                             hideBalances: hideBalances,
+                            compact: compactPositions,
+                            quantityPrecision: quantityPrecision,
                             repository: repository,
                             onAdd: { onAdd(position.id) }
                         )
@@ -159,7 +164,7 @@ struct PortfolioView: View {
                 }
 
                 Label(
-                    "Actualizado (portfolio.updatedAt.formatted(date: .omitted, time: .standard))",
+                    "Actualizado \(portfolio.updatedAt.formatted(date: .omitted, time: .standard))",
                     systemImage: "arrow.triangle.2.circlepath"
                 )
                 .font(.caption2)
@@ -235,7 +240,7 @@ struct PortfolioView: View {
                     Divider().padding(.horizontal, 10)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Posiciones").font(.caption2).foregroundStyle(.secondary)
-                        Text(String(portfolio.positions.count)).font(.caption.weight(.semibold)).monospacedDigit()
+                        Text(String(activePositions(portfolio.positions).count)).font(.caption.weight(.semibold)).monospacedDigit()
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -297,15 +302,18 @@ struct PortfolioView: View {
         }
     }
 
-    private func positionsHeader(_ portfolio: PortfolioResponse) -> some View {
+    private func positionsHeader(_ count: Int) -> some View {
         VStack(spacing: 10) {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Posiciones").font(.title3.weight(.semibold))
-                    Text("\(portfolio.positions.count) activos").font(.caption).foregroundStyle(.secondary)
+                    Text("\(count) activos con inversión").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Picker("Orden", selection: $positionSort) {
+                Picker("Orden", selection: Binding(
+                    get: { PositionSort(rawValue: positionSortRaw) ?? .value },
+                    set: { positionSortRaw = $0.rawValue }
+                )) {
                     ForEach(PositionSort.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
@@ -339,12 +347,16 @@ struct PortfolioView: View {
                     || (position.asset.ticker?.localizedCaseInsensitiveContains(term) ?? false)
             }
             .sorted { left, right in
-                if positionSort == .day {
+                if (PositionSort(rawValue: positionSortRaw) ?? .value) == .day {
                     return abs(left.dailyChange?.amount.decimalValue.doubleValue ?? 0)
                         > abs(right.dailyChange?.amount.decimalValue.doubleValue ?? 0)
                 }
                 return left.currentValue.amount.decimalValue > right.currentValue.amount.decimalValue
             }
+    }
+
+    private func activePositions(_ positions: [Position]) -> [Position] {
+        positions.filter { $0.asset.kind != .cash && $0.quantity.decimalValue > 0 }
     }
 
     private struct AllocationItem: Identifiable {
@@ -396,6 +408,8 @@ private struct PositionRow: View {
     let position: Position
     let period: PerformancePeriod
     let hideBalances: Bool
+    let compact: Bool
+    let quantityPrecision: Int
     let repository: PortfolioRepository
     let onAdd: () -> Void
 
@@ -424,7 +438,7 @@ private struct PositionRow: View {
 
                         VStack(alignment: .leading, spacing: 3) {
                             HStack(spacing: 5) {
-                                Text(position.asset.ticker ?? position.asset.name).font(.subheadline.weight(.semibold))
+                                Text(position.asset.shortLabel).font(.subheadline.weight(.semibold))
                                 if position.isPriceStale {
                                     Text("RETRASADO")
                                         .font(.system(size: 8, weight: .bold))
@@ -435,6 +449,11 @@ private struct PositionRow: View {
                                 }
                             }
                             Text(position.asset.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            if !compact {
+                                Text("\(SiloxFormatters.quantity(position.quantity, precision: quantityPrecision)) unidades")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                             HStack(spacing: 4) {
                                 Text(position.currentPrice.map { SiloxFormatters.money($0.amount, currency: $0.currency) } ?? "Sin cotización")
                                 Text("·")
@@ -460,7 +479,7 @@ private struct PositionRow: View {
                                 .monospacedDigit()
                                 .foregroundStyle(percent >= 0 ? SiloxColors.positive : SiloxColors.negative)
                             }
-                            if let daily = position.dailyChange {
+                            if let daily = position.dailyChange, !compact {
                                 Text(hideBalances ? "••" : SiloxFormatters.signedMoney(daily.amount, currency: daily.currency) + " hoy")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
@@ -481,7 +500,7 @@ private struct PositionRow: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .accessibilityLabel("Añadir movimiento en \(position.asset.ticker ?? position.asset.name)")
+                .accessibilityLabel("Añadir movimiento en \(position.asset.shortLabel)")
             }
         }
     }
@@ -521,7 +540,7 @@ private struct PositionDetailView: View {
                 }
             }
             Section("Tu posición") {
-                LabeledContent("Cantidad", value: position.quantity)
+                LabeledContent("Cantidad", value: SiloxFormatters.quantity(position.quantity, precision: 8))
                 LabeledContent("Valor", value: SiloxFormatters.money(position.currentValue.amount, currency: position.currentValue.currency))
                 LabeledContent("Coste abierto", value: SiloxFormatters.money(position.openCost.amount, currency: position.openCost.currency))
                 LabeledContent("Rentabilidad", value: SiloxFormatters.percentage(position.gainPercent))
@@ -541,7 +560,7 @@ private struct PositionDetailView: View {
                 }
             }
         }
-        .navigationTitle(position.asset.ticker ?? position.asset.name)
+        .navigationTitle(position.asset.shortLabel)
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await refresh() }
         .task(id: scenePhase) {

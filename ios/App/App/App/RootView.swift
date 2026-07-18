@@ -5,6 +5,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("useBiometrics") private var useBiometrics = false
+    @AppStorage("appearanceMode") private var appearanceMode = "system"
     @State private var isUnlocked = false
 
     var body: some View {
@@ -23,10 +24,19 @@ struct RootView: View {
             }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: session.state)
+        .preferredColorScheme(preferredColorScheme)
         .task(id: session.state) { await unlockIfNeeded() }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active, useBiometrics { isUnlocked = false }
             if phase == .active { Task { await unlockIfNeeded() } }
+        }
+    }
+
+    private var preferredColorScheme: ColorScheme? {
+        switch appearanceMode {
+        case "light": .light
+        case "dark": .dark
+        default: nil
         }
     }
 

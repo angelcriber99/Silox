@@ -46,8 +46,7 @@ struct SiloxAssetMark: View {
     var size: CGFloat = 42
 
     private var symbol: String {
-        let source = asset.ticker ?? asset.name
-        return String(source.split(separator: ".").first?.prefix(2) ?? "--").uppercased()
+        String(asset.shortLabel.prefix(2)).uppercased()
     }
 
     private var tint: Color {
@@ -100,7 +99,31 @@ extension Decimal {
 }
 
 extension String {
-    var decimalValue: Decimal { Decimal(string: self) ?? .zero }
+    var normalizedDecimal: Decimal? {
+        let cleaned = trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: ",", with: ".")
+        return Decimal(string: cleaned, locale: Locale(identifier: "en_US_POSIX"))
+    }
+
+    var decimalValue: Decimal { normalizedDecimal ?? .zero }
+}
+
+extension Asset {
+    var shortLabel: String {
+        let rawTicker = ticker?.split(separator: ".").first.map(String.init) ?? ""
+        let looksLikeISIN = rawTicker.count == 12
+            && rawTicker.prefix(2).allSatisfy(\.isLetter)
+            && rawTicker.dropFirst(2).contains(where: \.isNumber)
+        if !rawTicker.isEmpty, rawTicker.count <= 10, !looksLikeISIN { return rawTicker.uppercased() }
+
+        let ignored = Set(["THE", "FUND", "INDEX", "ACC", "ETF"])
+        let words = name
+            .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+            .map { String($0).uppercased() }
+            .filter { $0.count > 1 && !ignored.contains($0) }
+        return words.first.map { String($0.prefix(8)) } ?? String(rawTicker.prefix(8)).uppercased()
+    }
 }
 
 enum SiloxFormatters {
@@ -116,5 +139,9 @@ enum SiloxFormatters {
         let decimal = value.decimalValue
         let formatted = money(NSDecimalNumber(decimal: abs(decimal)).stringValue, currency: currency)
         return decimal >= 0 ? "+\(formatted)" : "−\(formatted)"
+    }
+
+    static func quantity(_ value: String, precision: Int) -> String {
+        value.decimalValue.formatted(.number.precision(.fractionLength(0...max(0, precision))))
     }
 }
