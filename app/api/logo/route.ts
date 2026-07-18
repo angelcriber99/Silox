@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+
+const LogoTickerSchema = z.string().trim().toUpperCase().min(1).max(24)
+  .regex(/^[A-Z0-9.^=_-]+$/)
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const ticker = searchParams.get("ticker")
+  const parsedTicker = LogoTickerSchema.safeParse(searchParams.get("ticker"))
 
-  if (!ticker) {
-    return new NextResponse("Ticker is required", { status: 400 })
+  if (!parsedTicker.success) {
+    return new NextResponse("Invalid ticker", { status: 400 })
   }
+  const ticker = parsedTicker.data
+  const encodedTicker = encodeURIComponent(ticker)
 
   const sources = [
-    `https://financialmodelingprep.com/image-stock/${ticker}.png`,
-    `https://companiesmarketcap.com/img/company-logos/64/${ticker}.png`
+    `https://financialmodelingprep.com/image-stock/${encodedTicker}.png`,
+    `https://companiesmarketcap.com/img/company-logos/64/${encodedTicker}.png`
   ]
 
   for (const url of sources) {

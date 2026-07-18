@@ -28,9 +28,12 @@ interface UnifiedEvent {
 
 const AutomaticEventsSchema = z.object({
   events: z.array(z.object({
+    id: z.string(),
     ticker: z.string(),
     date: z.string(),
     type: z.string(),
+    title: z.string(),
+    certainty: z.enum(["confirmed", "scheduled", "estimated", "speculative", "manual"]),
   })).default([]),
 })
 
@@ -44,13 +47,15 @@ async function loadUpcomingEvents(activePositions: EnrichedPosition[]): Promise<
   })
   if (!response.ok) throw new Error(`API returned ${response.status}`)
 
-  const automaticEvents = AutomaticEventsSchema.parse(await response.json()).events.map((event) => ({
-    id: `auto-${event.ticker}-${event.date}-${event.type}`,
-    title: `Dividendo ${event.ticker}`,
-    date: new Date(event.date),
-    type: event.type,
-    isManual: false,
-  }))
+  const automaticEvents = AutomaticEventsSchema.parse(await response.json()).events
+    .filter((event) => event.certainty !== "manual")
+    .map((event) => ({
+      id: event.id,
+      title: `${event.title} · ${event.ticker.split(".")[0]}`,
+      date: new Date(event.date),
+      type: event.type,
+      isManual: false,
+    }))
 
   const activeAssetIds = new Set(activePositions.map((position) => position.activo_id))
   const manualEvents = (await fetchEventosRecurrentes())
@@ -93,9 +98,15 @@ async function loadUpcomingEvents(activePositions: EnrichedPosition[]): Promise<
 
 function getEventIcon(type: string) {
   switch (type) {
+    case "DIVIDEND":
+    case "EX_DIVIDEND":
     case "Pago Dividendo":
     case "Ex-Dividendo":
       return <DollarSign aria-hidden="true" className="h-4 w-4 text-emerald-400" />
+    case "EARNINGS":
+      return <CalendarDays aria-hidden="true" className="h-4 w-4 text-blue-400" />
+    case "CATALYST":
+      return <CalendarDays aria-hidden="true" className="h-4 w-4 text-orange-400" />
     case "Interés":
       return <Wallet aria-hidden="true" className="h-4 w-4 text-blue-400" />
     case "Aportación":

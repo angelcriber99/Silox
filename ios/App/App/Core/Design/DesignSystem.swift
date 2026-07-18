@@ -61,16 +61,59 @@ struct SiloxAssetMark: View {
         }
     }
 
+    private var logoURL: URL? {
+        guard asset.kind != .cash,
+              let rawBaseURL = Bundle.main.object(forInfoDictionaryKey: "SILOX_API_BASE_URL") as? String,
+              let baseURL = URL(string: rawBaseURL) else { return nil }
+        let ticker = asset.kind == .fund ? asset.shortLabel : (asset.ticker ?? asset.shortLabel)
+        let withoutExchange = ticker.split(separator: ".").first.map(String.init) ?? ticker
+        let identifier = withoutExchange.split(separator: "-").first.map(String.init) ?? withoutExchange
+        guard !identifier.isEmpty else { return nil }
+        var components = URLComponents(url: baseURL.appending(path: "api/logo"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "ticker", value: identifier.uppercased())]
+        return components?.url
+    }
+
     var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
+                .fill(Color.white.opacity(0.94))
+            if let logoURL {
+                AsyncImage(url: logoURL, transaction: Transaction(animation: .easeInOut(duration: 0.15))) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .padding(size * 0.12)
+                            .transition(.opacity)
+                    case .empty:
+                        ProgressView().controlSize(.mini).tint(tint)
+                    case .failure:
+                        fallback
+                    @unknown default:
+                        fallback
+                    }
+                }
+            } else {
+                fallback
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.25, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
+                .stroke(tint.opacity(0.24), lineWidth: 0.75)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private var fallback: some View {
         Text(symbol)
             .font(.system(size: size * 0.31, weight: .heavy, design: .rounded))
             .foregroundStyle(tint)
-            .frame(width: size, height: size)
-            .background(tint.opacity(0.13), in: RoundedRectangle(cornerRadius: size * 0.25, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: size * 0.25, style: .continuous)
-                    .stroke(tint.opacity(0.24), lineWidth: 0.75)
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(tint.opacity(0.13))
     }
 }
 

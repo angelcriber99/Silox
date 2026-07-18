@@ -24,35 +24,13 @@ final class PortfolioRepository: @unchecked Sendable {
 final class RadarRepository: @unchecked Sendable {
     private let api: APIClient
     private let cache: ReadCache
-    private let cacheKey = "radar-v1"
+    private let cacheKey = "radar-v2"
 
     init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
     func cached() async -> ReadCache.Cached<RadarResponse>? { await cache.load(RadarResponse.self, key: cacheKey) }
     func refresh() async throws -> RadarResponse {
-        let portfolio: PortfolioWire = try await api.get("api/mobile/v1/portfolio")
-        let activeTickers = portfolio.positions
-            .filter { ($0.units?.decimalValue ?? 0) > 0 && Asset.Kind(serverValue: $0.type) != .cash }
-            .map(\.ticker)
-        let tickerSet = Set(activeTickers.map { $0.uppercased() })
-        async let eventRequest: [RecurringEventWire] = api.get("api/mobile/v1/events")
-        async let newsRequest: [NewsItemWire] = api.get("api/mobile/v1/news")
-        let (events, news) = try await (eventRequest, newsRequest)
-        let marketEvents: [MarketCalendarEventWire] = (try? await api.send(
-            "api/mobile/v1/market/events",
-            method: .post,
-            body: MarketEventsRequest(tickers: activeTickers)
-        )) ?? []
-        let recurring = events
-            .filter { event in event.asset?.ticker.map { tickerSet.contains($0.uppercased()) } ?? false }
-            .map { $0.domain() }
-        let combined = (recurring + marketEvents.map { $0.domain() })
-            .filter { $0.startsAt >= Calendar.current.startOfDay(for: .now) }
-            .sorted { $0.startsAt < $1.startsAt }
-        let response = RadarResponse(
-            news: news.map { $0.domain() }.filter { item in item.ticker.map { tickerSet.contains($0.uppercased()) } ?? false },
-            events: combined,
-            updatedAt: .now
-        )
+        let wire: PortfolioRadarWire = try await api.get("api/mobile/v1/radar")
+        let response = wire.domain()
         await cache.save(response, key: cacheKey)
         return response
     }

@@ -4,10 +4,9 @@ import { buildPortfolioRadar } from '@/lib/server/portfolio-radar'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   return mobileHandler(request, async (requestId) => {
     const context = await requireMobileUser(request)
-    const radar = await buildPortfolioRadar(context)
-    return mobileJson(radar.events, requestId)
+    return mobileJson(await buildPortfolioRadar(context), requestId)
   })
 }

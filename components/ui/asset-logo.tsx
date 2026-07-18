@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
+import Image from "next/image"
 
 interface AssetLogoProps {
   ticker: string
@@ -39,7 +39,7 @@ export function AssetLogo({
   const logoTicker = displayTicker.includes("-") ? displayTicker.split("-")[0] : displayTicker
   const cfg = TYPE_CONFIG[type] ?? { color: "#98989D", bg: "rgba(152,152,157,0.13)", pill: "rgba(152,152,157,0.20)" }
 
-  const Fallback = () => (
+  const fallback = (
     <div
       className={`flex items-center justify-center font-black ${fallbackClassName}`}
       style={{
@@ -60,7 +60,7 @@ export function AssetLogo({
   if (error || type === "Liquidez") {
     return (
       <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
-         <Fallback />
+        {fallback}
       </div>
     )
   }
@@ -77,9 +77,12 @@ export function AssetLogo({
         }}
       />
       {/* Image layer */}
-      <img
+      <Image
         src={`/api/logo?ticker=${logoTicker}`}
         alt={logoTicker}
+        width={size}
+        height={size}
+        unoptimized
         className="w-full h-full object-contain p-[12%] relative z-10"
         onError={() => setError(true)}
       />

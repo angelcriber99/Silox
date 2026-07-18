@@ -140,40 +140,66 @@ struct TransactionPageWire: Decodable, Sendable {
     }()
 }
 
-struct RecurringEventWire: Decodable, Sendable {
-    struct AssetInfo: Decodable, Sendable { let ticker: String?; let name: String; let type: String }
-    let id: String
-    let title: String
-    let dayOfMonth: Int
-    let type: String
-    let asset: AssetInfo?
+struct PortfolioRadarWire: Decodable, Sendable {
+    struct RadarAssetWire: Decodable, Sendable {
+        let id: String
+        let ticker: String
+        let name: String
+        let type: String
+        let currency: String
 
-    func domain(calendar: Calendar = .current) -> MarketEvent {
-        let now = Date()
-        var components = calendar.dateComponents([.year, .month], from: now)
-        components.day = min(dayOfMonth, calendar.range(of: .day, in: .month, for: now)?.count ?? 28)
-        var date = calendar.date(from: components) ?? now
-        if date < calendar.startOfDay(for: now), let next = calendar.date(byAdding: .month, value: 1, to: date) { date = next }
-        return MarketEvent(id: id, title: title, startsAt: date, kind: type, ticker: asset?.ticker)
+        func domain() -> Asset {
+            Asset(id: id, ticker: ticker, name: name, kind: Asset.Kind(serverValue: type), currency: currency)
+        }
     }
-}
 
-struct MarketEventsRequest: Encodable, Sendable { let tickers: [String] }
+    struct RadarEventWire: Decodable, Sendable {
+        let id: String
+        let assetId: String?
+        let ticker: String
+        let date: Date
+        let endDate: Date?
+        let datePrecision: String
+        let type: String
+        let title: String
+        let description: String?
+        let certainty: String
+        let impact: String
+        let sourceName: String?
+        let sourceUrl: URL?
+        let sourcePublishedAt: Date?
 
-struct MarketCalendarEventWire: Decodable, Sendable {
-    let id: String?
-    let ticker: String
-    let date: Date
-    let type: String
-    let title: String?
+        func domain() -> MarketEvent {
+            MarketEvent(
+                id: id,
+                title: title,
+                startsAt: date,
+                kind: type,
+                ticker: ticker,
+                assetId: assetId,
+                endsAt: endDate,
+                datePrecision: datePrecision,
+                description: description,
+                certainty: certainty,
+                impact: impact,
+                sourceName: sourceName,
+                sourceURL: sourceUrl,
+                sourcePublishedAt: sourcePublishedAt
+            )
+        }
+    }
 
-    func domain() -> MarketEvent {
-        MarketEvent(
-            id: id ?? "\(ticker)-\(type)-\(date.timeIntervalSince1970)",
-            title: title ?? type,
-            startsAt: date,
-            kind: type,
-            ticker: ticker
+    let assets: [RadarAssetWire]
+    let events: [RadarEventWire]
+    let news: [NewsItemWire]
+    let updatedAt: Date
+
+    func domain() -> RadarResponse {
+        RadarResponse(
+            assets: assets.map { $0.domain() },
+            news: news.map { $0.domain() },
+            events: events.map { $0.domain() },
+            updatedAt: updatedAt
         )
     }
 }

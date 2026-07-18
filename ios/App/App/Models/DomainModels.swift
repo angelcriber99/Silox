@@ -121,6 +121,7 @@ struct PriceAlert: Codable, Sendable, Equatable, Identifiable {
 }
 
 struct RadarResponse: Codable, Sendable, Equatable {
+    let assets: [Asset]?
     let news: [NewsItem]
     let events: [MarketEvent]
     let updatedAt: Date
@@ -141,6 +142,15 @@ struct MarketEvent: Codable, Sendable, Equatable, Identifiable {
     let startsAt: Date
     let kind: String
     let ticker: String?
+    var assetId: String? = nil
+    var endsAt: Date? = nil
+    var datePrecision: String? = nil
+    var description: String? = nil
+    var certainty: String? = nil
+    var impact: String? = nil
+    var sourceName: String? = nil
+    var sourceURL: URL? = nil
+    var sourcePublishedAt: Date? = nil
 }
 
 struct WidgetCredentialResponse: Codable, Sendable {

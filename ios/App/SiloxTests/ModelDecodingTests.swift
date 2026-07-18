@@ -33,4 +33,27 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(asset.displayName, "MSCI World")
         XCTAssertEqual(asset.metadataLabel, "MSCI")
     }
+
+    func testPortfolioRadarDecodesEventWindowsAndSources() throws {
+        let data = Data(#"{
+          "assets":[{"id":"asts-id","ticker":"ASTS","name":"AST SpaceMobile","type":"Acción","currency":"USD"}],
+          "events":[{
+            "id":"launch-1","assetId":"asts-id","ticker":"ASTS",
+            "date":"2026-08-01T12:00:00.000Z","endDate":"2026-08-15T12:00:00.000Z",
+            "datePrecision":"range","type":"CATALYST","title":"Lanzamiento o misión relevante",
+            "description":"BlueBird launch in the first half of August","certainty":"scheduled","impact":"high",
+            "sourceName":"Business Wire","sourceUrl":"https://example.com/asts","sourcePublishedAt":"2026-06-25T10:00:00.000Z"
+          }],
+          "news":[],"updatedAt":"2026-07-18T12:00:00.000Z"
+        }"#.utf8)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let radar = try decoder.decode(PortfolioRadarWire.self, from: data).domain()
+
+        XCTAssertEqual(radar.assets?.first?.ticker, "ASTS")
+        XCTAssertEqual(radar.events.first?.certainty, "scheduled")
+        XCTAssertEqual(radar.events.first?.impact, "high")
+        XCTAssertEqual(radar.events.first?.endsAt?.ISO8601Format(), "2026-08-15T12:00:00Z")
+        XCTAssertEqual(radar.events.first?.sourceURL?.host, "example.com")
+    }
 }

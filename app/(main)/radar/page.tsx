@@ -1,402 +1,366 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { IOSHeader } from "@/components/ui/ios-header"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
-import { Newspaper, Loader2, Rocket, AlertTriangle, Briefcase, TrendingUp } from "lucide-react"
-import { startOfMonth, endOfMonth, eachDayOfInterval, addMonths, format, isSameDay, getDay, isPast, isToday } from "date-fns"
+import { useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  format,
+  getDay,
+  isSameDay,
+  startOfDay,
+  startOfMonth,
+} from "date-fns"
 import { es } from "date-fns/locale"
-import { toast } from "sonner"
+import {
+  BriefcaseBusiness,
+  CalendarDays,
+  CircleDollarSign,
+  Clock3,
+  ExternalLink,
+  Loader2,
+  Newspaper,
+  Radio,
+  Rocket,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react"
+import { z } from "zod"
+import { AssetLogo } from "@/components/ui/asset-logo"
 
-type CalendarEvent = {
-  id: string
-  ticker: string
-  date: string
-  type: 'EARNINGS' | 'DIVIDEND' | 'EX_DIVIDEND' | 'AI_EVENT' | 'AI_EVENT_SPECULATIVE'
-  title: string
-  description?: string
+const RadarEventSchema = z.object({
+  id: z.string(),
+  assetId: z.string().optional(),
+  ticker: z.string(),
+  date: z.string(),
+  endDate: z.string().optional(),
+  datePrecision: z.enum(["exact", "range", "month", "quarter"]),
+  type: z.enum(["EARNINGS", "DIVIDEND", "EX_DIVIDEND", "CATALYST", "MANUAL"]),
+  title: z.string(),
+  description: z.string().optional(),
+  certainty: z.enum(["confirmed", "scheduled", "estimated", "speculative", "manual"]),
+  impact: z.enum(["high", "medium", "low"]),
+  sourceName: z.string().optional(),
+  sourceUrl: z.string().url().optional(),
+  sourcePublishedAt: z.string().optional(),
+})
+
+const RadarResponseSchema = z.object({
+  data: z.object({
+    assets: z.array(z.object({
+      id: z.string(),
+      ticker: z.string(),
+      name: z.string(),
+      type: z.string(),
+      currency: z.string(),
+    })),
+    events: z.array(RadarEventSchema),
+    news: z.array(z.object({
+      id: z.string(),
+      title: z.string(),
+      source: z.string(),
+      publishedAt: z.string(),
+      url: z.string().url(),
+      ticker: z.string(),
+    })),
+    updatedAt: z.string(),
+  }),
+})
+
+type RadarEvent = z.infer<typeof RadarEventSchema>
+type RadarPayload = z.infer<typeof RadarResponseSchema>["data"]
+
+async function loadRadar(): Promise<RadarPayload> {
+  const response = await fetch("/api/mobile/v1/radar", { cache: "no-store" })
+  if (!response.ok) throw new Error(`Radar API returned ${response.status}`)
+  return RadarResponseSchema.parse(await response.json()).data
 }
 
-type NewsItem = {
-  uuid: string
-  title: string
-  publisher: string
-  link: string
-  providerPublishTime: string
-  relatedTicker: string
-  sentiment?: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL'
+const CERTAINTY = {
+  confirmed: { label: "Confirmado", dot: "bg-emerald-400", badge: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" },
+  scheduled: { label: "Programado", dot: "bg-blue-400", badge: "border-blue-400/30 bg-blue-400/10 text-blue-300" },
+  estimated: { label: "Estimado", dot: "bg-amber-400", badge: "border-amber-400/30 bg-amber-400/10 text-amber-300" },
+  speculative: { label: "Especulativo", dot: "bg-orange-400", badge: "border-orange-400/40 bg-orange-400/10 text-orange-300 border-dashed" },
+  manual: { label: "Manual", dot: "bg-purple-400", badge: "border-purple-400/30 bg-purple-400/10 text-purple-300" },
+} as const
+
+function eventOccursOn(event: RadarEvent, day: Date): boolean {
+  const target = startOfDay(day).getTime()
+  const start = startOfDay(new Date(event.date)).getTime()
+  const end = startOfDay(new Date(event.endDate ?? event.date)).getTime()
+  return target >= start && target <= end
+}
+
+function eventIcon(type: RadarEvent["type"]) {
+  switch (type) {
+    case "EARNINGS": return BriefcaseBusiness
+    case "DIVIDEND":
+    case "EX_DIVIDEND": return CircleDollarSign
+    case "CATALYST": return Rocket
+    case "MANUAL": return CalendarDays
+  }
+}
+
+function eventDateLabel(event: RadarEvent): string {
+  const start = new Date(event.date)
+  if (!event.endDate || isSameDay(start, new Date(event.endDate))) {
+    return format(start, "d 'de' MMMM 'de' yyyy", { locale: es })
+  }
+  const end = new Date(event.endDate)
+  if (start.getMonth() === end.getMonth()) {
+    return `${format(start, "d", { locale: es })}–${format(end, "d 'de' MMMM 'de' yyyy", { locale: es })}`
+  }
+  return `${format(start, "d MMM", { locale: es })} – ${format(end, "d MMM yyyy", { locale: es })}`
 }
 
 export default function RadarPage() {
-  const { positions } = usePortfolio()
-  
-  const [noticias, setNoticias] = useState<NewsItem[]>([])
-  const [aiEvents, setAiEvents] = useState<CalendarEvent[]>([])
-  const [marketEvents, setMarketEvents] = useState<CalendarEvent[]>([])
-  
-  const [loadingNews, setLoadingNews] = useState(false)
-  const [loadingCalendar, setLoadingCalendar] = useState(false)
-
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
+    queryKey: ["portfolio-radar-v2"],
+    queryFn: loadRadar,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+  })
 
-  const uniqueTickers = useMemo(() => {
-    if (!positions) return []
-    const tickers = new Set<string>()
-    positions.forEach(p => {
-      if (p.ticker && p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez' && p.ticker !== 'CASH' && Math.abs(p.unidades) > 0.000001) {
-        tickers.add(p.ticker)
+  const months = useMemo(() => {
+    const now = new Date()
+    return Array.from({ length: 6 }, (_, index) => {
+      const date = addMonths(now, index)
+      const start = startOfMonth(date)
+      const firstDay = getDay(start)
+      return {
+        date,
+        days: eachDayOfInterval({ start, end: endOfMonth(date) }),
+        padding: firstDay === 0 ? 6 : firstDay - 1,
       }
     })
-    return Array.from(tickers)
-  }, [positions])
-
-  // Use a stringified version of tickers to prevent infinite refetching
-  const tickersStr = uniqueTickers.join(',')
-
-  useEffect(() => {
-    if (!tickersStr) return
-
-    const fetchNews = async () => {
-      setLoadingNews(true)
-      try {
-        const items = tickersStr.split(',').map(t => ({ query: t, displayName: t }))
-        const res = await fetch("/api/noticias", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items }),
-        })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.error) {
-            console.error("API returned error:", data.error)
-            toast.error("Error cargando noticias", { description: data.error })
-          }
-          setNoticias(data.noticias || [])
-          setAiEvents(data.aiEvents || [])
-        }
-      } catch (err) {
-        console.error("Error fetching news:", err)
-      } finally {
-        setLoadingNews(false)
-      }
-    }
-
-    const fetchCalendar = async () => {
-      setLoadingCalendar(true)
-      try {
-        const res = await fetch("/api/calendar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tickers: tickersStr.split(',') }),
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setMarketEvents(data.events || [])
-        }
-      } catch (err) {
-        console.error("Error fetching calendar:", err)
-      } finally {
-        setLoadingCalendar(false)
-      }
-    }
-
-    fetchNews()
-    fetchCalendar()
-  }, [tickersStr])
-
-  const allEvents = useMemo(() => {
-    const combined = [...marketEvents, ...aiEvents]
-    return combined.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [marketEvents, aiEvents])
-
-  // Generate 6 months data
-  const monthsData = useMemo(() => {
-    const now = new Date()
-    const months = []
-    for (let i = 0; i < 6; i++) {
-      const currentMonth = addMonths(now, i)
-      const start = startOfMonth(currentMonth)
-      const end = endOfMonth(currentMonth)
-      const days = eachDayOfInterval({ start, end })
-      
-      // Calculate padding for first day of month (0 = Sunday, 1 = Monday)
-      // We want Monday to be 0, Sunday to be 6
-      const firstDay = getDay(start)
-      const padding = firstDay === 0 ? 6 : firstDay - 1
-
-      months.push({
-        date: currentMonth,
-        days,
-        padding,
-      })
-    }
-    return months
   }, [])
 
-  const getEventIcon = (type: string, className?: string) => {
-    const cn = className || "w-4 h-4"
-    switch(type) {
-      case 'EARNINGS': return <Briefcase className={`${cn} text-blue-400`} />
-      case 'DIVIDEND': return <TrendingUp className={`${cn} text-green-400`} />
-      case 'EX_DIVIDEND': return <AlertTriangle className={`${cn} text-yellow-400`} />
-      case 'AI_EVENT': return <Rocket className={`${cn} text-purple-400`} />
-      case 'AI_EVENT_SPECULATIVE': return <Rocket className={`${cn} text-orange-400 opacity-80`} />
-      default: return null
-    }
-  }
-
-  const getEventBgColor = (type: string) => {
-    switch(type) {
-      case 'EARNINGS': return 'bg-blue-400/20 text-blue-300 border-blue-400/30'
-      case 'DIVIDEND': return 'bg-green-400/20 text-green-300 border-green-400/30'
-      case 'EX_DIVIDEND': return 'bg-yellow-400/20 text-yellow-300 border-yellow-400/30'
-      case 'AI_EVENT': return 'bg-purple-400/20 text-purple-300 border-purple-400/30'
-      case 'AI_EVENT_SPECULATIVE': return 'bg-orange-400/10 text-orange-300 border-orange-400/50 border-dashed opacity-90'
-      default: return 'bg-zinc-800 text-zinc-300'
-    }
-  }
-
-  const getSentimentColor = (sentiment?: string) => {
-    if (sentiment === 'POSITIVE') return 'text-green-500'
-    if (sentiment === 'NEGATIVE') return 'text-red-500'
-    return 'text-zinc-500'
-  }
-
-  // Filter lists based on selected date
-  const displayedEvents = useMemo(() => {
-    let list = allEvents.filter(e => {
-      const edate = new Date(e.date)
-      return !isPast(edate) || isToday(edate) // filter past events globally unless selected
+  const filteredEvents = useMemo(() => {
+    const events = data?.events ?? []
+    return events.filter((event) => {
+      if (selectedTicker && event.ticker !== selectedTicker) return false
+      if (selectedDate && !eventOccursOn(event, selectedDate)) return false
+      return true
     })
+  }, [data?.events, selectedDate, selectedTicker])
 
-    if (selectedDate) {
-      list = allEvents.filter(e => isSameDay(new Date(e.date), selectedDate))
-    }
-    return list
-  }, [allEvents, selectedDate])
+  const filteredNews = useMemo(() => {
+    const news = data?.news ?? []
+    return selectedTicker ? news.filter((item) => item.ticker === selectedTicker) : news
+  }, [data?.news, selectedTicker])
 
-  const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
-
-  const displayedNews = useMemo(() => {
-    let list = noticias
-    if (selectedDate) {
-      list = noticias.filter(n => isSameDay(new Date(n.providerPublishTime), selectedDate))
-    }
-    if (selectedTicker) {
-      list = list.filter(n => n.relatedTicker === selectedTicker)
-    }
-    return list
-  }, [noticias, selectedDate, selectedTicker])
-
-  // Extract tickers that actually have news
-  const newsTickers = useMemo(() => {
-    const tickers = new Set<string>()
-    noticias.forEach(n => tickers.add(n.relatedTicker))
-    return Array.from(tickers).sort()
-  }, [noticias])
+  const highImpactCount = data?.events.filter((event) => event.impact === "high").length ?? 0
+  const estimatedCount = data?.events.filter((event) => event.certainty === "estimated" || event.certainty === "speculative").length ?? 0
 
   return (
-    <main className="min-h-full bg-background text-foreground flex flex-col pb-24 relative">
-      <div className="w-full bg-background/90 backdrop-blur-xl z-20 pt-16 pb-4">
-        <div className="px-4 mb-4 relative flex items-center justify-center">
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Radar
-          </h1>
-          {selectedDate && (
-            <button 
-              onClick={() => setSelectedDate(null)}
-              className="absolute right-4 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm hover:bg-primary/20 transition-colors"
-            >
-              Ver Todo
-            </button>
+    <main className="min-h-full bg-background pb-28 text-foreground">
+      <header className="border-b border-border/50 bg-background/85 px-4 pb-5 pt-16 backdrop-blur-xl lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                <Radio className="h-3.5 w-3.5" aria-hidden="true" />
+                Solo posiciones abiertas
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">Radar de cartera</h1>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                Resultados, dividendos y catalizadores respaldados por una fuente. Las ventanas estimadas nunca se muestran como fechas confirmadas.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-label="Actualizando" />}
+              {data && <>Actualizado {format(new Date(data.updatedAt), "HH:mm")}</>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 sm:max-w-xl">
+            <SummaryMetric label="Posiciones" value={data?.assets.length ?? 0} icon={ShieldCheck} />
+            <SummaryMetric label="Alto impacto" value={highImpactCount} icon={Sparkles} />
+            <SummaryMetric label="Por confirmar" value={estimatedCount} icon={Clock3} />
+          </div>
+
+          {data && data.assets.length > 0 && (
+            <div className="flex flex-wrap gap-2" aria-label="Filtrar por activo">
+              <FilterButton active={selectedTicker === null} onClick={() => setSelectedTicker(null)}>Todos</FilterButton>
+              {data.assets.map((asset) => (
+                <FilterButton
+                  key={asset.id}
+                  active={selectedTicker === asset.ticker}
+                  onClick={() => setSelectedTicker(selectedTicker === asset.ticker ? null : asset.ticker)}
+                >
+                  {asset.ticker.split(".")[0]}
+                </FilterButton>
+              ))}
+            </div>
           )}
         </div>
-        
-        {loadingCalendar ? (
-          <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-            <Loader2 className="w-6 h-6 animate-spin mb-3" />
-            <p className="text-sm">Analizando fechas clave...</p>
+      </header>
+
+      <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 lg:px-8">
+        {isLoading ? (
+          <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="h-7 w-7 animate-spin" />
+            <span className="text-sm">Buscando eventos de tus posiciones…</span>
+          </div>
+        ) : isError ? (
+          <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-destructive/30 bg-destructive/5 text-center">
+            <p className="font-medium text-destructive">No se pudo actualizar el radar.</p>
+            <button type="button" onClick={() => void refetch()} className="rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background">
+              Reintentar
+            </button>
+          </div>
+        ) : !data || data.assets.length === 0 ? (
+          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-dashed border-border text-center">
+            <CalendarDays className="mb-3 h-9 w-9 text-muted-foreground" aria-hidden="true" />
+            <p className="font-semibold">No hay posiciones con dinero invertido</p>
+            <p className="mt-1 text-sm text-muted-foreground">Radar se activará cuando exista al menos una posición abierta.</p>
           </div>
         ) : (
-          <div className="flex overflow-x-auto snap-x hide-scrollbar px-4 pb-2 gap-6">
-            {monthsData.map((month, i) => (
-              <div key={i} className="flex-shrink-0 snap-start w-[260px]">
-                <h3 className="text-sm font-semibold capitalize mb-3 px-1 text-zinc-100">
-                  {format(month.date, "MMMM yyyy", { locale: es })}
-                </h3>
-                
-                <div className="grid grid-cols-7 gap-1.5 text-center mb-1.5">
-                  {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, idx) => (
-                    <div key={idx} className="text-[10px] font-medium text-zinc-500">{day}</div>
-                  ))}
+          <>
+            <section aria-labelledby="calendar-title">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 id="calendar-title" className="text-lg font-semibold">Próximos seis meses</h2>
+                  <p className="text-xs text-muted-foreground">Las ventanas se marcan durante todos sus días posibles.</p>
                 </div>
-                
-                <div className="grid grid-cols-7 gap-1.5">
-                  {Array.from({ length: month.padding }).map((_, idx) => (
-                    <div key={`empty-${idx}`} className="h-8 rounded-md" />
+                <div className="flex flex-wrap gap-3">
+                  {(["confirmed", "scheduled", "estimated", "speculative"] as const).map((certainty) => (
+                    <span key={certainty} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span className={`h-1.5 w-1.5 rounded-full ${CERTAINTY[certainty].dot}`} />
+                      {CERTAINTY[certainty].label}
+                    </span>
                   ))}
-                  
-                  {month.days.map((day, dayIdx) => {
-                    const colIdx = (dayIdx + month.padding) % 7
-                    const dayEvents = allEvents.filter(e => isSameDay(new Date(e.date), day))
-                    const hasEvent = dayEvents.length > 0
-                    const firstEvent = dayEvents[0]
-                    const isSelected = selectedDate && isSameDay(day, selectedDate)
-                    
-                    let bgClass = "bg-transparent text-zinc-400 hover:bg-zinc-800"
-                    if (hasEvent) {
-                      bgClass = getEventBgColor(firstEvent.type)
-                    } else if (isToday(day)) {
-                      bgClass = "bg-zinc-800 text-white font-bold"
-                    }
-
-                    if (isSelected) {
-                      bgClass += " ring-2 ring-primary ring-offset-1 ring-offset-background"
-                    }
-
-                    // Smart tooltip positioning based on column index
-                    let tooltipPosClass = "left-1/2 -translate-x-1/2"
-                    let trianglePosClass = "left-1/2 -translate-x-1/2"
-                    if (colIdx <= 1) {
-                      tooltipPosClass = "left-0"
-                      trianglePosClass = "left-4"
-                    } else if (colIdx >= 5) {
-                      tooltipPosClass = "right-0"
-                      trianglePosClass = "right-4"
-                    }
-
-                    return (
-                      <div key={dayIdx} className="relative group">
-                        <button
-                          onClick={() => setSelectedDate(day)}
-                          className={`w-full h-8 flex items-center justify-center rounded-md text-xs transition-all border border-transparent ${bgClass}`}
-                        >
-                          {format(day, "d")}
-                        </button>
-                        
-                        {/* Custom Tooltip on Hover */}
-                        {hasEvent && (
-                          <div className={`absolute bottom-full mb-2 w-48 p-2.5 rounded-xl bg-zinc-900 border border-white/10 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none ${tooltipPosClass}`}>
-                            <div className="flex flex-col gap-1.5">
-                              {dayEvents.map(e => (
-                                <div key={e.id} className="flex items-start gap-1.5">
-                                  <div className="mt-0.5">{getEventIcon(e.type, "w-3.5 h-3.5")}</div>
-                                  <div className="flex flex-col">
-                                    <span className="text-[10px] font-bold text-white leading-tight">{e.ticker}</span>
-                                    <span className="text-[10px] text-zinc-400 leading-tight">{e.title}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            {/* Little triangle pointer */}
-                            <div className={`absolute top-full -mt-[1px] border-4 border-transparent border-t-zinc-900 ${trianglePosClass}`} />
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {months.map((month) => (
+                  <div key={month.date.toISOString()} className="rounded-2xl border border-border/60 bg-card/45 p-4 shadow-sm">
+                    <h3 className="mb-3 text-sm font-semibold capitalize">{format(month.date, "MMMM yyyy", { locale: es })}</h3>
+                    <div className="mb-1 grid grid-cols-7 gap-1 text-center">
+                      {["L", "M", "X", "J", "V", "S", "D"].map((day) => <span key={day} className="text-[10px] font-medium text-muted-foreground">{day}</span>)}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: month.padding }, (_, index) => <span key={`empty-${index}`} className="h-9" />)}
+                      {month.days.map((day) => {
+                        const dayEvents = data.events.filter((event) => (!selectedTicker || event.ticker === selectedTicker) && eventOccursOn(event, day))
+                        const isSelected = selectedDate ? isSameDay(selectedDate, day) : false
+                        return (
+                          <button
+                            key={day.toISOString()}
+                            type="button"
+                            onClick={() => setSelectedDate(isSelected ? null : day)}
+                            aria-pressed={isSelected}
+                            aria-label={`${format(day, "d 'de' MMMM", { locale: es })}: ${dayEvents.length} eventos`}
+                            className={`flex h-9 flex-col items-center justify-center rounded-lg text-xs transition-colors ${isSelected ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                          >
+                            <span>{format(day, "d")}</span>
+                            <span className="mt-0.5 flex h-1 gap-0.5">
+                              {dayEvents.slice(0, 3).map((event) => <span key={event.id} className={`h-1 w-1 rounded-full ${CERTAINTY[event.certainty].dot}`} />)}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+              <section aria-labelledby="events-title">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h2 id="events-title" className="text-lg font-semibold">
+                      {selectedDate ? `Eventos del ${format(selectedDate, "d 'de' MMMM", { locale: es })}` : "Eventos detectados"}
+                    </h2>
+                    <p className="text-xs text-muted-foreground">{filteredEvents.length} eventos vinculados a posiciones abiertas</p>
+                  </div>
+                  {selectedDate && <button type="button" onClick={() => setSelectedDate(null)} className="text-xs font-semibold text-primary">Ver todos</button>}
+                </div>
+                {filteredEvents.length === 0 ? (
+                  <EmptyPanel text="No hay eventos para este filtro." />
+                ) : (
+                  <div className="space-y-2">
+                    {filteredEvents.map((event) => {
+                      const asset = data.assets.find((item) => item.id === event.assetId || item.ticker === event.ticker)
+                      const Icon = eventIcon(event.type)
+                      return (
+                        <article key={event.id} className="rounded-2xl border border-border/60 bg-card/45 p-4">
+                          <div className="flex items-start gap-3">
+                            {asset ? <AssetLogo ticker={asset.ticker} name={asset.name} type={asset.type} size={42} /> : (
+                              <span className="flex h-[42px] w-[42px] items-center justify-center rounded-xl bg-muted"><Icon className="h-5 w-5" /></span>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-bold">{event.ticker.split(".")[0]}</span>
+                                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${CERTAINTY[event.certainty].badge}`}>
+                                  {CERTAINTY[event.certainty].label}
+                                </span>
+                                {event.impact === "high" && <span className="text-[10px] font-semibold uppercase tracking-wide text-rose-400">Alto impacto</span>}
+                              </div>
+                              <h3 className="mt-1 font-semibold leading-snug">{event.title}</h3>
+                              <p className="mt-1 text-xs font-medium text-muted-foreground">{eventDateLabel(event)}</p>
+                              {event.description && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{event.description}</p>}
+                              {event.sourceUrl && (
+                                <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                                  Fuente: {event.sourceName ?? "Abrir"} <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
+
+              <section aria-labelledby="news-title">
+                <div className="mb-3">
+                  <h2 id="news-title" className="flex items-center gap-2 text-lg font-semibold"><Newspaper className="h-4 w-4" /> Noticias relacionadas</h2>
+                  <p className="text-xs text-muted-foreground">Fuentes usadas para vigilar nuevos catalizadores</p>
+                </div>
+                {filteredNews.length === 0 ? <EmptyPanel text="No hay noticias recientes para este filtro." /> : (
+                  <div className="space-y-2">
+                    {filteredNews.slice(0, 12).map((item) => (
+                      <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block rounded-2xl border border-border/50 bg-card/35 p-3 transition-colors hover:bg-muted/50">
+                        <div className="mb-1 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                          <span className="font-bold text-primary">{item.ticker.split(".")[0]}</span>
+                          <span>{format(new Date(item.publishedAt), "d MMM", { locale: es })}</span>
+                        </div>
+                        <h3 className="text-sm font-medium leading-snug">{item.title}</h3>
+                        <p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">{item.source}</p>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+          </>
         )}
-      </div>
-
-      <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full space-y-8">
-        
-        {/* ── News Feed (Filtered) ────────────────────────────────────────────────── */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Newspaper className="w-4 h-4 text-zinc-400" />
-              <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
-                {selectedDate ? `Noticias del ${format(selectedDate, "d 'de' MMMM", { locale: es })}` : "Últimas Noticias"}
-              </h3>
-            </div>
-            {(selectedDate || selectedTicker) && (
-              <button 
-                onClick={() => { setSelectedDate(null); setSelectedTicker(null); }}
-                className="text-xs text-primary"
-              >
-                Limpiar Filtros
-              </button>
-            )}
-          </div>
-
-          {/* Ticker Filters */}
-          {!loadingNews && newsTickers.length > 0 && (
-            <div className="flex overflow-x-auto snap-x hide-scrollbar gap-2 pb-4 mb-2">
-              <button
-                onClick={() => setSelectedTicker(null)}
-                className={`snap-start flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
-                  selectedTicker === null 
-                    ? 'bg-zinc-100 text-zinc-900 border-zinc-100' 
-                    : 'bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:bg-zinc-800'
-                }`}
-              >
-                Todos
-              </button>
-              {newsTickers.map(ticker => (
-                <button
-                  key={ticker}
-                  onClick={() => setSelectedTicker(ticker === selectedTicker ? null : ticker)}
-                  className={`snap-start flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
-                    selectedTicker === ticker 
-                      ? 'bg-primary text-primary-foreground border-primary' 
-                      : 'bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:bg-zinc-800'
-                  }`}
-                >
-                  {ticker}
-                </button>
-              ))}
-            </div>
-          )}
-          
-          {loadingNews ? (
-            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-              <Loader2 className="w-6 h-6 animate-spin mb-3" />
-              <p className="text-sm">Analizando noticias...</p>
-            </div>
-          ) : displayedNews.length === 0 ? (
-            <div className="p-4 rounded-xl border border-dashed border-white/10 text-center text-muted-foreground text-sm">
-              No se encontraron noticias.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {displayedNews.map((news) => (
-                <a 
-                  key={news.uuid} 
-                  href={news.link} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="block p-4 rounded-2xl bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-white/10 text-white/80">
-                      {news.relatedTicker}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">
-                      {new Date(news.providerPublishTime).toLocaleDateString(es.code, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-zinc-100 leading-snug mb-2">
-                    {news.title}
-                  </h3>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{news.publisher}</span>
-                    {news.sentiment && (
-                      <span className={`text-[10px] font-bold tracking-wider ${getSentimentColor(news.sentiment)}`}>
-                        {news.sentiment}
-                      </span>
-                    )}
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-
       </div>
     </main>
   )
+}
+
+function SummaryMetric({ label, value, icon: Icon }: { label: string; value: number; icon: typeof ShieldCheck }) {
+  return (
+    <div className="rounded-2xl border border-border/50 bg-card/40 p-3">
+      <Icon className="mb-2 h-4 w-4 text-primary" aria-hidden="true" />
+      <p className="text-xl font-bold tabular-nums">{value}</p>
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+    </div>
+  )
+}
+
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" onClick={onClick} aria-pressed={active} className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${active ? "border-foreground bg-foreground text-background" : "border-border bg-card/40 text-muted-foreground hover:text-foreground"}`}>{children}</button>
+}
+
+function EmptyPanel({ text }: { text: string }) {
+  return <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">{text}</div>
 }

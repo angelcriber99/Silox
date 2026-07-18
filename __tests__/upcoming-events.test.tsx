@@ -53,7 +53,14 @@ describe("UpcomingEvents", () => {
       created_at: "2026-07-01T00:00:00.000Z",
     }])
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      events: [{ ticker: "AAPL", date: "2026-07-20", type: "Pago Dividendo" }],
+      events: [{
+        id: "aapl-dividend-2026-07-20",
+        ticker: "AAPL",
+        date: "2026-07-20",
+        type: "DIVIDEND",
+        title: "Dividendo",
+        certainty: "scheduled",
+      }],
     }), { status: 200, headers: { "Content-Type": "application/json" } })))
   })
 
@@ -70,7 +77,7 @@ describe("UpcomingEvents", () => {
     )
 
     await waitFor(() => expect(screen.getByText("Aportación mensual")).toBeInTheDocument())
-    expect(screen.getByText("Dividendo AAPL")).toBeInTheDocument()
+    expect(screen.getByText("Dividendo · AAPL")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: /aportación mensual/i }))
     expect(onEditEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "manual-1" }))
