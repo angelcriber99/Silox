@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CASH_ASSET_DEFAULTS,
   displayAssetType,
+  isInvestablePortfolioAsset,
   toDatabaseAssetPayload,
 } from '@/lib/domain/assets/normalization'
 import { getErrorMessage } from '@/lib/utils/errors'
@@ -30,6 +31,13 @@ describe('asset normalization', () => {
       estrategia: 'Liquidez',
       moneda: 'EUR',
     })
+  })
+
+  it('keeps cash and money-market bookkeeping out of the visible portfolio', () => {
+    expect(isInvestablePortfolioAsset({ ticker: 'CASH', tipo: 'Fondo Monetario' })).toBe(false)
+    expect(isInvestablePortfolioAsset({ ticker: 'CASH_USD', tipo: 'Fondo Monetario' })).toBe(false)
+    expect(isInvestablePortfolioAsset({ ticker: 'REVOLUT', tipo: 'Fondo Monetario' })).toBe(false)
+    expect(isInvestablePortfolioAsset({ ticker: 'ASTS', tipo: 'Acción' })).toBe(true)
   })
 })
 

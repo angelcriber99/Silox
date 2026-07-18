@@ -92,7 +92,7 @@ export async function GET(request: Request) {
       : { prices: {} }
 
     // Enrich positions
-    const enriched = enrichPositions(rawPositions || [], pricePayload)
+    const enriched = enrichPositions(filteredPositions, pricePayload)
     const confirmedPositions = enriched.filter(p => p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez')
     
     // Compute totals

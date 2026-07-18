@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
-import { CASH_ASSET_DEFAULTS, displayAssetType, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
+import { CASH_ASSET_DEFAULTS, displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 import { calculateOpenCostBasis } from '@/lib/utils/open-cost-basis'
 import {
-  calculateNetContributions,
-  EXTERNAL_FLOW_NOTE_PREFIX,
+  calculateNetInvestmentByCurrency,
+  type PortfolioFundingSummary,
 } from '@/lib/domain/portfolio/contributions'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
@@ -46,17 +46,17 @@ export async function fetchActivos(): Promise<Activo[]> {
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(`Error cargando activos: ${error.message}`)
-  return (data ?? []).map(displayAssetType)
+  return (data ?? []).map(displayAssetType).filter(isInvestablePortfolioAsset)
 }
 
-export async function fetchNetPortfolioContributions(): Promise<number | null> {
+export async function fetchPortfolioFunding(): Promise<PortfolioFundingSummary> {
   const { data, error } = await createClient()
     .from('transacciones')
-    .select('tipo_operacion, notas')
-    .like('notas', `${EXTERNAL_FLOW_NOTE_PREFIX}%`)
+    .select('tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, notas, activo:activos(ticker, tipo, moneda)')
+    .eq('estado', 'Completada')
 
-  if (error) throw new Error(`Error cargando las aportaciones de la cartera: ${error.message}`)
-  return calculateNetContributions(data ?? [])
+  if (error) throw new Error(`Error calculando el capital neto aportado: ${error.message}`)
+  return calculateNetInvestmentByCurrency(data ?? [])
 }
 
 export async function insertActivo(activo: {

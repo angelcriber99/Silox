@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
-import { calculateNetContributions, EXTERNAL_FLOW_NOTE_PREFIX } from '@/lib/domain/portfolio/contributions'
+import { calculateNetInvestmentByCurrency, convertNetInvestmentToEur } from '@/lib/domain/portfolio/contributions'
+import { isInvestablePortfolioAsset } from '@/lib/domain/assets/normalization'
 import { fetchMarketPrices } from '@/lib/actions/market'
 
 export const revalidate = 0
@@ -67,8 +68,9 @@ export async function GET(request: Request) {
         return { ...pos, unidades: newUnidades, coste_total: newCoste }
       })
 
-      const tickers = adjustedPositions
-        .filter((p) => p.unidades > 0 && !p.ticker.startsWith('CASH'))
+      const visiblePositions = adjustedPositions.filter(isInvestablePortfolioAsset)
+      const tickers = visiblePositions
+        .filter((p) => p.unidades > 0)
         .map((p) => p.ticker)
       if (tickers.length === 0) continue
 
@@ -80,13 +82,15 @@ export async function GET(request: Request) {
         continue
       }
 
-      const enriched = enrichPositions(adjustedPositions, pricePayload)
-      const { data: externalFlows } = await supabaseAdmin
+      const enriched = enrichPositions(visiblePositions, pricePayload)
+      const { data: fundingTransactions } = await supabaseAdmin
         .from('transacciones')
-        .select('tipo_operacion, notas')
+        .select('tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, notas, activo:activos(ticker, tipo, moneda)')
         .eq('user_id', user.id)
-        .like('notas', `${EXTERNAL_FLOW_NOTE_PREFIX}%`)
-      const totals = computePortfolioTotals(enriched, calculateNetContributions(externalFlows ?? []))
+        .eq('estado', 'Completada')
+      const funding = calculateNetInvestmentByCurrency(fundingTransactions ?? [])
+      const netContributions = convertNetInvestmentToEur(funding, pricePayload.fxRates)
+      const totals = computePortfolioTotals(enriched, netContributions)
 
       if (totals.totalValue > 0) {
         // Get the last snapshot to prevent saving identical data (0 PnL instante)

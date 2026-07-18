@@ -11,9 +11,9 @@ import {
   TransactionInputSchema,
   TransferInputSchema,
 } from './schemas'
-import { displayAssetType, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
+import { displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 import { enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
-import { calculateNetContributions, EXTERNAL_FLOW_NOTE_PREFIX } from '@/lib/domain/portfolio/contributions'
+import { calculateNetInvestmentByCurrency, convertNetInvestmentToEur } from '@/lib/domain/portfolio/contributions'
 import { fetchMarketPricesDirect } from '@/lib/actions/market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
@@ -113,7 +113,9 @@ export async function listAssets(context: Context) {
     .eq('user_id', context.user.id)
     .order('created_at', { ascending: false })
   databaseFailure('cargar los activos', error)
-  return (data ?? []).map((row) => assetDto(row as unknown as Record<string, unknown>))
+  return (data ?? [])
+    .filter(isInvestablePortfolioAsset)
+    .map((row) => assetDto(row as unknown as Record<string, unknown>))
 }
 
 export async function getAsset(context: Context, id: string) {
@@ -192,27 +194,25 @@ export async function portfolio(context: Context) {
     .eq('user_id', context.user.id)
   databaseFailure('cargar la cartera', error)
 
-  // Keep the native dashboard on the exact same accounting universe as the
-  // web usePortfolio hook. Imported CASH rows are part of the portfolio value;
-  // unrelated money-market/liquidity assets remain outside this dashboard.
-  const positions = (rawPositions ?? []).filter((position) =>
-    position.ticker.startsWith('CASH') || (
-      position.tipo !== 'Fondo Monetario' && position.tipo !== 'Liquidez'
-    )
-  )
+  // Keep the native dashboard on the exact same accounting universe as web.
+  // Cash and money-market bookkeeping never belongs to the visible portfolio.
+  const positions = (rawPositions ?? []).filter(isInvestablePortfolioAsset)
   const tickers = positions
-    .filter((position) => position.unidades > 0 && !position.ticker.startsWith('CASH'))
+    .filter((position) => position.unidades > 0)
     .map((position) => position.ticker)
   const market = tickers.length > 0
     ? await fetchMarketPricesDirect(tickers, true)
     : { prices: {}, fxRates: { EUR: 1 }, displayCurrency: 'EUR', marketState: 'CLOSED' }
   const enriched = enrichPositions(positions, market)
-  const { data: externalFlows } = await context.supabase
+  const { data: fundingTransactions, error: fundingError } = await context.supabase
     .from('transacciones')
-    .select('tipo_operacion, notas')
+    .select('tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, notas, activo:activos(ticker, tipo, moneda)')
     .eq('user_id', context.user.id)
-    .like('notas', `${EXTERNAL_FLOW_NOTE_PREFIX}%`)
-  const totals = computePortfolioTotals(enriched, calculateNetContributions(externalFlows ?? []))
+    .eq('estado', 'Completada')
+  databaseFailure('calcular el capital neto aportado', fundingError)
+  const funding = calculateNetInvestmentByCurrency(fundingTransactions ?? [])
+  const netContributions = convertNetInvestmentToEur(funding, market.fxRates)
+  const totals = computePortfolioTotals(enriched, netContributions)
 
   return {
     asOf: new Date().toISOString(),

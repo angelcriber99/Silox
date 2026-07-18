@@ -23,6 +23,16 @@ export function toDatabaseAssetPayload<
   } as T
 }
 
+export function isInvestablePortfolioAsset<
+  T extends { ticker?: string | null; tipo: string },
+>(asset: T): boolean {
+  const ticker = asset.ticker?.toUpperCase() ?? ''
+  return !ticker.startsWith('CASH')
+    && ticker !== 'REVOLUT'
+    && asset.tipo !== 'Fondo Monetario'
+    && asset.tipo !== 'Liquidez'
+}
+
 export const CASH_ASSET_DEFAULTS = {
   ticker: 'CASH',
   nombre: 'Efectivo',

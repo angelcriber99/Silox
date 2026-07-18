@@ -3,11 +3,13 @@
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useEffect, useRef, useState } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
-import { fetchPosiciones, fetchNetPortfolioContributions, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
+import { fetchPosiciones, fetchPortfolioFunding, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
 import { savePortfolioHistory } from '@/lib/api/assets'
 import { usePrices } from "./use-prices"
 import { createClient } from '@/lib/supabase/client'
 import { fetchPendingTransactions } from '@/lib/api/transactions'
+import { isInvestablePortfolioAsset } from '@/lib/domain/assets/normalization'
+import { convertNetInvestmentToEur } from '@/lib/domain/portfolio/contributions'
 
 export function usePositions(options?: { enabled?: boolean }) {
   return useQuery({
@@ -27,10 +29,10 @@ export function usePendingTransactions(options?: { enabled?: boolean }) {
   })
 }
 
-export function useNetPortfolioContributions(options?: { enabled?: boolean }) {
+export function usePortfolioFunding(options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: ["net-portfolio-contributions"],
-    queryFn: fetchNetPortfolioContributions,
+    queryKey: ["portfolio-funding"],
+    queryFn: fetchPortfolioFunding,
     staleTime: 60_000,
     enabled: options?.enabled ?? true,
   })
@@ -52,23 +54,21 @@ export function usePortfolio(options?: { enabled?: boolean }) {
   } = usePendingTransactions({ enabled })
 
   const {
-    data: netContributions,
+    data: funding,
     isLoading: contributionsLoading,
     error: contributionsError,
     refetch: refetchContributions,
-  } = useNetPortfolioContributions({ enabled })
+  } = usePortfolioFunding({ enabled })
 
   // The posiciones view is the confirmed accounting source of truth. Pending
   // orders are fetched separately for projected balances and UI badges.
   const confirmedPositions = useMemo(() => {
-    return (positions ?? []).filter(p => p.ticker.startsWith('CASH') || (
-      p.tipo !== 'Fondo Monetario' && p.tipo !== 'Liquidez'
-    ))
+    return (positions ?? []).filter(isInvestablePortfolioAsset)
   }, [positions])
 
   const tickers = useMemo(
     () => confirmedPositions
-      .filter((p) => p.unidades > 0 && !p.ticker.startsWith('CASH'))
+      .filter((p) => p.unidades > 0)
       .map((p) => p.ticker),
     [confirmedPositions]
   )
@@ -84,6 +84,11 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     const enrichedList = enrichPositions(confirmedPositions, pricePayload ?? { prices: {} })
     return enrichedList
   }, [confirmedPositions, pricePayload])
+
+  const netContributions = useMemo(
+    () => convertNetInvestmentToEur(funding, pricePayload?.fxRates),
+    [funding, pricePayload?.fxRates]
+  )
 
   const totals: PortfolioTotals = useMemo(
     () => computePortfolioTotals(enriched, netContributions),
