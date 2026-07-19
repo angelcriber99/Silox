@@ -85,7 +85,7 @@ final class TransactionRepository: Sendable {
     func cached() async -> ReadCache.Cached<TransactionPage>? { await cache.load(TransactionPage.self, key: cacheKey) }
     func value(maxAge: TimeInterval = CacheLifetime.transactions) async throws -> TransactionPage {
         if let cached = await cached(), cached.isFresh(for: maxAge) { return cached.value }
-        return try await list()
+        return try await list(query: TransactionQuery())
     }
 
     func list(query: TransactionQuery = TransactionQuery()) async throws -> TransactionPage {
@@ -101,7 +101,7 @@ final class TransactionRepository: Sendable {
         }
     }
 
-    func list(cursor: String? = nil) async throws -> TransactionPage {
+    func list(cursor: String?) async throws -> TransactionPage {
         try await list(query: TransactionQuery(cursor: cursor))
     }
 
