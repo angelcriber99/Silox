@@ -8,6 +8,7 @@ final class NavigationUITests: XCTestCase {
 
         XCTAssertTrue(app.buttons["Cartera"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Radar"].exists)
+        XCTAssertTrue(app.buttons["Análisis"].exists)
         XCTAssertTrue(app.buttons["Movimientos"].exists)
         XCTAssertTrue(app.buttons["Ajustes"].exists)
         XCTAssertFalse(app.buttons["Añadir"].exists)

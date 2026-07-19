@@ -1,12 +1,11 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useMemo, useEffect, useRef, useState } from "react"
+import { useMemo, useEffect, useRef } from "react"
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
 import { fetchPosiciones, fetchPortfolioFunding, enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
 import { savePortfolioHistory } from '@/lib/api/assets'
 import { usePrices } from "./use-prices"
-import { createClient } from '@/lib/supabase/client'
 import { fetchPendingTransactions } from '@/lib/api/transactions'
 import { isInvestablePortfolioAsset } from '@/lib/domain/assets/normalization'
 import { convertNetInvestmentToEur } from '@/lib/domain/portfolio/contributions'
@@ -38,9 +37,8 @@ export function usePortfolioFunding(options?: { enabled?: boolean }) {
   })
 }
 
-export function usePortfolio(options?: { enabled?: boolean }) {
+export function usePortfolio(options?: { enabled?: boolean; persistHistory?: boolean }) {
   const enabled = options?.enabled ?? true
-  const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
   const {
     data: positions,
     isLoading: positionsLoading,
@@ -106,7 +104,7 @@ export function usePortfolio(options?: { enabled?: boolean }) {
   // The write function also enforces the same persistence window, so remounts do
   // not create duplicate points.
   useEffect(() => {
-    if (!historyReady) return
+    if (!historyReady || !options?.persistHistory) return
     const persist = () => {
       const { totalValue, totalCost } = latestSnapshot.current
       if (totalValue > 0) savePortfolioHistory(totalValue, totalCost).catch(console.error)
@@ -114,34 +112,7 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     persist()
     const timer = window.setInterval(persist, 15 * 60 * 1000)
     return () => window.clearInterval(timer)
-  }, [historyReady])
-
-  // Supabase Realtime: Súper Tiempo Real
-  useEffect(() => {
-    if (!enabled) return
-
-    const supabase = createClient()
-    const channelName = `portfolio-realtime-${Math.random()}`
-    
-    const channel = supabase.channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transacciones' }, () => {
-        refetchPositions()
-        refetchPending()
-        refetchContributions()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activos' }, () => {
-        refetchPositions()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'eventos_recurrentes' }, () => {})
-      .subscribe((status) => {
-        setRealtimeStatus(status === 'SUBSCRIBED' ? 'connected' : status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' ? 'disconnected' : 'connecting')
-      })
-
-    return () => {
-      setRealtimeStatus('disconnected')
-      supabase.removeChannel(channel)
-    }
-  }, [enabled, refetchPositions, refetchPending, refetchContributions])
+  }, [historyReady, options?.persistHistory])
 
   const refetch = async () => {
     await Promise.all([
@@ -163,7 +134,6 @@ export function usePortfolio(options?: { enabled?: boolean }) {
     pricesUpdatedAt,
     marketState: pricePayload?.marketState ?? 'CLOSED',
     pendingTxs: pendingTxs ?? [],
-    realtimeStatus,
   }
 }
 

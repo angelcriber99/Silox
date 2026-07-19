@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var session: SessionStore
+    @EnvironmentObject private var environment: AppEnvironment
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("useBiometrics") private var useBiometrics = false
@@ -31,7 +32,12 @@ struct RootView: View {
         .task(id: session.state) { await unlockIfNeeded() }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active, useBiometrics { isUnlocked = false }
-            if phase == .active { Task { await unlockIfNeeded() } }
+            if phase == .active {
+                Task {
+                    await unlockIfNeeded()
+                    if case .signedIn = session.state { await environment.preloader.prepare() }
+                }
+            }
         }
         .onOpenURL { url in _ = router.handle(url) }
         .task { routeUITestLaunchArgumentIfNeeded() }
@@ -108,6 +114,13 @@ struct MainTabView: View {
             PortfolioView(repository: environment.portfolioRepository, onAdd: presentAdd)
                 .tabItem { Label(AppTab.portfolio.title, systemImage: AppTab.portfolio.systemImage) }
                 .tag(AppTab.portfolio)
+            AnalysisView(
+                portfolioRepository: environment.portfolioRepository,
+                insightsRepository: environment.insightsRepository,
+                onAdd: { presentAdd(nil) }
+            )
+                .tabItem { Label(AppTab.analysis.title, systemImage: AppTab.analysis.systemImage) }
+                .tag(AppTab.analysis)
             TransactionsView(repository: environment.transactionRepository, onAdd: { presentAdd(nil) })
                 .tabItem { Label(AppTab.transactions.title, systemImage: AppTab.transactions.systemImage) }
                 .tag(AppTab.transactions)
@@ -139,6 +152,7 @@ struct MainTabView: View {
                 onAdd: { router.presentAddMovement(assetID: $0) }
             )
         }
+        .task { await environment.preloader.prepare() }
     }
 
     private func presentAdd(_ assetID: String?) {

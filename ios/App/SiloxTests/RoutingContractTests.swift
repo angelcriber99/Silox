@@ -5,6 +5,7 @@ import XCTest
 final class RoutingContractTests: XCTestCase {
     func testSupportedDeepLinksResolve() throws {
         XCTAssertEqual(SiloxDeepLink(url: try url("silox://portfolio")), .tab(.portfolio))
+        XCTAssertEqual(SiloxDeepLink(url: try url("silox://analysis")), .tab(.analysis))
         XCTAssertEqual(SiloxDeepLink(url: try url("silox://transactions")), .tab(.transactions))
         XCTAssertEqual(SiloxDeepLink(url: try url("silox://radar")), .tab(.radar))
         XCTAssertEqual(SiloxDeepLink(url: try url("silox://settings")), .tab(.settings))

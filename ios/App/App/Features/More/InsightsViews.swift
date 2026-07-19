@@ -4,6 +4,320 @@ import Observation
 import Accessibility
 
 @MainActor
+private final class AnalysisViewModel: ObservableObject {
+    @Published private(set) var portfolio: PortfolioResponse?
+    @Published private(set) var history: [PortfolioHistoryPoint] = []
+    @Published private(set) var isLoading = true
+    @Published private(set) var isRefreshing = false
+    @Published private(set) var errorMessage: String?
+
+    private let portfolioRepository: PortfolioRepository
+    private let insightsRepository: InsightsRepository
+
+    init(portfolioRepository: PortfolioRepository, insightsRepository: InsightsRepository) {
+        self.portfolioRepository = portfolioRepository
+        self.insightsRepository = insightsRepository
+    }
+
+    func load() async {
+        async let cachedPortfolio = portfolioRepository.cached()
+        async let cachedHistory = insightsRepository.cachedHistory()
+        let cached = await (cachedPortfolio, cachedHistory)
+        portfolio = cached.0?.value
+        history = cached.1?.value ?? []
+        isLoading = portfolio == nil
+        await refresh(force: false)
+    }
+
+    func refresh(force: Bool = true) async {
+        isRefreshing = true
+        defer { isRefreshing = false; isLoading = false }
+        do {
+            async let portfolioValue = try loadPortfolio(force: force)
+            async let historyValue = try insightsRepository.history(maxAge: force ? 0 : CacheLifetime.history)
+            let values = try await (portfolioValue, historyValue)
+            portfolio = values.0
+            history = values.1
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func loadPortfolio(force: Bool) async throws -> PortfolioResponse {
+        if force { return try await portfolioRepository.refresh() }
+        return try await portfolioRepository.value()
+    }
+}
+
+struct AnalysisView: View {
+    @StateObject private var model: AnalysisViewModel
+    @AppStorage("hideBalances") private var hideBalances = false
+    let onAdd: () -> Void
+
+    init(
+        portfolioRepository: PortfolioRepository,
+        insightsRepository: InsightsRepository,
+        onAdd: @escaping () -> Void = {}
+    ) {
+        _model = StateObject(wrappedValue: AnalysisViewModel(
+            portfolioRepository: portfolioRepository,
+            insightsRepository: insightsRepository
+        ))
+        self.onAdd = onAdd
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if let portfolio = model.portfolio {
+                    content(portfolio)
+                } else if let error = model.errorMessage, !model.isLoading {
+                    ErrorStateView(message: error) { Task { await model.refresh() } }
+                } else {
+                    ProgressView("Preparando análisis…")
+                }
+            }
+            .background(SiloxColors.backgroundPrimary.ignoresSafeArea())
+            .navigationTitle("Análisis")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: onAdd) { Image(systemName: "plus") }
+                        .accessibilityLabel("Añadir movimiento")
+                }
+            }
+            .task { await model.load() }
+        }
+    }
+
+    private func content(_ portfolio: PortfolioResponse) -> some View {
+        ScrollView {
+            LazyVStack(spacing: 14) {
+                if model.isRefreshing {
+                    HStack(spacing: 7) {
+                        ProgressView().controlSize(.mini)
+                        Text("Actualizando en segundo plano")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                performanceCard(portfolio)
+                historyCard(portfolio)
+                allocationCard(portfolio)
+                moversCard(portfolio)
+                if let error = model.errorMessage {
+                    Label(error, systemImage: "wifi.exclamationmark")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+        .refreshable { await model.refresh() }
+    }
+
+    private func performanceCard(_ portfolio: PortfolioResponse) -> some View {
+        let totals = portfolio.totals
+        return SiloxCard {
+            VStack(alignment: .leading, spacing: 15) {
+                Text("RENDIMIENTO")
+                    .font(.system(size: 10, weight: .semibold))
+                    .tracking(0.9)
+                    .foregroundStyle(.secondary)
+                Text(hiddenMoney(totals.totalValue))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                HStack(spacing: 0) {
+                    metric(
+                        "Hoy completo",
+                        money: totals.dailyGain,
+                        percent: totals.dailyGainPercent,
+                        color: performanceColor(totals.dailyGain?.amount.decimalValue ?? 0)
+                    )
+                    Divider().padding(.horizontal, 12)
+                    metric(
+                        "P&L total",
+                        money: totals.totalGain,
+                        percent: totals.totalGainPercent,
+                        color: performanceColor(totals.totalGain.amount.decimalValue)
+                    )
+                }
+                .frame(height: 46)
+                Text("Hoy incluye premercado, sesión regular y postmercado.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func historyCard(_ portfolio: PortfolioResponse) -> some View {
+        let points = chartPoints(portfolio)
+        return SiloxCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Evolución del patrimonio").font(.headline)
+                        Text("Valor contrastado con capital aportado").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chart.xyaxis.line").foregroundStyle(SiloxColors.accent)
+                }
+                if points.count < 2 {
+                    ContentUnavailableView(
+                        "Aún no hay histórico suficiente",
+                        systemImage: "chart.line.uptrend.xyaxis",
+                        description: Text("La gráfica aparecerá tras guardar varios puntos de cartera.")
+                    )
+                    .frame(height: 170)
+                } else {
+                    Chart(points) { point in
+                        LineMark(
+                            x: .value("Fecha", point.date),
+                            y: .value("Patrimonio", point.value)
+                        )
+                        .foregroundStyle(SiloxColors.accent)
+                        .interpolationMethod(.monotone)
+                        AreaMark(
+                            x: .value("Fecha", point.date),
+                            yStart: .value("Base", points.map(\.value).min() ?? 0),
+                            yEnd: .value("Patrimonio", point.value)
+                        )
+                        .foregroundStyle(LinearGradient(
+                            colors: [SiloxColors.accent.opacity(0.25), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ))
+                        if let invested = point.invested {
+                            LineMark(
+                                x: .value("Fecha", point.date),
+                                y: .value("Aportado", invested),
+                                series: .value("Serie", "Aportado")
+                            )
+                            .foregroundStyle(.secondary.opacity(0.65))
+                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                        }
+                    }
+                    .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
+                    .chartYAxis { AxisMarks(position: .leading) }
+                    .frame(height: 190)
+                    .accessibilityLabel("Evolución del patrimonio")
+                }
+            }
+        }
+    }
+
+    private func allocationCard(_ portfolio: PortfolioResponse) -> some View {
+        let positions = activePositions(portfolio)
+        let total = positions.reduce(0) { $0 + $1.currentValue.amount.decimalValue.doubleValue }
+        return SiloxCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Concentración").font(.headline)
+                ForEach(Array(positions.prefix(4))) { position in
+                    let value = position.currentValue.amount.decimalValue.doubleValue
+                    let weight = total > 0 ? value / total : 0
+                    VStack(spacing: 6) {
+                        HStack {
+                            Text(position.asset.displayName).font(.subheadline.weight(.medium)).lineLimit(1)
+                            Spacer()
+                            Text(weight, format: .percent.precision(.fractionLength(1)))
+                                .font(.caption.weight(.semibold)).monospacedDigit()
+                        }
+                        ProgressView(value: weight).tint(SiloxColors.accent)
+                    }
+                }
+            }
+        }
+    }
+
+    private func moversCard(_ portfolio: PortfolioResponse) -> some View {
+        let movers = activePositions(portfolio)
+            .filter { $0.dailyChangePercent != nil }
+            .sorted { abs($0.dailyChangePercent ?? 0) > abs($1.dailyChangePercent ?? 0) }
+            .prefix(4)
+        return SiloxCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Movimiento de hoy").font(.headline)
+                ForEach(Array(movers)) { position in
+                    HStack(spacing: 10) {
+                        SiloxAssetMark(asset: position.asset, size: 34)
+                        Text(position.asset.displayName).font(.subheadline.weight(.medium)).lineLimit(1)
+                        Spacer()
+                        Text(SiloxFormatters.percentage(position.dailyChangePercent ?? 0))
+                            .font(.subheadline.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(performanceColor(Decimal(position.dailyChangePercent ?? 0)))
+                    }
+                }
+            }
+        }
+    }
+
+    private func metric(_ title: String, money: MoneyValue?, percent: Double?, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.caption2).foregroundStyle(.secondary)
+            HStack(spacing: 5) {
+                Text(hideBalances ? "••••" : money.map { SiloxFormatters.signedMoney($0.amount, currency: $0.currency) } ?? "—")
+                if let percent { Text(SiloxFormatters.percentage(percent)) }
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(color)
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func activePositions(_ portfolio: PortfolioResponse) -> [Position] {
+        portfolio.positions
+            .filter { $0.asset.kind != .cash && $0.quantity.decimalValue > 0 }
+            .sorted { $0.currentValue.amount.decimalValue > $1.currentValue.amount.decimalValue }
+    }
+
+    private func hiddenMoney(_ value: MoneyValue) -> String {
+        hideBalances ? "••••••" : SiloxFormatters.money(value.amount, currency: value.currency)
+    }
+
+    private func performanceColor(_ value: Decimal) -> Color {
+        if value > 0 { return SiloxColors.positive }
+        if value < 0 { return SiloxColors.negative }
+        return .primary
+    }
+
+    private func chartPoints(_ portfolio: PortfolioResponse) -> [AnalysisChartPoint] {
+        var values = model.history.compactMap { point -> AnalysisChartPoint? in
+            guard let value = point.value?.decimalValue.doubleValue, value.isFinite else { return nil }
+            return AnalysisChartPoint(
+                date: point.date,
+                value: value,
+                invested: point.invested?.decimalValue.doubleValue
+            )
+        }
+        let today = Date.now.formatted(.iso8601.year().month().day())
+        let livePoint = AnalysisChartPoint(
+            date: today,
+            value: portfolio.totals.totalValue.amount.decimalValue.doubleValue,
+            invested: portfolio.totals.totalCost.amount.decimalValue.doubleValue
+        )
+        if let todayIndex = values.lastIndex(where: { $0.date == today }) {
+            values[todayIndex] = livePoint
+        } else {
+            values.append(livePoint)
+        }
+        return values
+    }
+}
+
+private struct AnalysisChartPoint: Identifiable {
+    var id: String { date }
+    let date: String
+    let value: Double
+    let invested: Double?
+}
+
+@MainActor
 private final class InsightsViewModel<Value: Sendable>: ObservableObject {
     enum State { case loading, loaded(Value), failed(String) }
     @Published var state: State = .loading

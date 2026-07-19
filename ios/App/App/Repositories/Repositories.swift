@@ -4,6 +4,16 @@ extension Notification.Name {
     static let siloxPortfolioChanged = Notification.Name("silox.portfolio.changed")
 }
 
+enum CacheLifetime {
+    static let portfolio: TimeInterval = 15
+    static let transactions: TimeInterval = 60
+    static let radar: TimeInterval = 5 * 60
+    static let assets: TimeInterval = 10 * 60
+    static let history: TimeInterval = 5 * 60
+    static let alerts: TimeInterval = 2 * 60
+    static let settings: TimeInterval = 15 * 60
+}
+
 actor PortfolioRepository {
     private let api: APIClient
     private let cache: ReadCache
@@ -13,6 +23,11 @@ actor PortfolioRepository {
     init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
 
     func cached() async -> ReadCache.Cached<PortfolioResponse>? { await cache.load(PortfolioResponse.self, key: cacheKey) }
+
+    func value(maxAge: TimeInterval = CacheLifetime.portfolio) async throws -> PortfolioResponse {
+        if let cached = await cached(), cached.isFresh(for: maxAge) { return cached.value }
+        return try await refresh()
+    }
 
     func refresh() async throws -> PortfolioResponse {
         if let refreshTask { return try await refreshTask.task.value }
@@ -42,14 +57,21 @@ final class RadarRepository: Sendable {
     private let api: APIClient
     private let cache: ReadCache
     private let cacheKey = "radar-v2"
+    private let refreshFlight = SingleFlight<RadarResponse>()
 
     init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
     func cached() async -> ReadCache.Cached<RadarResponse>? { await cache.load(RadarResponse.self, key: cacheKey) }
+    func value(maxAge: TimeInterval = CacheLifetime.radar) async throws -> RadarResponse {
+        if let cached = await cached(), cached.isFresh(for: maxAge) { return cached.value }
+        return try await refresh()
+    }
     func refresh() async throws -> RadarResponse {
-        let wire: PortfolioRadarWire = try await api.get("api/mobile/v1/radar")
-        let response = wire.domain()
-        await cache.save(response, key: cacheKey)
-        return response
+        try await refreshFlight.run { [api, cache, cacheKey] in
+            let wire: PortfolioRadarWire = try await api.get("api/mobile/v1/radar")
+            let response = wire.domain()
+            await cache.save(response, key: cacheKey)
+            return response
+        }
     }
 }
 
@@ -57,14 +79,26 @@ final class TransactionRepository: Sendable {
     private let api: APIClient
     private let cache: ReadCache
     private let cacheKey = "transactions-v1"
+    private let defaultPageFlight = SingleFlight<TransactionPage>()
 
     init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
     func cached() async -> ReadCache.Cached<TransactionPage>? { await cache.load(TransactionPage.self, key: cacheKey) }
+    func value(maxAge: TimeInterval = CacheLifetime.transactions) async throws -> TransactionPage {
+        if let cached = await cached(), cached.isFresh(for: maxAge) { return cached.value }
+        return try await list()
+    }
+
     func list(query: TransactionQuery = TransactionQuery()) async throws -> TransactionPage {
-        let wire: TransactionPageWire = try await api.get("api/mobile/v1/transactions", query: query.queryItems)
-        let response = wire.domain()
-        if query == TransactionQuery() { await cache.save(response, key: cacheKey) }
-        return response
+        let load: @Sendable () async throws -> TransactionPage = { [api] in
+            let wire: TransactionPageWire = try await api.get("api/mobile/v1/transactions", query: query.queryItems)
+            return wire.domain()
+        }
+        guard query == TransactionQuery() else { return try await load() }
+        return try await defaultPageFlight.run { [cache, cacheKey] in
+            let response = try await load()
+            await cache.save(response, key: cacheKey)
+            return response
+        }
     }
 
     func list(cursor: String? = nil) async throws -> TransactionPage {
@@ -127,6 +161,7 @@ final class TransactionRepository: Sendable {
             notes: request.notes
         )
         let created: TransactionPageWire.Item = try await api.send("api/mobile/v1/transactions", method: .post, body: wire, idempotencyKey: request.idempotencyKey)
+        await cache.remove(cacheKey)
         await MainActor.run { NotificationCenter.default.post(name: .siloxPortfolioChanged, object: nil) }
         return TransactionPageWire(items: [created], page: 1, pageSize: 1, total: 1).domain().items[0]
     }
@@ -139,17 +174,29 @@ final class TransactionRepository: Sendable {
     }
     func delete(id: String) async throws {
         try await api.delete("api/mobile/v1/transactions/\(id)", idempotencyKey: UUID().uuidString)
+        await cache.remove(cacheKey)
         await MainActor.run { NotificationCenter.default.post(name: .siloxPortfolioChanged, object: nil) }
     }
 }
 
 final class AssetRepository: Sendable {
     private let api: APIClient
-    init(api: APIClient) { self.api = api }
+    private let cache: ReadCache
+    private let cacheKey = "assets-v1"
+    private let refreshFlight = SingleFlight<[Asset]>()
 
-    func list() async throws -> [Asset] {
-        let wire: [AssetWire] = try await api.get("api/mobile/v1/assets")
-        return wire.map { $0.domain() }
+    init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
+
+    func cached() async -> ReadCache.Cached<[Asset]>? { await cache.load([Asset].self, key: cacheKey) }
+
+    func list(maxAge: TimeInterval = CacheLifetime.assets) async throws -> [Asset] {
+        if let cached = await cached(), cached.isFresh(for: maxAge) { return cached.value }
+        return try await refreshFlight.run { [api, cache, cacheKey] in
+            let wire: [AssetWire] = try await api.get("api/mobile/v1/assets")
+            let response = wire.map { $0.domain() }
+            await cache.save(response, key: cacheKey)
+            return response
+        }
     }
 
     func create(ticker: String, name: String?, type: String, currency: String) async throws -> Asset {
@@ -164,21 +211,46 @@ final class AssetRepository: Sendable {
                 currency: currency
             )
         )
+        await cache.remove(cacheKey)
         return wire.domain()
     }
 }
 
 final class InsightsRepository: Sendable {
     private let api: APIClient
-    init(api: APIClient) { self.api = api }
+    private let cache: ReadCache
+    private let historyKey = "portfolio-history-v1"
+    private let alertsKey = "price-alerts-v1"
+    private let historyFlight = SingleFlight<[PortfolioHistoryPoint]>()
+    private let alertsFlight = SingleFlight<[PriceAlert]>()
 
-    func history() async throws -> [PortfolioHistoryPoint] {
-        try await api.get("api/mobile/v1/portfolio/history")
+    init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
+
+    func cachedHistory() async -> ReadCache.Cached<[PortfolioHistoryPoint]>? {
+        await cache.load([PortfolioHistoryPoint].self, key: historyKey)
     }
 
-    func alerts() async throws -> [PriceAlert] {
-        let wire: [PriceAlertWire] = try await api.get("api/mobile/v1/alerts")
-        return wire.map { $0.domain() }
+    func cachedAlerts() async -> ReadCache.Cached<[PriceAlert]>? {
+        await cache.load([PriceAlert].self, key: alertsKey)
+    }
+
+    func history(maxAge: TimeInterval = CacheLifetime.history) async throws -> [PortfolioHistoryPoint] {
+        if let cached = await cachedHistory(), cached.isFresh(for: maxAge) { return cached.value }
+        return try await historyFlight.run { [api, cache, historyKey] in
+            let value: [PortfolioHistoryPoint] = try await api.get("api/mobile/v1/portfolio/history")
+            await cache.save(value, key: historyKey)
+            return value
+        }
+    }
+
+    func alerts(maxAge: TimeInterval = CacheLifetime.alerts) async throws -> [PriceAlert] {
+        if let cached = await cachedAlerts(), cached.isFresh(for: maxAge) { return cached.value }
+        return try await alertsFlight.run { [api, cache, alertsKey] in
+            let wire: [PriceAlertWire] = try await api.get("api/mobile/v1/alerts")
+            let value = wire.map { $0.domain() }
+            await cache.save(value, key: alertsKey)
+            return value
+        }
     }
 
     func createAlert(_ request: CreatePriceAlertRequest) async throws -> PriceAlert {
@@ -191,6 +263,7 @@ final class InsightsRepository: Sendable {
                 condition: try validatedAlertCondition(request.condition)
             )
         )
+        await cache.remove(alertsKey)
         return wire.domain()
     }
 
@@ -207,11 +280,13 @@ final class InsightsRepository: Sendable {
                 triggered: request.triggered
             )
         )
+        await cache.remove(alertsKey)
         return wire.domain()
     }
 
     func deleteAlert(id: String) async throws {
         try await api.delete("api/mobile/v1/alerts/\(id)", idempotencyKey: UUID().uuidString)
+        await cache.remove(alertsKey)
     }
 
     private func canonicalAlertPrice(_ raw: String) throws -> String {
@@ -232,14 +307,27 @@ final class InsightsRepository: Sendable {
 
 final class SettingsRepository: Sendable {
     private let api: APIClient
-    init(api: APIClient) { self.api = api }
+    private let cache: ReadCache
+    private let cacheKey = "notification-settings-v1"
+    private let refreshFlight = SingleFlight<NotificationPreferences>()
 
-    func get() async throws -> NotificationPreferences {
-        try await api.get("api/mobile/v1/settings")
+    init(api: APIClient, cache: ReadCache) { self.api = api; self.cache = cache }
+
+    func get(maxAge: TimeInterval = CacheLifetime.settings) async throws -> NotificationPreferences {
+        if let cached = await cache.load(NotificationPreferences.self, key: cacheKey), cached.isFresh(for: maxAge) {
+            return cached.value
+        }
+        return try await refreshFlight.run { [api, cache, cacheKey] in
+            let value: NotificationPreferences = try await api.get("api/mobile/v1/settings")
+            await cache.save(value, key: cacheKey)
+            return value
+        }
     }
 
     func update(_ preferences: UpdateNotificationPreferences) async throws -> NotificationPreferences {
-        try await api.send("api/mobile/v1/settings", method: .patch, body: preferences)
+        let value: NotificationPreferences = try await api.send("api/mobile/v1/settings", method: .patch, body: preferences)
+        await cache.save(value, key: cacheKey)
+        return value
     }
 }
 

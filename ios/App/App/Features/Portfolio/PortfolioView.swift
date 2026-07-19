@@ -12,7 +12,11 @@ final class PortfolioViewModel: ObservableObject {
             if let cached = await repository.cached() { state = .loaded(cached.value, cachedAt: cached.savedAt) }
             else { state = .loading }
         }
-        await refresh()
+        do { state = .loaded(try await repository.value(), cachedAt: nil) }
+        catch {
+            let cached = await repository.cached()
+            state = .failed(error.localizedDescription, cached: cached?.value, cachedAt: cached?.savedAt)
+        }
     }
 
     func refresh() async {

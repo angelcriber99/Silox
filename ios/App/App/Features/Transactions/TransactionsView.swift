@@ -36,7 +36,20 @@ final class TransactionsViewModel: ObservableObject {
                 state = .loading
             }
         }
-        await refresh(query: query)
+        activeQuery = query
+        do {
+            let page: TransactionPage
+            if query == TransactionQuery() {
+                page = try await repository.value()
+            } else {
+                page = try await repository.list(query: query)
+            }
+            state = .loaded(page, cachedAt: nil)
+        }
+        catch {
+            let fallback = items.isEmpty ? await repository.cached() : nil
+            state = .failed(error.localizedDescription, cached: items.isEmpty ? fallback?.value : currentPage, cachedAt: fallback?.savedAt)
+        }
     }
 
     func refresh(query: TransactionQuery? = nil) async {

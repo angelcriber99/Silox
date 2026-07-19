@@ -19,7 +19,7 @@ final class ReadCacheTests: XCTestCase {
         let cache = ReadCache(directory: directory)
         await cache.save(MoneyValue(amount: "99", currency: "EUR"), key: "portfolio-v1")
 
-        cache.clearAll()
+        await cache.clearAll()
 
         let loaded = await cache.load(MoneyValue.self, key: "portfolio-v1")
         XCTAssertNil(loaded)
@@ -45,5 +45,29 @@ final class ReadCacheTests: XCTestCase {
         let loaded = await cache.load(MoneyValue.self, key: "portfolio", maxAge: 0)
 
         XCTAssertNil(loaded)
+    }
+
+    func testRemoveEvictsMemoryAndDiskCopies() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let cache = ReadCache(directory: directory)
+        await cache.save(MoneyValue(amount: "42", currency: "EUR"), key: "portfolio-v1")
+        let beforeRemoval = await cache.load(MoneyValue.self, key: "portfolio-v1")
+        XCTAssertNotNil(beforeRemoval)
+
+        await cache.remove("portfolio-v1")
+
+        let afterRemoval = await cache.load(MoneyValue.self, key: "portfolio-v1")
+        XCTAssertNil(afterRemoval)
+    }
+
+    func testFreshnessPolicy() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let cache = ReadCache(directory: directory)
+        await cache.save(MoneyValue(amount: "10", currency: "EUR"), key: "money")
+        let cached = await cache.load(MoneyValue.self, key: "money")
+        let loaded = try XCTUnwrap(cached)
+
+        XCTAssertTrue(loaded.isFresh(for: 30, now: loaded.savedAt.addingTimeInterval(29)))
+        XCTAssertFalse(loaded.isFresh(for: 30, now: loaded.savedAt.addingTimeInterval(31)))
     }
 }

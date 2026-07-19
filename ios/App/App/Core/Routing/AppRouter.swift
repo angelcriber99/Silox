@@ -2,12 +2,13 @@ import Foundation
 import Observation
 
 enum AppTab: String, CaseIterable, Identifiable, Sendable {
-    case portfolio, transactions, radar, settings
+    case portfolio, analysis, transactions, radar, settings
 
     var id: Self { self }
     var title: String {
         switch self {
         case .portfolio: "Cartera"
+        case .analysis: "Análisis"
         case .transactions: "Movimientos"
         case .radar: "Radar"
         case .settings: "Ajustes"
@@ -16,6 +17,7 @@ enum AppTab: String, CaseIterable, Identifiable, Sendable {
     var systemImage: String {
         switch self {
         case .portfolio: "chart.pie"
+        case .analysis: "chart.xyaxis.line"
         case .transactions: "arrow.left.arrow.right"
         case .radar: "dot.radiowaves.left.and.right"
         case .settings: "gearshape"
@@ -46,6 +48,7 @@ enum SiloxDeepLink: Equatable {
         let components = url.pathComponents.filter { $0 != "/" }
         switch destination {
         case "portfolio": self = .tab(.portfolio)
+        case "analysis": self = .tab(.analysis)
         case "transactions":
             self = components.first?.lowercased() == "add" ? .addMovement(assetID: nil) : .tab(.transactions)
         case "radar": self = .tab(.radar)
