@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useState, useRef } from "react"
 import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { FundHoldingsResponse } from "@/lib/actions/market-data"
-import { formatCurrency } from "@/lib/utils/formatters"
+import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Loader2, Wallet, Globe2, Briefcase, Lightbulb, Activity } from "lucide-react"
 import { useHistory } from "@/lib/hooks/use-portfolio"
@@ -446,18 +446,33 @@ export function ComprehensiveAnalysis() {
       <div className="p-6 rounded-[32px] border border-border flex flex-col relative overflow-hidden" style={{ background: "var(--card)" }}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[64px] pointer-events-none" />
         
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
-              <Activity className="w-5 h-5 text-primary" />
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
+                <Activity className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold tracking-tight text-foreground">Rendimiento Histórico</h3>
+                <p className="text-xs font-medium text-muted-foreground">Evolución del patrimonio y ganancias diarias</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-bold tracking-tight text-foreground">Rendimiento Histórico</h3>
-              <p className="text-xs font-medium text-muted-foreground">Evolución del patrimonio y ganancias diarias</p>
+            
+            <div className="flex items-center gap-4 mt-2 ml-13">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider mb-0.5">Rendimiento Global</span>
+                <div className={`flex items-baseline gap-1.5 ${(totals.totalPnl ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                  <span className="text-base font-bold tabular-nums tracking-tight">
+                    {(totals.totalPnl ?? 0) >= 0 ? "+" : ""}{formatCurrency(totals.totalPnl ?? 0)}
+                  </span>
+                  <span className="text-xs font-semibold tabular-nums">
+                    ({(totals.totalPnl ?? 0) >= 0 ? "+" : ""}{formatPercent(totals.totalPnlPercent ?? 0)})
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center rounded-xl border border-border/60 bg-background/80 p-1">
+          <div className="flex items-center rounded-xl border border-border/60 bg-background/80 p-1 sm:self-start mt-2 sm:mt-0">
             {(["1D", "1W", "1M", "YTD", "1Y", "ALL"] as PerformanceRange[]).map((range) => (
               <button
                 key={range}
@@ -473,7 +488,6 @@ export function ComprehensiveAnalysis() {
               </button>
             ))}
           </div>
-        </div>
         
         <div className="relative mt-2">
           <CombinedPerformanceChart 

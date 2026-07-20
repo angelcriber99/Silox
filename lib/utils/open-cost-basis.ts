@@ -11,6 +11,7 @@ export interface CostBasisTransaction {
   created_at: string
   notas?: string | null
   estado?: string | null
+  tipo_cambio_eur?: number | null
 }
 
 export interface OpenPurchaseLot {
@@ -24,12 +25,16 @@ export interface OpenPurchaseLot {
   commission: number
   performanceUnitCost: number
   investedUnitCost: number
+  performanceUnitCostEur: number
+  investedUnitCostEur: number
   notes?: string | null
 }
 
 export interface OpenPositionBasis {
   performanceCost: number
   investedCost: number
+  performanceCostEur: number
+  investedCostEur: number
 }
 
 const BUY_OPERATIONS = new Set([
@@ -71,6 +76,13 @@ export function calculateOpenPurchaseLots(
       const purchasePrice = Number(transaction.precio_unitario)
       const commission = Math.max(0, Number(transaction.comision) || 0)
       const performanceUnitCost = ((quantity * purchasePrice) + commission) / quantity
+      
+      const rate = Number.isFinite(Number(transaction.tipo_cambio_eur)) && Number(transaction.tipo_cambio_eur) > 0 
+        ? Number(transaction.tipo_cambio_eur) 
+        : 1
+      const performanceUnitCostEur = performanceUnitCost / rate
+      const investedUnitCostEur = (isNonCashReward(transaction) ? 0 : performanceUnitCost) / rate
+
       if (Number.isFinite(performanceUnitCost) && performanceUnitCost >= 0) {
         lots.push({
           transactionId: transaction.id,
@@ -83,6 +95,8 @@ export function calculateOpenPurchaseLots(
           commission,
           performanceUnitCost,
           investedUnitCost: isNonCashReward(transaction) ? 0 : performanceUnitCost,
+          performanceUnitCostEur,
+          investedUnitCostEur,
           notes: transaction.notas,
         })
       }
@@ -124,6 +138,8 @@ export function calculateOpenPositionBases(
         {
           performanceCost: lots.reduce((total, lot) => total + (lot.remainingQuantity * lot.performanceUnitCost), 0),
           investedCost: lots.reduce((total, lot) => total + (lot.remainingQuantity * lot.investedUnitCost), 0),
+          performanceCostEur: lots.reduce((total, lot) => total + (lot.remainingQuantity * lot.performanceUnitCostEur), 0),
+          investedCostEur: lots.reduce((total, lot) => total + (lot.remainingQuantity * lot.investedUnitCostEur), 0),
         },
       ]
     }),

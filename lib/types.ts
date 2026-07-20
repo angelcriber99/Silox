@@ -11,6 +11,8 @@ export interface Posicion {
   unidades: number
   coste_total: number
   dinero_invertido?: number
+  coste_total_eur_historico?: number
+  dinero_invertido_eur_historico?: number
   comisiones_total: number
   num_operaciones: number
   ultima_operacion: string | null

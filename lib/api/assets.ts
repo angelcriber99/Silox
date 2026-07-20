@@ -25,7 +25,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   const { data: completedTransactions, error: transactionsError } = await supabase
     .from('transacciones')
-    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas')
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur')
     .in('activo_id', assetIds)
     .eq('estado', 'Completada')
 
@@ -43,6 +43,8 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
       ...(openBasis !== undefined ? {
         coste_total: openBasis.performanceCost,
         dinero_invertido: openBasis.investedCost,
+        coste_total_eur_historico: openBasis.performanceCostEur,
+        dinero_invertido_eur_historico: openBasis.investedCostEur,
       } : {}),
       ...(activity ? {
         has_daily_activity: true,
@@ -232,8 +234,8 @@ export function enrichPositions(
       sparkline = Array(7).fill(precio_actual)
     }
     
-    const coste_total_eur = p.coste_total / fxRate
-    const dinero_invertido_eur = (p.dinero_invertido ?? p.coste_total) / fxRate
+    const coste_total_eur = p.coste_total_eur_historico ?? (p.coste_total / fxRate)
+    const dinero_invertido_eur = p.dinero_invertido_eur_historico ?? ((p.dinero_invertido ?? p.coste_total) / fxRate)
     
     const valor_actual_eur =
       p.unidades === 0 ? 0 :
