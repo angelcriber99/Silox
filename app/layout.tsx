@@ -46,8 +46,8 @@ export const metadata: Metadata = {
     title: "Silox",
   },
   icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
   },
 };
 
