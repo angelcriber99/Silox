@@ -223,6 +223,8 @@ export async function portfolio(context: Context) {
         ...(openBasis !== undefined ? {
           coste_total: openBasis.performanceCost,
           dinero_invertido: openBasis.investedCost,
+          coste_total_eur_historico: openBasis.performanceCostEur,
+          dinero_invertido_eur_historico: openBasis.investedCostEur,
         } : {}),
         has_daily_activity: Boolean(activity),
         daily_net_units: activity?.netUnits ?? 0,
