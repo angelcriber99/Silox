@@ -16,6 +16,7 @@ import { AssetNews } from "./detail/asset-news"
 import { AssetLogo } from "@/components/ui/asset-logo"
 import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
+import { AssetPnlChart } from "./detail/asset-pnl-chart"
 import { MarketStats } from "./detail/market-stats"
 import type { AssetDetails } from '@/lib/actions/market'
 import { PurchaseLotsCard } from "./detail/purchase-lots-card"
@@ -42,6 +43,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
 
   const [alertsOpen, setAlertsOpen] = useState(false)
   const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
+  const [chartMode, setChartMode] = useState<"price" | "pnl">("price")
 
   const currentPerformance = rangePerformance || {
     label: "Hoy",
@@ -118,15 +120,35 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
 
         {/* ═══════════ GRÁFICO INTERACTIVO ═══════════ */}
         <div className="mb-8 animate-fade-in stagger-1">
-          <InteractiveAssetChart 
-            ticker={position.ticker} 
-            moneda={position.original_currency || position.moneda} 
-            colorHex={colorHex} 
-            transactions={transactions}
-            units={position.unidades}
-            historicalPnl={{ absolute: position.pnl ?? 0, percent: position.pnl_percent ?? 0 }}
-            onRangePerformanceChange={setRangePerformance}
-          />
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg">
+              <button
+                onClick={() => setChartMode("price")}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${chartMode === "price" ? "bg-background text-foreground shadow-sm ring-1 ring-border/50" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Evolución de Precio
+              </button>
+              <button
+                onClick={() => setChartMode("pnl")}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${chartMode === "pnl" ? "bg-background text-foreground shadow-sm ring-1 ring-border/50" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Beneficio Histórico
+              </button>
+            </div>
+          </div>
+          {chartMode === "price" ? (
+            <InteractiveAssetChart 
+              ticker={position.ticker} 
+              moneda={position.original_currency || position.moneda} 
+              colorHex={colorHex} 
+              transactions={transactions}
+              units={position.unidades}
+              historicalPnl={{ absolute: position.pnl ?? 0, percent: position.pnl_percent ?? 0 }}
+              onRangePerformanceChange={setRangePerformance}
+            />
+          ) : (
+            <AssetPnlChart assetId={position.activo_id} colorHex={colorHex} />
+          )}
         </div>
 
         {/* ═══════════ TU POSICIÓN ═══════════ */}
