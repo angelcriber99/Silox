@@ -488,7 +488,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                   <th className="px-5 py-4 text-right">Precio</th>
                   <th className="px-5 py-4 text-right">Total</th>
                   <th className="px-5 py-4 text-right">Comisión</th>
-                  <th className="px-5 py-4 text-right">P&L</th>
+                  <th className="px-5 py-4 text-right">Rendimiento</th>
                   <th className="px-5 py-4 text-right">Acumulado</th>
                 </tr>
               </thead>
@@ -515,15 +515,17 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                       {tx.comision > 0 ? formatCurrency(tx.comision, position.moneda) : "—"}
                     </td>
                     <td className="px-5 py-4 text-right tabular-nums">
-                      {tx.pnlTotal !== null ? (
-                        <span className={tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                          {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotal)}
-                          <span className="text-[10px] ml-1 opacity-60">
-                            ({tx.pnlPct !== null ? (tx.pnlPct >= 0 ? "+" : "") + tx.pnlPct.toFixed(1) + "%" : ""})
+                      {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
+                        <div className="flex flex-col items-end">
+                          <span className={`tabular-nums font-medium ${tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotal)}
                           </span>
-                        </span>
+                          <span className={`text-[10px] tabular-nums ${tx.pnlPct >= 0 ? "text-emerald-500/70" : "text-rose-500/70"}`}>
+                            {tx.pnlPct >= 0 ? "+" : ""}{tx.pnlPct.toFixed(2)}%
+                          </span>
+                        </div>
                       ) : (
-                        <span className="text-muted-foreground/60">—</span>
+                        <span className="text-muted-foreground/50">—</span>
                       )}
                     </td>
                     <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">{formatCurrency(tx.accumulated, position.moneda)}</td>

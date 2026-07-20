@@ -189,6 +189,7 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
                     <th className="px-5 py-4">Tipo</th>
                     <th className="px-5 py-4 text-right">Acciones</th>
                     <th className="px-5 py-4 text-right">Precio</th>
+                    <th className="px-5 py-4 text-right">Rendimiento</th>
                     <th className="px-5 py-4 text-right">Total</th>
                   </tr>
                 </thead>
@@ -210,6 +211,20 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
                       </td>
                       <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
                       <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                      <td className="px-5 py-4 text-right">
+                        {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
+                          <div className="flex flex-col items-end">
+                            <span className={`tabular-nums font-medium ${tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                              {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotal, position.moneda)}
+                            </span>
+                            <span className={`text-[10px] tabular-nums ${tx.pnlPct >= 0 ? "text-emerald-500/70" : "text-rose-500/70"}`}>
+                              {tx.pnlPct >= 0 ? "+" : ""}{tx.pnlPct.toFixed(2)}%
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
+                      </td>
                       <td className="px-5 py-4 text-right tabular-nums font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
                     </tr>
                   ))}
