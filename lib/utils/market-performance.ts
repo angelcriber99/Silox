@@ -122,7 +122,7 @@ export function extractMarketPerformance(
     }
   }
 
-  const dailyChangePercent = latestQuote ? percentChange(currentPrice, dailyBaseline) : 0
+  const dailyChangePercent = percentChange(currentPrice, dailyBaseline) ?? 0
 
   const activePeriod = getSessionPeriod(meta, marketState)
   const sessionStartMs = toMilliseconds(activePeriod?.start)
@@ -138,7 +138,7 @@ export function extractMarketPerformance(
     ? 0
     : percentChange(sessionQuotes.at(-1)?.close ?? null, sessionBaseline)
   const quoteAge = latestTime ? now.getTime() - latestTime.getTime() : Number.POSITIVE_INFINITY
-  const isStale = !latestQuote || quoteAge > ACTIVE_QUOTE_STALE_AFTER_MS
+  const isStale = (latestTime && quoteAge > ACTIVE_QUOTE_STALE_AFTER_MS) || (!latestTime && marketState !== 'CLOSED' && meta.regularMarketPrice == null)
 
   return {
     currentPrice,
