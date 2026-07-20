@@ -67,7 +67,7 @@ export default function Home() {
           <div className="flex-1 flex flex-row overflow-hidden bg-background">
             
             {/* ── Left Sidebar (Dashboard Control Panel) ── */}
-            <div className="w-[360px] xl:w-[380px] flex-shrink-0 flex flex-col border-r border-border/20 overflow-y-auto custom-scrollbar bg-background relative">
+            <div className="w-[360px] xl:w-[380px] flex-shrink-0 flex flex-col border-r border-border/20 overflow-hidden bg-background relative">
               {/* Subtle gradient background for the premium feel */}
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
               <PortfolioSummary
@@ -80,7 +80,7 @@ export default function Home() {
                 marketState={marketState}
               />
               
-              <div className="flex flex-col flex-1 gap-6 p-4">
+              <div className="flex flex-col flex-1 min-h-0 gap-6 p-4">
                 <AllocationChart positions={positions} marketState={marketState} />
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 <UpcomingEvents

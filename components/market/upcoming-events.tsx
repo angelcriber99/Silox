@@ -144,7 +144,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
   })
 
   return (
-    <Card className="flex flex-1 flex-col border-border/40 bg-card/40 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md">
+    <Card className="flex flex-1 min-h-0 flex-col border-border/40 bg-card/40 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border/20 p-4 pb-2">
         <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Calendar aria-hidden="true" className="h-4 w-4 text-amber-400" />
