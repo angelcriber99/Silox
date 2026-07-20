@@ -481,7 +481,7 @@ export function ComprehensiveAnalysis() {
             dailyData={dailyAggregatedData}
             timeRange={timeRange}
             currentDailyPnl={totals.totalSessionPnl}
-            currentDailyPnlPercent={totals.totalSessionPnlPercent}
+            currentDailyPnlPercent={totals.totalDailyPnlPercent}
           />
         </div>
       </div>
