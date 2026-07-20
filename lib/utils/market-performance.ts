@@ -82,6 +82,7 @@ export function determineMarketState(meta: ChartMeta, now = new Date()): MarketS
 export function extractMarketPerformance(
   meta: ChartMeta,
   quotes: ChartQuote[],
+  dailyQuotes: ChartQuote[] = [],
   now = new Date(),
 ): MarketPerformance {
   const exchangeTimezone = meta.exchangeTimezoneName || DEFAULT_MARKET_TIME_ZONE
@@ -98,7 +99,17 @@ export function extractMarketPerformance(
   const latestQuote = currentDateQuotes.at(-1)
   const latestTime = latestQuote ? new Date(latestQuote.date) : undefined
   const currentPrice = latestQuote?.close ?? meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
-  const dailyBaseline = meta.chartPreviousClose ?? meta.previousClose ?? null
+  let dailyBaseline = meta.chartPreviousClose ?? meta.previousClose ?? null
+  
+  if (dailyQuotes && dailyQuotes.length > 0) {
+    const validDailyQuotes = dailyQuotes.filter(q => q.close != null && Number.isFinite(q.close));
+    const latestQuoteDateStr = latestQuote ? getMarketDateKey(latestQuote.date, exchangeTimezone) : marketDate;
+    const previousDays = validDailyQuotes.filter(q => getMarketDateKey(q.date, exchangeTimezone) < latestQuoteDateStr);
+    if (previousDays.length > 0) {
+      dailyBaseline = previousDays.at(-1)?.close ?? dailyBaseline;
+    }
+  }
+
   const dailyChangePercent = latestQuote ? percentChange(currentPrice, dailyBaseline) : 0
 
   const activePeriod = getSessionPeriod(meta, marketState)

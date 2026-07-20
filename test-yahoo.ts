@@ -5,6 +5,5 @@ async function test() {
   console.log('chartPreviousClose:', chart.meta.chartPreviousClose)
   console.log('previousClose:', chart.meta.previousClose)
   console.log('regularMarketPrice:', chart.meta.regularMarketPrice)
-  console.log('latestQuote:', chart.quotes.at(-1))
 }
 test().catch(console.error)

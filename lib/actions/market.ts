@@ -343,7 +343,7 @@ async function _fetchMarketPrices(
       
       const yahooCurrency = meta.currency || 'USD'
       const originalCurrency = normalizeYahooCurrency(yahooCurrency)
-      const performance = extractMarketPerformance(meta as ChartMeta, quotes)
+      const performance = extractMarketPerformance(meta as ChartMeta, quotes, (chart1d?.quotes as ChartQuote[]) || [])
 
       const rawPrice = performance.currentPrice === null
         ? null
