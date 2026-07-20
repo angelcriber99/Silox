@@ -172,6 +172,8 @@ function getMetalPriceEntry(
   }
 }
 
+let lastKnownFxRates: FxRatesToEur = { EUR: 1 }
+
 async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
   const pairs = Object.values(FX_PAIRS)
   const results = await Promise.allSettled(
@@ -179,17 +181,31 @@ async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
   )
 
   const rates: FxRatesToEur = { EUR: 1 }
+  let allFailed = true
 
   pairs.forEach((pair, index) => {
     const result = results[index]
-    if (result.status !== 'fulfilled') return
+    const foreign = pair.replace('EUR', '').replace('=X', '')
+    
+    if (result.status !== 'fulfilled') {
+      if (lastKnownFxRates[foreign]) rates[foreign] = lastKnownFxRates[foreign]
+      return
+    }
 
     const raw = result.value.regularMarketPrice
-    if (!raw || raw <= 0) return
+    if (!raw || raw <= 0) {
+      if (lastKnownFxRates[foreign]) rates[foreign] = lastKnownFxRates[foreign]
+      return
+    }
 
-    const foreign = pair.replace('EUR', '').replace('=X', '')
     rates[foreign] = raw
+    lastKnownFxRates[foreign] = raw
+    allFailed = false
   })
+
+  if (allFailed && Object.keys(lastKnownFxRates).length > 1) {
+    return { ...lastKnownFxRates }
+  }
 
   return rates
 }

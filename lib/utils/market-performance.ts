@@ -98,7 +98,17 @@ export function extractMarketPerformance(
   )
   const latestQuote = currentDateQuotes.at(-1)
   const latestTime = latestQuote ? new Date(latestQuote.date) : undefined
-  const currentPrice = latestQuote?.close ?? meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
+  
+  // Prefer official meta prices over 1m chart ticks to prevent extreme after-hours volatility bugs
+  let currentPrice = meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
+  if (marketState === 'PRE' && meta.preMarketPrice) {
+    currentPrice = meta.preMarketPrice
+  } else if ((marketState === 'POST' || marketState === 'CLOSED') && meta.postMarketPrice) {
+    currentPrice = meta.postMarketPrice
+  } else if (marketState === 'REGULAR' && latestQuote?.close != null) {
+    currentPrice = latestQuote.close
+  }
+
   let dailyBaseline = meta.chartPreviousClose ?? meta.previousClose ?? null
   
   if (dailyQuotes && dailyQuotes.length > 0) {
