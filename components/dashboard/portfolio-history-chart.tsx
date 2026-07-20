@@ -165,17 +165,19 @@ export function PortfolioHistoryChart({
             activeDot={{ r: 5, fill: lineColor, stroke: "var(--background)", strokeWidth: 3 }}
             dot={false}
             isAnimationActive={false}
+            connectNulls={true}
           />
           <Line
-            type="stepAfter"
+            type="monotone"
             dataKey="totalInvested"
             stroke="var(--muted-foreground)"
-            strokeWidth={1.5}
+            strokeWidth={2}
             strokeDasharray="5 5"
             strokeOpacity={0.8}
             dot={false}
             activeDot={false}
             isAnimationActive={false}
+            connectNulls={true}
           />
         </ComposedChart>
       </ResponsiveContainer>

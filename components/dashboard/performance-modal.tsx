@@ -217,18 +217,39 @@ export function PerformanceModal({
           <div className="flex-1 bg-muted/10 p-4 sm:p-6">
             <TabsContent value="evolucion" className="mt-0">
               <section className="rounded-2xl border border-border/60 bg-card/55 p-4 shadow-sm sm:p-6">
-                <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Resultado del periodo</p>
-                    <div className="mt-1 flex flex-wrap items-baseline gap-2">
-                      <p className={`text-2xl font-bold tabular-nums ${pnlTextClass(displayedPeriod.profit)}`}>
-                        {money(displayedPeriod.profit, true)}
-                      </p>
-                      <p className={`text-sm font-semibold ${pnlTextClass(displayedPeriod.profit)}`}>
-                        {percent(displayedPeriod.profitPercent)}
-                      </p>
+                <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Resultado del periodo</p>
+                      <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                        <p className={`text-2xl font-bold tabular-nums ${pnlTextClass(displayedPeriod.profit)}`}>
+                          {money(displayedPeriod.profit, true)}
+                        </p>
+                        <p className={`text-sm font-semibold ${pnlTextClass(displayedPeriod.profit)}`}>
+                          {percent(displayedPeriod.profitPercent)}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{rangeLabel}</p>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{rangeLabel}</p>
+
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-[120px] text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Total Histórico</span>
+                        <span className={`text-sm font-bold tabular-nums ${pnlTextClass(currentTotalPnl)}`}>
+                          {money(currentTotalPnl, true)}
+                        </span>
+                        <span className="text-muted-foreground text-xs opacity-50">•</span>
+                        <span className={`text-sm font-semibold tabular-nums ${pnlTextClass(currentTotalPnl)}`}>
+                          {percent(currentTotalPnlPercent)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-[120px] text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Aportado Neto</span>
+                        <span className="text-sm font-bold tabular-nums text-foreground">
+                          {money(currentTotalCost)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <RangeSelector value={timeRange} onChange={(range) => { setTimeRange(range); setHoveredPoint(null) }} />
                 </div>
