@@ -64,35 +64,48 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
       if (enrichedChart.length > 0) {
         // Enriquecer con compras
         if (transactions.length > 0) {
-          const purchasesByDate = transactions
-            .filter(t => t.tipo_operacion === 'Compra' && t.fecha)
-            .reduce((acc, t) => {
-              const dateStr = new Date(t.fecha).toISOString().split('T')[0]
-              if (!acc[dateStr]) acc[dateStr] = []
-              acc[dateStr].push(t)
-              return acc
-            }, {} as Record<string, RawTransaction[]>)
-            
-          const lastPointOfDay = new Map()
-          enrichedChart.forEach((p: any, index: number) => {
-            const pointDateStr = new Date(p.date).toISOString().split('T')[0]
-            lastPointOfDay.set(pointDateStr, index)
-          })
+          const purchases = transactions.filter(t => 
+            (t.tipo_operacion === 'Compra' || t.tipo_operacion === 'Traspaso Entrada' || t.tipo_operacion === 'Aportación') && t.fecha
+          )
           
-          enrichedChart = enrichedChart.map((p: any, index: number) => {
-            const pointDateStr = new Date(p.date).toISOString().split('T')[0]
-            const purchases = purchasesByDate[pointDateStr]
-            if (purchases && lastPointOfDay.get(pointDateStr) === index) {
-              const totalQty = purchases.reduce((sum, t) => sum + Number(t.cantidad), 0)
-              const avgPrice = purchases.reduce((sum, t) => sum + Number(t.cantidad) * Number(t.precio_unitario), 0) / totalQty
-              return {
-                ...p,
-                isPurchase: true,
-                purchaseDetails: { qty: totalQty, price: avgPrice }
+          if (purchases.length > 0) {
+            purchases.forEach(t => {
+              const txTime = new Date(t.fecha).getTime()
+              let closestIdx = -1
+              let minDiff = Infinity
+              
+              enrichedChart.forEach((p: any, index: number) => {
+                const pTime = new Date(p.date).getTime()
+                const diff = Math.abs(pTime - txTime)
+                if (diff < minDiff) {
+                  minDiff = diff
+                  closestIdx = index
+                }
+              })
+              
+              // Only attach if within a reasonable threshold (e.g., 4 days)
+              // to avoid showing a purchase on a chart range that doesn't contain it
+              if (closestIdx !== -1 && minDiff < 4 * 24 * 60 * 60 * 1000) {
+                if (!enrichedChart[closestIdx].purchases) {
+                   enrichedChart[closestIdx].purchases = []
+                }
+                enrichedChart[closestIdx].purchases.push(t)
               }
-            }
-            return p
-          })
+            })
+            
+            enrichedChart = enrichedChart.map((p: any) => {
+              if (p.purchases && p.purchases.length > 0) {
+                const totalQty = p.purchases.reduce((sum: number, t: any) => sum + Number(t.cantidad), 0)
+                const avgPrice = p.purchases.reduce((sum: number, t: any) => sum + (Number(t.cantidad) * Number(t.precio_unitario || p.price)), 0) / totalQty
+                return {
+                  ...p,
+                  isPurchase: true,
+                  purchaseDetails: { qty: totalQty, price: avgPrice }
+                }
+              }
+              return p
+            })
+          }
         }
         
         // Calcular rendimiento del rango
