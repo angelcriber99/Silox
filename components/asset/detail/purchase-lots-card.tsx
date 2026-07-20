@@ -34,6 +34,9 @@ export function PurchaseLotsCard({ position, transactions }: PurchaseLotsCardPro
   )
   const visibleLots = showAll ? lots : lots.slice(0, INITIAL_VISIBLE_LOTS)
   const hiddenCount = Math.max(0, lots.length - INITIAL_VISIBLE_LOTS)
+  const conversionRate = (position.precio_actual && position.precio_actual_nativo && position.precio_actual_nativo > 0)
+    ? position.precio_actual / position.precio_actual_nativo
+    : 1
 
   return (
     <Card className="mb-10 border-border bg-card backdrop-blur-sm animate-fade-in">
@@ -67,6 +70,8 @@ export function PurchaseLotsCard({ position, transactions }: PurchaseLotsCardPro
               const currentValue = currentPrice === null ? null : lot.remainingQuantity * currentPrice
               const referenceValue = lot.remainingQuantity * lot.performanceUnitCost
               const pnl = currentValue === null ? null : currentValue - referenceValue
+              const pnlEur = pnl !== null ? pnl * conversionRate : null
+              const currentValueEur = currentValue !== null ? currentValue * conversionRate : null
               const pnlPercent = pnl === null || referenceValue <= 0 ? null : (pnl / referenceValue) * 100
               const isPositive = (pnl ?? 0) >= 0
               const isPartial = lot.remainingQuantity < lot.originalQuantity - EPSILON
@@ -106,7 +111,7 @@ export function PurchaseLotsCard({ position, transactions }: PurchaseLotsCardPro
                   <div className="flex justify-between gap-3 md:block">
                     <span className="text-xs text-muted-foreground">Valor actual</span>
                     <p className="font-medium tabular-nums text-foreground">
-                      {currentValue === null ? "—" : formatCurrency(currentValue, position.moneda)}
+                      {currentValueEur === null ? "—" : formatCurrency(currentValueEur, 'EUR')}
                     </p>
                   </div>
 
@@ -118,7 +123,7 @@ export function PurchaseLotsCard({ position, transactions }: PurchaseLotsCardPro
                       ) : (
                         <>
                           <p className={`font-bold tabular-nums ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                            {isPositive ? "+" : ""}{formatCurrency(pnl, position.moneda)}
+                            {isPositive ? "+" : ""}{formatCurrency(pnlEur ?? pnl, 'EUR')}
                           </p>
                           <p className={`flex items-center gap-1 text-xs font-semibold tabular-nums md:justify-end ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
                             {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
