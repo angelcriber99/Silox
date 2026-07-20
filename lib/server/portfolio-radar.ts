@@ -448,17 +448,21 @@ async function loadMarketData(assets: RadarAsset[], now: Date) {
       if (!article.title || !validExternalUrl(article.link)) return []
       
       const related = article.relatedTickers ?? []
-      if (related.length > 0) {
-        if (!related.includes(asset.ticker)) {
-          return []
-        }
-      } else {
-         const titleWords = article.title.toLowerCase()
-         const tickerLower = asset.ticker.toLowerCase()
-         const nameWords = asset.name.toLowerCase().split(' ').filter(w => w.length > 3)
-         if (!titleWords.includes(tickerLower) && !nameWords.some(w => titleWords.includes(w))) {
-           return []
-         }
+      const baseTicker = asset.ticker.split('.')[0]
+      
+      const isRelatedByTicker = related.includes(asset.ticker) || related.includes(baseTicker)
+      const titleLower = article.title.toLowerCase()
+      const nameWords = asset.name.toLowerCase().split(' ').filter(w => w.length > 3)
+      const isRelatedByName = titleLower.includes(baseTicker.toLowerCase()) || nameWords.some(w => titleLower.includes(w))
+
+      // If Yahoo returned it, we trust it unless it has related tickers and NONE of them match our asset
+      if (related.length > 0 && !isRelatedByTicker && !isRelatedByName) {
+        return []
+      }
+      
+      // If no related tickers, require at least a name or ticker match in the title
+      if (related.length === 0 && !isRelatedByName) {
+        return []
       }
 
       return [{

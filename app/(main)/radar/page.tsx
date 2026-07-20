@@ -237,9 +237,9 @@ export default function RadarPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {months.map((month) => (
-                  <div key={month.date.toISOString()} className="rounded-2xl border border-border/60 bg-card/45 p-4 shadow-sm">
+                  <div key={month.date.toISOString()} className="min-w-[280px] max-w-[320px] flex-1 snap-start shrink-0 rounded-2xl border border-border/60 bg-card/45 p-4 shadow-sm">
                     <h3 className="mb-3 text-sm font-semibold capitalize">{format(month.date, "MMMM yyyy", { locale: es })}</h3>
                     <div className="mb-1 grid grid-cols-7 gap-1 text-center">
                       {["L", "M", "X", "J", "V", "S", "D"].map((day) => <span key={day} className="text-[10px] font-medium text-muted-foreground">{day}</span>)}
