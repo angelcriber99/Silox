@@ -13,7 +13,7 @@ export interface RawTransaction {
   estado?: string
 }
 
-function buildTransactionTable(transactions: RawTransaction[], currentNativePrice: number | null) {
+function buildTransactionTable(transactions: RawTransaction[], currentNativePrice: number | null, conversionRate: number = 1) {
   let accumulated = 0
   return transactions.map((tx) => {
     const qty = Number(tx.cantidad) || 0
@@ -28,13 +28,16 @@ function buildTransactionTable(transactions: RawTransaction[], currentNativePric
     const pnlTotal = pnlPerUnit !== null ? pnlPerUnit * qty : null
     const pnlPct = price > 0 && pnlPerUnit !== null ? (pnlPerUnit / price) * 100 : null
 
+    const pnlTotalEur = pnlTotal !== null ? pnlTotal * conversionRate : null
+
     return {
       ...tx,
       total,
       comision,
       accumulated,
-      pnlTotal: tx.tipo_operacion === "Compra" ? pnlTotal : null,
-      pnlPct: tx.tipo_operacion === "Compra" ? pnlPct : null,
+      pnlTotal: tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada" ? pnlTotal : null,
+      pnlTotalEur: tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada" ? pnlTotalEur : null,
+      pnlPct: tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada" ? pnlPct : null,
     }
   })
 }
@@ -228,10 +231,12 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
   }, [position])
 
   // ── Tabla de transacciones con P&L ──
-  const txTableData = useMemo(
-    () => buildTransactionTable(transactions, position.precio_actual_nativo ?? position.precio_actual),
-    [transactions, position.precio_actual, position.precio_actual_nativo],
-  )
+  const txTableData = useMemo(() => {
+    const conversionRate = (position.precio_actual && position.precio_actual_nativo && position.precio_actual_nativo > 0)
+      ? position.precio_actual / position.precio_actual_nativo
+      : 1
+    return buildTransactionTable(transactions, position.precio_actual_nativo ?? position.precio_actual, conversionRate)
+  }, [transactions, position.precio_actual, position.precio_actual_nativo])
 
   return {
     sparklineData,

@@ -215,7 +215,7 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
                         {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
                           <div className="flex flex-col items-end">
                             <span className={`tabular-nums font-medium ${tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                              {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotal, position.moneda)}
+                              {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotalEur ?? tx.pnlTotal, 'EUR')}
                             </span>
                             <span className={`text-[10px] tabular-nums ${tx.pnlPct >= 0 ? "text-emerald-500/70" : "text-rose-500/70"}`}>
                               {tx.pnlPct >= 0 ? "+" : ""}{tx.pnlPct.toFixed(2)}%
