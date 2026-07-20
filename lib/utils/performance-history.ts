@@ -99,7 +99,30 @@ export function filterPerformanceSeries(
   if (range === 'ALL') return points
   if (range === '1D') {
     const marketDate = getMarketDateKey(now)
-    return points.filter((point) => getMarketDateKey(point.timestamp) === marketDate)
+    const todayPoints = points.filter((point) => getMarketDateKey(point.timestamp) === marketDate)
+    
+    const previousPoints = points.filter((point) => 
+      getMarketDateKey(point.timestamp) !== marketDate && 
+      new Date(point.timestamp).getTime() < now.getTime()
+    )
+    const lastPreviousPoint = previousPoints.at(-1)
+
+    if (lastPreviousPoint) {
+      const startOfDay = new Date(now)
+      startOfDay.setHours(0, 0, 0, 0)
+      
+      // Only add the baseline if it's strictly before the first real point of today
+      // to avoid overlapping timestamps
+      const firstTodayTime = todayPoints.length > 0 ? new Date(todayPoints[0].timestamp).getTime() : Infinity
+      if (startOfDay.getTime() < firstTodayTime) {
+        const baselinePoint = {
+          ...lastPreviousPoint,
+          timestamp: startOfDay.toISOString(),
+        }
+        return [baselinePoint, ...todayPoints]
+      }
+    }
+    return todayPoints
   }
 
   let start: number
