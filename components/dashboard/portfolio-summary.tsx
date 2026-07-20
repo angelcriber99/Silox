@@ -110,6 +110,7 @@ export function PortfolioSummary({
                 <span className="uppercase tracking-widest text-[10px]">Total Histórico</span>
                 <span className="tabular-nums font-semibold" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
                   {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+                  {!hideBalances && <span className="opacity-80 ml-1 text-[10px]">({formatPercent(totals.totalPnlPercent).replace('+', '')})</span>}
                 </span>
               </div>
               <span className="hidden sm:inline opacity-30 text-[10px]">•</span>

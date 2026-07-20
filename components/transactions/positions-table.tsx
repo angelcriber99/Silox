@@ -67,7 +67,7 @@ const translateType = (type: string, t: (key: string) => string) => {
   return map[type] ? t(map[type]) : type
 }
 
-type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent" | "change_percent_24h"
+type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent" | "change_amount_24h"
 type SortDir = "asc" | "desc"
 
 function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
@@ -395,7 +395,7 @@ export function PositionsTable({
                 <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">{t('purchase_price')}</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">{t('current_price')}</TableHead>
                 {sortableHeader({ label: t('value'), sortKeyName: "valor_actual", className: "text-right whitespace-nowrap min-w-[120px]" })}
-                {sortableHeader({ label: t('today'), sortKeyName: "change_percent_24h", className: "text-right hidden sm:table-cell" })}
+                {sortableHeader({ label: t('today'), sortKeyName: "change_amount_24h", className: "text-right hidden sm:table-cell" })}
                 {!showPnlPercentOnly && sortableHeader({ label: "P&L", sortKeyName: "pnl", className: "text-right" })}
                 {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}` })}
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
