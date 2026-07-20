@@ -18,7 +18,8 @@ import {
 } from './schemas'
 import { displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 import { enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
-import { calculateNetInvestmentByCurrency, convertNetInvestmentToEur } from '@/lib/domain/portfolio/contributions'
+import { calculateFixedNetInvestmentEur, calculateNetInvestmentByCurrency, historicalFxKey } from '@/lib/domain/portfolio/contributions'
+import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
 import { fetchMarketPricesDirect } from '@/lib/actions/market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
@@ -203,7 +204,7 @@ export async function portfolio(context: Context) {
 
   const { data: fundingTransactions, error: fundingError } = await context.supabase
     .from('transacciones')
-    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, activo:activos(ticker, tipo, moneda)')
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
     .eq('user_id', context.user.id)
     .eq('estado', 'Completada')
   databaseFailure('calcular el capital neto aportado', fundingError)
@@ -236,7 +237,29 @@ export async function portfolio(context: Context) {
     : { prices: {}, fxRates: { EUR: 1 }, displayCurrency: 'EUR', marketState: 'CLOSED' }
   const enriched = enrichPositions(positions, market)
   const funding = calculateNetInvestmentByCurrency(fundingTransactions ?? [])
-  const netContributions = convertNetInvestmentToEur(funding, market.fxRates)
+  const missingFx = funding.datedFlows.filter((flow) => flow.currency !== 'EUR' && flow.fixedRate === null)
+  const historicalRates = await fetchHistoricalFxRates(missingFx.map((flow) => ({
+    currency: flow.currency,
+    date: flow.date,
+  })))
+  const idsByRate = new Map<number, string[]>()
+  for (const flow of missingFx) {
+    if (!flow.transactionId) continue
+    const rate = historicalRates[historicalFxKey(flow.currency, flow.date)]
+    if (!rate) continue
+    const ids = idsByRate.get(rate) ?? []
+    ids.push(flow.transactionId)
+    idsByRate.set(rate, ids)
+  }
+  await Promise.all(Array.from(idsByRate, ([rate, ids]) =>
+    context.supabase
+      .from('transacciones')
+      .update({ tipo_cambio_eur: rate })
+      .in('id', ids)
+      .eq('user_id', context.user.id)
+      .is('tipo_cambio_eur', null)
+  ))
+  const netContributions = calculateFixedNetInvestmentEur(funding, historicalRates)
   const totals = computePortfolioTotals(enriched, netContributions)
 
   return {

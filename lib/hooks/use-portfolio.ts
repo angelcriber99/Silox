@@ -8,7 +8,6 @@ import { savePortfolioHistory } from '@/lib/api/assets'
 import { usePrices } from "./use-prices"
 import { fetchPendingTransactions } from '@/lib/api/transactions'
 import { isInvestablePortfolioAsset } from '@/lib/domain/assets/normalization'
-import { convertNetInvestmentToEur } from '@/lib/domain/portfolio/contributions'
 
 export function usePositions(options?: { enabled?: boolean }) {
   return useQuery({
@@ -83,14 +82,9 @@ export function usePortfolio(options?: { enabled?: boolean; persistHistory?: boo
     return enrichedList
   }, [confirmedPositions, pricePayload])
 
-  const netContributions = useMemo(
-    () => convertNetInvestmentToEur(funding, pricePayload?.fxRates),
-    [funding, pricePayload?.fxRates]
-  )
-
   const totals: PortfolioTotals = useMemo(
-    () => computePortfolioTotals(enriched, netContributions),
-    [enriched, netContributions]
+    () => computePortfolioTotals(enriched, funding),
+    [enriched, funding]
   )
 
   const latestSnapshot = useRef({ totalValue: totals.totalValue, totalCost: totals.totalCost })

@@ -171,6 +171,7 @@ export interface Database {
           linked_transaction_id: string | null
           retencion_origen: number | null
           retencion_destino: number | null
+          tipo_cambio_eur: number | null
         }
         Insert: {
           id?: string
@@ -187,6 +188,7 @@ export interface Database {
           linked_transaction_id?: string | null
           retencion_origen?: number | null
           retencion_destino?: number | null
+          tipo_cambio_eur?: number | null
         }
         Update: {
           id?: string
@@ -203,6 +205,7 @@ export interface Database {
           linked_transaction_id?: string | null
           retencion_origen?: number | null
           retencion_destino?: number | null
+          tipo_cambio_eur?: number | null
         }
         Relationships: [
           {

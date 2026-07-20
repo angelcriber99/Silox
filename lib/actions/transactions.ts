@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { TransaccionSchema } from '@/lib/validations/schemas'
 import type { Transaccion } from '@/lib/types'
 import { fetchMarketPrices } from '@/lib/actions/market'
+import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
+import { historicalFxKey } from '@/lib/domain/portfolio/contributions'
 const TransactionMutationSchema = TransaccionSchema
 type TransactionMutation = z.infer<typeof TransactionMutationSchema>
 type FxRates = Record<string, number>
@@ -21,6 +23,16 @@ interface StoredTransaction {
   estado: 'Completada' | 'Pendiente' | null
   fecha: string
   notas: string | null
+  tipo_cambio_eur: number | null
+}
+
+async function fixedFxRate(currency: string, date: string): Promise<number> {
+  if (currency === 'EUR') return 1
+  const normalizedDate = date.slice(0, 10)
+  const rates = await fetchHistoricalFxRates([{ currency, date: normalizedDate }])
+  const rate = rates[historicalFxKey(currency, normalizedDate)]
+  if (!rate) throw new Error(`No se pudo fijar el cambio ${currency}/EUR para ${normalizedDate}`)
+  return rate
 }
 
 function convertCurrency(
@@ -110,6 +122,7 @@ export async function insertTransaccionAction(formData: unknown): Promise<Transa
     const validated = TransactionMutationSchema.parse(formData)
     const assetCurrency = await getOwnedAssetCurrency(validated.activo_id, user.id)
     const monetary = await prepareMonetaryValues(validated, assetCurrency)
+    const transactionFxRate = await fixedFxRate(assetCurrency, validated.fecha)
     const transaction = {
       activo_id: validated.activo_id,
       tipo_operacion: validated.tipo_operacion,
@@ -121,6 +134,7 @@ export async function insertTransaccionAction(formData: unknown): Promise<Transa
       estado: validated.estado ?? 'Completada',
       fecha: validated.fecha,
       notas: monetary.notes || null,
+      tipo_cambio_eur: transactionFxRate,
     }
     const { data, error } = await supabase
       .from('transacciones')
@@ -149,7 +163,7 @@ export async function updateTransaccionAction(
   const validated = TransactionMutationSchema.partial().parse(formData)
   const { data: currentData, error: currentError } = await supabase
     .from('transacciones')
-    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, estado, fecha, notas')
+    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, estado, fecha, notas, tipo_cambio_eur')
     .eq('id', id)
     .eq('user_id', user.id)
     .is('linked_transaction_id', null)
@@ -162,6 +176,10 @@ export async function updateTransaccionAction(
   const assetId = validated.activo_id ?? current.activo_id
   const assetCurrency = await getOwnedAssetCurrency(assetId, user.id)
   const monetary = await prepareMonetaryValues(validated, assetCurrency, current.notas)
+  const transactionDate = validated.fecha ?? current.fecha
+  const transactionFxRate = validated.activo_id !== undefined || validated.fecha !== undefined || current.tipo_cambio_eur === null
+    ? await fixedFxRate(assetCurrency, transactionDate)
+    : current.tipo_cambio_eur
   const transaction = {
     activo_id: assetId,
     tipo_operacion: validated.tipo_operacion ?? current.tipo_operacion,
@@ -171,8 +189,9 @@ export async function updateTransaccionAction(
     retencion_origen: validated.retencion_origen ?? current.retencion_origen ?? 0,
     retencion_destino: validated.retencion_destino ?? current.retencion_destino ?? 0,
     estado: validated.estado ?? current.estado ?? 'Completada',
-    fecha: validated.fecha ?? current.fecha,
+    fecha: transactionDate,
     notas: monetary.notes || null,
+    tipo_cambio_eur: transactionFxRate,
   }
   const { data, error } = await supabase
     .from('transacciones')

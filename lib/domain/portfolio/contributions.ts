@@ -9,11 +9,14 @@ export interface ExternalFlowTransaction {
 }
 
 export interface InvestmentFlowTransaction extends ExternalFlowTransaction {
+  id?: string
+  fecha?: string
   cantidad: number
   precio_unitario: number
   comision?: number | null
   retencion_origen?: number | null
   retencion_destino?: number | null
+  tipo_cambio_eur?: number | null
   activo?: {
     ticker: string
     tipo: string
@@ -27,6 +30,19 @@ export interface InvestmentFlowTransaction extends ExternalFlowTransaction {
 
 export interface PortfolioFundingSummary {
   netByCurrency: Record<string, number>
+  datedFlows: DatedInvestmentFlow[]
+}
+
+export interface DatedInvestmentFlow {
+  transactionId?: string
+  date: string
+  currency: string
+  amount: number
+  fixedRate: number | null
+}
+
+export function historicalFxKey(currency: string, date: string): string {
+  return `${currency.toUpperCase()}:${date.slice(0, 10)}`
 }
 
 export function externalFlowNote(eurAmount: number, description: string): string {
@@ -62,11 +78,11 @@ export function calculateNetContributions(
 
   return found ? total : null
 }
-
 export function calculateNetInvestmentByCurrency(
   transactions: InvestmentFlowTransaction[],
 ): PortfolioFundingSummary {
   const netByCurrency: Record<string, number> = {}
+  const datedFlows: DatedInvestmentFlow[] = []
 
   for (const transaction of transactions) {
     if (isNonCashReward(transaction)) continue
@@ -108,23 +124,43 @@ export function calculateNetInvestmentByCurrency(
     }
 
     netByCurrency[asset.moneda] = (netByCurrency[asset.moneda] ?? 0) + flow
+    datedFlows.push({
+      transactionId: transaction.id,
+      date: String(transaction.fecha ?? '').slice(0, 10),
+      currency: asset.moneda.toUpperCase(),
+      amount: flow,
+      fixedRate: Number.isFinite(Number(transaction.tipo_cambio_eur))
+        && Number(transaction.tipo_cambio_eur) > 0
+        ? Number(transaction.tipo_cambio_eur)
+        : null,
+    })
   }
 
-  return { netByCurrency }
+  return {
+    netByCurrency,
+    datedFlows,
+  }
 }
 
-export function convertNetInvestmentToEur(
+/**
+ * Calculates invested capital in EUR without ever applying today's FX rate to
+ * past cash flows. Every native-currency flow is converted with its
+ * persisted/historical rate.
+ */
+export function calculateFixedNetInvestmentEur(
   funding: PortfolioFundingSummary | null | undefined,
-  fxRates: Record<string, number> | null | undefined,
+  historicalRates: Record<string, number> = {},
 ): number | null {
   if (!funding) return null
 
   let total = 0
   let found = false
-  for (const [currency, amount] of Object.entries(funding.netByCurrency)) {
-    const rate = currency === 'EUR' ? 1 : fxRates?.[currency]
+  for (const flow of funding.datedFlows) {
+    const rate = flow.currency === 'EUR'
+      ? 1
+      : flow.fixedRate ?? historicalRates[historicalFxKey(flow.currency, flow.date)]
     if (!Number.isFinite(rate) || !rate || rate <= 0) return null
-    total += amount / rate
+    total += flow.amount / rate
     found = true
   }
 

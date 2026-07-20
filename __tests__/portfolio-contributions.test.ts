@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  calculateFixedNetInvestmentEur,
   calculateNetInvestmentByCurrency,
   calculateNetContributions,
-  convertNetInvestmentToEur,
   externalFlowNote,
   nonCashRewardNote,
 } from '@/lib/domain/portfolio/contributions'
@@ -194,7 +194,40 @@ describe('portfolio contributions', () => {
     ])
 
     expect(funding.netByCurrency.USD).toBe(79)
-    expect(convertNetInvestmentToEur(funding, { USD: 1.25 })).toBe(63.2)
+  })
+
+  it('freezes every foreign-currency flow at its transaction-date FX rate', () => {
+    const asset = { ticker: 'ASTS', tipo: 'AcciÃ³n', moneda: 'USD' }
+    const funding = calculateNetInvestmentByCurrency([
+      {
+        id: 'buy', fecha: '2026-01-10', activo: asset,
+        tipo_operacion: 'Compra', cantidad: 10, precio_unitario: 20, comision: 2,
+        tipo_cambio_eur: 1.20,
+      },
+      {
+        id: 'sell', fecha: '2026-02-10', activo: asset,
+        tipo_operacion: 'Venta', cantidad: 4, precio_unitario: 30, comision: 1,
+        tipo_cambio_eur: 1.25,
+      },
+    ])
+
+    // 202 USD / 1.20 minus 119 USD / 1.25. Today's FX is deliberately absent:
+    // once recorded, the result cannot move with the current exchange rate.
+    expect(calculateFixedNetInvestmentEur(funding)).toBeCloseTo(73.1333333333)
+    expect(calculateFixedNetInvestmentEur(funding, { 'USD:2026-01-10': 9 })).toBeCloseTo(73.1333333333)
+  })
+
+  it('uses historical date rates for legacy rows and never a current aggregate rate', () => {
+    const asset = { ticker: 'ASTS', tipo: 'AcciÃ³n', moneda: 'USD' }
+    const funding = calculateNetInvestmentByCurrency([
+      { fecha: '2026-01-10', activo: asset, tipo_operacion: 'Compra', cantidad: 10, precio_unitario: 20, comision: 0 },
+      { fecha: '2026-02-10', activo: asset, tipo_operacion: 'Venta', cantidad: 4, precio_unitario: 30, comision: 0 },
+    ])
+
+    expect(calculateFixedNetInvestmentEur(funding, {
+      'USD:2026-01-10': 1.20,
+      'USD:2026-02-10': 1.25,
+    })).toBeCloseTo(70.6666666667)
   })
 
   it('excludes staking and free rewards from invested capital', () => {
@@ -227,7 +260,7 @@ describe('portfolio contributions', () => {
     ])
 
     expect(funding.netByCurrency).toEqual({})
-    expect(convertNetInvestmentToEur(funding, { USD: 1.25 })).toBeNull()
+    expect(calculateFixedNetInvestmentEur(funding, { 'USD:2026-01-10': 1.25 })).toBeNull()
   })
 
   it('includes unspent foreign cash in the current portfolio value', () => {

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
-import { calculateNetInvestmentByCurrency, convertNetInvestmentToEur } from '@/lib/domain/portfolio/contributions'
+import { calculateFixedNetInvestmentEur, calculateNetInvestmentByCurrency, historicalFxKey } from '@/lib/domain/portfolio/contributions'
+import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
 import { isInvestablePortfolioAsset } from '@/lib/domain/assets/normalization'
 import { fetchMarketPrices } from '@/lib/actions/market'
 
@@ -85,11 +86,33 @@ export async function GET(request: Request) {
       const enriched = enrichPositions(visiblePositions, pricePayload)
       const { data: fundingTransactions } = await supabaseAdmin
         .from('transacciones')
-        .select('tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, notas, activo:activos(ticker, tipo, moneda)')
+        .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
         .eq('user_id', user.id)
         .eq('estado', 'Completada')
       const funding = calculateNetInvestmentByCurrency(fundingTransactions ?? [])
-      const netContributions = convertNetInvestmentToEur(funding, pricePayload.fxRates)
+      const missingFx = funding.datedFlows.filter((flow) => flow.currency !== 'EUR' && flow.fixedRate === null)
+      const historicalRates = await fetchHistoricalFxRates(missingFx.map((flow) => ({
+        currency: flow.currency,
+        date: flow.date,
+      })))
+      const idsByRate = new Map<number, string[]>()
+      for (const flow of missingFx) {
+        if (!flow.transactionId) continue
+        const rate = historicalRates[historicalFxKey(flow.currency, flow.date)]
+        if (!rate) continue
+        const ids = idsByRate.get(rate) ?? []
+        ids.push(flow.transactionId)
+        idsByRate.set(rate, ids)
+      }
+      await Promise.all(Array.from(idsByRate, ([rate, ids]) =>
+        supabaseAdmin
+          .from('transacciones')
+          .update({ tipo_cambio_eur: rate })
+          .in('id', ids)
+          .eq('user_id', user.id)
+          .is('tipo_cambio_eur', null)
+      ))
+      const netContributions = calculateFixedNetInvestmentEur(funding, historicalRates)
       const totals = computePortfolioTotals(enriched, netContributions)
 
       if (totals.totalValue > 0) {

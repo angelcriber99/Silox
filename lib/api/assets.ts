@@ -4,9 +4,11 @@ import { CASH_ASSET_DEFAULTS, displayAssetType, isInvestablePortfolioAsset, toDa
 import { calculateOpenPositionBases } from '@/lib/utils/open-cost-basis'
 import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
 import {
+  calculateFixedNetInvestmentEur,
   calculateNetInvestmentByCurrency,
-  type PortfolioFundingSummary,
+  historicalFxKey,
 } from '@/lib/domain/portfolio/contributions'
+import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
   const supabase = createClient()
@@ -61,14 +63,56 @@ export async function fetchActivos(): Promise<Activo[]> {
   return (data ?? []).map(displayAssetType).filter(isInvestablePortfolioAsset)
 }
 
-export async function fetchPortfolioFunding(): Promise<PortfolioFundingSummary> {
-  const { data, error } = await createClient()
+export async function fetchPortfolioFunding(): Promise<number | null> {
+  const supabase = createClient()
+  let { data, error } = await supabase
     .from('transacciones')
-    .select('tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, notas, activo:activos(ticker, tipo, moneda)')
+    .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
     .eq('estado', 'Completada')
 
+  // Allows the web deployment to remain readable while the additive migration
+  // is being applied. Persistence starts automatically as soon as the column exists.
+  let canPersistRates = true
+  if (error?.code === '42703') {
+    canPersistRates = false
+    const fallback = await supabase
+      .from('transacciones')
+      .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, activo:activos(ticker, tipo, moneda)')
+      .eq('estado', 'Completada')
+    data = fallback.data as typeof data
+    error = fallback.error
+  }
   if (error) throw new Error(`Error calculando el capital neto aportado: ${error.message}`)
-  return calculateNetInvestmentByCurrency(data ?? [])
+
+  const funding = calculateNetInvestmentByCurrency(data ?? [])
+  const missingFlows = funding.datedFlows.filter((flow) =>
+    flow.currency !== 'EUR' && flow.fixedRate === null && Boolean(flow.date)
+  )
+  const historicalRates = await fetchHistoricalFxRates(missingFlows.map((flow) => ({
+    currency: flow.currency,
+    date: flow.date,
+  })))
+
+  if (canPersistRates && missingFlows.length > 0) {
+    const idsByRate = new Map<number, string[]>()
+    for (const flow of missingFlows) {
+      if (!flow.transactionId) continue
+      const rate = historicalRates[historicalFxKey(flow.currency, flow.date)]
+      if (!rate) continue
+      const ids = idsByRate.get(rate) ?? []
+      ids.push(flow.transactionId)
+      idsByRate.set(rate, ids)
+    }
+    await Promise.all(Array.from(idsByRate, ([rate, ids]) =>
+      supabase
+        .from('transacciones')
+        .update({ tipo_cambio_eur: rate })
+        .in('id', ids)
+        .is('tipo_cambio_eur', null)
+    ))
+  }
+
+  return calculateFixedNetInvestmentEur(funding, historicalRates)
 }
 
 export async function insertActivo(activo: {

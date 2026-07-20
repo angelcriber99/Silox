@@ -58,6 +58,7 @@ export interface Transaccion {
   retencion_destino_moneda?: string
   estado?: 'Completada' | 'Pendiente'
   fecha: string
+  tipo_cambio_eur?: number | null
   notas: string | null
   created_at: string
   activo?: {
