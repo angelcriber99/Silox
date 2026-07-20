@@ -5,7 +5,10 @@ import { usePortfolio } from "@/lib/hooks/use-portfolio"
 import { FundHoldingsResponse } from "@/lib/actions/market-data"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { Loader2, Wallet, Globe2, Briefcase, Lightbulb } from "lucide-react"
+import { Loader2, Wallet, Globe2, Briefcase, Lightbulb, Activity } from "lucide-react"
+import { useHistory } from "@/lib/hooks/use-portfolio"
+import { buildPerformanceSeries, filterPerformanceSeries, aggregateDailyPnl, type PerformanceRange } from "@/lib/utils/performance-history"
+import { CombinedPerformanceChart } from "./combined-performance-chart"
 
 // Theme colors
 const COLORS = [
@@ -106,9 +109,29 @@ function translateAssetClass(key: string): string {
 
 export function ComprehensiveAnalysis() {
   const { positions, totals, isLoading: portfolioLoading } = usePortfolio()
+  const { data: snapshots = [] } = useHistory()
+  const [timeRange, setTimeRange] = useState<PerformanceRange>("1Y")
+  
   const [marketDataMap, setMarketDataMap] = useState<Record<string, FundHoldingsResponse | null>>(() => ({ ...marketDataCache }))
   const [isEnriching, setIsEnriching] = useState(false)
   const fetchedIds = useRef(fetchedMarketDataIds);
+
+  const processedData = useMemo(() => buildPerformanceSeries(snapshots, {
+    timestamp: new Date().toISOString(),
+    total_value: totals.totalValue,
+    total_invested: totals.totalCost,
+  }), [snapshots, totals.totalValue, totals.totalCost])
+
+  const filteredData = useMemo(
+    () => filterPerformanceSeries(processedData, timeRange),
+    [processedData, timeRange],
+  )
+  
+  const dailyAggregatedData = useMemo(
+    () => aggregateDailyPnl(filteredData),
+    [filteredData]
+  )
+
 
   // Fetch true market holdings for all positions
   useEffect(() => {
@@ -418,6 +441,50 @@ export function ComprehensiveAnalysis() {
 
   return (
     <div className="space-y-6">
+      
+      {/* Gráfica Combinada de Evolución y P&L */}
+      <div className="p-6 rounded-[32px] border border-border flex flex-col relative overflow-hidden" style={{ background: "var(--card)" }}>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[64px] pointer-events-none" />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
+              <Activity className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold tracking-tight text-foreground">Rendimiento Histórico</h3>
+              <p className="text-xs font-medium text-muted-foreground">Evolución del patrimonio y ganancias diarias</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center rounded-xl border border-border/60 bg-background/80 p-1">
+            {(["1D", "1W", "1M", "YTD", "1Y", "ALL"] as PerformanceRange[]).map((range) => (
+              <button
+                key={range}
+                type="button"
+                onClick={() => setTimeRange(range)}
+                className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                  timeRange === range
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {range === "1W" ? "1S" : range === "ALL" ? "TODO" : range}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="relative mt-2">
+          <CombinedPerformanceChart 
+            chartData={filteredData}
+            dailyData={dailyAggregatedData}
+            timeRange={timeRange}
+            currentDailyPnl={totals.totalSessionPnl}
+            currentDailyPnlPercent={totals.totalSessionPnlPercent}
+          />
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         

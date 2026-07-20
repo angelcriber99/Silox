@@ -53,6 +53,7 @@ private final class AnalysisViewModel: ObservableObject {
 struct AnalysisView: View {
     @StateObject private var model: AnalysisViewModel
     @AppStorage("hideBalances") private var hideBalances = false
+    @State private var timeRange: HistoryRange = .year
     let onAdd: () -> Void
 
     init(
@@ -102,7 +103,7 @@ struct AnalysisView: View {
                     .foregroundStyle(.secondary)
                 }
                 performanceCard(portfolio)
-                historyCard(portfolio)
+                combinedPerformanceCard(portfolio)
                 allocationCard(portfolio)
                 moversCard(portfolio)
                 if let error = model.errorMessage {
@@ -152,57 +153,89 @@ struct AnalysisView: View {
         }
     }
 
-    private func historyCard(_ portfolio: PortfolioResponse) -> some View {
-        let points = chartPoints(portfolio)
+    private func combinedPerformanceCard(_ portfolio: PortfolioResponse) -> some View {
+        let allPoints = chartPoints(portfolio)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let filteredPoints = allPoints.filter { point in
+            guard let cutoff = timeRange.cutoff, let date = dateFormatter.date(from: point.date) else { return true }
+            return date >= cutoff
+        }
+        
         return SiloxCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Evolución del patrimonio").font(.headline)
-                        Text("Valor contrastado con capital aportado").font(.caption).foregroundStyle(.secondary)
+                        Text("Rendimiento Histórico").font(.headline)
+                        Text("Evolución y ganancias diarias").font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                     Image(systemName: "chart.xyaxis.line").foregroundStyle(SiloxColors.accent)
                 }
-                if points.count < 2 {
+                
+                Picker("Periodo", selection: $timeRange) {
+                    ForEach(HistoryRange.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .siloxPeriodControlSurface()
+                
+                if filteredPoints.count < 2 {
                     ContentUnavailableView(
                         "Aún no hay histórico suficiente",
                         systemImage: "chart.line.uptrend.xyaxis",
                         description: Text("La gráfica aparecerá tras guardar varios puntos de cartera.")
                     )
-                    .frame(height: 170)
+                    .frame(height: 190)
                 } else {
-                    Chart(points) { point in
-                        LineMark(
-                            x: .value("Fecha", point.date),
-                            y: .value("Patrimonio", point.value)
-                        )
-                        .foregroundStyle(SiloxColors.accent)
-                        .interpolationMethod(.monotone)
-                        AreaMark(
-                            x: .value("Fecha", point.date),
-                            yStart: .value("Base", points.map(\.value).min() ?? 0),
-                            yEnd: .value("Patrimonio", point.value)
-                        )
-                        .foregroundStyle(LinearGradient(
-                            colors: [SiloxColors.accent.opacity(0.25), .clear],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ))
-                        if let invested = point.invested {
+                    VStack(spacing: 12) {
+                        Chart(filteredPoints) { point in
                             LineMark(
                                 x: .value("Fecha", point.date),
-                                y: .value("Aportado", invested),
-                                series: .value("Serie", "Aportado")
+                                y: .value("Patrimonio", point.value)
                             )
-                            .foregroundStyle(.secondary.opacity(0.65))
-                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                            .foregroundStyle(SiloxColors.accent)
+                            .interpolationMethod(.monotone)
+                            
+                            AreaMark(
+                                x: .value("Fecha", point.date),
+                                yStart: .value("Base", filteredPoints.map(\.value).min() ?? 0),
+                                yEnd: .value("Patrimonio", point.value)
+                            )
+                            .foregroundStyle(LinearGradient(
+                                colors: [SiloxColors.accent.opacity(0.25), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
+                            
+                            if let invested = point.invested {
+                                LineMark(
+                                    x: .value("Fecha", point.date),
+                                    y: .value("Aportado", invested),
+                                    series: .value("Serie", "Aportado")
+                                )
+                                .foregroundStyle(.secondary.opacity(0.65))
+                                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                            }
                         }
+                        .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
+                        .chartYAxis { AxisMarks(position: .leading) }
+                        .frame(height: 160)
+                        
+                        Chart(filteredPoints) { point in
+                            if let dailyPnl = point.dailyPnL {
+                                BarMark(
+                                    x: .value("Fecha", point.date),
+                                    y: .value("P&L Diario", dailyPnl)
+                                )
+                                .foregroundStyle(dailyPnl >= 0 ? SiloxColors.positive : SiloxColors.negative)
+                            }
+                        }
+                        .chartXAxis(.hidden)
+                        .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) }
+                        .frame(height: 60)
                     }
-                    .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
-                    .chartYAxis { AxisMarks(position: .leading) }
-                    .frame(height: 190)
-                    .accessibilityLabel("Evolución del patrimonio")
+                    .accessibilityLabel("Evolución del patrimonio y P&L diario")
                 }
             }
         }
@@ -287,25 +320,47 @@ struct AnalysisView: View {
     }
 
     private func chartPoints(_ portfolio: PortfolioResponse) -> [AnalysisChartPoint] {
-        var values = model.history.compactMap { point -> AnalysisChartPoint? in
+        var rawValues = model.history.compactMap { point -> (date: String, value: Double, invested: Double)? in
             guard let value = point.value?.decimalValue.doubleValue, value.isFinite else { return nil }
-            return AnalysisChartPoint(
-                date: point.date,
-                value: value,
-                invested: point.invested?.decimalValue.doubleValue
-            )
+            return (date: point.date, value: value, invested: point.invested?.decimalValue.doubleValue ?? 0)
         }
         let today = Date.now.formatted(.iso8601.year().month().day())
-        let livePoint = AnalysisChartPoint(
-            date: today,
-            value: portfolio.totals.totalValue.amount.decimalValue.doubleValue,
-            invested: portfolio.totals.totalCost.amount.decimalValue.doubleValue
-        )
-        if let todayIndex = values.lastIndex(where: { $0.date == today }) {
-            values[todayIndex] = livePoint
+        let liveValue = portfolio.totals.totalValue.amount.decimalValue.doubleValue
+        let liveInvested = portfolio.totals.totalCost.amount.decimalValue.doubleValue
+        
+        if let todayIndex = rawValues.lastIndex(where: { $0.date == today }) {
+            rawValues[todayIndex] = (date: today, value: liveValue, invested: liveInvested)
         } else {
-            values.append(livePoint)
+            rawValues.append((date: today, value: liveValue, invested: liveInvested))
         }
+
+        var values: [AnalysisChartPoint] = []
+        for i in 0..<rawValues.count {
+            let current = rawValues[i]
+            let pnl: Double?
+            if i == 0 {
+                pnl = nil
+            } else {
+                let previous = rawValues[i-1]
+                let netFlow = current.invested - previous.invested
+                pnl = current.value - previous.value - netFlow
+            }
+            
+            let finalPnl: Double?
+            if i == rawValues.count - 1 && current.date == today {
+                finalPnl = portfolio.totals.dailyGain?.amount.decimalValue.doubleValue ?? pnl
+            } else {
+                finalPnl = pnl
+            }
+            
+            values.append(AnalysisChartPoint(
+                date: current.date,
+                value: current.value,
+                invested: current.invested,
+                dailyPnL: finalPnl
+            ))
+        }
+        
         return values
     }
 }
@@ -315,6 +370,7 @@ private struct AnalysisChartPoint: Identifiable {
     let date: String
     let value: Double
     let invested: Double?
+    let dailyPnL: Double?
 }
 
 @MainActor
@@ -422,15 +478,17 @@ struct PortfolioHistoryView: View {
 }
 
 private enum HistoryRange: String, CaseIterable, Identifiable {
-    case month, quarter, year, all
+    case day, week, month, ytd, year, all
     var id: Self { self }
     var title: String {
-        switch self { case .month: "1M"; case .quarter: "3M"; case .year: "1A"; case .all: "Todo" }
+        switch self { case .day: "1D"; case .week: "1S"; case .month: "1M"; case .ytd: "YTD"; case .year: "1A"; case .all: "Todo" }
     }
     var cutoff: Date? {
         switch self {
+        case .day: Calendar.current.date(byAdding: .day, value: -1, to: .now)
+        case .week: Calendar.current.date(byAdding: .day, value: -7, to: .now)
         case .month: Calendar.current.date(byAdding: .month, value: -1, to: .now)
-        case .quarter: Calendar.current.date(byAdding: .month, value: -3, to: .now)
+        case .ytd: Calendar.current.date(from: Calendar.current.dateComponents([.year], from: .now))
         case .year: Calendar.current.date(byAdding: .year, value: -1, to: .now)
         case .all: nil
         }

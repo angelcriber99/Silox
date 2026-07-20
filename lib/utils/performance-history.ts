@@ -1,6 +1,6 @@
 import { getMarketDateKey } from './market-performance'
 
-export type PerformanceRange = '1D' | '1W' | '1M' | '1Y' | 'ALL'
+export type PerformanceRange = '1D' | '1W' | '1M' | 'YTD' | '1Y' | 'ALL'
 
 export interface PortfolioSnapshot {
   timestamp: string
@@ -102,12 +102,17 @@ export function filterPerformanceSeries(
     return points.filter((point) => getMarketDateKey(point.timestamp) === marketDate)
   }
 
-  const rangeMs = range === '1W'
-    ? 7 * DAY_MS
-    : range === '1M'
-      ? 31 * DAY_MS
-      : 366 * DAY_MS
-  const start = now.getTime() - rangeMs
+  let start: number
+  if (range === 'YTD') {
+    start = new Date(now.getFullYear(), 0, 1).getTime()
+  } else {
+    const rangeMs = range === '1W'
+      ? 7 * DAY_MS
+      : range === '1M'
+        ? 31 * DAY_MS
+        : 366 * DAY_MS
+    start = now.getTime() - rangeMs
+  }
   return points.filter((point) => new Date(point.timestamp).getTime() >= start)
 }
 
