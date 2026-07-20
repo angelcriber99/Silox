@@ -16,8 +16,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import type { TooltipProps } from "recharts"
-import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent"
+import type { TooltipContentProps } from "recharts"
 
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
@@ -35,7 +34,7 @@ interface CombinedChartPoint extends PerformancePoint {
   dailyPnl?: number | null
 }
 
-interface CombinedTooltipProps extends TooltipProps<ValueType, NameType> {
+interface CombinedTooltipProps extends TooltipContentProps {
   hideBalances: boolean
 }
 
