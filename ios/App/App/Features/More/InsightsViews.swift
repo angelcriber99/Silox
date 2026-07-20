@@ -54,6 +54,7 @@ struct AnalysisView: View {
     @StateObject private var model: AnalysisViewModel
     @AppStorage("hideBalances") private var hideBalances = false
     @State private var timeRange: HistoryRange = .year
+    @State private var rawSelectedDate: String?
     let onAdd: () -> Void
 
     init(
@@ -203,7 +204,7 @@ struct AnalysisView: View {
                                 yEnd: .value("Patrimonio", point.value)
                             )
                             .foregroundStyle(LinearGradient(
-                                colors: [SiloxColors.accent.opacity(0.25), .clear],
+                                colors: [SiloxColors.accent.opacity(0.35), .clear],
                                 startPoint: .top,
                                 endPoint: .bottom
                             ))
@@ -215,12 +216,63 @@ struct AnalysisView: View {
                                     series: .value("Serie", "Aportado")
                                 )
                                 .foregroundStyle(.secondary.opacity(0.65))
-                                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                            }
+
+                            if let rawSelectedDate, rawSelectedDate == point.date {
+                                RuleMark(x: .value("Fecha", point.date))
+                                    .foregroundStyle(.secondary.opacity(0.5))
+                                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                                
+                                PointMark(
+                                    x: .value("Fecha", point.date),
+                                    y: .value("Patrimonio", point.value)
+                                )
+                                .foregroundStyle(SiloxColors.accent)
+                                .symbolSize(100)
+                                .annotation(position: .top, spacing: 10) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(point.date)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                        Text(hideBalances ? "****" : SiloxFormatters.money(Decimal(point.value), currency: "EUR"))
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(.primary)
+                                    }
+                                    .padding(6)
+                                    .background(.background.opacity(0.95), in: RoundedRectangle(cornerRadius: 8))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
+                                }
                             }
                         }
                         .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
-                        .chartYAxis { AxisMarks(position: .leading) }
-                        .frame(height: 160)
+                        .chartYAxis { 
+                            AxisMarks(position: .leading) { value in
+                                AxisGridLine()
+                                AxisTick()
+                                if let doubleValue = value.as(Double.self) {
+                                    AxisValueLabel {
+                                        Text(doubleValue >= 1000 ? "€\(Int(doubleValue / 1000))k" : "€\(Int(doubleValue))")
+                                    }
+                                }
+                            }
+                        }
+                        .frame(height: 200)
+                        .chartOverlay { proxy in
+                            GeometryReader { geo in
+                                Rectangle().fill(.clear).contentShape(Rectangle())
+                                    .gesture(
+                                        DragGesture(minimumDistance: 0)
+                                            .onChanged { value in
+                                                let x = value.location.x - geo[proxy.plotAreaFrame].origin.x
+                                                if let date: String = proxy.value(atX: x) {
+                                                    rawSelectedDate = date
+                                                }
+                                            }
+                                            .onEnded { _ in rawSelectedDate = nil }
+                                    )
+                            }
+                        }
                         
                         Chart(filteredPoints) { point in
                             if let dailyPnl = point.dailyPnL {
@@ -229,11 +281,22 @@ struct AnalysisView: View {
                                     y: .value("P&L Diario", dailyPnl)
                                 )
                                 .foregroundStyle(dailyPnl >= 0 ? SiloxColors.positive : SiloxColors.negative)
+                                .cornerRadius(3)
                             }
                         }
-                        .chartXAxis(.hidden)
-                        .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) }
-                        .frame(height: 60)
+                        .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
+                        .chartYAxis { 
+                            AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
+                                AxisGridLine()
+                                AxisTick()
+                                if let doubleValue = value.as(Double.self) {
+                                    AxisValueLabel {
+                                        Text(doubleValue >= 1000 ? "€\(Int(doubleValue / 1000))k" : doubleValue <= -1000 ? "-€\(Int(abs(doubleValue) / 1000))k" : "€\(Int(doubleValue))")
+                                    }
+                                }
+                            }
+                        }
+                        .frame(height: 90)
                     }
                     .accessibilityLabel("Evolución del patrimonio y P&L diario")
                 }
@@ -391,6 +454,7 @@ private final class InsightsViewModel<Value: Sendable>: ObservableObject {
 struct PortfolioHistoryView: View {
     @StateObject private var model: InsightsViewModel<[PortfolioHistoryPoint]>
     @State private var range: HistoryRange = .year
+    @State private var rawSelectedDate: Date?
 
     init(repository: InsightsRepository) {
         _model = StateObject(wrappedValue: InsightsViewModel(loader: { try await repository.history() }))
@@ -422,12 +486,49 @@ struct PortfolioHistoryView: View {
                                     .foregroundStyle(by: .value("Serie", "Patrimonio"))
                                     .interpolationMethod(.catmullRom)
 
+                                    AreaMark(
+                                        x: .value("Fecha", date),
+                                        yStart: .value("Base", visiblePoints(points).compactMap { $0.value?.decimalValue.doubleValue }.min() ?? 0),
+                                        yEnd: .value("Patrimonio", point.value?.decimalValue.doubleValue ?? 0)
+                                    )
+                                    .foregroundStyle(LinearGradient(
+                                        colors: [SiloxColors.accent.opacity(0.35), .clear],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ))
+
                                     LineMark(
                                         x: .value("Fecha", date),
                                         y: .value("Capital invertido", point.invested?.decimalValue.doubleValue ?? 0)
                                     )
                                     .foregroundStyle(by: .value("Serie", "Invertido"))
                                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+
+                                    if let rawSelectedDate, rawSelectedDate == date {
+                                        RuleMark(x: .value("Fecha", date))
+                                            .foregroundStyle(.secondary.opacity(0.5))
+                                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                                        
+                                        PointMark(
+                                            x: .value("Fecha", date),
+                                            y: .value("Patrimonio", point.value?.decimalValue.doubleValue ?? 0)
+                                        )
+                                        .foregroundStyle(SiloxColors.accent)
+                                        .symbolSize(100)
+                                        .annotation(position: .top, spacing: 10) {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(date.formatted(date: .abbreviated, time: .omitted))
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                                Text(SiloxFormatters.money(point.value ?? "0", currency: "EUR"))
+                                                    .font(.caption.weight(.bold))
+                                                    .foregroundStyle(.primary)
+                                            }
+                                            .padding(6)
+                                            .background(.background.opacity(0.95), in: RoundedRectangle(cornerRadius: 8))
+                                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
+                                        }
+                                    }
                                 }
                             }
                             .chartForegroundStyleScale([
@@ -435,7 +536,35 @@ struct PortfolioHistoryView: View {
                                 "Invertido": SiloxColors.textSecondary,
                             ])
                             .chartLegend(position: .bottom, alignment: .leading)
+                            .chartYAxis { 
+                                AxisMarks(position: .leading) { value in
+                                    AxisGridLine()
+                                    AxisTick()
+                                    if let doubleValue = value.as(Double.self) {
+                                        AxisValueLabel {
+                                            Text(doubleValue >= 1000 ? "€\(Int(doubleValue / 1000))k" : "€\(Int(doubleValue))")
+                                        }
+                                    }
+                                }
+                            }
                             .frame(height: 240)
+                            .chartOverlay { proxy in
+                                GeometryReader { geo in
+                                    Rectangle().fill(.clear).contentShape(Rectangle())
+                                        .gesture(
+                                            DragGesture(minimumDistance: 0)
+                                                .onChanged { value in
+                                                    let x = value.location.x - geo[proxy.plotAreaFrame].origin.x
+                                                    if let date: Date = proxy.value(atX: x) {
+                                                        rawSelectedDate = visiblePoints(points)
+                                                            .compactMap(\.chartDate)
+                                                            .min(by: { abs($0.timeIntervalSince(date)) < abs($1.timeIntervalSince(date)) })
+                                                    }
+                                                }
+                                                .onEnded { _ in rawSelectedDate = nil }
+                                        )
+                                }
+                            }
                             .accessibilityLabel("Gráfico de patrimonio e inversión")
                             .accessibilityChartDescriptor(
                                 PortfolioHistoryAccessibilityDescriptor(points: visiblePoints(points))
