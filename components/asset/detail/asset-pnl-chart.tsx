@@ -7,10 +7,10 @@ import {
 import { formatCurrency } from "@/lib/utils/formatters"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchAssetHistoricalPerformance } from "@/lib/actions/asset-history"
-import { TimeRange } from "@/lib/utils/performance-history"
+import { PerformanceRange } from "@/lib/utils/performance-history"
 import { cn } from "@/lib/utils"
 
-const RANGES: { label: string, value: TimeRange }[] = [
+const RANGES: { label: string, value: PerformanceRange }[] = [
   { label: "1D", value: "1D" },
   { label: "1S", value: "1W" },
   { label: "1M", value: "1M" },
@@ -24,7 +24,7 @@ interface AssetPnlChartProps {
 }
 
 export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartProps) {
-  const [range, setRange] = useState<TimeRange>("1M")
+  const [range, setRange] = useState<PerformanceRange>("1M")
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['asset-pnl-history', assetId, range],
@@ -130,7 +130,7 @@ export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartPr
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 11, fill: '#888' }}
-                tickFormatter={(val) => formatCurrency(val, "EUR", { maximumFractionDigits: 0 })}
+                tickFormatter={(val) => formatCurrency(val, "EUR")}
                 width={60}
                 orientation="right"
               />

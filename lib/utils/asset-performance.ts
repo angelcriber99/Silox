@@ -25,7 +25,7 @@ export function buildAssetHistory(
 
   // Calculate cumulative position per transaction day
   for (const tx of sortedTxs) {
-    if (tx.estado === "Pendiente" || tx.estado === "Cancelada") continue
+    if (tx.estado === "Pendiente") continue
 
     const dateKey = tx.fecha.split("T")[0]
     

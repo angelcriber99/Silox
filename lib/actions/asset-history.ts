@@ -1,12 +1,12 @@
 "use server"
 
 import { fetchAssetTransactions } from "@/lib/api/transactions"
-import { getYahooFinance } from "@/lib/actions/yahoo-instance"
+import { getYahooFinance } from "@/lib/server/yahoo-finance"
 import { buildAssetHistory, AssetHistoryPoint } from "@/lib/utils/asset-performance"
 import { createClient } from "@/lib/supabase/server"
-import { TimeRange } from "@/lib/utils/performance-history"
+import { PerformanceRange } from "@/lib/utils/performance-history"
 
-function getInterval(range: TimeRange): "1d" | "1m" | "1wk" | "1mo" {
+function getInterval(range: PerformanceRange): "1d" | "1m" | "1wk" | "1mo" {
   switch (range) {
     case "1D":
       return "1m"
@@ -14,13 +14,14 @@ function getInterval(range: TimeRange): "1d" | "1m" | "1wk" | "1mo" {
     case "1M":
       return "1d"
     case "1Y":
+    case "YTD":
       return "1wk"
     case "ALL":
       return "1mo"
   }
 }
 
-function getPeriod(range: TimeRange): Date {
+function getPeriod(range: PerformanceRange): Date {
   const d = new Date()
   switch (range) {
     case "1D":
@@ -35,6 +36,9 @@ function getPeriod(range: TimeRange): Date {
     case "1Y":
       d.setFullYear(d.getFullYear() - 1)
       break
+    case "YTD":
+      d.setMonth(0, 1) // Jan 1st of current year
+      break
     case "ALL":
       d.setFullYear(2000) // Fetch all
       break
@@ -44,7 +48,7 @@ function getPeriod(range: TimeRange): Date {
 
 export async function fetchAssetHistoricalPerformance(
   assetId: string,
-  range: TimeRange
+  range: PerformanceRange
 ): Promise<AssetHistoryPoint[]> {
   try {
     // 1. Fetch asset metadata and transactions

@@ -14,7 +14,7 @@ import { useAssetCalculations, RawTransaction } from './detail/use-asset-calcula
 import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetLogo } from "@/components/ui/asset-logo"
 import { AssetNews } from "./detail/asset-news"
-import { PriceAlerts } from "./detail/price-alerts"
+import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { AssetPnlChart } from "./detail/asset-pnl-chart"
 import { MarketStats } from "./detail/market-stats"
