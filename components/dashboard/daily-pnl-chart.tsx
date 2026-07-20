@@ -8,6 +8,7 @@ import { usePreferences } from "@/lib/stores/use-preferences"
 import type { ChartDataPoint } from "./performance-modal"
 import {
   aggregateDailyPnl,
+  aggregateMonthlyPnl,
   filterPerformanceSeries,
   type PerformanceRange,
 } from "@/lib/utils/performance-history"
@@ -17,9 +18,10 @@ interface DailyTooltipProps {
   active?: boolean
   payload?: Array<{ payload: ChartDataPoint }>
   label?: string
+  isMonthly?: boolean
 }
 
-function DailyTooltip({ active, payload, label }: DailyTooltipProps) {
+function DailyTooltip({ active, payload, label, isMonthly }: DailyTooltipProps) {
   const { hideBalances } = usePreferences()
 
   if (active && payload?.length && label) {
@@ -32,7 +34,7 @@ function DailyTooltip({ active, payload, label }: DailyTooltipProps) {
         <p className="text-muted-foreground text-xs mb-3 font-medium uppercase tracking-wider border-b border-border/50 pb-2">{formattedDate}</p>
         <div>
           <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-1">
-            P&amp;L diario completo
+            {isMonthly ? 'P&L mensual completo' : 'P&L diario completo'}
           </p>
           <p className={`font-bold text-xl tabular-nums leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
             {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.pnl)}`}
@@ -53,6 +55,7 @@ interface DailyPnlChartProps {
   range: PerformanceRange
   currentDailyPnl?: number
   currentDailyPnlPercent?: number
+  currentMarketDate?: string
 }
 
 export function DailyPnlChart({
@@ -60,10 +63,16 @@ export function DailyPnlChart({
   range,
   currentDailyPnl,
   currentDailyPnlPercent,
+  currentMarketDate,
 }: DailyPnlChartProps) {
-  const currentMarketDate = getMarketDateKey(new Date())
-  const dailyData = filterPerformanceSeries(aggregateDailyPnl(chartData), range).map((point) => (
-    getMarketDateKey(point.timestamp) === currentMarketDate && currentDailyPnl !== undefined
+  const isMonthly = range === '1Y' || range === 'ALL'
+  
+  const aggregatedData = isMonthly 
+    ? aggregateMonthlyPnl(chartData) 
+    : aggregateDailyPnl(chartData)
+
+  const plotData = filterPerformanceSeries(aggregatedData, range).map((point) => (
+    getMarketDateKey(point.timestamp) === currentMarketDate && currentDailyPnl !== undefined && !isMonthly
       ? {
           ...point,
           pnl: currentDailyPnl,
@@ -72,7 +81,7 @@ export function DailyPnlChart({
       : point
   ))
 
-  if (dailyData.length === 0) {
+  if (plotData.length === 0) {
     return null
   }
 
@@ -83,16 +92,16 @@ export function DailyPnlChart({
       aria-label="Beneficio o pérdida diario de la cartera, incluyendo premercado, mercado regular y postmercado"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={dailyData} margin={{ top: 10, right: 6, left: 6, bottom: 20 }}>
+        <BarChart data={plotData} margin={{ top: 10, right: 6, left: 6, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
           <XAxis 
             dataKey="timestamp" 
             axisLine={false} 
             tickLine={false} 
-            tickFormatter={(date) => format(parseISO(date), "d MMM")}
+            tickFormatter={(date) => format(parseISO(date), isMonthly ? "MMM yy" : "d MMM")}
             tick={{ fill: '#a1a1aa', fontSize: 11 }}
             tickMargin={10}
-            minTickGap={30}
+            minTickGap={isMonthly ? 15 : 30}
           />
           <YAxis
             axisLine={false}
@@ -102,9 +111,12 @@ export function DailyPnlChart({
             width={64}
           />
           <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeOpacity={0.45} />
-          <Tooltip content={<DailyTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
+          <Tooltip 
+            content={<DailyTooltip isMonthly={isMonthly} />} 
+            cursor={{ fill: 'var(--muted)', opacity: 0.4 }} 
+          />
           <Bar dataKey="pnl" radius={[4, 4, 4, 4]} isAnimationActive={false}>
-            {dailyData.map((entry, index) => (
+            {plotData.map((entry, index) => (
               <Cell
                 key={entry.timestamp || `cell-${index}`}
                 fill={entry.pnl > 0 ? '#30d158' : entry.pnl < 0 ? '#ff453a' : 'var(--muted-foreground)'}
