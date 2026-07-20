@@ -40,7 +40,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
 
   return (
     <div
-      className="rounded-2xl flex flex-col h-full overflow-hidden"
+      className="rounded-2xl flex flex-col overflow-hidden"
       style={{
         background: "var(--card)",
         border: "1px solid var(--border)",
