@@ -1,7 +1,8 @@
 "use server"
 
-import { fetchAssetTransactions } from "@/lib/api/transactions"
+
 import { getYahooFinance } from "@/lib/server/yahoo-finance"
+import { Transaccion } from "@/lib/types"
 import { buildAssetHistory, AssetHistoryPoint } from "@/lib/utils/asset-performance"
 import { createClient } from "@/lib/supabase/server"
 import { PerformanceRange } from "@/lib/utils/performance-history"
@@ -61,7 +62,15 @@ export async function fetchAssetHistoricalPerformance(
 
     if (assetError || !asset) throw new Error("Asset not found")
 
-    const transactions = await fetchAssetTransactions(assetId)
+    const { data: transactions, error: txError } = await supabase
+      .from("transacciones")
+      .select("*")
+      .eq("activo_id", assetId)
+      .order("fecha", { ascending: true })
+      .order("created_at", { ascending: true })
+      .overrideTypes<Transaccion[], { merge: false }>()
+      
+    if (txError) throw new Error("Error fetching transactions")
     if (!transactions || transactions.length === 0) return []
 
     // 2. Determine timeframe
