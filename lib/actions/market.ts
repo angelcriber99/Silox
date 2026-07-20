@@ -172,7 +172,13 @@ function getMetalPriceEntry(
   }
 }
 
-let lastKnownFxRates: FxRatesToEur = { EUR: 1 }
+// Realistic fallbacks for cold starts in serverless to prevent massive 1:1 parity spikes if Yahoo rate-limits the first request
+let lastKnownFxRates: FxRatesToEur = { 
+  EUR: 1,
+  USD: 1.09, // 1 EUR = 1.09 USD approx
+  GBP: 0.84, // 1 EUR = 0.84 GBP approx
+  CHF: 0.97, // 1 EUR = 0.97 CHF approx
+}
 
 async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
   const pairs = Object.values(FX_PAIRS)
