@@ -152,6 +152,9 @@ export function CombinedPerformanceChart({
   const yMaxLeft = maxPnl + (pnlAbsMax * 4)
   const yMinLeft = minPnl - (pnlAbsMax * 0.2)
 
+  const periodPnl = chartData.reduce((sum, point) => sum + point.pnl, 0)
+  const lineColor = periodPnl > 0 ? "#30d158" : periodPnl < 0 ? "#ff453a" : "#0a84ff"
+
   const firstDate = parseISO(mergedData[0].timestamp)
   const lastDate = parseISO(mergedData.at(-1)!.timestamp)
   const isOneDay = timeRange === '1D' || (lastDate.getTime() - firstDate.getTime() <= 24 * 60 * 60 * 1_000)
@@ -162,9 +165,9 @@ export function CombinedPerformanceChart({
         <ComposedChart data={mergedData} margin={{ top: 15, right: 10, left: 10, bottom: 0 }}>
           <defs>
             <linearGradient id={`colorValue-${chartId}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-              <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+              <stop offset="0%" stopColor={lineColor} stopOpacity={0.35} />
+              <stop offset="60%" stopColor={lineColor} stopOpacity={0.05} />
+              <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
             </linearGradient>
           </defs>
           
@@ -228,12 +231,12 @@ export function CombinedPerformanceChart({
             yAxisId="right"
             type="monotone"
             dataKey="value"
-            stroke="hsl(var(--primary))"
+            stroke={lineColor}
             strokeWidth={3}
             fillOpacity={1}
             fill={`url(#colorValue-${chartId})`}
-            activeDot={{ r: 5, fill: "hsl(var(--primary))", stroke: "var(--background)", strokeWidth: 3 }}
-            connectNulls
+            activeDot={{ r: 5, fill: lineColor, stroke: "var(--background)", strokeWidth: 3 }}
+            connectNulls={true}
             isAnimationActive={false}
           />
 
@@ -241,12 +244,12 @@ export function CombinedPerformanceChart({
             yAxisId="right"
             type="monotone"
             dataKey="totalInvested"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="#94a3b8"
             strokeWidth={2}
             strokeDasharray="5 5"
             dot={false}
             activeDot={false}
-            connectNulls
+            connectNulls={true}
             isAnimationActive={false}
           />
         </ComposedChart>
