@@ -9,6 +9,8 @@ export interface ChartMeta {
   currency?: string
   exchangeTimezoneName?: string
   regularMarketPrice?: number
+  preMarketPrice?: number
+  postMarketPrice?: number
   chartPreviousClose?: number
   previousClose?: number
   currentTradingPeriod?: {
