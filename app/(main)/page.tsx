@@ -80,7 +80,7 @@ export default function Home() {
                 marketState={marketState}
               />
               
-              <div className="flex flex-col gap-6 p-4">
+              <div className="flex flex-col flex-1 gap-6 p-4">
                 <AllocationChart positions={positions} marketState={marketState} />
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 <UpcomingEvents

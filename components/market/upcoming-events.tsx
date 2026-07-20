@@ -144,7 +144,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
   })
 
   return (
-    <Card className="flex h-full flex-col border-border/40 bg-card/40 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md">
+    <Card className="flex h-full flex-1 flex-col border-border/40 bg-card/40 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border/20 p-4 pb-2">
         <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Calendar aria-hidden="true" className="h-4 w-4 text-amber-400" />
@@ -164,7 +164,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         </Button>
       </CardHeader>
 
-      <CardContent className="flex max-h-[200px] flex-col gap-3 overflow-y-auto p-4 pt-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent">
+      <CardContent className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 pt-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="flex items-center gap-3">
@@ -189,7 +189,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
             <p className="mt-1 max-w-[200px] text-[10px] text-muted-foreground/60">{t("add_manual_events")}</p>
           </div>
         ) : (
-          <div className="max-h-[140px] space-y-2 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent">
+          <div className="flex flex-col space-y-2">
             {events.map((event) => {
               const content = (
                 <>
