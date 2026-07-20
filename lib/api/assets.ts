@@ -431,9 +431,13 @@ export function savePortfolioHistory(totalValue: number, totalInvested: number):
 
 export async function fetchHistory(): Promise<{ timestamp: string, total_value: number, total_invested: number }[]> {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
   const { data, error } = await supabase
     .from('portfolio_history')
     .select('timestamp, total_value, total_invested')
+    .eq('user_id', user.id)
     .order('timestamp', { ascending: true })
 
   if (error) {
