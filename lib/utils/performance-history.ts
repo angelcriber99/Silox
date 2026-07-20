@@ -94,9 +94,19 @@ export function buildPerformanceSeries(
 export function filterPerformanceSeries(
   points: PerformancePoint[],
   range: PerformanceRange,
-  now = new Date(),
+  timeOffset = 0,
+  baseNow = new Date(),
 ): PerformancePoint[] {
   if (range === 'ALL') return points
+
+  const now = new Date(baseNow)
+  if (timeOffset !== 0) {
+    if (range === '1D') now.setDate(now.getDate() + timeOffset)
+    else if (range === '1W') now.setDate(now.getDate() + timeOffset * 7)
+    else if (range === '1M') now.setMonth(now.getMonth() + timeOffset)
+    else if (range === '1Y') now.setFullYear(now.getFullYear() + timeOffset)
+  }
+  const end = now.getTime()
   if (range === '1D') {
     const marketDate = getMarketDateKey(now)
     const todayPoints = points.filter((point) => getMarketDateKey(point.timestamp) === marketDate)
@@ -119,24 +129,26 @@ export function filterPerformanceSeries(
           ...lastPreviousPoint,
           timestamp: startOfDay.toISOString(),
         }
-        return [baselinePoint, ...todayPoints]
+        return [baselinePoint, ...todayPoints].filter(p => new Date(p.timestamp).getTime() <= end)
       }
     }
-    return todayPoints
+    return todayPoints.filter(p => new Date(p.timestamp).getTime() <= end)
   }
 
   let start: number
   if (range === 'YTD') {
     start = new Date(now.getFullYear(), 0, 1).getTime()
   } else {
-    const rangeMs = range === '1W'
-      ? 7 * DAY_MS
-      : range === '1M'
-        ? 31 * DAY_MS
-        : 366 * DAY_MS
-    start = now.getTime() - rangeMs
+    const startObj = new Date(now)
+    if (range === '1W') startObj.setDate(startObj.getDate() - 7)
+    else if (range === '1M') startObj.setMonth(startObj.getMonth() - 1)
+    else if (range === '1Y') startObj.setFullYear(startObj.getFullYear() - 1)
+    start = startObj.getTime()
   }
-  return points.filter((point) => new Date(point.timestamp).getTime() >= start)
+  return points.filter((point) => {
+    const t = new Date(point.timestamp).getTime()
+    return t >= start && t <= end
+  })
 }
 
 /** Modified Dietz denominator gives a flow-adjusted period return. */
@@ -200,6 +212,36 @@ export function aggregateDailyPnl(points: PerformancePoint[]): PerformancePoint[
       timestamp: `${marketDate}T12:00:00.000Z`,
       pnl,
       pnlPercent: dailySummary.profitPercent,
+      previousValue: first.previousValue,
+      netFlow: sorted.reduce((sum, point) => sum + point.netFlow, 0),
+      isFirstPoint: first.isFirstPoint,
+    }
+  })
+}
+
+export function aggregateMonthlyPnl(points: PerformancePoint[]): PerformancePoint[] {
+  const groups = new Map<string, PerformancePoint[]>()
+  for (const point of points) {
+    const d = new Date(point.timestamp)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    groups.set(key, [...(groups.get(key) ?? []), point])
+  }
+
+  return Array.from(groups.entries()).map(([monthKey, monthPoints]) => {
+    const sorted = monthPoints.sort(
+      (left, right) => new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
+    )
+    const first = sorted[0]
+    const latest = sorted.at(-1)!
+    const pnl = sorted.reduce((sum, point) => sum + point.pnl, 0)
+    // Create a pseudo-range covering this month for summarizePerformance
+    const monthlySummary = summarizePerformance(sorted, '1M')
+
+    return {
+      ...latest,
+      timestamp: `${monthKey}-15T12:00:00.000Z`, // Middle of the month for plotting
+      pnl,
+      pnlPercent: monthlySummary.profitPercent,
       previousValue: first.previousValue,
       netFlow: sorted.reduce((sum, point) => sum + point.netFlow, 0),
       isFirstPoint: first.isFirstPoint,

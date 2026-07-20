@@ -235,7 +235,7 @@ struct AnalysisView: View {
                                         Text(point.date)
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
-                                        Text(hideBalances ? "****" : SiloxFormatters.money(Decimal(point.value), currency: "EUR"))
+                                        Text(hideBalances ? "****" : SiloxFormatters.money(String(describing: point.value), currency: "EUR"))
                                             .font(.caption.weight(.bold))
                                             .foregroundStyle(.primary)
                                     }

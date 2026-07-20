@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Activity, BarChart2, CircleDollarSign, Landmark, TrendingUp, WalletCards } from "lucide-react"
+import { Activity, BarChart2, ChevronLeft, ChevronRight, CircleDollarSign, Landmark, TrendingUp, WalletCards } from "lucide-react"
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -48,24 +48,60 @@ function pnlTextClass(value: number): string {
   return value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-foreground"
 }
 
-function RangeSelector({ value, onChange }: { value: TimeRange; onChange: (range: TimeRange) => void }) {
+function RangeSelector({ 
+  value, 
+  onChange,
+  timeOffset,
+  onOffsetChange
+}: { 
+  value: TimeRange
+  onChange: (range: TimeRange) => void
+  timeOffset: number
+  onOffsetChange: (offset: number) => void
+}) {
+  const canGoForward = timeOffset < 0
+  const showNav = value !== "ALL"
+
   return (
-    <div className="flex items-center rounded-xl border border-border/60 bg-background/80 p-1">
-      {RANGES.map((range) => (
-        <button
-          key={range}
-          type="button"
-          aria-pressed={value === range}
-          onClick={() => onChange(range)}
-          className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-            value === range
-              ? "bg-foreground text-background shadow-sm"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          {range === "1W" ? "1S" : range === "ALL" ? "TODO" : range}
-        </button>
-      ))}
+    <div className="flex items-center gap-2">
+      {showNav && (
+        <div className="flex items-center rounded-xl border border-border/60 bg-background/80 p-1">
+          <button
+            type="button"
+            onClick={() => onOffsetChange(timeOffset - 1)}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onOffsetChange(timeOffset + 1)}
+            disabled={!canGoForward}
+            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+              canGoForward ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "text-muted-foreground/30"
+            }`}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      <div className="flex items-center rounded-xl border border-border/60 bg-background/80 p-1">
+        {RANGES.map((range) => (
+          <button
+            key={range}
+            type="button"
+            aria-pressed={value === range}
+            onClick={() => onChange(range)}
+            className={`min-w-10 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+              value === range
+                ? "bg-foreground text-background shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            {range === "1W" ? "1S" : range === "ALL" ? "TODO" : range}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -115,6 +151,7 @@ export function PerformanceModal({
   currentTotalPnlPercent = currentTotalCost > 0 ? ((currentTotalValue - currentTotalCost) / currentTotalCost) * 100 : 0,
 }: PerformanceModalProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M")
+  const [timeOffset, setTimeOffset] = useState<number>(0)
   const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null)
   const { data: snapshots = [], isLoading } = useHistory({ enabled: open })
   const { hideBalances } = usePreferences()
@@ -126,8 +163,8 @@ export function PerformanceModal({
   }), [snapshots, currentTotalValue, currentTotalCost])
 
   const filteredData = useMemo(
-    () => filterPerformanceSeries(processedData, timeRange),
-    [processedData, timeRange],
+    () => filterPerformanceSeries(processedData, timeRange, timeOffset),
+    [processedData, timeRange, timeOffset],
   )
 
   const selectedData = useMemo(() => {
@@ -251,7 +288,12 @@ export function PerformanceModal({
                       </div>
                     </div>
                   </div>
-                  <RangeSelector value={timeRange} onChange={(range) => { setTimeRange(range); setHoveredPoint(null) }} />
+                  <RangeSelector 
+                    value={timeRange} 
+                    onChange={(range) => { setTimeRange(range); setTimeOffset(0); setHoveredPoint(null) }} 
+                    timeOffset={timeOffset}
+                    onOffsetChange={setTimeOffset}
+                  />
                 </div>
 
                 {isLoading ? (
@@ -282,7 +324,12 @@ export function PerformanceModal({
                     <p className="text-lg font-semibold">Beneficio o pérdida por día</p>
                     <p className="mt-1 text-xs text-muted-foreground">Cada barra suma premercado, sesión regular y postmercado, descontando aportaciones y retiradas.</p>
                   </div>
-                  <RangeSelector value={timeRange} onChange={(range) => { setTimeRange(range); setHoveredPoint(null) }} />
+                  <RangeSelector 
+                    value={timeRange} 
+                    onChange={(range) => { setTimeRange(range); setTimeOffset(0); setHoveredPoint(null) }} 
+                    timeOffset={timeOffset}
+                    onOffsetChange={setTimeOffset}
+                  />
                 </div>
                 {isLoading ? (
                   <div className="grid h-[360px] place-items-center text-muted-foreground">Calculando resultados diarios…</div>
