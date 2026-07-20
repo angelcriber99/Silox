@@ -18,16 +18,20 @@ interface CombinedPerformanceChartProps {
   currentDailyPnlPercent?: number
 }
 
-interface CombinedTooltipProps extends TooltipContentProps {
+interface CombinedTooltipProps extends TooltipContentProps<any, any> {
   hideBalances: boolean
+}
+
+interface CombinedChartPoint extends PerformancePoint {
+  dailyPnl?: number | null
 }
 
 function CombinedTooltip({ active, payload, label, hideBalances }: CombinedTooltipProps) {
   if (!active || !payload?.length || !label) return null
 
   // Find the area point and bar point if they exist
-  const areaPayload = payload.find(p => p.dataKey === "value")?.payload as PerformancePoint | undefined
-  const barPayload = payload.find(p => p.dataKey === "dailyPnl")?.payload as PerformancePoint | undefined
+  const areaPayload = payload.find(p => p.dataKey === "value")?.payload as CombinedChartPoint | undefined
+  const barPayload = payload.find(p => p.dataKey === "dailyPnl")?.payload as CombinedChartPoint | undefined
   
   // Use areaPayload as primary data source for totals, fallback to barPayload
   const data = areaPayload || barPayload
