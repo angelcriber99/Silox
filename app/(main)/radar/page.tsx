@@ -281,6 +281,7 @@ export default function RadarPage() {
                                 id={`radar-preview-${dayKey}`}
                                 day={day}
                                 events={dayEvents}
+                                assets={data.assets}
                                 positionClassName={tooltipPosition}
                               />
                             )}
@@ -319,7 +320,7 @@ export default function RadarPage() {
                             )}
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-xs font-bold">{event.ticker.split(".")[0]}</span>
+                                <span className="text-xs font-bold">{asset ? asset.name : event.ticker.split(".")[0]}</span>
                                 <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${CERTAINTY[event.certainty].badge}`}>
                                   {CERTAINTY[event.certainty].label}
                                 </span>
@@ -349,16 +350,18 @@ export default function RadarPage() {
                 </div>
                 {filteredNews.length === 0 ? <EmptyPanel text="No hay noticias recientes para este filtro." /> : (
                   <div className="space-y-2">
-                    {filteredNews.slice(0, 12).map((item) => (
+                    {filteredNews.slice(0, 12).map((item) => {
+                      const asset = data.assets.find((a) => a.ticker === item.ticker)
+                      return (
                       <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block rounded-2xl border border-border/50 bg-card/35 p-3 transition-colors hover:bg-muted/50">
                         <div className="mb-1 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
-                          <span className="font-bold text-primary">{item.ticker.split(".")[0]}</span>
+                          <span className="font-bold text-primary">{asset ? asset.name : item.ticker.split(".")[0]}</span>
                           <span>{format(new Date(item.publishedAt), "d MMM", { locale: es })}</span>
                         </div>
                         <h3 className="text-sm font-medium leading-snug">{item.title}</h3>
                         <p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">{item.source}</p>
                       </a>
-                    ))}
+                    )})}
                   </div>
                 )}
               </section>
@@ -392,11 +395,13 @@ function DayPreview({
   id,
   day,
   events,
+  assets,
   positionClassName,
 }: {
   id: string
   day: Date
   events: RadarEvent[]
+  assets: { ticker: string; name: string }[]
   positionClassName: string
 }) {
   return (
@@ -419,7 +424,9 @@ function DayPreview({
             <div key={event.id} className="flex items-start gap-2">
               <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${CERTAINTY[event.certainty].dot}`} />
               <div className="min-w-0">
-                <p className="text-[10px] font-bold text-primary">{event.ticker.split(".")[0]}</p>
+                <p className="text-[10px] font-bold text-primary">
+                  {assets.find(a => a.ticker === event.ticker)?.name ?? event.ticker.split(".")[0]}
+                </p>
                 <p className="line-clamp-2 text-xs leading-snug">{event.title}</p>
               </div>
             </div>

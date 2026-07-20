@@ -446,6 +446,21 @@ async function loadMarketData(assets: RadarAsset[], now: Date) {
 
     const articles: RadarNewsCandidate[] = news.flatMap((article) => {
       if (!article.title || !validExternalUrl(article.link)) return []
+      
+      const related = article.relatedTickers ?? []
+      if (related.length > 0) {
+        if (!related.includes(asset.ticker)) {
+          return []
+        }
+      } else {
+         const titleWords = article.title.toLowerCase()
+         const tickerLower = asset.ticker.toLowerCase()
+         const nameWords = asset.name.toLowerCase().split(' ').filter(w => w.length > 3)
+         if (!titleWords.includes(tickerLower) && !nameWords.some(w => titleWords.includes(w))) {
+           return []
+         }
+      }
+
       return [{
         id: `${asset.id}-${article.uuid || `news-${stableHash(article.link)}`}`,
         title: article.title,
