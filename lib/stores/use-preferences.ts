@@ -23,7 +23,6 @@ interface PreferencesState {
   showPnlPercentOnly: boolean
   pushNotifs: boolean
   emailNotifs: boolean
-  priceAlerts: boolean
   weeklyReport: boolean
   dividendAlerts: boolean
   refreshInterval: RefreshInterval
@@ -54,7 +53,6 @@ interface PreferencesState {
   setShowPnlPercentOnly: (val: boolean) => void
   setPushNotifs: (val: boolean) => void
   setEmailNotifs: (val: boolean) => void
-  setPriceAlerts: (val: boolean) => void
   setWeeklyReport: (val: boolean) => void
   setDividendAlerts: (val: boolean) => void
   setRefreshInterval: (val: RefreshInterval) => void
@@ -90,7 +88,6 @@ export const usePreferences = create<PreferencesState>()(
       showPnlPercentOnly: false,
       pushNotifs: true,
       emailNotifs: true,
-      priceAlerts: true,
       weeklyReport: false,
       dividendAlerts: true,
       refreshInterval: 5_000,
@@ -121,7 +118,6 @@ export const usePreferences = create<PreferencesState>()(
       setShowPnlPercentOnly: (val) => set({ showPnlPercentOnly: val }),
       setPushNotifs: (val) => set({ pushNotifs: val }),
       setEmailNotifs: (val) => set({ emailNotifs: val }),
-      setPriceAlerts: (val) => set({ priceAlerts: val }),
       setWeeklyReport: (val) => set({ weeklyReport: val }),
       setDividendAlerts: (val) => set({ dividendAlerts: val }),
       setRefreshInterval: (val) => set({ refreshInterval: val }),

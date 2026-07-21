@@ -11,7 +11,6 @@ import {
   SlidersHorizontal,
 } from "lucide-react"
 
-import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { usePreferences } from "@/lib/stores/use-preferences"
@@ -65,7 +64,6 @@ export function MobileDashboard({
 }: MobileDashboardProps) {
   const { hideBalances, setHideBalances } = usePreferences()
   const { openEmpty } = useQuickAdd()
-  const [alertsOpen, setAlertsOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [sortMode, setSortMode] = useState<SortMode>("value")
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>("session")
@@ -142,19 +140,6 @@ export function MobileDashboard({
               aria-label={hideBalances ? "Mostrar saldos" : "Ocultar saldos"}
             >
               {hideBalances ? <Eye className="h-[18px] w-[18px]" /> : <EyeOff className="h-[18px] w-[18px]" />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setAlertsOpen(true)}
-              className="touch-target relative rounded-full text-muted-foreground transition-colors active:bg-muted active:text-foreground"
-              aria-label="Abrir alertas"
-            >
-              <Bell className="h-[18px] w-[18px]" />
-              {pendingCount > 0 && (
-                <span className="absolute right-2 top-2 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-amber-400 px-0.5 text-[8px] font-bold text-black">
-                  {pendingCount > 9 ? "9+" : pendingCount}
-                </span>
-              )}
             </button>
           </div>
         </div>
@@ -286,8 +271,6 @@ export function MobileDashboard({
           ))}
         </div>
       </section>
-
-      <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
     </div>
   )
 }

@@ -124,7 +124,6 @@ export default function SettingsPage() {
     hideBalances, setHideBalances,
     pushNotifs, setPushNotifs,
     emailNotifs, setEmailNotifs,
-    priceAlerts, setPriceAlerts,
     weeklyReport, setWeeklyReport,
     dividendAlerts, setDividendAlerts
   } = usePreferences()
@@ -536,11 +535,7 @@ export default function SettingsPage() {
                     iconColor="text-rose-500"
                     action={<CustomSwitch checked={pushNotifs} onChange={() => { setPushNotifs(!pushNotifs); toast.success("Preferencia actualizada") }} />} 
                   />
-                  <SettingRow 
-                    icon={Zap} title="Alertas de Precio" desc="Avisos cuando un activo sube o baja drásticamente."
-                    iconColor="text-amber-500"
-                    action={<CustomSwitch checked={priceAlerts} onChange={() => { setPriceAlerts(!priceAlerts); toast.success("Preferencia actualizada") }} />} 
-                  />
+
                   <SettingRow 
                     icon={Download} title="Cobro de Dividendos" desc="Notificar cuando se reciba un dividendo de una empresa."
                     iconColor="text-emerald-500"

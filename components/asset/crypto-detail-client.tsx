@@ -11,10 +11,9 @@ import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatPercent, formatUnits } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
-import { AssetAlerts } from "./detail/asset-alerts"
+
 import { AssetLogo } from "@/components/ui/asset-logo"
 import { AssetNews } from "./detail/asset-news"
-import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { AssetPnlChart } from "./detail/asset-pnl-chart"
 import { MarketStats } from "./detail/market-stats"
@@ -37,7 +36,7 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
     txTableData
   } = useAssetCalculations(position, transactions)
 
-  const [alertsOpen, setAlertsOpen] = useState(false)
+
   const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
   const [chartMode, setChartMode] = useState<"price" | "pnl">("price")
 
@@ -180,23 +179,12 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
 
         {/* ═══════════ ESTADÍSTICAS Y ALERTAS ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-3">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
               <Coins className="h-5 w-5 text-orange-400" />
               Datos de la Red
             </h2>
             <MarketStats ticker={position.ticker} moneda={position.moneda} />
-          </div>
-          <div className="lg:col-span-1">
-            <h2 className="text-xl font-bold text-transparent mb-4 flex items-center gap-2 select-none pointer-events-none">
-              <Coins className="h-5 w-5 text-transparent" />
-              Alertas
-            </h2>
-            <AssetAlerts 
-              ticker={position.ticker} 
-              moneda={position.moneda} 
-              onOpenAlertsModal={() => setAlertsOpen(true)} 
-            />
           </div>
         </div>
 
@@ -264,11 +252,6 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
         </div>
       </main>
 
-      <PriceAlerts 
-        open={alertsOpen} 
-        onOpenChange={setAlertsOpen} 
-        initialTicker={position.ticker} 
-      />
     </div>
   )
 }

@@ -21,9 +21,7 @@ import type { EnrichedPosition } from '@/lib/types'
 import dynamic from 'next/dynamic'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
 import { AssetLogo } from "@/components/ui/asset-logo"
-import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetNews } from "./detail/asset-news"
-import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { AssetPnlChart } from "./detail/asset-pnl-chart"
 import { MarketStats } from "./detail/market-stats"
@@ -56,7 +54,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
   const [monthlyContribution, setMonthlyContribution] = useState(300)
   const [years, setYears] = useState(15)
   const [expectedReturn, setExpectedReturn] = useState(8)
-  const [alertsOpen, setAlertsOpen] = useState(false)
+
   const [traspasoOpen, setTraspasoOpen] = useState(false)
   const [chartMode, setChartMode] = useState<"price" | "pnl">("price")
   
@@ -382,18 +380,8 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         {/* ═══════════ APORTACIONES MENSUALES + OPERACIONES ═══════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 animate-fade-in stagger-2">
           {/* Barras de aportaciones */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <AssetContributionsChart monthlyContributionsData={monthlyContributionsData} />
-          </div>
-          <div className="lg:col-span-1">
-            <div className="mb-4 flex items-center gap-2 select-none pointer-events-none opacity-0">
-              <span className="text-xl font-bold text-transparent">Alertas</span>
-            </div>
-            <AssetAlerts 
-              ticker={position.ticker} 
-              moneda={position.moneda} 
-              onOpenAlertsModal={() => setAlertsOpen(true)} 
-            />
           </div>
         </div>
 
@@ -578,11 +566,6 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         onOpenChange={setTraspasoOpen} 
       />
       
-      <PriceAlerts 
-        open={alertsOpen} 
-        onOpenChange={setAlertsOpen} 
-        initialTicker={position.ticker} 
-      />
     </div>
   )
 }

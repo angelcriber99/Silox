@@ -11,10 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatPercent, formatUnits } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
-import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetNews } from "./detail/asset-news"
 import { AssetLogo } from "@/components/ui/asset-logo"
-import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { AssetPnlChart } from "./detail/asset-pnl-chart"
 import { StockExtendedStats } from "./detail/stock-extended-stats"
@@ -40,7 +38,7 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
     txTableData
   } = useAssetCalculations(position, transactions)
 
-  const [alertsOpen, setAlertsOpen] = useState(false)
+
   const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
   const [chartMode, setChartMode] = useState<"price" | "pnl">("price")
 
@@ -254,18 +252,7 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
               </table>
             </div>
           </div>
-          
-          <div className="lg:col-span-1">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-violet-400" />
-              Tus Alertas
-            </h2>
-            <AssetAlerts 
-              ticker={position.ticker} 
-              moneda={position.moneda} 
-              onOpenAlertsModal={() => setAlertsOpen(true)} 
-            />
-          </div>
+
         </div>
 
         {/* ═══════════ NOTICIAS RELEVANTES ═══════════ */}
@@ -274,11 +261,6 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
         </div>
       </main>
 
-      <PriceAlerts 
-        open={alertsOpen} 
-        onOpenChange={setAlertsOpen} 
-        initialTicker={position.ticker} 
-      />
     </div>
   )
 }

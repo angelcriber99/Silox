@@ -20,9 +20,7 @@ import { Sparkline } from "@/components/asset/sparkline"
 import { AddAssetModal } from "@/components/asset/add-asset-modal"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { HelpGuideModal } from "@/components/dashboard/help-guide-modal"
-import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { useAlerts } from "@/lib/hooks/use-alerts"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { WaveTrackerModal, parseAssetNotes } from "@/components/asset/wave-tracker-modal"
@@ -539,12 +537,8 @@ export function PositionsTable({
   }, [])
   const [addAssetOpen, setAddAssetOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
-  const [alertsOpen, setAlertsOpen] = useState(false)
   const [waveModalOpen, setWaveModalOpen] = useState(false)
   const [waveAsset, setWaveAsset] = useState<EnrichedPosition | null>(null)
-  const { alerts } = useAlerts()
-
-  const hasTriggeredAlerts = alerts.some(a => a.triggered)
 
   const toggleSort = (key: SortKey) => {
     let newKey = key;
@@ -647,20 +641,7 @@ export function PositionsTable({
             >
               <BookOpen className="h-4 w-4" />
             </Button>
-            <div className="relative">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setAlertsOpen(true)}
-                className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
-              >
-                <Bell className="h-4 w-4 mr-2" />
-                {t('alerts')}
-              </Button>
-              {hasTriggeredAlerts && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 border-2 border-background animate-pulse" />
-              )}
-            </div>
+
             
             <RevolutSync>
               <Button
@@ -840,7 +821,7 @@ export function PositionsTable({
       </CardContent>
       <AddAssetModal open={addAssetOpen} onOpenChange={setAddAssetOpen} />
       <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
-      <PriceAlerts open={alertsOpen} onOpenChange={setAlertsOpen} />
+
       <WaveTrackerModal open={waveModalOpen} onOpenChange={setWaveModalOpen} position={waveAsset} onSuccess={() => {
         // Trigger a refresh of the page or let SWR handle it if needed
         window.location.reload()

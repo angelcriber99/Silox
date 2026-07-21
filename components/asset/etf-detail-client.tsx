@@ -11,10 +11,8 @@ import { formatCurrency, formatPercent, formatUnits } from "@/lib/utils/formatte
 import type { EnrichedPosition } from '@/lib/types'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
 import dynamic from 'next/dynamic'
-import { AssetAlerts } from "./detail/asset-alerts"
 import { AssetNews } from "./detail/asset-news"
 import { AssetLogo } from "@/components/ui/asset-logo"
-import { PriceAlerts } from "@/components/dashboard/price-alerts"
 import { InteractiveAssetChart } from "./detail/interactive-chart"
 import { AssetPnlChart } from "./detail/asset-pnl-chart"
 import { MarketStats } from "./detail/market-stats"
@@ -41,7 +39,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
     txTableData
   } = useAssetCalculations(position, transactions)
 
-  const [alertsOpen, setAlertsOpen] = useState(false)
+
   const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
   const [chartMode, setChartMode] = useState<"price" | "pnl">("price")
 
@@ -234,12 +232,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
                </h2>
                <MarketStats ticker={position.ticker} moneda={position.moneda} />
             </div>
-            
-            <AssetAlerts 
-              ticker={position.ticker} 
-              moneda={position.moneda} 
-              onOpenAlertsModal={() => setAlertsOpen(true)} 
-            />
+
           </div>
 
           {/* ═══════════ APORTACIONES DCA ═══════════ */}
@@ -312,11 +305,6 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
         </div>
       </main>
 
-      <PriceAlerts 
-        open={alertsOpen} 
-        onOpenChange={setAlertsOpen} 
-        initialTicker={position.ticker} 
-      />
     </div>
   )
 }
