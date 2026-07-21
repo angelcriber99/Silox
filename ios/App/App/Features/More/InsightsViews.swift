@@ -77,7 +77,7 @@ struct AnalysisView: View {
                 } else if let error = model.errorMessage, !model.isLoading {
                     ErrorStateView(message: error) { Task { await model.refresh() } }
                 } else {
-                    ProgressView("Preparando análisis…")
+                    SiloxLoadingView(.analysis)
                 }
             }
             .background(SiloxColors.backgroundPrimary.ignoresSafeArea())

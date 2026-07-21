@@ -65,7 +65,7 @@ struct PortfolioView: View {
             Group {
                 switch model.state {
                 case .idle, .loading:
-                    ProgressView("Cargando cartera…")
+                    SiloxLoadingView(.portfolio)
                 case .loaded(let portfolio, let cachedAt):
                     portfolioContent(portfolio, cachedAt: cachedAt)
                 case .failed(let message, let cached, let cachedAt):
