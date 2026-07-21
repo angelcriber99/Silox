@@ -27,6 +27,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import { z } from "zod"
+import { usePreferences } from "@/lib/stores/use-preferences"
 import { AssetLogo } from "@/components/ui/asset-logo"
 
 const RadarEventSchema = z.object({
@@ -115,7 +116,6 @@ function eventDateLabel(event: RadarEvent): string {
 }
 
 export default function RadarPage() {
-  const t = useTranslations('Radar')
   const language = usePreferences((state) => state.language)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
