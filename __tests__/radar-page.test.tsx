@@ -68,7 +68,7 @@ describe('RadarPage', () => {
     const dayButton = await screen.findByRole('button', { name: '5 de agosto: 1 eventos' })
     fireEvent.mouseEnter(dayButton)
 
-    const tooltip = screen.getByRole('tooltip')
+    const tooltip = await screen.findByRole('tooltip')
     expect(within(tooltip).getByText('ASTS')).toBeInTheDocument()
     expect(within(tooltip).getByText('Lanzamiento o misión relevante')).toBeInTheDocument()
     expect(within(tooltip).getByText('Haz click para fijar el detalle debajo.')).toBeInTheDocument()

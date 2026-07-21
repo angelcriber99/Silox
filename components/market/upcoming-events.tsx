@@ -144,8 +144,8 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
   })
 
   return (
-    <Card className="flex flex-1 min-h-0 flex-col border-border/40 bg-card/40 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border/20 p-4 pb-2">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border/40 bg-card/40 shadow-sm backdrop-blur-md transition-shadow hover:shadow-md">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border/20 px-3 py-2.5">
         <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Calendar aria-hidden="true" className="h-4 w-4 text-amber-400" />
           <span>{t("upcoming_events")}</span>
@@ -164,7 +164,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         </Button>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 pt-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="flex items-center gap-3">
@@ -189,17 +189,21 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
             <p className="mt-1 max-w-[200px] text-[10px] text-muted-foreground/60">{t("add_manual_events")}</p>
           </div>
         ) : (
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col space-y-1">
             {events.map((event) => {
               const content = (
                 <>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/50 bg-background/50">
-                    {getEventIcon(event.type)}
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border/50 bg-background/65 leading-none">
+                    <span className="text-sm font-bold tabular-nums text-foreground">{event.date.getDate()}</span>
+                    <span className="-mt-1 text-[8px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {event.date.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
+                    </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground/90">{event.title}</p>
-                    <p className="text-xs text-muted-foreground/80">
-                      {event.date.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                    <p className="truncate text-xs font-semibold text-foreground/90">{event.title}</p>
+                    <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground/80">
+                      {getEventIcon(event.type)}
+                      {event.type.replaceAll("_", " ")}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
@@ -222,7 +226,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
                   <button
                     key={event.id}
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-muted/50"
+                    className="flex w-full items-center gap-2 rounded-lg p-1.5 text-left transition-colors hover:bg-muted/50"
                     onClick={() => onEditEvent(originalEvent)}
                   >
                     {content}
@@ -231,7 +235,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
               }
 
               return (
-                <div key={event.id} className="flex items-center gap-3 rounded-lg p-2">
+                <div key={event.id} className="flex items-center gap-2 rounded-lg p-1.5">
                   {content}
                 </div>
               )

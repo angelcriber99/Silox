@@ -1,15 +1,29 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from "recharts"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { RawTransaction } from "./use-asset-calculations"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import { calculateAssetPeriodPerformance } from "@/lib/utils/asset-period-performance"
 
-const PurchaseDot = (props: any) => {
+interface AssetChartPoint {
+  date: string
+  price: number
+  purchases?: RawTransaction[]
+  isPurchase?: boolean
+  purchaseDetails?: { qty: number; price: number }
+}
+
+interface AssetChartResponse {
+  chart: AssetChartPoint[]
+  [key: string]: unknown
+}
+
+const PurchaseDot = (props: { cx?: number; cy?: number; payload?: AssetChartPoint }) => {
   const { cx, cy, payload } = props
   if (payload?.isPurchase) {
     return (
@@ -48,18 +62,24 @@ interface InteractiveAssetChartProps {
   onRangePerformanceChange?: (perf: { label: string, absolute: number, percent: number } | null) => void
 }
 
-export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions = [], units = 0, historicalPnl, onRangePerformanceChange }: InteractiveAssetChartProps) {
+export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions = [], historicalPnl, onRangePerformanceChange }: InteractiveAssetChartProps) {
   const [range, setRange] = useState("1mo")
   const { refreshInterval, pauseUpdatesWhenHidden } = usePreferences()
+  const historicalAbsolute = historicalPnl?.absolute
+  const historicalPercent = historicalPnl?.percent
+  const transactionKey = useMemo(
+    () => transactions.map((transaction) => `${transaction.id}:${transaction.fecha}:${transaction.tipo_operacion}:${transaction.cantidad}:${transaction.precio_unitario}`).join("|"),
+    [transactions],
+  )
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['marketData', ticker, range],
+  const { data, isLoading, error } = useQuery<AssetChartResponse>({
+    queryKey: ['marketData', ticker, range, transactionKey],
     queryFn: async () => {
       const res = await fetch(`/api/market/${ticker}?range=${range}`)
       if (!res.ok) throw new Error("Failed to fetch market data")
-      const result = await res.json()
+      const result = await res.json() as AssetChartResponse
       
-      let enrichedChart = result.chart || []
+      let enrichedChart: AssetChartPoint[] = result.chart || []
       
       if (enrichedChart.length > 0) {
         // Enriquecer con compras
@@ -74,7 +94,7 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
               let closestIdx = -1
               let minDiff = Infinity
               
-              enrichedChart.forEach((p: any, index: number) => {
+              enrichedChart.forEach((p, index) => {
                 const pTime = new Date(p.date).getTime()
                 const diff = Math.abs(pTime - txTime)
                 if (diff < minDiff) {
@@ -86,17 +106,15 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
               // Only attach if within a reasonable threshold (e.g., 4 days)
               // to avoid showing a purchase on a chart range that doesn't contain it
               if (closestIdx !== -1 && minDiff < 4 * 24 * 60 * 60 * 1000) {
-                if (!enrichedChart[closestIdx].purchases) {
-                   enrichedChart[closestIdx].purchases = []
-                }
-                enrichedChart[closestIdx].purchases.push(t)
+                const point = enrichedChart[closestIdx]
+                if (point) point.purchases = [...(point.purchases ?? []), t]
               }
             })
             
-            enrichedChart = enrichedChart.map((p: any) => {
+            enrichedChart = enrichedChart.map((p) => {
               if (p.purchases && p.purchases.length > 0) {
-                const totalQty = p.purchases.reduce((sum: number, t: any) => sum + Number(t.cantidad), 0)
-                const avgPrice = p.purchases.reduce((sum: number, t: any) => sum + (Number(t.cantidad) * Number(t.precio_unitario || p.price)), 0) / totalQty
+                const totalQty = p.purchases.reduce((sum, transaction) => sum + Number(transaction.cantidad), 0)
+                const avgPrice = p.purchases.reduce((sum, transaction) => sum + (Number(transaction.cantidad) * Number(transaction.precio_unitario || p.price)), 0) / totalQty
                 return {
                   ...p,
                   isPurchase: true,
@@ -108,52 +126,6 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
           }
         }
         
-        // Calcular rendimiento del rango
-        if (onRangePerformanceChange) {
-          if (range === '1d') {
-             onRangePerformanceChange(null) // Para 1D, usar el cálculo diario estándar del padre
-          } else if (range === 'max' && historicalPnl) {
-             onRangePerformanceChange({
-               label: 'Histórico',
-               absolute: historicalPnl.absolute,
-               percent: historicalPnl.percent
-             })
-          } else {
-             let effectiveFirstPrice = enrichedChart[0].price
-             if (transactions.length > 0) {
-               const sortedTx = [...transactions].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-               const firstTxDateStr = new Date(sortedTx[0].fecha).toISOString().split('T')[0]
-               const chartStartDateStr = new Date(enrichedChart[0].date).toISOString().split('T')[0]
-               
-               if (new Date(firstTxDateStr) > new Date(chartStartDateStr)) {
-                 const point = enrichedChart.find((p: any) => new Date(p.date).toISOString().split('T')[0] >= firstTxDateStr)
-                 if (point) effectiveFirstPrice = point.price
-               }
-             }
-
-             const lastPrice = enrichedChart[enrichedChart.length - 1].price
-             const absoluteChange = (lastPrice - effectiveFirstPrice) * units
-             const percentChange = ((lastPrice - effectiveFirstPrice) / effectiveFirstPrice) * 100
-             
-             const labelMap: Record<string, string> = {
-               '5d': 'en 5 días',
-               '1mo': 'en 1 mes',
-               '6mo': 'en 6 meses',
-               'ytd': 'en YTD',
-               '1y': 'en 1 año',
-               '5y': 'en 5 años',
-               'max': 'Histórico'
-             }
-             
-             onRangePerformanceChange({
-               label: labelMap[range] || '',
-               absolute: absoluteChange,
-               percent: percentChange
-             })
-          }
-        }
-      } else if (onRangePerformanceChange) {
-         onRangePerformanceChange(null)
       }
       
       return { ...result, chart: enrichedChart }
@@ -164,6 +136,36 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
     refetchOnWindowFocus: 'always',
     refetchOnReconnect: 'always',
   })
+
+  useEffect(() => {
+    if (!onRangePerformanceChange || range === "1d") {
+      onRangePerformanceChange?.(null)
+      return
+    }
+
+    const performance = calculateAssetPeriodPerformance(data?.chart ?? [], transactions)
+    const labelMap: Record<string, string> = {
+      "5d": "en 5 días",
+      "1mo": "en 1 mes",
+      "6mo": "en 6 meses",
+      "ytd": "en YTD",
+      "1y": "en 1 año",
+      "5y": "en 5 años",
+      "max": "Histórico",
+    }
+
+    if (performance) {
+      onRangePerformanceChange({
+        label: labelMap[range] ?? "",
+        absolute: performance.absolute,
+        percent: performance.percent,
+      })
+    } else if (range === "max" && historicalAbsolute !== undefined && historicalPercent !== undefined) {
+      onRangePerformanceChange({ label: "Histórico", absolute: historicalAbsolute, percent: historicalPercent })
+    } else {
+      onRangePerformanceChange(null)
+    }
+  }, [data?.chart, historicalAbsolute, historicalPercent, onRangePerformanceChange, range, transactions])
 
   return (
     <div className="w-full">
@@ -213,7 +215,7 @@ export function InteractiveAssetChart({ ticker, moneda, colorHex, transactions =
               <Tooltip 
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null
-                  const point = payload[0].payload
+                  const point = payload[0].payload as AssetChartPoint
                   const date = new Date(point.date)
                   
                   return (

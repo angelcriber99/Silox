@@ -115,7 +115,9 @@ export async function GET(request: Request) {
       const netContributions = calculateFixedNetInvestmentEur(funding, historicalRates)
       const totals = computePortfolioTotals(enriched, netContributions)
 
-      if (totals.totalValue > 0) {
+      // Never persist an estimated portfolio. A temporary quote outage would
+      // otherwise look like a real market loss in the historical chart.
+      if (totals.totalValue > 0 && totals.hasAllPrices) {
         // Get the last snapshot to prevent saving identical data (0 PnL instante)
         const { data: lastSnapshot } = await supabaseAdmin
           .from('portfolio_history')

@@ -29,7 +29,6 @@ import {
 import { z } from "zod"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { AssetLogo } from "@/components/ui/asset-logo"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 
 const RadarEventSchema = z.object({
   id: z.string(),
@@ -119,6 +118,7 @@ function eventDateLabel(event: RadarEvent): string {
 export default function RadarPage() {
   const language = usePreferences((state) => state.language)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["radar", language],
@@ -256,17 +256,18 @@ export default function RadarPage() {
                     </div>
                     <div className="grid grid-cols-7 gap-1">
                       {Array.from({ length: month.padding }, (_, index) => <span key={`empty-${index}`} className="h-9" />)}
-                      {month.days.map((day, dayIndex) => {
+                      {month.days.map((day) => {
                         const dayEvents = data.events.filter((event) => (!selectedTicker || event.ticker === selectedTicker) && eventOccursOn(event, day))
                         const isSelected = selectedDate ? isSameDay(selectedDate, day) : false
-                        const dayKey = format(day, "yyyy-MM-dd")
-                        
+
                         return (
-                          <HoverCard key={day.toISOString()} openDelay={200} closeDelay={100}>
-                            <HoverCardTrigger asChild>
+                          <div key={day.toISOString()} className="relative" onMouseLeave={() => setHoveredDate(null)}>
                               <button
                                 type="button"
                                 onClick={() => setSelectedDate(isSelected ? null : day)}
+                                onMouseEnter={() => setHoveredDate(day)}
+                                onFocus={() => setHoveredDate(day)}
+                                onBlur={() => setHoveredDate(null)}
                                 aria-pressed={isSelected}
                                 aria-label={`${format(day, "d 'de' MMMM", { locale: es })}: ${dayEvents.length} eventos`}
                                 className={`flex h-9 w-full flex-col items-center justify-center rounded-lg text-xs transition-colors ${isSelected ? "bg-foreground text-background" : "hover:bg-muted focus-visible:bg-muted"}`}
@@ -276,8 +277,8 @@ export default function RadarPage() {
                                   {dayEvents.slice(0, 3).map((event) => <span key={event.id} className={`h-1 w-1 rounded-full ${CERTAINTY[event.certainty].dot}`} />)}
                                 </span>
                               </button>
-                            </HoverCardTrigger>
-                            <HoverCardContent side="top" className="w-60 p-3" sideOffset={8}>
+                            {hoveredDate && isSameDay(hoveredDate, day) && (
+                            <div role="tooltip" className="absolute bottom-full left-1/2 z-50 mb-2 w-60 -translate-x-1/2 rounded-lg bg-popover p-3 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/10">
                               <div className="mb-2 flex items-center justify-between gap-2">
                                 <p className="text-xs font-semibold capitalize">{format(day, "EEEE, d MMMM", { locale: es })}</p>
                                 <span className="shrink-0 text-[10px] text-muted-foreground">
@@ -292,8 +293,11 @@ export default function RadarPage() {
                                     <div key={event.id} className="flex items-start gap-2">
                                       <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${CERTAINTY[event.certainty].dot}`} />
                                       <div className="min-w-0">
-                                        <p className="text-[10px] font-bold text-primary">
-                                          {data.assets.find(a => a.ticker === event.ticker)?.name ?? event.ticker.split(".")[0]}
+                                        <p className="flex items-center gap-1.5 text-[10px] font-bold text-primary">
+                                          <span>{event.ticker.split(".")[0]}</span>
+                                          <span className="truncate font-medium text-muted-foreground">
+                                            {data.assets.find(a => a.ticker === event.ticker)?.name}
+                                          </span>
                                         </p>
                                         <p className="line-clamp-2 text-xs leading-snug">{event.title}</p>
                                       </div>
@@ -303,8 +307,9 @@ export default function RadarPage() {
                                 </div>
                               )}
                               <p className="mt-2 border-t border-border/60 pt-2 text-[10px] text-muted-foreground">Haz click para fijar el detalle debajo.</p>
-                            </HoverCardContent>
-                          </HoverCard>
+                            </div>
+                            )}
+                          </div>
                         )
                       })}
                     </div>

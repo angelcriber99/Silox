@@ -28,10 +28,12 @@ import {
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { createClient } from '@supabase/supabase-js'
 
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !serviceKey) throw new Error('Supabase admin environment is not configured')
+  return createClient(url, serviceKey)
+}
 
 const METAL_RATE_API_BASE = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api'
 const METAL_HISTORY_DAYS = 6
@@ -179,7 +181,7 @@ function getMetalPriceEntry(
 }
 
 // Realistic fallbacks for cold starts in serverless to prevent massive 1:1 parity spikes if Yahoo rate-limits the first request
-let lastKnownFxRates: FxRatesToEur = { 
+const lastKnownFxRates: FxRatesToEur = {
   EUR: 1,
   USD: 1.09, // 1 EUR = 1.09 USD approx
   GBP: 0.84, // 1 EUR = 0.84 GBP approx
@@ -294,13 +296,19 @@ export async function fetchMarketPricesDirect(
   
   // Apply Market Snapshots to stabilize daily P&L
   try {
-    const { data: snapshots } = await adminClient
+    const snapshotClient = getAdminClient()
+    const { data: snapshots } = await snapshotClient
       .from('market_snapshots')
       .select('*')
       .in('ticker', tickers)
 
     const snapshotMap = new Map(snapshots?.map(s => [s.ticker, s]) || [])
-    const snapshotsToUpsert: any[] = []
+    const snapshotsToUpsert: Array<{
+      ticker: string
+      market_date: string
+      price: number
+      updated_at: string
+    }> = []
 
     for (const ticker of tickers) {
       const current = prices[ticker]
@@ -330,7 +338,7 @@ export async function fetchMarketPricesDirect(
     }
 
     if (snapshotsToUpsert.length > 0) {
-      await adminClient.from('market_snapshots').upsert(snapshotsToUpsert, { onConflict: 'ticker' })
+      await snapshotClient.from('market_snapshots').upsert(snapshotsToUpsert, { onConflict: 'ticker' })
     }
   } catch (err) {
     console.error('Error applying market snapshots:', err)
@@ -462,8 +470,8 @@ async function _fetchMarketPrices(
         }
       }
 
-      let meta: any = chart1m?.meta || {}
-      let quotes = (chart1m?.quotes as ChartQuote[]) || []
+      let meta = (chart1m?.meta || {}) as ChartMeta & YahooQuote
+      const quotes = (chart1m?.quotes as ChartQuote[]) || []
 
       if (fallbackQuote) {
         // Merge real-time quote data into meta (quote endpoint is much faster than chart meta)

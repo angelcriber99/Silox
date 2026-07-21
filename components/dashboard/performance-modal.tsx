@@ -11,7 +11,6 @@ import { formatPercent } from "@/lib/utils/formatters"
 import {
   buildPerformanceSeries,
   filterPerformanceSeries,
-  summarizePerformance,
   type PerformancePoint,
   type PerformanceRange,
 } from "@/lib/utils/performance-history"
@@ -39,14 +38,10 @@ interface PerformanceModalProps {
 export type TimeRange = PerformanceRange
 export type ChartDataPoint = PerformancePoint
 
-const RANGES: TimeRange[] = ["1D", "1W", "1M", "1Y", "ALL"]
+const RANGES: TimeRange[] = ["1D", "1W", "1M", "YTD", "1Y", "ALL"]
 
 function pnlTone(value: number): "positive" | "negative" | "neutral" {
   return value > 0 ? "positive" : value < 0 ? "negative" : "neutral"
-}
-
-function pnlTextClass(value: number): string {
-  return value > 0 ? "text-emerald-400" : value < 0 ? "text-rose-400" : "text-foreground"
 }
 
 function RangeSelector({ 
@@ -61,7 +56,7 @@ function RangeSelector({
   onOffsetChange: (offset: number) => void
 }) {
   const canGoForward = timeOffset < 0
-  const showNav = value !== "ALL"
+  const showNav = value !== "ALL" && value !== "YTD"
 
   return (
     <div className="flex items-center gap-2">
@@ -153,7 +148,6 @@ export function PerformanceModal({
 }: PerformanceModalProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("1M")
   const [timeOffset, setTimeOffset] = useState<number>(0)
-  const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null)
   const { data: snapshots = [], isLoading } = useHistory({ enabled: open })
   const { hideBalances } = usePreferences()
   const { displayCurrency, format: formatDisplay } = useDisplayCurrency()
@@ -169,29 +163,9 @@ export function PerformanceModal({
     [processedData, timeRange, timeOffset],
   )
 
-  const selectedData = useMemo(() => {
-    if (!hoveredPoint) return filteredData
-    const hoveredTime = new Date(hoveredPoint.timestamp).getTime()
-    return filteredData.filter((point) => new Date(point.timestamp).getTime() <= hoveredTime)
-  }, [filteredData, hoveredPoint])
-
-  const period = useMemo(
-    () => summarizePerformance(selectedData, timeRange),
-    [selectedData, timeRange],
-  )
-  const displayedPeriod = timeRange === "1D" && !hoveredPoint
-    ? { ...period, profit: currentDailyPnl, profitPercent: currentDailyPnlPercent }
-    : period
-
   const dailyCoverageDetail = currentPositionCount > 0 && currentDailyCoverage < currentPositionCount
     ? `Día completo · cobertura ${currentDailyCoverage}/${currentPositionCount} posiciones`
     : "Premercado + regular + postmercado"
-  const rangeLabel = timeRange === "1D"
-    ? "Día completo: pre + regular + post"
-    : timeRange === "ALL"
-      ? "Desde la primera aportación registrada"
-      : `Resultado ajustado por flujos · ${timeRange === "1W" ? "1 semana" : timeRange === "1M" ? "1 mes" : "1 año"}`
-
   const money = (value: number, signed = false) => hideBalances
     ? "••••"
     : `${signed && value >= 0 ? "+" : ""}${formatDisplay(value)}`
@@ -260,10 +234,12 @@ export function PerformanceModal({
                   <CombinedPerformanceChart 
                     chartData={filteredData}
                     timeRange={timeRange}
+                    currentDailyPnl={currentDailyPnl}
+                    currentDailyPnlPercent={currentDailyPnlPercent}
                   >
                     <RangeSelector 
                       value={timeRange} 
-                      onChange={(range) => { setTimeRange(range); setTimeOffset(0); setHoveredPoint(null) }} 
+                      onChange={(range) => { setTimeRange(range); setTimeOffset(0) }}
                       timeOffset={timeOffset}
                       onOffsetChange={setTimeOffset}
                     />
@@ -290,7 +266,7 @@ export function PerformanceModal({
                   </div>
                   <RangeSelector 
                     value={timeRange} 
-                    onChange={(range) => { setTimeRange(range); setTimeOffset(0); setHoveredPoint(null) }} 
+                    onChange={(range) => { setTimeRange(range); setTimeOffset(0) }}
                     timeOffset={timeOffset}
                     onOffsetChange={setTimeOffset}
                   />

@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { PurchaseLotsCard } from '@/components/asset/detail/purchase-lots-card'
 import type { EnrichedPosition } from '@/lib/types'
+import { renderWithProviders } from '@/__tests__/test-utils'
 
 const position = {
   moneda: 'EUR',
@@ -13,7 +14,7 @@ const position = {
 
 describe('PurchaseLotsCard', () => {
   it('renders only the remaining FIFO purchase quantity and its performance', () => {
-    render(
+    renderWithProviders(
       <PurchaseLotsCard
         position={position}
         transactions={[

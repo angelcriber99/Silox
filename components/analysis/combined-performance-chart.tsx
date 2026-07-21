@@ -14,21 +14,21 @@ import {
 } from "recharts"
 
 import { usePreferences } from "@/lib/stores/use-preferences"
-import type { PerformancePoint } from "@/lib/utils/performance-history"
+import { summarizePerformance, type PerformancePoint, type PerformanceRange } from "@/lib/utils/performance-history"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface CombinedPerformanceChartProps {
   chartData: PerformancePoint[]
   dailyData?: PerformancePoint[] // kept for type compatibility
-  timeRange: any
+  timeRange: PerformanceRange
   currentDailyPnl?: number
   currentDailyPnlPercent?: number
   children?: React.ReactNode
 }
 
 /* ─── Custom active dot with glow ─── */
-function GlowDot(props: any) {
+function GlowDot(props: { cx?: number; cy?: number; fill?: string }) {
   const { cx, cy, fill } = props
   if (cx == null || cy == null) return null
   return (
@@ -41,7 +41,15 @@ function GlowDot(props: any) {
 }
 
 /* ─── Main Chart ─── */
-function StateUpdaterTooltip({ active, payload, onPointUpdate }: any) {
+function StateUpdaterTooltip({
+  active,
+  payload,
+  onPointUpdate,
+}: {
+  active?: boolean
+  payload?: Array<{ payload: PerformancePoint }>
+  onPointUpdate: (point: PerformancePoint | null) => void
+}) {
   useEffect(() => {
     if (active && payload && payload.length > 0) {
       onPointUpdate(payload[0].payload)
@@ -54,6 +62,8 @@ function StateUpdaterTooltip({ active, payload, onPointUpdate }: any) {
 export function CombinedPerformanceChart({
   chartData,
   timeRange,
+  currentDailyPnl,
+  currentDailyPnlPercent,
   children
 }: CombinedPerformanceChartProps) {
   const { hideBalances } = usePreferences()
@@ -63,9 +73,19 @@ export function CombinedPerformanceChart({
 
   if (chartData.length === 0) return null
 
-  const firstPoint = chartData[0]
   const lastPoint = chartData[chartData.length - 1]
   const displayPoint = hoveredPoint ?? lastPoint
+  const visibleData = hoveredPoint
+    ? chartData.filter((point) => new Date(point.timestamp).getTime() <= new Date(hoveredPoint.timestamp).getTime())
+    : chartData
+  const calculatedPeriod = summarizePerformance(visibleData, timeRange)
+  const period = timeRange === "1D" && !hoveredPoint && currentDailyPnl !== undefined
+    ? {
+        ...calculatedPeriod,
+        profit: currentDailyPnl,
+        profitPercent: currentDailyPnlPercent ?? calculatedPeriod.profitPercent,
+      }
+    : calculatedPeriod
 
   const plottedValues = chartData.map((point) => point.value)
   const minValue = Math.min(...plottedValues)
@@ -74,13 +94,11 @@ export function CombinedPerformanceChart({
   const yMinRight = minValue - valueRange * 0.05
   const yMaxRight = maxValue + valueRange * 0.05
 
-  const periodPnl = chartData.reduce((sum, point) => sum + point.pnl, 0)
+  const periodPnl = period.profit
   const lineColor = periodPnl > 0 ? "#30d158" : periodPnl < 0 ? "#ff453a" : "#0a84ff"
 
-  // Calculamos la rentabilidad del periodo
-  const pnlInPeriod = displayPoint.totalPnl - firstPoint.totalPnl
-  const startCost = firstPoint.totalInvested || 1 // evitar division por 0
-  const pnlPercentInPeriod = (pnlInPeriod / startCost) * 100
+  const pnlInPeriod = period.profit
+  const pnlPercentInPeriod = period.profitPercent
   const isPositive = pnlInPeriod >= 0
 
   const firstDate = parseISO(chartData[0].timestamp)
@@ -120,7 +138,7 @@ export function CombinedPerformanceChart({
                 <>
                   {isPositive ? "+" : ""}{formatDisplay(pnlInPeriod)}
                   <span className="mx-0.5">{isPositive ? "▴" : "▾"}</span>
-                  {Math.abs(pnlPercentInPeriod).toFixed(2)}%
+                  {pnlPercentInPeriod >= 0 ? "+" : ""}{pnlPercentInPeriod.toFixed(2)}%
                 </>
               )}
             </span>
@@ -129,7 +147,22 @@ export function CombinedPerformanceChart({
         {children}
       </div>
 
-      <div className="h-[240px] sm:h-[320px] w-full relative">
+      <div className="mb-4 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground">
+        <div className="rounded-lg border border-border/50 bg-background/45 px-3 py-2">
+          <span className="block">Inicio</span>
+          <strong className="mt-0.5 block tabular-nums text-foreground">{hideBalances ? "••••" : formatDisplay(period.startValue)}</strong>
+        </div>
+        <div className="rounded-lg border border-border/50 bg-background/45 px-3 py-2">
+          <span className="block">Flujos netos</span>
+          <strong className="mt-0.5 block tabular-nums text-foreground">{hideBalances ? "••••" : formatDisplay(period.netFlow)}</strong>
+        </div>
+        <div className="rounded-lg border border-border/50 bg-background/45 px-3 py-2">
+          <span className="block">Resultado ajustado</span>
+          <strong className={`mt-0.5 block tabular-nums ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>{hideBalances ? "••••" : formatDisplay(period.profit)}</strong>
+        </div>
+      </div>
+
+      <div className="h-[240px] sm:h-[290px] w-full relative">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart 
             data={chartData} 

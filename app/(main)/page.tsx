@@ -80,7 +80,7 @@ export default function Home() {
                 marketState={marketState}
               />
               
-              <div className="flex flex-col flex-1 min-h-0 gap-6 p-4 overflow-y-auto hide-scrollbar">
+              <div className="grid flex-1 min-h-0 grid-rows-[auto_minmax(128px,0.8fr)_minmax(170px,1fr)] gap-3 overflow-hidden p-3">
                 <AllocationChart positions={positions} marketState={marketState} />
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 <UpcomingEvents
@@ -92,7 +92,7 @@ export default function Home() {
               
               {/* Price updated footer */}
               {pricesUpdatedAt && (
-                <div className="mt-auto text-[10px] text-muted-foreground/40 text-center py-4">
+                <div className="mt-auto py-2 text-center text-[10px] text-muted-foreground/40">
                   Precios: {new Date(pricesUpdatedAt).toLocaleString("es-ES")}
                 </div>
               )}

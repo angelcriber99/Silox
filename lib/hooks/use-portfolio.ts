@@ -87,12 +87,24 @@ export function usePortfolio(options?: { enabled?: boolean; persistHistory?: boo
     [enriched, funding]
   )
 
-  const latestSnapshot = useRef({ totalValue: totals.totalValue, totalCost: totals.totalCost })
+  const latestSnapshot = useRef({
+    totalValue: totals.totalValue,
+    totalCost: totals.totalCost,
+    hasAllPrices: totals.hasAllPrices,
+  })
   useEffect(() => {
-    latestSnapshot.current = { totalValue: totals.totalValue, totalCost: totals.totalCost }
-  }, [totals.totalValue, totals.totalCost])
+    latestSnapshot.current = {
+      totalValue: totals.totalValue,
+      totalCost: totals.totalCost,
+      hasAllPrices: totals.hasAllPrices,
+    }
+  }, [totals.totalValue, totals.totalCost, totals.hasAllPrices])
 
-  const historyReady = enabled && !positionsLoading && !pricesLoading && !contributionsLoading
+  const historyReady = enabled
+    && !positionsLoading
+    && !pricesLoading
+    && !contributionsLoading
+    && totals.hasAllPrices
 
   // Persist a real intraday point every 15 minutes while the dashboard is open.
   // The write function also enforces the same persistence window, so remounts do
@@ -100,8 +112,8 @@ export function usePortfolio(options?: { enabled?: boolean; persistHistory?: boo
   useEffect(() => {
     if (!historyReady || !options?.persistHistory) return
     const persist = () => {
-      const { totalValue, totalCost } = latestSnapshot.current
-      if (totalValue > 0) savePortfolioHistory(totalValue, totalCost).catch(console.error)
+      const { totalValue, totalCost, hasAllPrices } = latestSnapshot.current
+      if (totalValue > 0 && hasAllPrices) savePortfolioHistory(totalValue, totalCost).catch(console.error)
     }
     persist()
     const timer = window.setInterval(persist, 15 * 60 * 1000)

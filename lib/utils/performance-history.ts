@@ -22,17 +22,18 @@ export interface PerformancePoint {
   previousValue: number
   pnlPercent: number
   isFirstPoint: boolean
+  isBoundary?: boolean
 }
 
 export interface PerformanceSummary {
+  startValue: number
   endValue: number
+  netFlow: number
   profit: number
   profitPercent: number
   totalProfit: number
   totalProfitPercent: number
 }
-
-const DAY_MS = 24 * 60 * 60 * 1000
 
 function isValidSnapshot(snapshot: PortfolioSnapshot): boolean {
   return Boolean(snapshot.timestamp)
@@ -128,6 +129,12 @@ export function filterPerformanceSeries(
         const baselinePoint = {
           ...lastPreviousPoint,
           timestamp: startOfDay.toISOString(),
+          pnl: 0,
+          pnlPercent: 0,
+          netFlow: 0,
+          previousValue: lastPreviousPoint.value,
+          isFirstPoint: true,
+          isBoundary: true,
         }
         return [baselinePoint, ...todayPoints].filter(p => new Date(p.timestamp).getTime() <= end)
       }
@@ -145,24 +152,45 @@ export function filterPerformanceSeries(
     else if (range === '1Y') startObj.setFullYear(startObj.getFullYear() - 1)
     start = startObj.getTime()
   }
-  return points.filter((point) => {
+  const inRange = points.filter((point) => {
     const t = new Date(point.timestamp).getTime()
     return t >= start && t <= end
   })
+  if (inRange.length === 0) return []
+
+  const previous = points
+    .filter((point) => new Date(point.timestamp).getTime() < start)
+    .at(-1)
+  if (!previous) return inRange
+
+  return [{
+    ...previous,
+    timestamp: new Date(start).toISOString(),
+    pnl: 0,
+    pnlPercent: 0,
+    netFlow: 0,
+    previousValue: previous.value,
+    isFirstPoint: true,
+    isBoundary: true,
+  }, ...inRange]
 }
 
 /** Modified Dietz denominator gives a flow-adjusted period return. */
 export function summarizePerformance(points: PerformancePoint[], range: PerformanceRange): PerformanceSummary {
   if (points.length === 0) {
-    return { endValue: 0, profit: 0, profitPercent: 0, totalProfit: 0, totalProfitPercent: 0 }
+    return { startValue: 0, endValue: 0, netFlow: 0, profit: 0, profitPercent: 0, totalProfit: 0, totalProfitPercent: 0 }
   }
 
   const target = points.at(-1)!
   const totalProfit = target.totalPnl
   const totalProfitPercent = target.totalInvested > 0 ? (totalProfit / target.totalInvested) * 100 : 0
+  const startValue = points[0].previousValue
+  const netFlow = points.reduce((sum, point) => sum + point.netFlow, 0)
   if (range === 'ALL') {
     return {
+      startValue,
       endValue: target.value,
+      netFlow,
       profit: totalProfit,
       profitPercent: totalProfitPercent,
       totalProfit,
@@ -171,7 +199,6 @@ export function summarizePerformance(points: PerformancePoint[], range: Performa
   }
 
   const profit = points.reduce((sum, point) => sum + point.pnl, 0)
-  const startValue = points[0].previousValue
   const startTime = new Date(points[0].timestamp).getTime()
   const endTime = new Date(target.timestamp).getTime()
   const duration = Math.max(1, endTime - startTime)
@@ -182,7 +209,9 @@ export function summarizePerformance(points: PerformancePoint[], range: Performa
   const denominator = startValue + weightedFlows
 
   return {
+    startValue,
     endValue: target.value,
+    netFlow,
     profit,
     profitPercent: denominator > 0 ? (profit / denominator) * 100 : 0,
     totalProfit,

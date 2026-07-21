@@ -8,6 +8,8 @@ export interface RawTransaction {
   cantidad: number
   precio_unitario: number
   comision: number
+  retencion_origen?: number | null
+  retencion_destino?: number | null
   notas: string | null
   created_at: string
   estado?: string
