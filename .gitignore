@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local tool state and generated verification artifacts
+/supabase/.temp/
+/tmp/
+/null
+
 # typescript
 *.tsbuildinfo
 
