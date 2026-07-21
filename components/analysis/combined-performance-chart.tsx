@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useId, useState, useEffect } from "react"
 import { parseISO, format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
@@ -41,6 +41,16 @@ function GlowDot(props: any) {
 }
 
 /* ─── Main Chart ─── */
+function StateUpdaterTooltip({ active, payload, onPointUpdate }: any) {
+  useEffect(() => {
+    if (active && payload && payload.length > 0) {
+      onPointUpdate(payload[0].payload)
+    } else {
+      onPointUpdate(null)
+    }
+  }, [active, payload, onPointUpdate])
+  return null
+}
 export function CombinedPerformanceChart({
   chartData,
   timeRange,
@@ -123,11 +133,6 @@ export function CombinedPerformanceChart({
           <ComposedChart 
             data={chartData} 
             margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
-            onMouseMove={(data: any) => {
-              if (data?.activePayload?.[0]?.payload) {
-                setHoveredPoint(data.activePayload[0].payload)
-              }
-            }}
             onMouseLeave={() => setHoveredPoint(null)}
           >
             <defs>
@@ -148,7 +153,7 @@ export function CombinedPerformanceChart({
             <YAxis yAxisId="right" orientation="right" hide domain={[yMinRight, yMaxRight]} />
 
             {/* Tooltip fantasma necesario para onMouseMove y activePayload */}
-            <Tooltip content={() => null} cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1, strokeOpacity: 0.3 }} />
+            <Tooltip content={<StateUpdaterTooltip onPointUpdate={setHoveredPoint} />} cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1, strokeOpacity: 0.3 }} />
 
             {/* Crosshair horizontal opcional, Revolut a veces muestra una linea */}
             {hoveredPoint && (
