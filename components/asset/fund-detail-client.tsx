@@ -179,7 +179,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground/80 uppercase font-bold tracking-wider mb-1">Valor Actual</p>
             <p className="text-4xl md:text-5xl font-bold text-foreground tabular-nums drop-shadow-md">
-              {position.valor_actual !== null ? formatCurrency(position.valor_actual, 'EUR') : "—"}
+              {position.valor_actual !== null ? formatCurrency(position.valor_actual_nativo ?? position.valor_actual, position.original_currency || position.moneda) : "—"}
             </p>
             <div className="flex flex-col md:flex-row items-end justify-end gap-3 mt-1">
               <p className={`text-base font-medium tabular-nums flex items-center gap-1 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
@@ -231,8 +231,8 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <Sparkles className="h-4 w-4 text-emerald-400" />
               <span className="text-xs font-medium uppercase tracking-wider">Ganado por Mercado</span>
             </div>
-            <p className={`text-2xl font-bold tabular-nums ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
+            <p className={`text-2xl font-bold tabular-nums ${(position.pnl ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatCurrency(position.pnl ?? 0, 'EUR')}
             </p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">

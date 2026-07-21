@@ -170,7 +170,7 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual || 0, 'EUR')}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual_nativo ?? position.valor_actual ?? 0, position.original_currency || position.moneda)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Precio Medio</span>
@@ -178,11 +178,11 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rentabilidad Total</span>
-            <p className={`text-2xl font-bold tabular-nums mt-1 ${stats.gananciaIntereses >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {stats.gananciaIntereses >= 0 ? "+" : ""}{formatCurrency(stats.gananciaIntereses, position.moneda)}
+            <p className={`text-2xl font-bold tabular-nums mt-1 ${(position.pnl ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatCurrency(position.pnl ?? 0, 'EUR')}
             </p>
-            <p className={`text-sm font-bold tabular-nums ${stats.precioPorcentaje >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-              {stats.precioPorcentaje >= 0 ? "+" : ""}{stats.precioPorcentaje.toFixed(2)}%
+            <p className={`text-sm font-bold tabular-nums ${(position.pnl_percent ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+              {(position.pnl_percent ?? 0) >= 0 ? "+" : ""}{(position.pnl_percent ?? 0).toFixed(2)}%
             </p>
           </div>
         </div>
