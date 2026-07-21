@@ -168,38 +168,6 @@ export async function GET(request: Request) {
             } else {
               registeredDividends.add(`${activo.user_id}:${activo.id}:${divDate.toISOString().split('T')[0]}`)
               
-              // ADD CASH TRANSACTION SO PORTFOLIO VALUE INCREASES
-              let cashAsset = activos.find(a => a.user_id === activo.user_id && a.ticker === 'CASH')
-              if (!cashAsset) {
-                const { data: newCash } = await supabase.from('activos').insert({
-                  user_id: activo.user_id,
-                  ticker: 'CASH',
-                  moneda: 'EUR',
-                  tipo: 'Liquidez',
-                  estrategia: 'Liquidez',
-                  nombre: 'Efectivo',
-                }).select('id, ticker, user_id, moneda, tipo').single()
-                
-                if (newCash) {
-                  cashAsset = newCash
-                  activos.push(newCash) // Cache it for future iterations
-                }
-              }
-
-              if (cashAsset) {
-                const netAmount = gross - retencionOrigen - retencionDestino
-                await supabase.from('transacciones').insert({
-                  user_id: activo.user_id,
-                  activo_id: cashAsset.id,
-                  tipo_operacion: 'Compra',
-                  cantidad: Number(netAmount.toFixed(2)),
-                  precio_unitario: 1,
-                  fecha: divDate.toISOString().split('T')[0],
-                  estado: 'Completada',
-                  notas: `[REVOLUT_CASH] dividendo (Autocalculado: ${baseTicker})`
-                })
-              }
-
               addedDividends.push({
                 ticker: baseTicker,
                 user_id: activo.user_id,
