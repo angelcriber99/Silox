@@ -11,7 +11,7 @@ import confetti from "canvas-confetti"
 export default function PerfilPage() {
   const { theme, setTheme } = useTheme()
   const { 
-    hideBalances, compactView, accentColor, celebrationMode, zenMode, amoled,
+    hideBalances, compactView, accentColor, celebrationMode, zenMode,
     setHideBalances, setCompactView, setAccentColor, setCelebrationMode, setZenMode
   } = usePreferences()
   const [email, setEmail] = useState<string | null>(null)

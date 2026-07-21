@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type AccentColor = 'blue' | 'emerald' | 'violet' | 'rose' | 'amber' | 'indigo' | 'teal' | 'pink'
+export type ThemePreset = 'silox' | 'obsidian' | 'midnight' | 'aurora' | 'crystal' | 'macos'
 export type Language = 'es' | 'en' | 'fr' | 'de'
 export type RefreshInterval = 5_000 | 10_000 | 15_000 | 30_000 | 60_000
 export type DashboardDensity = 'auto' | 'compact' | 'comfortable'
@@ -9,12 +10,12 @@ export type DashboardSort = 'value' | 'day' | 'session' | 'pnl'
 
 interface PreferencesState {
   language: Language
+  themePreset: ThemePreset
   hideBalances: boolean
   compactView: boolean
   accentColor: AccentColor
   celebrationMode: boolean
   zenMode: boolean
-  amoled: boolean
   defaultView: 'historical' | 'daily'
   sidebarCollapsed: boolean
   biometrics: boolean
@@ -39,12 +40,12 @@ interface PreferencesState {
   showLastUpdate: boolean
   fontScale: 'small' | 'normal' | 'large'
   setLanguage: (lang: Language) => void
+  setThemePreset: (preset: ThemePreset) => void
   setHideBalances: (val: boolean) => void
   setCompactView: (val: boolean) => void
   setAccentColor: (color: AccentColor) => void
   setCelebrationMode: (val: boolean) => void
   setZenMode: (val: boolean) => void
-  setAmoled: (val: boolean) => void
   setDefaultView: (view: 'historical' | 'daily') => void
   setSidebarCollapsed: (val: boolean) => void
   setBiometrics: (val: boolean) => void
@@ -74,25 +75,25 @@ export const usePreferences = create<PreferencesState>()(
   persist(
     (set) => ({
       language: 'es',
+      themePreset: 'silox',
       hideBalances: false,
       compactView: false,
       accentColor: 'blue',
       celebrationMode: true,
       zenMode: false,
-      amoled: false,
       defaultView: 'historical',
       sidebarCollapsed: false,
       biometrics: false,
       twoFactor: false,
-      tableDensity: 'compact',
+      tableDensity: 'relaxed',
       showPnlPercentOnly: false,
       pushNotifs: true,
-      emailNotifs: true,
-      weeklyReport: false,
+      emailNotifs: false,
+      weeklyReport: true,
       dividendAlerts: true,
-      refreshInterval: 5_000,
+      refreshInterval: 10_000,
       pauseUpdatesWhenHidden: true,
-      dashboardDensity: 'auto',
+      dashboardDensity: 'comfortable',
       dashboardPageSize: 'auto',
       dashboardSort: 'value',
       showAssetNames: true,
@@ -104,12 +105,12 @@ export const usePreferences = create<PreferencesState>()(
       showLastUpdate: true,
       fontScale: 'normal',
       setLanguage: (lang) => set({ language: lang }),
+      setThemePreset: (preset) => set({ themePreset: preset }),
       setHideBalances: (val) => set({ hideBalances: val }),
       setCompactView: (val) => set({ compactView: val }),
       setAccentColor: (color) => set({ accentColor: color }),
       setCelebrationMode: (val) => set({ celebrationMode: val }),
       setZenMode: (val) => set({ zenMode: val }),
-      setAmoled: (val) => set({ amoled: val }),
       setDefaultView: (view) => set({ defaultView: view }),
       setSidebarCollapsed: (val) => set({ sidebarCollapsed: val }),
       setBiometrics: (val) => set({ biometrics: val }),

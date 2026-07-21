@@ -46,7 +46,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-full bg-background text-foreground flex flex-col flex-1 w-full">
+    <main className="min-h-full bg-transparent text-foreground flex flex-col flex-1 w-full relative">
       {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden flex-1 w-full">
         <MobileDashboard
@@ -60,14 +60,14 @@ export default function Home() {
       </div>
 
       {/* ── Desktop ─────────────────────────────────────────────────── */}
-      <div className="hidden md:flex md:flex-col fixed inset-0 z-0 bg-background overflow-hidden">
+      <div className="hidden md:flex md:flex-col fixed inset-0 pt-8 z-0 bg-transparent overflow-hidden">
         {zenMode ? (
           <ZenDashboard positions={positions} marketState={marketState} />
         ) : (
-          <div className="flex-1 flex flex-row overflow-hidden bg-background">
+          <div className="flex-1 flex flex-row overflow-hidden bg-transparent">
             
             {/* ── Left Sidebar (Dashboard Control Panel) ── */}
-            <div className="w-[360px] xl:w-[380px] flex-shrink-0 flex flex-col border-r border-border/20 overflow-hidden bg-background relative">
+            <div className="w-[280px] lg:w-[320px] xl:w-[380px] flex-shrink-0 flex flex-col border-r glass-sidebar relative transition-all duration-300">
               {/* Subtle gradient background for the premium feel */}
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
               <PortfolioSummary
@@ -80,7 +80,7 @@ export default function Home() {
                 marketState={marketState}
               />
               
-              <div className="flex flex-col flex-1 min-h-0 gap-6 p-4">
+              <div className="flex flex-col flex-1 min-h-0 gap-6 p-4 overflow-y-auto hide-scrollbar">
                 <AllocationChart positions={positions} marketState={marketState} />
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 <UpcomingEvents
@@ -100,7 +100,7 @@ export default function Home() {
 
             {/* ── Main Content (Positions Table) ── */}
             <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-5 lg:px-6 overflow-hidden relative">
-              <div className="flex-1 flex flex-col bg-card rounded-xl border border-border/30 shadow-sm overflow-hidden">
+              <div className="flex-1 flex flex-col glass-card border overflow-hidden">
                 <div className="flex-shrink-0">
                   <PendingOrders transactions={pendingTxs} />
                 </div>

@@ -77,7 +77,7 @@ export function PortfolioSummary({
   }
   if (variant === 'sidebar') {
     return (
-      <div className="flex flex-col gap-4 p-4 relative bg-background shrink-0">
+      <div className="flex flex-col gap-4 p-4 relative bg-transparent shrink-0">
         <div className="flex flex-col items-center z-10 py-6">
           <div className="flex items-center gap-3 mb-2">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-1.5 opacity-80">
@@ -264,7 +264,7 @@ export function PortfolioSummary({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-6 pb-6">
 
         {/* Invested */}
-        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
+        <div className="p-5 flex flex-col gap-2 glass-card hover:shadow-md transition-shadow relative z-10">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Capital aportado</span>
             <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">
@@ -281,7 +281,7 @@ export function PortfolioSummary({
 
         {/* P&L */}
         <div
-          className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow"
+          className="p-5 flex flex-col gap-2 glass-card hover:shadow-md transition-shadow relative z-10 text-left"
         >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Ganancia Total</span>
@@ -307,7 +307,7 @@ export function PortfolioSummary({
         </div>
 
         {/* Rentabilidad % */}
-        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
+        <div className="p-5 flex flex-col gap-2 glass-card hover:shadow-md transition-shadow relative z-10">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Rentabilidad</span>
             <div
@@ -335,7 +335,7 @@ export function PortfolioSummary({
         </div>
 
         {/* Top Activo Hoy */}
-        <div className="p-5 flex flex-col gap-2 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 shadow-sm hover:shadow-md transition-shadow">
+        <div className="p-5 flex flex-col gap-2 glass-card hover:shadow-md transition-shadow relative z-10">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Top Activo Hoy</span>
             <div className="p-1.5 rounded-lg bg-foreground/5 text-muted-foreground/50">

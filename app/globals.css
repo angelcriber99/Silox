@@ -53,51 +53,61 @@
 /* ─────────────────────────────────────────────── */
 
 :root {
+  /* Layout & Glass Fallbacks */
+  --app-bg-image: none;
+  --card-radius: 1rem;
+  --glass-bg: hsl(0, 0%, 100%);
+  --glass-blur: 0px;
+  --glass-border: rgba(0,0,0,0.05);
+  --glass-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  --sidebar-bg: hsl(200, 2%, 99%);
+  --sidebar-blur: 0px;
+
   /* Premium Light Theme — Wealth Teal */
-  --background: oklch(0.975 0.004 200);
-  --foreground: oklch(0.11 0.015 220);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.11 0.015 220);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.11 0.015 220);
+  --background: hsl(200, 2%, 99%);
+  --foreground: hsl(220, 6%, 9%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(220, 6%, 9%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(220, 6%, 9%);
   /* Primary: Wealth Teal — between deep indigo and emerald */
-  --primary: oklch(0.48 0.16 195);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.94 0.01 200);
-  --secondary-foreground: oklch(0.25 0.02 200);
-  --muted: oklch(0.94 0.01 200);
-  --muted-foreground: oklch(0.52 0.01 210);
-  --accent: oklch(0.92 0.025 195);
-  --accent-foreground: oklch(0.25 0.02 200);
-  --destructive: oklch(0.57 0.20 25);
-  --border: oklch(0.88 0.015 200);
-  --input: oklch(0.88 0.015 200);
-  --ring: oklch(0.48 0.16 195);
+  --primary: hsl(195, 64%, 48%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(200, 4%, 97%);
+  --secondary-foreground: hsl(200, 8%, 20%);
+  --muted: hsl(200, 4%, 97%);
+  --muted-foreground: hsl(210, 4%, 52%);
+  --accent: hsl(195, 10%, 96%);
+  --accent-foreground: hsl(200, 8%, 20%);
+  --destructive: hsl(25, 80%, 57%);
+  --border: hsl(200, 6%, 88%);
+  --input: hsl(200, 6%, 88%);
+  --ring: hsl(195, 64%, 48%);
 
   /* Semantic tokens */
-  --positive: oklch(0.58 0.18 155);
-  --negative: oklch(0.57 0.20 25);
-  --warning: oklch(0.72 0.17 55);
+  --positive: hsl(155, 72%, 58%);
+  --negative: hsl(25, 80%, 57%);
+  --warning: hsl(55, 68%, 72%);
 
   /* Surface layers */
-  --surface-1: oklch(0.975 0.004 200);
-  --surface-2: oklch(0.96 0.006 200);
-  --surface-3: oklch(0.94 0.008 200);
+  --surface-1: hsl(200, 2%, 99%);
+  --surface-2: hsl(200, 2%, 98%);
+  --surface-3: hsl(200, 3%, 97%);
 
-  --chart-1: oklch(0.55 0.19 195);
-  --chart-2: oklch(0.65 0.18 155);
-  --chart-3: oklch(0.60 0.17 270);
-  --chart-4: oklch(0.72 0.15 55);
-  --chart-5: oklch(0.67 0.18 25);
-  --radius: 0.875rem;
-  --sidebar: oklch(0.975 0.004 200);
-  --sidebar-foreground: oklch(0.11 0.015 220);
-  --sidebar-primary: oklch(0.48 0.16 195);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.94 0.01 200);
-  --sidebar-accent-foreground: oklch(0.11 0.015 220);
-  --sidebar-border: oklch(0.88 0.015 200);
-  --sidebar-ring: oklch(0.48 0.16 195);
+  --chart-1: hsl(195, 76%, 55%);
+  --chart-2: hsl(155, 72%, 65%);
+  --chart-3: hsl(270, 68%, 60%);
+  --chart-4: hsl(55, 60%, 72%);
+  --chart-5: hsl(25, 72%, 67%);
+  --radius: var(--card-radius);
+  --sidebar: hsl(200, 2%, 99%);
+  --sidebar-foreground: hsl(220, 6%, 9%);
+  --sidebar-primary: hsl(195, 64%, 48%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(200, 4%, 97%);
+  --sidebar-accent-foreground: hsl(220, 6%, 9%);
+  --sidebar-border: hsl(200, 6%, 88%);
+  --sidebar-ring: hsl(195, 64%, 48%);
 }
 
 .dark {
@@ -153,35 +163,357 @@
   --sidebar-ring: #30D158;
 }
 
-.dark.amoled {
-  /* Pure AMOLED Black — Wealth Teal accents */
-  --background: oklch(0 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.055 0.005 235);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.055 0.005 235);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.70 0.17 192);
-  --primary-foreground: oklch(0.05 0 0);
-  --secondary: oklch(0.10 0 0);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.10 0 0);
-  --muted-foreground: oklch(0.60 0 0);
-  --accent: oklch(0.10 0 0);
-  --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.57 0.21 27);
-  --border: oklch(0.14 0.008 235);
-  --input: oklch(0.14 0.008 235);
-  --ring: oklch(0.45 0.12 192);
-  --sidebar: oklch(0 0 0);
-  --sidebar-foreground: oklch(0.97 0 0);
-  --sidebar-primary: oklch(0.70 0.17 192);
-  --sidebar-primary-foreground: oklch(0.05 0 0);
-  --sidebar-accent: oklch(0.10 0 0);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.14 0.008 235);
-  --sidebar-ring: oklch(0.45 0.12 192);
-}
+/* ─────────────────────────────────────────────── */
+/* Premium Theme Presets                          */
+/* ─────────────────────────────────────────────── */
+
+  /* 1. Silox Classic (Baseline UI) */
+  .dark[data-preset="silox"] {
+    --background: hsl(240, 4%, 14%);
+    --foreground: #FFFFFF;
+    --card: hsl(240, 4%, 18%);
+    --card-foreground: #FFFFFF;
+    --popover: hsl(240, 4%, 18%);
+    --popover-foreground: #FFFFFF;
+    --secondary: hsl(240, 4%, 20%);
+    --secondary-foreground: #FFFFFF;
+    --muted: hsl(240, 4%, 20%);
+    --muted-foreground: rgba(255,255,255,0.60);
+    --accent: hsl(240, 4%, 22%);
+    --accent-foreground: #FFFFFF;
+    --border: rgba(255,255,255,0.08);
+    --input: hsl(240, 4%, 20%);
+    --sidebar: hsl(240, 4%, 13%);
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-accent: hsl(240, 4%, 18%);
+    --sidebar-border: rgba(255,255,255,0.08);
+
+    /* Layout & Glass Tokens */
+    --app-bg-image: none;
+    --card-radius: 1rem;
+    --glass-bg: hsl(240, 4%, 18%);
+    --glass-blur: 0px;
+    --glass-border: rgba(255,255,255,0.08);
+    --glass-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+    --sidebar-bg: hsl(240, 4%, 13%);
+    --sidebar-blur: 0px;
+  }
+  :root:not(.dark)[data-preset="silox"] {
+    --background: hsl(200, 2%, 99%);
+    --card: hsl(0, 0%, 100%);
+    --sidebar: hsl(200, 2%, 99%);
+    --app-bg-image: none;
+    --card-radius: 1rem;
+    --glass-bg: hsl(0, 0%, 100%);
+    --glass-blur: 0px;
+    --glass-border: rgba(0,0,0,0.05);
+    --glass-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    --sidebar-bg: hsl(200, 2%, 99%);
+    --sidebar-blur: 0px;
+  }
+
+  /* 2. Obsidian (Extreme OLED Terminal) */
+  .dark[data-preset="obsidian"] {
+    --background: #000000;
+    --foreground: #FFFFFF;
+    --card: #000000;
+    --card-foreground: #FFFFFF;
+    --popover: #000000;
+    --popover-foreground: #FFFFFF;
+    --secondary: #111111;
+    --secondary-foreground: #FFFFFF;
+    --muted: #111111;
+    --muted-foreground: rgba(255,255,255,0.50);
+    --accent: #222222;
+    --accent-foreground: #FFFFFF;
+    --border: rgba(255,255,255,0.15);
+    --input: #111111;
+    --sidebar: #000000;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-accent: #111111;
+    --sidebar-border: rgba(255,255,255,0.15);
+
+    /* Layout & Glass Tokens - Sharp, transparent, border-heavy */
+    --app-bg-image: none;
+    --card-radius: 0px; /* SHARP CORNERS */
+    --glass-bg: transparent; /* No backgrounds for cards! */
+    --glass-blur: 0px;
+    --glass-border: rgba(255,255,255,0.15);
+    --glass-shadow: none;
+    --sidebar-bg: #000000;
+    --sidebar-blur: 0px;
+  }
+  :root:not(.dark)[data-preset="obsidian"] {
+    --background: #FFFFFF;
+    --foreground: #000000;
+    --card: #FFFFFF;
+    --card-foreground: #000000;
+    --popover: #FFFFFF;
+    --popover-foreground: #000000;
+    --secondary: #F0F0F0;
+    --secondary-foreground: #000000;
+    --muted: #F0F0F0;
+    --muted-foreground: rgba(0,0,0,0.50);
+    --accent: #E0E0E0;
+    --accent-foreground: #000000;
+    --border: rgba(0,0,0,0.15);
+    --input: #F0F0F0;
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #000000;
+    --sidebar-accent: #F0F0F0;
+    --sidebar-border: rgba(0,0,0,0.15);
+
+    --app-bg-image: none;
+    --card-radius: 0px; /* SHARP CORNERS */
+    --glass-bg: transparent;
+    --glass-blur: 0px;
+    --glass-border: rgba(0,0,0,0.15);
+    --glass-shadow: none;
+    --sidebar-bg: #FFFFFF;
+    --sidebar-blur: 0px;
+  }
+
+  /* 3. Midnight Oasis (Deep Glassmorphism) */
+  .dark[data-preset="midnight"] {
+    --background: hsl(260, 12%, 13%);
+    --foreground: #FFFFFF;
+    --card: rgba(15, 20, 35, 0.4);
+    --card-foreground: #FFFFFF;
+    --popover: rgba(15, 20, 35, 0.7);
+    --popover-foreground: #FFFFFF;
+    --secondary: rgba(255,255,255,0.05);
+    --secondary-foreground: #FFFFFF;
+    --muted: rgba(255,255,255,0.03);
+    --muted-foreground: rgba(255,255,255,0.60);
+    --accent: rgba(255,255,255,0.1);
+    --accent-foreground: #FFFFFF;
+    --border: rgba(100,180,255,0.15);
+    --input: rgba(255,255,255,0.05);
+    --sidebar: transparent;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-accent: rgba(255,255,255,0.05);
+    --sidebar-border: rgba(100,180,255,0.15);
+
+    /* Layout & Glass Tokens - Massive Blur */
+    --app-bg-image: radial-gradient(circle at 10% 0%, hsl(250, 20%, 16%), hsl(260, 8%, 10%) 50%, hsl(260, 4%, 8%) 100%);
+    --card-radius: 1.5rem; /* VERY ROUND */
+    --glass-bg: rgba(15, 20, 35, 0.4);
+    --glass-blur: 24px;
+    --glass-border: rgba(100,180,255,0.15);
+    --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+    --sidebar-bg: rgba(10, 15, 25, 0.2);
+    --sidebar-blur: 40px;
+  }
+  :root:not(.dark)[data-preset="midnight"] {
+    --background: hsl(260, 4%, 99%);
+    --foreground: hsl(260, 20%, 12%);
+    --card: rgba(255, 255, 255, 0.6);
+    --card-foreground: hsl(260, 20%, 12%);
+    --popover: rgba(255, 255, 255, 0.8);
+    --popover-foreground: hsl(260, 20%, 12%);
+    --secondary: rgba(0,0,0,0.04);
+    --secondary-foreground: hsl(260, 20%, 12%);
+    --muted: rgba(0,0,0,0.02);
+    --muted-foreground: rgba(0,0,0,0.50);
+    --accent: rgba(0,0,0,0.06);
+    --accent-foreground: hsl(260, 20%, 12%);
+    --border: rgba(0,0,0,0.06);
+    --input: rgba(0,0,0,0.04);
+    --sidebar: transparent;
+    --sidebar-foreground: hsl(260, 20%, 12%);
+    --sidebar-accent: rgba(0,0,0,0.04);
+    --sidebar-border: rgba(0,0,0,0.06);
+
+    --app-bg-image: radial-gradient(circle at 10% 0%, hsl(240, 4%, 100%), hsl(260, 8%, 98%) 50%, hsl(270, 12%, 96%) 100%);
+    --card-radius: 1.5rem;
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-blur: 24px;
+    --glass-border: rgba(255,255,255,0.5);
+    --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.05);
+    --sidebar-bg: rgba(255, 255, 255, 0.3);
+    --sidebar-blur: 40px;
+  }
+
+  /* 4. Aurora Glow (Linear Gradients & Neon) */
+  .dark[data-preset="aurora"] {
+    --background: hsl(310, 16%, 13%);
+    --foreground: #FFFFFF;
+    --card: rgba(30, 20, 40, 0.3);
+    --card-foreground: #FFFFFF;
+    --popover: rgba(30, 20, 40, 0.8);
+    --popover-foreground: #FFFFFF;
+    --secondary: rgba(255,255,255,0.06);
+    --secondary-foreground: #FFFFFF;
+    --muted: rgba(255,255,255,0.03);
+    --muted-foreground: rgba(255,255,255,0.60);
+    --accent: rgba(255,255,255,0.1);
+    --accent-foreground: #FFFFFF;
+    --border: rgba(255,100,255,0.2);
+    --input: rgba(255,255,255,0.06);
+    --sidebar: transparent;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-accent: rgba(255,255,255,0.06);
+    --sidebar-border: rgba(255,100,255,0.2);
+
+    /* Layout & Glass Tokens */
+    --app-bg-image: linear-gradient(135deg, hsl(280, 20%, 10%), hsl(320, 24%, 14%) 50%, hsl(340, 20%, 11%));
+    --card-radius: 1.25rem;
+    --glass-bg: rgba(30, 20, 40, 0.4);
+    --glass-blur: 16px;
+    --glass-border: rgba(255,100,255,0.2);
+    --glass-shadow: 0 10px 30px -10px rgba(255,0,255,0.15);
+    --sidebar-bg: rgba(20, 10, 30, 0.3);
+    --sidebar-blur: 30px;
+  }
+  :root:not(.dark)[data-preset="aurora"] {
+    --background: hsl(310, 6%, 99%);
+    --foreground: hsl(310, 20%, 12%);
+    --card: rgba(255, 245, 255, 0.5);
+    --card-foreground: hsl(310, 20%, 12%);
+    --popover: rgba(255, 245, 255, 0.9);
+    --popover-foreground: hsl(310, 20%, 12%);
+    --secondary: rgba(0,0,0,0.04);
+    --secondary-foreground: hsl(310, 20%, 12%);
+    --muted: rgba(0,0,0,0.02);
+    --muted-foreground: rgba(0,0,0,0.50);
+    --accent: rgba(0,0,0,0.06);
+    --accent-foreground: hsl(310, 20%, 12%);
+    --border: rgba(255,150,255,0.3);
+    --input: rgba(0,0,0,0.04);
+    --sidebar: transparent;
+    --sidebar-foreground: hsl(310, 20%, 12%);
+    --sidebar-accent: rgba(0,0,0,0.04);
+    --sidebar-border: rgba(255,150,255,0.3);
+
+    --app-bg-image: linear-gradient(135deg, hsl(280, 4%, 100%), hsl(320, 12%, 98%) 50%, hsl(340, 8%, 99%));
+    --card-radius: 1.25rem;
+    --glass-bg: rgba(255, 245, 255, 0.5);
+    --glass-blur: 16px;
+    --glass-border: rgba(255,255,255,0.6);
+    --glass-shadow: 0 10px 30px -10px rgba(255,150,255,0.1);
+    --sidebar-bg: rgba(255, 240, 255, 0.4);
+    --sidebar-blur: 30px;
+  }
+
+  /* 5. Crystal (Abstract Glassmorphism) */
+  .dark[data-preset="crystal"] {
+    --background: #0a0a0f;
+    --foreground: #FFFFFF;
+    --card: rgba(20, 20, 25, 0.2);
+    --card-foreground: #FFFFFF;
+    --popover: rgba(20, 20, 25, 0.3);
+    --popover-foreground: #FFFFFF;
+    --secondary: rgba(255,255,255,0.08);
+    --secondary-foreground: #FFFFFF;
+    --muted: rgba(255,255,255,0.05);
+    --muted-foreground: rgba(255,255,255,0.70);
+    --accent: rgba(255,255,255,0.15);
+    --accent-foreground: #FFFFFF;
+    --border: rgba(255,255,255,0.15);
+    --input: rgba(255,255,255,0.08);
+    --sidebar: rgba(10, 10, 15, 0.4);
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-accent: rgba(255,255,255,0.08);
+    --sidebar-border: rgba(255,255,255,0.15);
+
+    --app-bg-image: radial-gradient(circle at 0% 0%, rgba(120, 50, 255, 0.15), transparent 40%), radial-gradient(circle at 100% 0%, rgba(0, 150, 255, 0.15), transparent 40%), radial-gradient(circle at 50% 100%, rgba(255, 50, 150, 0.1), transparent 50%);
+    --card-radius: 1.5rem;
+    --glass-bg: rgba(30, 30, 35, 0.3);
+    --glass-blur: 30px;
+    --glass-border: rgba(255,255,255,0.15);
+    --glass-shadow: inset 0 1px 1px rgba(255,255,255,0.15), 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    --sidebar-bg: rgba(20, 20, 25, 0.2);
+    --sidebar-blur: 40px;
+  }
+  :root:not(.dark)[data-preset="crystal"] {
+    --background: #f4f4f8;
+    --foreground: #000000;
+    --card: rgba(255, 255, 255, 0.4);
+    --card-foreground: #000000;
+    --popover: rgba(255, 255, 255, 0.5);
+    --popover-foreground: #000000;
+    --secondary: rgba(0,0,0,0.08);
+    --secondary-foreground: #000000;
+    --muted: rgba(0,0,0,0.05);
+    --muted-foreground: rgba(0,0,0,0.70);
+    --accent: rgba(0,0,0,0.15);
+    --accent-foreground: #000000;
+    --border: rgba(255,255,255,0.4);
+    --input: rgba(0,0,0,0.08);
+    --sidebar: rgba(255, 255, 255, 0.3);
+    --sidebar-foreground: #000000;
+    --sidebar-accent: rgba(0,0,0,0.08);
+    --sidebar-border: rgba(255,255,255,0.4);
+
+    --app-bg-image: radial-gradient(circle at 0% 0%, rgba(120, 50, 255, 0.08), transparent 40%), radial-gradient(circle at 100% 0%, rgba(0, 150, 255, 0.08), transparent 40%), radial-gradient(circle at 50% 100%, rgba(255, 50, 150, 0.05), transparent 50%);
+    --card-radius: 1.5rem;
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-blur: 30px;
+    --glass-border: rgba(255,255,255,0.4);
+    --glass-shadow: inset 0 1px 1px rgba(255,255,255,0.8), 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --sidebar-bg: rgba(255, 255, 255, 0.3);
+    --sidebar-blur: 40px;
+  }
+
+  /* 6. macOS Native (Cupertino) */
+  .dark[data-preset="macos"] {
+    --background: #1c1c1e;
+    --foreground: #FFFFFF;
+    --card: #2c2c2e;
+    --card-foreground: #FFFFFF;
+    --popover: #2c2c2e;
+    --popover-foreground: #FFFFFF;
+    --secondary: #3a3a3c;
+    --secondary-foreground: #FFFFFF;
+    --muted: #3a3a3c;
+    --muted-foreground: rgba(255,255,255,0.60);
+    --accent: #3a3a3c;
+    --accent-foreground: #FFFFFF;
+    --border: rgba(255,255,255,0.1);
+    --input: #2c2c2e;
+    --sidebar: transparent;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-accent: #3a3a3c;
+    --sidebar-border: rgba(255,255,255,0.1);
+
+    --app-bg-image: none;
+    --card-radius: 0.75rem; /* 12px macOS standard */
+    --glass-bg: #2c2c2e;
+    --glass-blur: 0px;
+    --glass-border: rgba(255,255,255,0.08);
+    --glass-shadow: 0 4px 14px 0 rgba(0,0,0,0.4);
+    --sidebar-bg: rgba(44, 44, 46, 0.6);
+    --sidebar-blur: 50px;
+  }
+  :root:not(.dark)[data-preset="macos"] {
+    --background: #f5f5f7;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --secondary: #e5e5ea;
+    --secondary-foreground: #000000;
+    --muted: #e5e5ea;
+    --muted-foreground: rgba(0,0,0,0.60);
+    --accent: #e5e5ea;
+    --accent-foreground: #000000;
+    --border: rgba(0,0,0,0.1);
+    --input: #ffffff;
+    --sidebar: transparent;
+    --sidebar-foreground: #000000;
+    --sidebar-accent: #e5e5ea;
+    --sidebar-border: rgba(0,0,0,0.1);
+
+    --app-bg-image: none;
+    --card-radius: 0.75rem; /* 12px macOS standard */
+    --glass-bg: #ffffff;
+    --glass-blur: 0px;
+    --glass-border: rgba(0,0,0,0.05);
+    --glass-shadow: 0 4px 14px 0 rgba(0,0,0,0.05);
+    --sidebar-bg: rgba(245, 245, 247, 0.6);
+    --sidebar-blur: 50px;
+  }
 
 /* ─────────────────────────────────────────────── */
 /* Base                                            */
@@ -259,24 +591,24 @@
   }
 
   /* Semantic color utilities */
-  .text-positive { color: oklch(0.70 0.21 155); }
-  .text-negative { color: oklch(0.65 0.22 22); }
-  .bg-positive { background: oklch(0.70 0.21 155 / 0.12); }
-  .bg-negative { background: oklch(0.65 0.22 22 / 0.12); }
-  .border-positive { border-color: oklch(0.70 0.21 155 / 0.3); }
-  .border-negative { border-color: oklch(0.65 0.22 22 / 0.3); }
+  .text-positive { color: hsl(155, 84%, 70%); }
+  .text-negative { color: hsl(22, 88%, 65%); }
+  .bg-positive { background: hsla(155, 84%, 70%, 0.12); }
+  .bg-negative { background: hsla(22, 88%, 65%, 0.12); }
+  .border-positive { border-color: hsla(155, 84%, 70%, 0.3); }
+  .border-negative { border-color: hsla(22, 88%, 65%, 0.3); }
 
   /* Wealth gradient — green-teal primary brand direction */
   .gradient-wealth {
     background: linear-gradient(135deg, 
-      oklch(0.68 0.17 192) 0%, 
-      oklch(0.65 0.19 155) 100%
+      hsl(192, 68%, 68%) 0%, 
+      hsl(155, 76%, 65%) 100%
     );
   }
   .gradient-wealth-text {
     background: linear-gradient(135deg, 
-      oklch(0.75 0.17 192) 0%, 
-      oklch(0.72 0.19 155) 100%
+      hsl(192, 68%, 75%) 0%, 
+      hsl(155, 76%, 72%) 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -285,20 +617,20 @@
 
   /* Glow effects */
   .glow-primary {
-    box-shadow: 0 0 24px oklch(0.68 0.17 192 / 0.35);
+    box-shadow: 0 0 24px hsla(192, 68%, 68%, 0.35);
   }
   .glow-positive {
-    box-shadow: 0 0 20px oklch(0.65 0.19 155 / 0.30);
+    box-shadow: 0 0 20px hsla(155, 76%, 65%, 0.30);
   }
   .glow-negative {
-    box-shadow: 0 0 20px oklch(0.62 0.20 20 / 0.30);
+    box-shadow: 0 0 20px hsla(20, 80%, 62%, 0.30);
   }
 
   /* Mesh background pattern for hero areas */
   .bg-mesh {
     background-image: 
-      radial-gradient(ellipse 80% 60% at 20% 20%, oklch(0.68 0.17 192 / 0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 80% at 80% 80%, oklch(0.65 0.19 155 / 0.06) 0%, transparent 60%);
+      radial-gradient(ellipse 80% 60% at 20% 20%, hsla(192, 68%, 68%, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 80%, hsla(155, 76%, 65%, 0.06) 0%, transparent 60%);
   }
 
   /* Card interactive states */
@@ -306,7 +638,7 @@
     @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer;
   }
   .card-interactive:hover {
-    border-color: oklch(0.68 0.17 192 / 0.3);
+    border-color: hsla(192, 68%, 68%, 0.3);
   }
 
   /* Pill badge base */
@@ -316,7 +648,7 @@
 
   /* Swipe action reveal layer */
   .swipe-action-bg {
-    background: linear-gradient(90deg, oklch(0.68 0.17 192 / 0.15), oklch(0.68 0.17 192 / 0.25));
+    background: linear-gradient(90deg, hsla(192, 68%, 68%, 0.15), hsla(192, 68%, 68%, 0.25));
   }
 }
 
@@ -345,11 +677,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.28 0.01 235);
+  background: hsl(235, 4%, 22%);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.38 0.015 235);
+  background: hsl(235, 6%, 38%);
 }
 
 @media (max-width: 768px) {
@@ -392,13 +724,13 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.68 0.17 192 / 0); }
-  50%       { box-shadow: 0 0 22px 5px oklch(0.68 0.17 192 / 0.18); }
+  0%, 100% { box-shadow: 0 0 0 0 hsla(192, 68%, 68%, 0); }
+  50%       { box-shadow: 0 0 22px 5px hsla(192, 68%, 68%, 0.18); }
 }
 
 @keyframes pulseGlowPositive {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.65 0.19 155 / 0); }
-  50%       { box-shadow: 0 0 18px 4px oklch(0.65 0.19 155 / 0.20); }
+  0%, 100% { box-shadow: 0 0 0 0 hsla(155, 76%, 65%, 0); }
+  50%       { box-shadow: 0 0 18px 4px hsla(155, 76%, 65%, 0.20); }
 }
 
 @keyframes shimmer {
@@ -407,8 +739,8 @@
 }
 
 @keyframes borderPulse {
-  0%, 100% { border-color: oklch(0.68 0.17 192 / 0.2); }
-  50%       { border-color: oklch(0.68 0.17 192 / 0.6); }
+  0%, 100% { border-color: hsla(192, 68%, 68%, 0.2); }
+  50%       { border-color: hsla(192, 68%, 68%, 0.6); }
 }
 
 @keyframes countUp {
@@ -434,7 +766,7 @@
 .animate-shimmer {
   background: linear-gradient(90deg,
     transparent 25%,
-    oklch(0.22 0.012 235) 50%,
+    hsl(235, 5%, 18%) 50%,
     transparent 75%
   );
   background-size: 200% 100%;
@@ -462,7 +794,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid oklch(0.68 0.17 192 / 0.6);
+  outline: 2px solid hsla(192, 68%, 68%, 0.6);
   outline-offset: 2px;
 }
 
@@ -502,9 +834,44 @@ textarea:focus-visible {
   inset: 0;
   background: linear-gradient(90deg,
     transparent 25%,
-    oklch(0.20 0.012 235 / 0.6) 50%,
+    hsla(235, 5%, 16%, 0.6) 50%,
     transparent 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.tauri-vibrancy {
+  background-color: transparent !important;
+}
+
+.tauri-vibrancy .bg-background {
+  background-color: transparent !important;
+}
+
+/* ─────────────────────────────────────────────── */
+/* Radical Themes Utility Classes                 */
+/* ─────────────────────────────────────────────── */
+
+body {
+  background-image: var(--app-bg-image);
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+}
+
+.glass-card {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--card-radius);
+}
+
+.glass-sidebar {
+  background-color: var(--sidebar-bg);
+  backdrop-filter: blur(var(--sidebar-blur));
+  -webkit-backdrop-filter: blur(var(--sidebar-blur));
+  border-color: var(--sidebar-border);
 }

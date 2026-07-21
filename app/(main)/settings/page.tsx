@@ -28,8 +28,10 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
+import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
+import { useEffect } from "react"
 
-type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
+type Tab = 'appearance' | 'desktop' | 'data'
 
 interface SettingTab {
   id: Tab
@@ -49,9 +51,7 @@ interface SettingRowProps {
 
 const tabs: SettingTab[] = [
   { id: 'appearance', label: 'Apariencia', icon: Palette, color: 'oklch(0.68 0.17 192)', accent: 'oklch(0.68 0.17 192 / 0.12)' },
-  { id: 'security', label: 'Seguridad', icon: Shield, color: 'oklch(0.65 0.19 155)', accent: 'oklch(0.65 0.19 155 / 0.12)' },
-  { id: 'notifications', label: 'Notificaciones', icon: Bell, color: 'oklch(0.62 0.20 20)', accent: 'oklch(0.62 0.20 20 / 0.12)' },
-  { id: 'integrations', label: 'Integraciones', icon: LinkIcon, color: 'oklch(0.65 0.17 270)', accent: 'oklch(0.65 0.17 270 / 0.12)' },
+  { id: 'desktop', label: 'App Nativa', icon: Monitor, color: 'oklch(0.62 0.20 20)', accent: 'oklch(0.62 0.20 20 / 0.12)' },
   { id: 'data', label: 'Datos', icon: Download, color: 'oklch(0.72 0.15 55)', accent: 'oklch(0.72 0.15 55 / 0.12)' },
 ]
 
@@ -106,16 +106,58 @@ function SettingRow({ icon: Icon, title, desc, action, iconColor }: SettingRowPr
   )
 }
 
+function AutostartToggle() {
+  const [autostart, setAutostart] = useState(false)
+
+  useEffect(() => {
+    async function check() {
+      try {
+        const enabled = await isEnabled();
+        setAutostart(enabled);
+      } catch (e) {
+        console.error("Autostart error:", e);
+      }
+    }
+    check();
+  }, [])
+
+  const toggle = async () => {
+    try {
+      if (autostart) {
+        await disable();
+        setAutostart(false);
+        toast.success("Arranque automático desactivado");
+      } else {
+        await enable();
+        setAutostart(true);
+        toast.success("Silox arrancará con macOS");
+      }
+    } catch (e) {
+      toast.error("Error al configurar el arranque automático");
+    }
+  }
+
+  return (
+    <SettingRow 
+      icon={Monitor} 
+      title="Arrancar al iniciar macOS" 
+      desc="Silox se ejecutará de fondo automáticamente cuando enciendas tu Mac."
+      iconColor="text-emerald-500"
+      action={<CustomSwitch checked={autostart} onChange={toggle} />} 
+    />
+  )
+}
+
 export default function SettingsPage() {
   const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false)
   const [activeTab, setActiveTab] = useState<Tab>('appearance')
-  const { theme, setTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
   const t = useTranslations('Settings')
   const router = useRouter()
 
   const { 
     language, setLanguage,
-    amoled, setAmoled,
+    themePreset, setThemePreset,
     zenMode, setZenMode,
     accentColor, setAccentColor,
     biometrics, setBiometrics,
@@ -298,17 +340,22 @@ export default function SettingsPage() {
               </div>
             </section>
 
-          {/* Seguridad */}
+          {/* App Desktop */}
           <section>
-            <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Seguridad</h2>
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">App Nativa</h2>
             <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
-              <div className="p-4 flex items-center justify-between bg-card">
+              <button onClick={() => toast.success("La descarga para Windows estará lista pronto")} className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-rose-500/10 text-rose-500 rounded-lg"><Shield className="w-5 h-5" /></div>
-                  <span className="font-semibold text-[15px]">Autenticación 2FA</span>
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Download className="w-5 h-5" /></div>
+                  <span className="font-semibold text-[15px] text-left">Descargar para Windows</span>
                 </div>
-                <CustomSwitch checked={twoFactor} onChange={() => setTwoFactor(!twoFactor)} />
-              </div>
+              </button>
+              <button onClick={() => toast.success("La descarga para Mac estará lista pronto")} className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-zinc-500/10 text-zinc-500 rounded-lg"><Monitor className="w-5 h-5" /></div>
+                  <span className="font-semibold text-[15px] text-left">Descargar para Mac</span>
+                </div>
+              </button>
             </div>
           </section>
 
@@ -440,15 +487,63 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Theme Specifics */}
-                  {theme === 'dark' && (
-                    <SettingRow 
-                      icon={Zap} title="Modo AMOLED Puro" desc="Fondo totalmente negro para pantallas OLED."
-                      iconColor="text-yellow-500"
-                      action={<CustomSwitch checked={amoled} onChange={() => setAmoled(!amoled)} />} 
-                    />
-                  )}
-
+                  {/* Theme Presets */}
+                  <div className="space-y-3 pt-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Temas Premium</label>
+                      <div className="flex gap-4 p-4 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm overflow-x-auto hide-scrollbar">
+                        <button
+                          onClick={() => setThemePreset('silox')}
+                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'silox' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
+                        >
+                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '1rem', background: resolvedTheme === 'dark' ? 'oklch(0.18 0.01 240)' : 'oklch(0.975 0.004 200)', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}></div>
+                          <span className="text-sm font-semibold">Clásico</span>
+                        </button>
+                        <button
+                          onClick={() => setThemePreset('obsidian')}
+                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'obsidian' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
+                        >
+                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '0px', background: resolvedTheme === 'dark' ? '#000000' : '#FFFFFF', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)' }}></div>
+                          <span className="text-sm font-semibold">Obsidian</span>
+                        </button>
+                        <button
+                          onClick={() => setThemePreset('midnight')}
+                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'midnight' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
+                        >
+                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '1.5rem', backgroundImage: resolvedTheme === 'dark' ? 'radial-gradient(circle at 10% 0%, oklch(0.2 0.05 250), oklch(0.12 0.02 260))' : 'radial-gradient(circle at 10% 0%, oklch(0.99 0.01 240), oklch(0.92 0.03 270))', borderColor: resolvedTheme === 'dark' ? 'rgba(100,140,255,0.2)' : 'rgba(0,0,0,0.08)' }}></div>
+                          <span className="text-sm font-semibold">Oasis</span>
+                        </button>
+                        <button
+                          onClick={() => setThemePreset('aurora')}
+                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'aurora' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
+                        >
+                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '1.25rem', backgroundImage: resolvedTheme === 'dark' ? 'linear-gradient(135deg, oklch(0.12 0.05 280), oklch(0.18 0.06 320))' : 'linear-gradient(135deg, oklch(0.99 0.01 280), oklch(0.95 0.03 320))', borderColor: resolvedTheme === 'dark' ? 'rgba(255,100,255,0.2)' : 'rgba(255,150,255,0.3)' }}></div>
+                          <span className="text-sm font-semibold">Aurora</span>
+                        </button>
+                        <button
+                          onClick={() => setThemePreset('crystal')}
+                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'crystal' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
+                        >
+                          <div className="w-full h-16 mb-3 shadow-inner border relative overflow-hidden" style={{ borderRadius: '1.5rem', background: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.3)', backdropFilter: 'blur(20px)', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.3), 0 4px 10px rgba(0,0,0,0.05)' }}>
+                             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent"></div>
+                          </div>
+                          <span className="text-sm font-semibold">Crystal</span>
+                        </button>
+                        <button
+                          onClick={() => setThemePreset('macos')}
+                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'macos' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
+                        >
+                          <div className="w-full h-16 mb-3 border relative overflow-hidden" style={{ borderRadius: '0.75rem', background: resolvedTheme === 'dark' ? '#2c2c2e' : '#ffffff', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', boxShadow: resolvedTheme === 'dark' ? '0 4px 14px 0 rgba(0,0,0,0.4)' : '0 4px 14px 0 rgba(0,0,0,0.05)' }}>
+                             <div className="absolute top-2 left-2 flex gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></div>
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
+                             </div>
+                          </div>
+                          <span className="text-sm font-semibold">macOS</span>
+                        </button>
+                      </div>
+                    </div>
+                  
                   {/* Accent Color */}
                   <div className="space-y-3 pt-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Color de Acento</label>
@@ -524,134 +619,37 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* SEGURIDAD */}
-            {activeTab === 'security' && (
+            {/* DESKTOP APP */}
+            {activeTab === 'desktop' && (
               <div className="space-y-8 pb-10">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold tracking-tight mb-2">Seguridad y Privacidad</h2>
-                  <p className="text-muted-foreground">Asegura tu cuenta de accesos no autorizados.</p>
-                </div>
-
-                <div className="space-y-3">
-                  <SettingRow 
-                    icon={Smartphone} title="Autenticación 2FA" desc="Protege tu cuenta con un código temporal (Authenticator)."
-                    iconColor="text-emerald-500"
-                    action={<CustomSwitch checked={twoFactor} onChange={() => setTwoFactor(!twoFactor)} />} 
-                  />
-
-                </div>
-
-                <div className="pt-6">
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2 mb-3 block">Sesiones Activas</label>
-                  <div className="bg-card/40 backdrop-blur-md border border-border/40 rounded-2xl overflow-hidden">
-                    <div className="flex items-center justify-between p-4 border-b border-border/30">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2.5 rounded-xl bg-background/50 border border-border/50 text-foreground">
-                          <Monitor className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground/90">Windows PC - Chrome</p>
-                          <p className="text-xs text-muted-foreground/80 mt-0.5">Madrid, España • Activo ahora</p>
-                        </div>
-                      </div>
-                      <span className="text-[11px] uppercase tracking-wider font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-md">Actual</span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-muted/10">
-                      <div className="flex items-center gap-4 opacity-70">
-                        <div className="p-2.5 rounded-xl bg-background/50 border border-border/50 text-foreground">
-                          <Smartphone className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground/90">iPhone 14 Pro - App iOS</p>
-                          <p className="text-xs text-muted-foreground/80 mt-0.5">Madrid, España • Hace 2 días</p>
-                        </div>
-                      </div>
-                      <button onClick={() => toast.success("Sesión revocada")} className="text-xs font-semibold text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg transition-colors">Revocar</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-6">
-                  <button className="w-full sm:w-auto px-5 py-3 rounded-xl bg-muted/40 hover:bg-muted border border-border/50 text-sm font-semibold transition-colors">
-                    Cambiar Contraseña
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* NOTIFICACIONES */}
-            {activeTab === 'notifications' && (
-              <div className="space-y-8 pb-10">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold tracking-tight mb-2">Notificaciones</h2>
-                  <p className="text-muted-foreground">Configura qué tipo de alertas quieres recibir.</p>
-                </div>
-
-                <div className="space-y-3">
-                  <SettingRow 
-                    icon={Bell} title="Notificaciones Push" desc="Recibe alertas directamente en tu dispositivo."
-                    iconColor="text-rose-500"
-                    action={<CustomSwitch checked={pushNotifs} onChange={() => { setPushNotifs(!pushNotifs); toast.success("Preferencia actualizada") }} />} 
-                  />
-
-                  <SettingRow 
-                    icon={Download} title="Cobro de Dividendos" desc="Notificar cuando se reciba un dividendo de una empresa."
-                    iconColor="text-emerald-500"
-                    action={<CustomSwitch checked={dividendAlerts} onChange={() => { setDividendAlerts(!dividendAlerts); toast.success("Preferencia actualizada") }} />} 
-                  />
-                  <SettingRow 
-                    icon={LogOut} title="Resumen Semanal" desc="Email cada domingo con el estado de tu cartera."
-                    iconColor="text-blue-500"
-                    action={<CustomSwitch checked={weeklyReport} onChange={() => { setWeeklyReport(!weeklyReport); toast.success("Preferencia actualizada") }} />} 
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* INTEGRACIONES */}
-            {activeTab === 'integrations' && (
-              <div className="space-y-8 pb-10">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold tracking-tight mb-2">Integraciones de Brókers</h2>
-                  <p className="text-muted-foreground">Sincroniza tus posiciones automáticamente.</p>
+                  <h2 className="text-2xl font-bold tracking-tight mb-2">App de Escritorio Nativa</h2>
+                  <p className="text-muted-foreground">Disfruta de Silox como una aplicación nativa super-rápida y ligera en tu ordenador.</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* MyInvestor (Connected) */}
-                  <div className="p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-emerald-500/30 relative overflow-hidden group shadow-sm">
-                    <div className="absolute top-0 right-0 p-3">
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Sincronizado
-                      </span>
+                  {/* macOS */}
+                  <div className="p-5 rounded-2xl bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors shadow-sm flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-zinc-700 to-zinc-900 text-white flex items-center justify-center mb-4 shadow-md border border-zinc-600/50">
+                      <Monitor className="w-8 h-8" />
                     </div>
-                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-border/20">
-                      <span className="text-xl font-bold text-slate-800">MYI</span>
-                    </div>
-                    <h3 className="text-lg font-bold">MyInvestor</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincronización diaria de fondos indexados y efectivo.</p>
-                    <button className="w-full py-2.5 rounded-xl border border-border/50 bg-background/50 hover:bg-background text-sm font-semibold transition-colors text-muted-foreground">Configurar</button>
+                    <h3 className="text-lg font-bold">macOS</h3>
+                    <p className="text-sm text-muted-foreground mt-1 mb-6">Instalador nativo (.dmg) optimizado para procesadores Apple Silicon (M1/M2/M3) e Intel.</p>
+                    <button onClick={() => toast.success("La descarga para Mac comenzará pronto.")} className="w-full py-2.5 rounded-xl bg-foreground text-background shadow-sm hover:shadow-md text-sm font-bold transition-all mt-auto">
+                      Descargar para Mac
+                    </button>
                   </div>
 
-                  {/* Revolut */}
-                  <div className="p-5 rounded-2xl bg-card/30 hover:bg-card/50 backdrop-blur-md border border-border/40 transition-colors shadow-sm">
-                    <div className="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center mb-4 shadow-sm border border-zinc-700">
-                      <span className="text-xl font-bold text-white">R</span>
+                  {/* Windows */}
+                  <div className="p-5 rounded-2xl bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors shadow-sm flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0078D4] to-[#00a2ed] text-white flex items-center justify-center mb-4 shadow-md border border-blue-400/50">
+                      <svg viewBox="0 0 88 88" className="w-8 h-8 fill-current"><path d="M0 12.402l35.687-4.86.016 34.423-35.703.206zm35.67 33.529l.016 33.912-35.686-4.996v-28.71zm4.326-34.02l48.004-6.91v39.148l-48.004.29zm48.004 38.257l-.022 38.647-47.982-6.906v-31.44z"/></svg>
                     </div>
-                    <h3 className="text-lg font-bold">Revolut</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Importa operaciones desde CSV o Excel directamente en la pestaña de Movimientos.</p>
-                    <Link href="/movimientos" className="w-full flex items-center justify-center py-2.5 rounded-xl bg-secondary text-secondary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">
-                      Ir a Movimientos
-                    </Link>
-                  </div>
-
-                  {/* DeGiro */}
-                  <div className="p-5 rounded-2xl bg-card/30 hover:bg-card/50 backdrop-blur-md border border-border/40 transition-colors shadow-sm">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mb-4 shadow-sm">
-                      <span className="text-xl font-bold text-white">DE</span>
-                    </div>
-                    <h3 className="text-lg font-bold">DeGiro</h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">Sincroniza tus ETFs y acciones europeas.</p>
-                    <button className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm hover:shadow-md text-sm font-semibold transition-all">Conectar</button>
+                    <h3 className="text-lg font-bold">Windows</h3>
+                    <p className="text-sm text-muted-foreground mt-1 mb-6">Instalador nativo (.msi) para Windows 10 y 11. Rendimiento nativo usando WebView2.</p>
+                    <button onClick={() => toast.success("La descarga para Windows comenzará pronto.")} className="w-full py-2.5 rounded-xl bg-foreground text-background shadow-sm hover:shadow-md text-sm font-bold transition-all mt-auto">
+                      Descargar para Windows
+                    </button>
                   </div>
                 </div>
               </div>
