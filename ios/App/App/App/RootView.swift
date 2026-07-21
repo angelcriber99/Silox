@@ -92,16 +92,8 @@ private struct BiometricLockView: View {
 
 private struct LaunchView: View {
     var body: some View {
-        ZStack {
-            SiloxColors.backgroundPrimary.ignoresSafeArea()
-            VStack(spacing: 16) {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 42, weight: .semibold))
-                    .foregroundStyle(SiloxColors.accent)
-                Text("Silox").font(.largeTitle.bold())
-                ProgressView().accessibilityLabel("Cargando")
-            }
-        }
+        SiloxLoadingView(.launch)
+            .ignoresSafeArea()
     }
 }
 
@@ -110,7 +102,7 @@ struct MainTabView: View {
     @Bindable var router: AppRouter
 
     var body: some View {
-        TabView(selection: $router.selectedTab) {
+        TabView(selection: tabSelection) {
             PortfolioView(repository: environment.portfolioRepository, onAdd: presentAdd)
                 .tabItem { Label(AppTab.portfolio.title, systemImage: AppTab.portfolio.systemImage) }
                 .tag(AppTab.portfolio)
@@ -132,7 +124,7 @@ struct MainTabView: View {
                 .tag(AppTab.settings)
         }
         .siloxTabBarBehavior()
-        .toolbarBackground(.automatic, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
         .sheet(item: $router.presentedSheet) { sheet in
             switch sheet {
             case .addMovement(let assetID):
@@ -157,5 +149,21 @@ struct MainTabView: View {
 
     private func presentAdd(_ assetID: String?) {
         router.presentAddMovement(assetID: assetID)
+    }
+
+    /// Keep tab changes as a UIKit-owned transition. The tab bar must not
+    /// inherit unrelated state animations from the root hierarchy.
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { router.selectedTab },
+            set: { tab in
+                guard router.selectedTab != tab else { return }
+                var transaction = Transaction(animation: nil)
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    router.selectedTab = tab
+                }
+            }
+        )
     }
 }

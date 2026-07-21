@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		012E3BADB746F3FA1C257270 /* SiloxLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 159B4717B92DF1BC77BDC351 /* SiloxLoadingView.swift */; };
 		11DE16DF9E9D34B9DE6D1ED5 /* TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4633A132B8C3D866A9CA883 /* TransactionsView.swift */; };
 		156C9422768051B4421D82FF /* RadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC7E5F7DFE4B53F01FE41074 /* RadarView.swift */; };
 		1D46FBC537F68A371E4C61A3 /* RoutingContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB2D6BFC5FA4E5202435128 /* RoutingContractTests.swift */; };
@@ -45,6 +46,7 @@
 		C5E63670846CB56059D40DE7 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA4E2E1ED74A894A95CD7B7 /* DesignSystem.swift */; };
 		C66819B5F84A642A6CD83796 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76989E05CECAD7B8B3C424A7 /* Assets.xcassets */; };
 		CE6693C6BE9E4642DFA903A0 /* PortfolioSharingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB1AFD52432C2677836BC9C /* PortfolioSharingTests.swift */; };
+		D5261E506F6EE73AF9473276 /* SiloxLoadingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1EA29B548D3BA2F0DC05D7B /* SiloxLoadingViewTests.swift */; };
 		D644DD499B51E6BDD8C102DD /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266092BA6835AAD1C7C07A0D /* SignInView.swift */; };
 		D6651672AAB67CE2C1903FCE /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1CE0178B5A172679112FCFF /* DomainModels.swift */; };
 		DBDD579D5A381045FE806B28 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */; };
@@ -100,6 +102,7 @@
 		113330F34B21CC3662FC912C /* AdaptiveLogoTileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveLogoTileTests.swift; sourceTree = "<group>"; };
 		1211419248011CE9ADD0A619 /* RoutedAssetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutedAssetView.swift; sourceTree = "<group>"; };
 		14882EE7E68AFD84442C7A6D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		159B4717B92DF1BC77BDC351 /* SiloxLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxLoadingView.swift; sourceTree = "<group>"; };
 		167DEFA905358AF7F183CE44 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		17D018AA5B9EBA23AE82AD7B /* Silox.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Silox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
@@ -130,6 +133,7 @@
 		993082DBBA769F8B67A0600A /* SiloxWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxWidgetBundle.swift; sourceTree = "<group>"; };
 		A04A6F1B8143ADF82E501C1E /* OAuthWebSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthWebSession.swift; sourceTree = "<group>"; };
 		A0EF65797D006056078E1CD4 /* WireModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireModels.swift; sourceTree = "<group>"; };
+		A1EA29B548D3BA2F0DC05D7B /* SiloxLoadingViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxLoadingViewTests.swift; sourceTree = "<group>"; };
 		A2DA7CABBC239FC19126EF52 /* NavigationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationUITests.swift; sourceTree = "<group>"; };
 		AE3DAAC412F855525F362EAD /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		B12F9403FEE14CEBDE6AA298 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -261,6 +265,7 @@
 				BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */,
 				5CB2D6BFC5FA4E5202435128 /* RoutingContractTests.swift */,
 				E475D55B61A657246221B32E /* SessionStoreTests.swift */,
+				A1EA29B548D3BA2F0DC05D7B /* SiloxLoadingViewTests.swift */,
 				3EB43BA36BA6BB5533360727 /* SiloxSemanticColorTests.swift */,
 			);
 			path = SiloxTests;
@@ -290,6 +295,7 @@
 			children = (
 				42093AAD6E6AFA01D76578B5 /* AdaptiveLogoTile.swift */,
 				8CA4E2E1ED74A894A95CD7B7 /* DesignSystem.swift */,
+				159B4717B92DF1BC77BDC351 /* SiloxLoadingView.swift */,
 			);
 			path = Design;
 			sourceTree = "<group>";
@@ -588,6 +594,7 @@
 				D644DD499B51E6BDD8C102DD /* SignInView.swift in Sources */,
 				DC4A35AB36469BDEB03D9A05 /* SiloxApp.swift in Sources */,
 				81CDFE78E278132239D61CA3 /* SiloxAppIntents.swift in Sources */,
+				012E3BADB746F3FA1C257270 /* SiloxLoadingView.swift in Sources */,
 				593219E6C1C45189D0811A7B /* SiloxSemanticColors.swift in Sources */,
 				11DE16DF9E9D34B9DE6D1ED5 /* TransactionsView.swift in Sources */,
 				61C702C967C6D441A3410E0F /* UITestURLProtocol.swift in Sources */,
@@ -617,6 +624,7 @@
 				F587B6624F0CE87684337A8B /* ReadCacheTests.swift in Sources */,
 				1D46FBC537F68A371E4C61A3 /* RoutingContractTests.swift in Sources */,
 				56B450A37DE7ECE3D5D21E55 /* SessionStoreTests.swift in Sources */,
+				D5261E506F6EE73AF9473276 /* SiloxLoadingViewTests.swift in Sources */,
 				4952A7149C2E93013748012A /* SiloxSemanticColorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

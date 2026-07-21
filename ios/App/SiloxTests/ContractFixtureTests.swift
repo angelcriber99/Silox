@@ -165,7 +165,8 @@ final class ContractFixtureTests: XCTestCase {
             XCTAssertTrue(body?["targetPrice"] == nil || body?["targetPrice"] is String)
             return (200, Data(#"{"data":{"id":"alert-1","ticker":"BTC","targetPrice":"95000.123456789","condition":"above","triggered":false,"createdAt":"2026-07-18T12:00:00Z"}}"#.utf8))
         }
-        let repository = InsightsRepository(api: makeAPIClient { _ in "token" })
+        let cache = ReadCache(directory: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString))
+        let repository = InsightsRepository(api: makeAPIClient { _ in "token" }, cache: cache)
 
         let created = try await repository.createAlert(CreatePriceAlertRequest(
             ticker: "btc",

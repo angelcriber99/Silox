@@ -41,7 +41,7 @@ struct RadarView: View {
             Group {
                 switch model.state {
                 case .idle, .loading:
-                    ProgressView("Buscando eventos de tus posiciones…")
+                    SiloxLoadingView(.radar)
                 case .loaded(let value, let date):
                     content(value, cachedAt: date)
                 case .failed(let message, let value, let date):

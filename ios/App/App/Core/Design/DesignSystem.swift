@@ -216,7 +216,9 @@ extension View {
     @ViewBuilder
     func siloxTabBarBehavior() -> some View {
         if #available(iOS 26.0, *) {
-            tabBarMinimizeBehavior(.onScrollDown)
+            // A permanently visible tab bar avoids a minimization transition
+            // racing a tab switch when the destination owns a ScrollView.
+            tabBarMinimizeBehavior(.never)
         } else {
             self
         }
