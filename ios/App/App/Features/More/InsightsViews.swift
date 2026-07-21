@@ -26,12 +26,18 @@ private final class AnalysisViewModel: ObservableObject {
         portfolio = cached.0?.value
         history = cached.1?.value ?? []
         isLoading = portfolio == nil
-        await refresh(force: false)
+        // Cached content is already on screen. Revalidating it must not add
+        // and remove a status row above the page, because that makes the whole
+        // analysis layout jump as soon as the user switches tabs.
+        await refresh(force: false, showsActivity: false)
     }
 
-    func refresh(force: Bool = true) async {
-        isRefreshing = true
-        defer { isRefreshing = false; isLoading = false }
+    func refresh(force: Bool = true, showsActivity: Bool = true) async {
+        if showsActivity { isRefreshing = true }
+        defer {
+            if showsActivity { isRefreshing = false }
+            isLoading = false
+        }
         do {
             async let portfolioValue = try loadPortfolio(force: force)
             async let historyValue = try insightsRepository.history(maxAge: force ? 0 : CacheLifetime.history)

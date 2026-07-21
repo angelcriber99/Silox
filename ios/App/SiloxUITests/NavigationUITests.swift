@@ -17,6 +17,17 @@ final class NavigationUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Ajustes"].waitForExistence(timeout: 2))
     }
 
+    func testAnalysisTabDoesNotVisiblyRefreshCachedContentOnEntry() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-test-authenticated", "-ui-test-fixtures"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons["Análisis"].waitForExistence(timeout: 5))
+        app.buttons["Análisis"].tap()
+        XCTAssertTrue(app.navigationBars["Análisis"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["Actualizando en segundo plano"].waitForExistence(timeout: 1))
+    }
+
     func testAddFlowUsesAssetSelectionInsteadOfInternalIdentifier() {
         let app = XCUIApplication()
         app.launchArguments.append("-ui-test-authenticated")
