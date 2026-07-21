@@ -210,15 +210,6 @@ export function PositionsTable({
       if (savedDir) setSortDir(savedDir)
     } catch (e) {}
   }, [])
-
-  useEffect(() => {
-    if (isMounted) {
-      try {
-        localStorage.setItem("silox_sortKey", sortKey)
-        localStorage.setItem("silox_sortDir", sortDir)
-      } catch (e) {}
-    }
-  }, [sortKey, sortDir, isMounted])
   const [addAssetOpen, setAddAssetOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
@@ -229,12 +220,19 @@ export function PositionsTable({
   const hasTriggeredAlerts = alerts.some(a => a.triggered)
 
   const toggleSort = (key: SortKey) => {
+    let newKey = key;
+    let newDir = "desc" as SortDir;
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+      newDir = sortDir === "asc" ? "desc" : "asc";
+      setSortDir(newDir);
     } else {
-      setSortKey(key)
-      setSortDir("desc")
+      setSortKey(key);
+      setSortDir("desc");
     }
+    try {
+      localStorage.setItem("silox_sortKey", newKey)
+      localStorage.setItem("silox_sortDir", newDir)
+    } catch (e) {}
   }
 
   const filteredAndSorted = useMemo(() => {
