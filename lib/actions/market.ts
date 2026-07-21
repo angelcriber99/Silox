@@ -231,6 +231,7 @@ export interface PriceEntry {
   sessionEnd?: string
   nextTransition?: string
   isStale?: boolean
+  marketDate?: string
 }
 
 export interface MarketPricesResult {
