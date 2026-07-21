@@ -254,6 +254,15 @@ const ACTIVE_CACHE_TTL = 8_000
 const CLOSED_CACHE_TTL = 60_000
 const sparklineCache = new Map<string, { values: number[]; expiresAt: number }>()
 
+/** Tickers that only have end-of-day NAV (Mutual Funds / Fondos Indexados) */
+function isMutualFundTicker(ticker: string): boolean {
+  // Morningstar-style fund IDs used by European brokers (e.g. 0P0001AINF.F)
+  return ticker.startsWith('0P') || ticker.toUpperCase().includes('MUTUALFUND')
+}
+
+/** Cache TTL for sparklines of end-of-day funds (12 h) */
+const FUND_SPARKLINE_TTL = 12 * 60 * 60 * 1000
+
 function getResultCacheTtl(result: MarketPricesResult): number {
   return ['PRE', 'REGULAR', 'POST', 'OPEN'].includes(result.marketState)
     ? ACTIVE_CACHE_TTL
@@ -348,42 +357,65 @@ async function _fetchMarketPrices(
       }
 
       const cachedSparkline = sparklineCache.get(ticker)
-      
+
       // Mutual funds like MSCI World usually start with 0P and need a suffix like .F on Yahoo Finance
       let fetchTicker = ticker
       if (fetchTicker.startsWith('0P') && !fetchTicker.includes('.')) {
         fetchTicker = `${fetchTicker}.F`
       }
 
-      const chart1dPromise = cachedSparkline && cachedSparkline.expiresAt > Date.now()
-        ? Promise.resolve(null)
-        : getYahooFinance().chart(fetchTicker, { period1: d, interval: '1d' }).catch(() => null)
-        
-      let [chart1m, chart1d] = await Promise.all([
-        getYahooFinance().chart(fetchTicker, { interval: '1m', period1: new Date(Date.now() - 24 * 60 * 60 * 1000), includePrePost: true }).catch(() => null),
-        chart1dPromise,
-      ])
+      const isFund = isMutualFundTicker(fetchTicker)
+      const sparklineCacheExpired = !cachedSparkline || cachedSparkline.expiresAt <= Date.now()
+      const chart1dPromise = sparklineCacheExpired
+        ? getYahooFinance().chart(fetchTicker, { period1: d, interval: '1d' }).catch(() => null)
+        : Promise.resolve(null)
 
-      // Fallback: If chart1m fails (e.g., no intraday data), try getting quote instead of throwing
-      let fallbackQuote = null;
-      if (!chart1m) {
-        fallbackQuote = await getYahooFinance().quote(fetchTicker).catch(() => null)
+      // For mutual funds: skip the 1m chart entirely (they have no intraday data).
+      // Fetch quote + daily chart in parallel directly.
+      let chart1m = null
+      let fallbackQuote = null
+      let chart1d = null
+
+      if (isFund) {
+        // Parallel fetch: current quote + daily price history
+        const [quoteResult, chart1dResult] = await Promise.all([
+          getYahooFinance().quote(fetchTicker).catch(() => null),
+          chart1dPromise,
+        ])
+        fallbackQuote = quoteResult
+        chart1d = chart1dResult
         if (!fallbackQuote) {
-          throw new Error(`Failed to fetch market data for ${ticker}`)
+          throw new Error(`Failed to fetch market data for fund ${ticker}`)
+        }
+      } else {
+        // Standard assets: try 1m chart first, fall back to quote if unavailable
+        const [chart1mResult, chart1dResult] = await Promise.all([
+          getYahooFinance().chart(fetchTicker, { interval: '1m', period1: new Date(Date.now() - 24 * 60 * 60 * 1000), includePrePost: true }).catch(() => null),
+          chart1dPromise,
+        ])
+        chart1m = chart1mResult
+        chart1d = chart1dResult
+
+        if (!chart1m) {
+          fallbackQuote = await getYahooFinance().quote(fetchTicker).catch(() => null)
+          if (!fallbackQuote) {
+            throw new Error(`Failed to fetch market data for ${ticker}`)
+          }
         }
       }
 
-      let meta: any = chart1m?.meta;
-      let quotes = (chart1m?.quotes as ChartQuote[]) || [];
+      let meta: any = chart1m?.meta
+      let quotes = (chart1m?.quotes as ChartQuote[]) || []
 
       if (!chart1m && fallbackQuote) {
-        // Construct a synthetic meta from quote
+        // Build synthetic meta from the quote, including previousClose for dailyChangePercent
         meta = {
           currency: fallbackQuote.currency,
           regularMarketPrice: fallbackQuote.regularMarketPrice,
           regularMarketTime: fallbackQuote.regularMarketTime,
           exchangeTimezoneName: fallbackQuote.exchangeTimezoneName,
           chartPreviousClose: fallbackQuote.regularMarketPreviousClose,
+          previousClose: fallbackQuote.regularMarketPreviousClose,
         }
       }
 
@@ -396,13 +428,16 @@ async function _fetchMarketPrices(
         : normalizeYahooPrice(performance.currentPrice, yahooCurrency)
       const changePercent24h = performance.sessionChangePercent
       const dailyChangePercent24h = performance.dailyChangePercent
+
       let sparkline: number[] = cachedSparkline?.values ?? []
       if (chart1d?.quotes) {
         sparkline = chart1d.quotes
           .map((q) => q.close)
           .filter((c): c is number => c !== null && c !== undefined)
           .map((value) => normalizeYahooPrice(value, yahooCurrency))
-        sparklineCache.set(ticker, { values: sparkline, expiresAt: Date.now() + 5 * 60_000 })
+        // Funds only update NAV once per day: cache their sparkline much longer
+        const sparklineTtl = isFund ? FUND_SPARKLINE_TTL : 5 * 60_000
+        sparklineCache.set(ticker, { values: sparkline, expiresAt: Date.now() + sparklineTtl })
       }
 
       let price = rawPrice
@@ -423,13 +458,13 @@ async function _fetchMarketPrices(
         dailyChangePercent24h,
         originalPrice: rawPrice,
         originalCurrency,
-        marketState: performance.marketState,
+        marketState: isFund ? 'CLOSED' : performance.marketState,
         latestTime: performance.latestTime?.toISOString(),
         exchangeTimezone: performance.exchangeTimezone,
         sessionStart: performance.sessionStart?.toISOString(),
         sessionEnd: performance.sessionEnd?.toISOString(),
         nextTransition: performance.nextTransition?.toISOString(),
-        isStale: performance.isStale,
+        isStale: isFund ? false : performance.isStale,
       }
     },
   )
