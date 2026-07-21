@@ -374,8 +374,8 @@ async function _fetchMarketPrices(
   tickers: string[],
   convertToEurFlag: boolean = false
 ): Promise<MarketPricesResult> {
-  if (!tickers || tickers.length === 0) {
-    throw new Error('No tickers provided')
+  if (!tickers) {
+    throw new Error('Tickers array cannot be null or undefined')
   }
 
   const d = new Date()
@@ -584,8 +584,8 @@ export async function fetchMarketPrices(
   tickers: string[],
   convertToEurFlag: boolean = false
 ): Promise<MarketPricesResult> {
-  if (!tickers || tickers.length === 0) {
-    throw new Error('No tickers provided')
+  if (!tickers) {
+    throw new Error('Tickers array cannot be null or undefined')
   }
   if (tickers.length > 50) {
     throw new Error('Requested too many tickers. Maximum allowed is 50.')
