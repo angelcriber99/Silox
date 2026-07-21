@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { Loader2, ArrowUpRight, ArrowDownRight, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -21,8 +21,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAddTransaction } from "@/lib/hooks/use-transactions"
+import { useAddTransaction, useAssetTransactions } from "@/lib/hooks/use-transactions"
 import { formatCurrency } from "@/lib/utils/formatters"
+import { checkPendingWashSale } from "@/lib/utils/wash-sale"
 import type { EnrichedPosition } from '@/lib/types'
 
 interface AddTransactionModalProps {
@@ -56,6 +57,7 @@ export function AddTransactionModal({
   const [notas, setNotas] = useState("")
 
   const addTransaction = useAddTransaction()
+  const { data: assetTransactions } = useAssetTransactions(position?.activo_id)
 
   const resetForm = () => {
     setTipoOperacion("Compra")
@@ -149,6 +151,10 @@ export function AddTransactionModal({
   const isCompra = tipoOperacion === "Compra"
   const isVenta = tipoOperacion === "Venta"
   const isDividendo = tipoOperacion === "Dividendo"
+
+  const washSaleWarning = isCompra && assetTransactions 
+    ? checkPendingWashSale(assetTransactions, fecha) 
+    : { hasWarning: false }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -431,6 +437,20 @@ export function AddTransactionModal({
                 <span className="text-lg font-bold tabular-nums text-violet-400">
                   {formatCurrency(precioNum - (parseFloat(retencionOrigen) || 0) - (parseFloat(retencionDestino) || 0) - (parseFloat(comision) || 0), position?.moneda || 'EUR')}
                 </span>
+              </div>
+            </div>
+          )}
+
+          {/* Wash Sale Warning */}
+          {washSaleWarning.hasWarning && (
+            <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 px-4 py-3 flex items-start gap-3 mt-2">
+              <AlertTriangle className="h-5 w-5 text-orange-400 shrink-0 mt-0.5" />
+              <div className="text-sm text-orange-200/90 leading-relaxed">
+                <p className="font-semibold text-orange-300 mb-1">Cuidado: Regla de homogeneización</p>
+                <p>
+                  Has vendido este activo con pérdidas recientemente (el {new Date(washSaleWarning.saleDate!).toLocaleDateString('es-ES')}). 
+                  Si compras en esta fecha, la pérdida quedará fiscalmente bloqueada. Puedes comprar sin penalización a partir del <strong className="text-orange-300">{new Date(washSaleWarning.safeBuyDate!).toLocaleDateString('es-ES')}</strong>.
+                </p>
               </div>
             </div>
           )}

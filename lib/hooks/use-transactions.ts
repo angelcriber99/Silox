@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { insertActivoAction, updateActivoAction } from '@/lib/actions/assets'
 import { createFundTransferAction, insertTransaccionAction, updateTransaccionAction, deleteTransaccionAction } from '@/lib/actions/transactions'
-import { fetchTransacciones, fetchAllTransactionsForTax } from '@/lib/api/transactions'
+import { fetchTransacciones, fetchAllTransactionsForTax, fetchAssetTransactions } from '@/lib/api/transactions'
 
 export function useTransactions(limit = 15) {
   return useQuery({
@@ -16,6 +16,14 @@ export function useAllTransactions() {
   return useQuery({
     queryKey: ["transactions", "all"],
     queryFn: () => fetchAllTransactionsForTax(),
+  })
+}
+
+export function useAssetTransactions(assetId: string | undefined) {
+  return useQuery({
+    queryKey: ["transactions", "asset", assetId],
+    queryFn: () => assetId ? fetchAssetTransactions(assetId) : Promise.resolve([]),
+    enabled: !!assetId,
   })
 }
 
