@@ -185,29 +185,33 @@ struct AnalysisView: View {
                     ContentUnavailableView(
                         "Aún no hay histórico suficiente",
                         systemImage: "chart.line.uptrend.xyaxis",
-                        description: Text("La gráfica aparecerá tras guardar varios puntos de cartera.")
+                        description: Text("La gráfica aparecerá al registrar movimientos o valoraciones de cartera.")
                     )
                     .frame(height: 190)
                 } else {
                     VStack(spacing: 12) {
                         Chart(filteredPoints) { point in
-                            LineMark(
-                                x: .value("Fecha", point.date),
-                                y: .value("Patrimonio", point.value)
-                            )
-                            .foregroundStyle(SiloxColors.accent)
-                            .interpolationMethod(.monotone)
-                            
-                            AreaMark(
-                                x: .value("Fecha", point.date),
-                                yStart: .value("Base", filteredPoints.map(\.value).min() ?? 0),
-                                yEnd: .value("Patrimonio", point.value)
-                            )
-                            .foregroundStyle(LinearGradient(
-                                colors: [SiloxColors.accent.opacity(0.35), .clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ))
+                            if let value = point.value, let valuationSegment = point.valuationSegment {
+                                LineMark(
+                                    x: .value("Fecha", point.date),
+                                    y: .value("Patrimonio", value),
+                                    series: .value("Tramo valorado", valuationSegment)
+                                )
+                                .foregroundStyle(SiloxColors.accent)
+                                .interpolationMethod(.monotone)
+
+                                AreaMark(
+                                    x: .value("Fecha", point.date),
+                                    yStart: .value("Base", filteredPoints.compactMap(\.value).min() ?? 0),
+                                    yEnd: .value("Patrimonio", value),
+                                    series: .value("Tramo valorado", valuationSegment)
+                                )
+                                .foregroundStyle(LinearGradient(
+                                    colors: [SiloxColors.accent.opacity(0.35), .clear],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ))
+                            }
                             
                             if let invested = point.invested {
                                 LineMark(
@@ -219,14 +223,14 @@ struct AnalysisView: View {
                                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
                             }
 
-                            if let rawSelectedDate, rawSelectedDate == point.date {
+                            if let value = point.value, let rawSelectedDate, rawSelectedDate == point.date {
                                 RuleMark(x: .value("Fecha", point.date))
                                     .foregroundStyle(.secondary.opacity(0.5))
                                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                                 
                                 PointMark(
                                     x: .value("Fecha", point.date),
-                                    y: .value("Patrimonio", point.value)
+                                    y: .value("Patrimonio", value)
                                 )
                                 .foregroundStyle(SiloxColors.accent)
                                 .symbolSize(100)
@@ -235,7 +239,7 @@ struct AnalysisView: View {
                                         Text(point.date)
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
-                                        Text(hideBalances ? "****" : SiloxFormatters.money(String(describing: point.value), currency: "EUR"))
+                                        Text(hideBalances ? "****" : SiloxFormatters.money(String(describing: value), currency: "EUR"))
                                             .font(.caption.weight(.bold))
                                             .foregroundStyle(.primary)
                                     }
@@ -274,31 +278,42 @@ struct AnalysisView: View {
                             }
                         }
                         
-                        Chart(filteredPoints) { point in
-                            if let dailyPnl = point.dailyPnL {
-                                BarMark(
-                                    x: .value("Fecha", point.date),
-                                    y: .value("P&L Diario", dailyPnl)
-                                )
-                                .foregroundStyle(dailyPnl >= 0 ? SiloxColors.positive : SiloxColors.negative)
-                                .cornerRadius(3)
+                        if filteredPoints.contains(where: { $0.dailyPnL != nil }) {
+                            Chart(filteredPoints) { point in
+                                if let dailyPnl = point.dailyPnL {
+                                    BarMark(
+                                        x: .value("Fecha", point.date),
+                                        y: .value("P&L Diario", dailyPnl)
+                                    )
+                                    .foregroundStyle(dailyPnl >= 0 ? SiloxColors.positive : SiloxColors.negative)
+                                    .cornerRadius(3)
+                                }
                             }
-                        }
-                        .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
-                        .chartYAxis { 
-                            AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
-                                AxisGridLine()
-                                AxisTick()
-                                if let doubleValue = value.as(Double.self) {
-                                    AxisValueLabel {
-                                        Text(doubleValue >= 1000 ? "€\(Int(doubleValue / 1000))k" : doubleValue <= -1000 ? "-€\(Int(abs(doubleValue) / 1000))k" : "€\(Int(doubleValue))")
+                            .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
+                            .chartYAxis {
+                                AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
+                                    AxisGridLine()
+                                    AxisTick()
+                                    if let doubleValue = value.as(Double.self) {
+                                        AxisValueLabel {
+                                            Text(doubleValue >= 1000 ? "€\(Int(doubleValue / 1000))k" : doubleValue <= -1000 ? "-€\(Int(abs(doubleValue) / 1000))k" : "€\(Int(doubleValue))")
+                                        }
                                     }
                                 }
                             }
+                            .frame(height: 90)
                         }
-                        .frame(height: 90)
                     }
                     .accessibilityLabel("Evolución del patrimonio y P&L diario")
+
+                    if filteredPoints.contains(where: { $0.source == .transaction }) {
+                        Label(
+                            "El capital anterior se ha reconstruido desde los movimientos importados. No se muestran precios ni rentabilidad donde no hay una valoración histórica real.",
+                            systemImage: "info.circle"
+                        )
+                        .font(.caption2)
+                        .foregroundStyle(SiloxColors.textSecondary)
+                    }
                 }
             }
         }
@@ -383,31 +398,61 @@ struct AnalysisView: View {
     }
 
     private func chartPoints(_ portfolio: PortfolioResponse) -> [AnalysisChartPoint] {
-        var rawValues = model.history.compactMap { point -> (date: String, value: Double, invested: Double)? in
-            guard let value = point.value?.decimalValue.doubleValue, value.isFinite else { return nil }
-            return (date: point.date, value: value, invested: point.invested?.decimalValue.doubleValue ?? 0)
+        var rawValues = model.history.compactMap { point -> AnalysisChartPoint? in
+            guard HistoryDateParser.date(from: point.date) != nil else { return nil }
+            let value = point.value?.decimalValue.doubleValue
+            let invested = point.invested?.decimalValue.doubleValue
+            guard value?.isFinite != false, invested?.isFinite != false else { return nil }
+            return AnalysisChartPoint(
+                date: point.date,
+                value: value,
+                invested: invested,
+                dailyPnL: nil,
+                source: point.source,
+                valuationSegment: nil
+            )
         }
         let today = Date.now.formatted(.iso8601.year().month().day())
         let liveValue = portfolio.totals.totalValue.amount.decimalValue.doubleValue
         let liveInvested = portfolio.totals.totalCost.amount.decimalValue.doubleValue
         
         if let todayIndex = rawValues.lastIndex(where: { $0.date == today }) {
-            rawValues[todayIndex] = (date: today, value: liveValue, invested: liveInvested)
+            rawValues[todayIndex] = AnalysisChartPoint(
+                date: today,
+                value: liveValue,
+                invested: liveInvested,
+                dailyPnL: nil,
+                source: .snapshot,
+                valuationSegment: nil
+            )
         } else {
-            rawValues.append((date: today, value: liveValue, invested: liveInvested))
+            rawValues.append(AnalysisChartPoint(
+                date: today,
+                value: liveValue,
+                invested: liveInvested,
+                dailyPnL: nil,
+                source: .snapshot,
+                valuationSegment: nil
+            ))
         }
+        rawValues.sort { $0.date < $1.date }
 
         var values: [AnalysisChartPoint] = []
-        for i in 0..<rawValues.count {
-            let current = rawValues[i]
-            let pnl: Double?
-            if i == 0 {
-                pnl = nil
-            } else {
-                let previous = rawValues[i-1]
-                let netFlow = current.invested - previous.invested
-                pnl = current.value - previous.value - netFlow
+        var segment = 0
+        for i in rawValues.indices {
+            var current = rawValues[i]
+            let previous = i > 0 ? rawValues[i - 1] : nil
+            let contiguousValuations = current.value != nil
+                && previous?.value != nil
+                && HistoryDateParser.isContiguous(previous?.date, current.date)
+            if current.value != nil {
+                if !contiguousValuations { segment += 1 }
+                current.valuationSegment = "snapshot-\(segment)"
             }
+
+            let pnl: Double? = contiguousValuations
+                ? current.value! - previous!.value! - ((current.invested ?? 0) - (previous!.invested ?? 0))
+                : nil
             
             let finalPnl: Double?
             if i == rawValues.count - 1 && current.date == today {
@@ -416,12 +461,8 @@ struct AnalysisView: View {
                 finalPnl = pnl
             }
             
-            values.append(AnalysisChartPoint(
-                date: current.date,
-                value: current.value,
-                invested: current.invested,
-                dailyPnL: finalPnl
-            ))
+            current.dailyPnL = finalPnl
+            values.append(current)
         }
         
         return values
@@ -431,9 +472,13 @@ struct AnalysisView: View {
 private struct AnalysisChartPoint: Identifiable {
     var id: String { date }
     let date: String
-    let value: Double
+    let value: Double?
     let invested: Double?
-    let dailyPnL: Double?
+    var dailyPnL: Double?
+    let source: PortfolioHistoryPoint.Source?
+    var valuationSegment: String?
+
+    var hasValuation: Bool { value != nil }
 }
 
 @MainActor
@@ -466,6 +511,8 @@ struct PortfolioHistoryView: View {
             case .loading: ProgressView("Cargando historial…")
             case .failed(let message): ErrorStateView(message: message) { Task { await model.load() } }
             case .loaded(let points):
+                let visible = visiblePoints(points)
+                let chartPoints = historicalChartPoints(visible)
                 List {
                     if points.isEmpty {
                         ContentUnavailableView("Sin historial", systemImage: "clock.arrow.circlepath", description: Text("Los cierres diarios aparecerán aquí cuando existan snapshots."))
@@ -477,41 +524,57 @@ struct PortfolioHistoryView: View {
                             .pickerStyle(.segmented)
                             .siloxPeriodControlSurface()
 
-                            Chart(visiblePoints(points)) { point in
+                            if visible.contains(where: { $0.source == .transaction }) {
+                                Label(
+                                    "El capital se ha reconstruido desde los movimientos importados. Solo se dibuja patrimonio cuando hay una valoración histórica real.",
+                                    systemImage: "info.circle"
+                                )
+                                .font(.caption)
+                                .foregroundStyle(SiloxColors.textSecondary)
+                            }
+
+                            Chart(chartPoints) { chartPoint in
+                                let point = chartPoint.point
                                 if let date = point.chartDate {
+                                    if let value = point.value?.decimalValue.doubleValue, let valuationSegment = chartPoint.valuationSegment {
                                     LineMark(
                                         x: .value("Fecha", date),
-                                        y: .value("Patrimonio", point.value?.decimalValue.doubleValue ?? 0)
+                                        y: .value("Patrimonio", value),
+                                        series: .value("Tramo valorado", valuationSegment)
                                     )
                                     .foregroundStyle(by: .value("Serie", "Patrimonio"))
                                     .interpolationMethod(.catmullRom)
 
                                     AreaMark(
                                         x: .value("Fecha", date),
-                                        yStart: .value("Base", visiblePoints(points).compactMap { $0.value?.decimalValue.doubleValue }.min() ?? 0),
-                                        yEnd: .value("Patrimonio", point.value?.decimalValue.doubleValue ?? 0)
+                                        yStart: .value("Base", visible.compactMap { $0.value?.decimalValue.doubleValue }.min() ?? 0),
+                                        yEnd: .value("Patrimonio", value),
+                                        series: .value("Tramo valorado", valuationSegment)
                                     )
                                     .foregroundStyle(LinearGradient(
                                         colors: [SiloxColors.accent.opacity(0.35), .clear],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     ))
+                                    }
 
-                                    LineMark(
-                                        x: .value("Fecha", date),
-                                        y: .value("Capital invertido", point.invested?.decimalValue.doubleValue ?? 0)
-                                    )
-                                    .foregroundStyle(by: .value("Serie", "Invertido"))
-                                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                                    if let invested = point.invested?.decimalValue.doubleValue {
+                                        LineMark(
+                                            x: .value("Fecha", date),
+                                            y: .value("Capital invertido", invested)
+                                        )
+                                        .foregroundStyle(by: .value("Serie", "Invertido"))
+                                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                                    }
 
-                                    if let rawSelectedDate, rawSelectedDate == date {
+                                    if let value = point.value?.decimalValue.doubleValue, let rawSelectedDate, rawSelectedDate == date {
                                         RuleMark(x: .value("Fecha", date))
                                             .foregroundStyle(.secondary.opacity(0.5))
                                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                                         
                                         PointMark(
                                             x: .value("Fecha", date),
-                                            y: .value("Patrimonio", point.value?.decimalValue.doubleValue ?? 0)
+                                            y: .value("Patrimonio", value)
                                         )
                                         .foregroundStyle(SiloxColors.accent)
                                         .symbolSize(100)
@@ -556,7 +619,7 @@ struct PortfolioHistoryView: View {
                                                 .onChanged { value in
                                                     let x = value.location.x - geo[proxy.plotAreaFrame].origin.x
                                                     if let date: Date = proxy.value(atX: x) {
-                                                        rawSelectedDate = visiblePoints(points)
+                                                        rawSelectedDate = visible
                                                             .compactMap(\.chartDate)
                                                             .min(by: { abs($0.timeIntervalSince(date)) < abs($1.timeIntervalSince(date)) })
                                                     }
@@ -567,12 +630,12 @@ struct PortfolioHistoryView: View {
                             }
                             .accessibilityLabel("Gráfico de patrimonio e inversión")
                             .accessibilityChartDescriptor(
-                                PortfolioHistoryAccessibilityDescriptor(points: visiblePoints(points))
+                                PortfolioHistoryAccessibilityDescriptor(points: visible)
                             )
                         }
 
                         Section("Cierres") {
-                            ForEach(visiblePoints(points).reversed()) { point in
+                            ForEach(visible.reversed()) { point in
                                 ViewThatFits(in: .horizontal) {
                                     HStack { historyPoint(point) }
                                     VStack(alignment: .leading, spacing: 6) { historyPoint(point) }
@@ -594,9 +657,14 @@ struct PortfolioHistoryView: View {
             .font(.body.monospacedDigit())
         Spacer(minLength: 8)
         VStack(alignment: .trailing) {
-            Text(SiloxFormatters.money(point.value ?? "0", currency: "EUR")).font(.headline).monospacedDigit()
+            Text(point.value.map { SiloxFormatters.money($0, currency: "EUR") } ?? "Sin valoración").font(.headline).monospacedDigit()
             Text("Invertido: \(SiloxFormatters.money(point.invested ?? "0", currency: "EUR"))")
                 .font(.caption).foregroundStyle(SiloxColors.textSecondary)
+            if point.source == .transaction {
+                Text("Reconstruido desde movimientos")
+                    .font(.caption2)
+                    .foregroundStyle(SiloxColors.warning)
+            }
         }
     }
 
@@ -604,6 +672,28 @@ struct PortfolioHistoryView: View {
         guard let cutoff = range.cutoff else { return points }
         return points.filter { ($0.chartDate ?? .distantPast) >= cutoff }
     }
+
+    private func historicalChartPoints(_ points: [PortfolioHistoryPoint]) -> [HistoricalChartPoint] {
+        var segment = 0
+        var previousValuation: PortfolioHistoryPoint?
+        return points.map { point in
+            guard point.value?.decimalValue.doubleValue != nil else {
+                previousValuation = nil
+                return HistoricalChartPoint(point: point, valuationSegment: nil)
+            }
+            if previousValuation == nil || !HistoryDateParser.isContiguous(previousValuation?.date, point.date) {
+                segment += 1
+            }
+            previousValuation = point
+            return HistoricalChartPoint(point: point, valuationSegment: "snapshot-\(segment)")
+        }
+    }
+}
+
+private struct HistoricalChartPoint: Identifiable {
+    var id: String { point.id }
+    let point: PortfolioHistoryPoint
+    let valuationSegment: String?
 }
 
 private enum HistoryRange: String, CaseIterable, Identifiable {
@@ -624,8 +714,7 @@ private enum HistoryRange: String, CaseIterable, Identifiable {
     }
 }
 
-private extension PortfolioHistoryPoint {
-    var chartDate: Date? { Self.dayFormatter.date(from: date) }
+private enum HistoryDateParser {
     static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .iso8601)
@@ -634,6 +723,20 @@ private extension PortfolioHistoryPoint {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter
     }()
+
+    static func date(from value: String) -> Date? { dayFormatter.date(from: value) }
+
+    static func isContiguous(_ previous: String?, _ current: String) -> Bool {
+        guard let previous, let previousDate = date(from: previous), let currentDate = date(from: current) else { return false }
+        let elapsedDays = Calendar(identifier: .iso8601)
+            .dateComponents([.day], from: previousDate, to: currentDate)
+            .day ?? Int.max
+        return elapsedDays >= 0 && elapsedDays <= 2
+    }
+}
+
+private extension PortfolioHistoryPoint {
+    var chartDate: Date? { HistoryDateParser.date(from: date) }
 }
 
 private struct PortfolioHistoryAccessibilityDescriptor: AXChartDescriptorRepresentable {

@@ -184,11 +184,15 @@ struct CreateTransactionRequest: Codable, Sendable {
 }
 
 struct PortfolioHistoryPoint: Codable, Sendable, Equatable, Identifiable {
+    enum Source: String, Codable, Sendable, Equatable { case snapshot, transaction }
+
     var id: String { date }
     let date: String
     let value: String?
     let invested: String?
     let updatedAt: Date?
+    /// Transaction points intentionally carry no historic market valuation.
+    let source: Source?
 }
 
 struct PriceAlert: Codable, Sendable, Equatable, Identifiable {

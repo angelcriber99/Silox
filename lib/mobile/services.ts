@@ -25,6 +25,8 @@ import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
 import { calculateOpenPositionBases, calculateOpenPurchaseLots } from '@/lib/utils/open-cost-basis'
+import { buildMobilePortfolioHistory } from './portfolio-history'
+import type { InvestmentFlowTransaction } from '@/lib/domain/portfolio/contributions'
 import type { Database } from '@/lib/database.types'
 
 type Context = MobileAuthContext
@@ -332,22 +334,82 @@ export async function portfolio(context: Context) {
   }
 }
 
+const HISTORY_PAGE_SIZE = 1_000
+const HISTORICAL_FX_BATCH_SIZE = 500
+type PortfolioHistoryRow = Pick<Database['public']['Tables']['portfolio_history']['Row'], 'timestamp' | 'total_value' | 'total_invested'>
+type LegacyPortfolioSnapshotRow = Pick<Database['public']['Tables']['portfolio_snapshots']['Row'], 'date' | 'total_value' | 'total_invested' | 'updated_at'>
+
+async function loadAllPortfolioHistory(context: Context) {
+  const rows: PortfolioHistoryRow[] = []
+  for (let offset = 0; ; offset += HISTORY_PAGE_SIZE) {
+    const { data, error } = await context.supabase
+      .from('portfolio_history')
+      .select('timestamp, total_value, total_invested')
+      .eq('user_id', context.user.id)
+      .order('timestamp', { ascending: true })
+      .range(offset, offset + HISTORY_PAGE_SIZE - 1)
+    databaseFailure('cargar el historial de valoraciones', error)
+    rows.push(...((data ?? []) as PortfolioHistoryRow[]))
+    if (!data || data.length < HISTORY_PAGE_SIZE) return rows
+  }
+}
+
+async function loadAllLegacyPortfolioSnapshots(context: Context) {
+  const rows: LegacyPortfolioSnapshotRow[] = []
+  for (let offset = 0; ; offset += HISTORY_PAGE_SIZE) {
+    const { data, error } = await context.supabase
+      .from('portfolio_snapshots')
+      .select('date, total_value, total_invested, updated_at')
+      .eq('user_id', context.user.id)
+      .order('date', { ascending: true })
+      .range(offset, offset + HISTORY_PAGE_SIZE - 1)
+    databaseFailure('cargar los cierres diarios heredados', error)
+    rows.push(...((data ?? []) as LegacyPortfolioSnapshotRow[]))
+    if (!data || data.length < HISTORY_PAGE_SIZE) return rows
+  }
+}
+
+async function loadAllInvestmentTransactions(context: Context) {
+  const rows: InvestmentFlowTransaction[] = []
+  for (let offset = 0; ; offset += HISTORY_PAGE_SIZE) {
+    const { data, error } = await context.supabase
+      .from('transacciones')
+      .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
+      .eq('user_id', context.user.id)
+      .eq('estado', 'Completada')
+      .order('fecha', { ascending: true })
+      .order('id', { ascending: true })
+      .range(offset, offset + HISTORY_PAGE_SIZE - 1)
+    databaseFailure('cargar los movimientos históricos', error)
+    rows.push(...((data ?? []) as unknown as InvestmentFlowTransaction[]))
+    if (!data || data.length < HISTORY_PAGE_SIZE) return rows
+  }
+}
+
+async function loadHistoricalFxForTransactions(
+  transactions: InvestmentFlowTransaction[],
+) {
+  const funding = calculateNetInvestmentByCurrency(transactions)
+  const missing = funding.datedFlows.filter((flow) => flow.currency !== 'EUR' && flow.fixedRate === null)
+  const requests = Array.from(new Map(missing.map((flow) => {
+    const key = historicalFxKey(flow.currency, flow.date)
+    return [key, { currency: flow.currency, date: flow.date }]
+  })).values())
+  const rates: Record<string, number> = {}
+  for (let offset = 0; offset < requests.length; offset += HISTORICAL_FX_BATCH_SIZE) {
+    Object.assign(rates, await fetchHistoricalFxRates(requests.slice(offset, offset + HISTORICAL_FX_BATCH_SIZE)))
+  }
+  return rates
+}
+
 export async function portfolioHistory(context: Context, from?: string | null, to?: string | null) {
-  let query = context.supabase
-    .from('portfolio_snapshots')
-    .select('date, total_value, total_invested, updated_at')
-    .eq('user_id', context.user.id)
-    .order('date', { ascending: true })
-  if (from) query = query.gte('date', from)
-  if (to) query = query.lte('date', to)
-  const { data, error } = await query
-  databaseFailure('cargar el historial', error)
-  return (data ?? []).map((point) => ({
-    date: point.date,
-    value: decimal(point.total_value),
-    invested: decimal(point.total_invested),
-    updatedAt: point.updated_at,
-  }))
+  const [history, legacySnapshots, transactions] = await Promise.all([
+    loadAllPortfolioHistory(context),
+    loadAllLegacyPortfolioSnapshots(context),
+    loadAllInvestmentTransactions(context),
+  ])
+  const historicalRates = await loadHistoricalFxForTransactions(transactions)
+  return buildMobilePortfolioHistory(history, legacySnapshots, transactions, historicalRates, { from, to })
 }
 
 type DecimalParts = { coefficient: bigint; scale: number }
