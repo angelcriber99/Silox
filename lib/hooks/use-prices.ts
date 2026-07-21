@@ -15,7 +15,13 @@ export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
     try {
       const saved = localStorage.getItem('silox_last_prices')
       if (saved) {
-        lastKnownPrices.current = JSON.parse(saved)
+        const parsed = JSON.parse(saved)
+        // Discard prices saved more than 20 hours ago to prevent stale
+        // dailyChangePercent from a previous trading day bleeding into today.
+        const MAX_AGE_MS = 20 * 60 * 60 * 1000
+        if (parsed.savedAt && Date.now() - parsed.savedAt < MAX_AGE_MS) {
+          lastKnownPrices.current = parsed.prices ?? parsed
+        }
       }
     } catch (e) {
       console.error('Error loading prices from local storage', e)
@@ -51,7 +57,10 @@ export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
       // Guardar en localStorage para sobrevivir F5
       if (hasUpdates) {
         try {
-          localStorage.setItem('silox_last_prices', JSON.stringify(lastKnownPrices.current))
+          localStorage.setItem('silox_last_prices', JSON.stringify({
+            savedAt: Date.now(),
+            prices: lastKnownPrices.current,
+          }))
         } catch {
           // ignore quota errors
         }

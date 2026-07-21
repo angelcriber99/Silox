@@ -105,9 +105,16 @@ export function extractMarketPerformance(
   // Prefer official meta prices over 1m chart ticks to prevent extreme after-hours volatility bugs
   let currentPrice = meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
   if (marketState === 'PRE') {
-    currentPrice = meta.preMarketPrice ?? validQuotes.at(-1)?.close ?? currentPrice
-  } else if ((marketState === 'POST' || marketState === 'CLOSED')) {
-    currentPrice = meta.postMarketPrice ?? validQuotes.at(-1)?.close ?? currentPrice
+    currentPrice = meta.preMarketPrice ?? meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? currentPrice
+  } else if (marketState === 'POST') {
+    // Use postMarketPrice only if it's available; keep regularMarketPrice as primary
+    // so low-volume after-hours trades don't distort portfolio value
+    currentPrice = meta.postMarketPrice ?? meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? currentPrice
+  } else if (marketState === 'CLOSED') {
+    // When fully closed, always use the official regular market close price.
+    // postMarketPrice is excluded here because it can be an illiquid off-hours
+    // print that differs wildly from the real close and causes spurious P&L spikes.
+    currentPrice = meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? currentPrice
   } else if (marketState === 'REGULAR') {
     currentPrice = latestQuote?.close ?? meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
   }
@@ -139,8 +146,11 @@ export function extractMarketPerformance(
       })
     : []
   const sessionBaseline = sessionQuotes[0]?.close ?? null
+  // When the market is closed there is no active session, so sessionChangePercent
+  // falls back to the full-day change (vs previous close) so the "Hoy" header
+  // always shows a meaningful figure rather than 0.
   const sessionChangePercent = marketState === 'CLOSED'
-    ? 0
+    ? dailyChangePercent
     : percentChange(sessionQuotes.at(-1)?.close ?? null, sessionBaseline)
   const quoteAge = latestTime ? now.getTime() - latestTime.getTime() : Number.POSITIVE_INFINITY
   const isStale = (latestTime && quoteAge > ACTIVE_QUOTE_STALE_AFTER_MS) || (!latestTime && marketState !== 'CLOSED' && meta.regularMarketPrice == null)

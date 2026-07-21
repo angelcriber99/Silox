@@ -298,7 +298,14 @@ export async function fetchMarketPricesDirect(
     if (oldest) lastKnownPriceCache.delete(oldest)
   }
   const data = { ...freshData, prices }
-  
+
+  // If the market session state has changed (e.g. just opened or just closed),
+  // force-evict the cached entry so the next poll always gets fresh state
+  // instead of waiting up to ACTIVE_CACHE_TTL (8 s) with stale marketState.
+  if (cached && cached.data.marketState !== data.marketState) {
+    actionCache.delete(cacheKey)
+  }
+
   // Cleanup old entries
   if (actionCache.size > 200) {
     const now = Date.now()
@@ -306,7 +313,7 @@ export async function fetchMarketPricesDirect(
       if (now > v.expiresAt) actionCache.delete(k)
     }
   }
-  
+
   actionCache.set(cacheKey, { data, expiresAt: Date.now() + getResultCacheTtl(data) })
   return data
 }
