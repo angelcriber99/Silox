@@ -21,6 +21,7 @@ export interface Posicion {
   daily_net_units?: number
   daily_net_flow_nativo?: number
   daily_net_flow_eur?: number | null
+  accounting_unit_mismatch?: boolean
 }
 
 export interface EnrichedPosition extends Posicion {
@@ -119,6 +120,8 @@ export interface PortfolioTotals {
   positionCount: number
   hasAllPrices: boolean
   estimatedPositionCount: number
+  /** Ledger/database unit divergences. A non-zero value requires reconciliation. */
+  accountingIssueCount?: number
 }
 
 export interface PriceData {

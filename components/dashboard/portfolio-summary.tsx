@@ -3,7 +3,7 @@
 import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import {
   TrendingUp, TrendingDown, Briefcase,
-  BarChart2, Target, Sparkles,
+  BarChart2, Target, Sparkles, TriangleAlert,
 } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import type { PortfolioTotals, EnrichedPosition, Transaccion } from "@/lib/types"
@@ -95,6 +95,12 @@ export function PortfolioSummary({
           <div className="text-4xl lg:text-5xl font-bold tracking-tight leading-none mb-6 bg-gradient-to-br from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent text-center drop-shadow-sm">
             <AnimatedNumber value={convert(totals.totalValue)} format="currency" currency={displayCurrency} hide={hideBalances} />
           </div>
+          {(totals.accountingIssueCount ?? 0) > 0 && (
+            <div className="mb-3 flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[10px] font-semibold text-amber-400">
+              <TriangleAlert className="h-3 w-3" />
+              ReconciliaciÃ³n pendiente en {totals.accountingIssueCount} activo{totals.accountingIssueCount === 1 ? '' : 's'}
+            </div>
+          )}
           
           <div className="flex flex-col items-center gap-1.5 mt-2">
             <div className="flex items-center gap-1.5" style={{ color: daily24Positive ? "#30D158" : "#FF453A" }}>

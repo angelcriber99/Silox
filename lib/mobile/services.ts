@@ -23,11 +23,16 @@ import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
 import { fetchMarketPricesDirect } from '@/lib/actions/market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
-import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
-import { calculateOpenPositionBases, calculateOpenPurchaseLots } from '@/lib/utils/open-cost-basis'
+import { calculateOpenPurchaseLots } from '@/lib/utils/open-cost-basis'
+import {
+  applyPortfolioAccounting,
+  calculatePortfolioAccounting,
+  type PortfolioAccountingTransaction,
+} from '@/lib/domain/portfolio/accounting-engine'
 import { buildMobilePortfolioHistory } from './portfolio-history'
 import type { InvestmentFlowTransaction } from '@/lib/domain/portfolio/contributions'
 import type { Database } from '@/lib/database.types'
+import { collectAllPages } from '@/lib/utils/pagination'
 
 type Context = MobileAuthContext
 
@@ -204,36 +209,30 @@ export async function portfolio(context: Context) {
     .eq('user_id', context.user.id)
   databaseFailure('cargar la cartera', error)
 
-  const { data: fundingTransactions, error: fundingError } = await context.supabase
-    .from('transacciones')
-    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
-    .eq('user_id', context.user.id)
-    .eq('estado', 'Completada')
-  databaseFailure('calcular el capital neto aportado', fundingError)
-  const openBases = calculateOpenPositionBases(fundingTransactions ?? [])
-  const dailyActivity = calculateDailyPositionActivity(fundingTransactions ?? [])
+  let fundingTransactions
+  try {
+    fundingTransactions = await collectAllPages((from, to) => context.supabase
+      .from('transacciones')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
+      .eq('user_id', context.user.id)
+      .eq('estado', 'Completada')
+      .order('fecha', { ascending: true })
+      .order('created_at', { ascending: true })
+      .range(from, to))
+  } catch {
+    throw new MobileApiError(500, 'database_error', 'No se pudo calcular el capital neto aportado')
+  }
+  const accounting = calculatePortfolioAccounting(
+    fundingTransactions as PortfolioAccountingTransaction[],
+  )
 
   // Keep the native dashboard on the exact same accounting universe as web.
   // Cash and money-market bookkeeping never belongs to the visible portfolio.
-  const positions = (rawPositions ?? [])
-    .filter(isInvestablePortfolioAsset)
-    .map((position) => {
-      const openBasis = openBases.get(position.activo_id)
-      const activity = dailyActivity.get(position.activo_id)
-      return {
-        ...position,
-        ...(openBasis !== undefined ? {
-          coste_total: openBasis.performanceCost,
-          dinero_invertido: openBasis.investedCost,
-          coste_total_eur_historico: openBasis.performanceCostEur,
-          dinero_invertido_eur_historico: openBasis.investedCostEur,
-        } : {}),
-        has_daily_activity: Boolean(activity),
-        daily_net_units: activity?.netUnits ?? 0,
-        daily_net_flow_nativo: activity?.netFlowNative ?? 0,
-        daily_net_flow_eur: activity?.netFlowEur ?? null,
-      }
-    })
+  const accountingProjection = applyPortfolioAccounting(
+    (rawPositions ?? []).filter(isInvestablePortfolioAsset),
+    accounting,
+  )
+  const positions = accountingProjection.positions
   const tickers = positions
     .filter((position) => position.unidades > 0 || position.has_daily_activity)
     .map((position) => position.ticker)
@@ -241,7 +240,7 @@ export async function portfolio(context: Context) {
     ? await fetchMarketPricesDirect(tickers, true)
     : { prices: {}, fxRates: { EUR: 1 }, displayCurrency: 'EUR', marketState: 'CLOSED' }
   const enriched = enrichPositions(positions, market)
-  const funding = calculateNetInvestmentByCurrency(fundingTransactions ?? [])
+  const funding = accounting.funding
   const missingFx = funding.datedFlows.filter((flow) => flow.currency !== 'EUR' && flow.fixedRate === null)
   const historicalRates = await fetchHistoricalFxRates(missingFx.map((flow) => ({
     currency: flow.currency,
@@ -271,6 +270,10 @@ export async function portfolio(context: Context) {
     asOf: new Date().toISOString(),
     displayCurrency: 'EUR',
     marketState: market.marketState,
+    accounting: {
+      isReconciled: accountingProjection.issues.length === 0,
+      issueCount: accountingProjection.issues.length,
+    },
     totals: {
       value: decimal(totals.totalValue),
       cost: decimal(totals.totalCost),
@@ -289,7 +292,7 @@ export async function portfolio(context: Context) {
         : position.original_currency === position.moneda
           ? position.precio_actual_nativo
           : position.precio_actual_nativo ?? position.precio_actual
-      const assetTransactions = (fundingTransactions ?? []).filter(
+      const assetTransactions = fundingTransactions.filter(
         (transaction) => transaction.activo_id === position.activo_id,
       )
       const openPurchaseLots = calculateOpenPurchaseLots(assetTransactions)

@@ -1,14 +1,17 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Posicion, Activo, EnrichedPosition, PriceData, PortfolioTotals } from '@/lib/types'
 import { CASH_ASSET_DEFAULTS, displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
-import { calculateOpenPositionBases } from '@/lib/utils/open-cost-basis'
-import { calculateDailyPositionActivity } from '@/lib/utils/daily-position-performance'
+import {
+  applyPortfolioAccounting,
+  calculatePortfolioAccounting,
+  type PortfolioAccountingTransaction,
+} from '@/lib/domain/portfolio/accounting-engine'
 import {
   calculateFixedNetInvestmentEur,
-  calculateNetInvestmentByCurrency,
   historicalFxKey,
 } from '@/lib/domain/portfolio/contributions'
 import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
+import { collectAllPages } from '@/lib/utils/pagination'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
   const supabase = createClient()
@@ -23,37 +26,24 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   if (assetIds.length === 0) return normalizedPositions
 
-  const { data: completedTransactions, error: transactionsError } = await supabase
-    .from('transacciones')
-    .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur')
-    .in('activo_id', assetIds)
-    .eq('estado', 'Completada')
-
-  if (transactionsError) {
-    throw new Error(`Error calculando el coste FIFO de las posiciones: ${transactionsError.message}`)
+  let completedTransactions
+  try {
+    completedTransactions = await collectAllPages((from, to) => supabase
+      .from('transacciones')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur')
+      .in('activo_id', assetIds)
+      .eq('estado', 'Completada')
+      .order('fecha', { ascending: true })
+      .order('created_at', { ascending: true })
+      .range(from, to))
+  } catch (error) {
+    throw new Error(`Error calculando el coste FIFO de las posiciones: ${error instanceof Error ? error.message : 'error desconocido'}`)
   }
 
-  const openBases = calculateOpenPositionBases(completedTransactions ?? [])
-  const dailyActivity = calculateDailyPositionActivity(completedTransactions ?? [])
-  return normalizedPositions.map((position) => {
-    const openBasis = openBases.get(position.activo_id)
-    const activity = dailyActivity.get(position.activo_id)
-    return {
-      ...position,
-      ...(openBasis !== undefined ? {
-        coste_total: openBasis.performanceCost,
-        dinero_invertido: openBasis.investedCost,
-        coste_total_eur_historico: openBasis.performanceCostEur,
-        dinero_invertido_eur_historico: openBasis.investedCostEur,
-      } : {}),
-      ...(activity ? {
-        has_daily_activity: true,
-        daily_net_units: activity.netUnits,
-        daily_net_flow_nativo: activity.netFlowNative,
-        daily_net_flow_eur: activity.netFlowEur,
-      } : {}),
-    }
-  })
+  const accounting = calculatePortfolioAccounting(
+    completedTransactions as PortfolioAccountingTransaction[],
+  )
+  return applyPortfolioAccounting(normalizedPositions, accounting).positions
 }
 
 export async function fetchActivos(): Promise<Activo[]> {
@@ -68,26 +58,23 @@ export async function fetchActivos(): Promise<Activo[]> {
 
 export async function fetchPortfolioFunding(): Promise<number | null> {
   const supabase = createClient()
-  let { data, error } = await supabase
-    .from('transacciones')
-    .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
-    .eq('estado', 'Completada')
-
-  // Allows the web deployment to remain readable while the additive migration
-  // is being applied. Persistence starts automatically as soon as the column exists.
-  let canPersistRates = true
-  if (error?.code === '42703') {
-    canPersistRates = false
-    const fallback = await supabase
+  let data
+  try {
+    data = await collectAllPages((from, to) => supabase
       .from('transacciones')
-      .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, activo:activos(ticker, tipo, moneda)')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
       .eq('estado', 'Completada')
-    data = fallback.data as typeof data
-    error = fallback.error
+      .order('fecha', { ascending: true })
+      .order('created_at', { ascending: true })
+      .range(from, to))
+  } catch (error) {
+    throw new Error(`Error calculando el capital neto aportado: ${error instanceof Error ? error.message : 'error desconocido'}`)
   }
-  if (error) throw new Error(`Error calculando el capital neto aportado: ${error.message}`)
 
-  const funding = calculateNetInvestmentByCurrency(data ?? [])
+  const accounting = calculatePortfolioAccounting(
+    data as PortfolioAccountingTransaction[],
+  )
+  const funding = accounting.funding
   const missingFlows = funding.datedFlows.filter((flow) =>
     flow.currency !== 'EUR' && flow.fixedRate === null && Boolean(flow.date)
   )
@@ -96,7 +83,7 @@ export async function fetchPortfolioFunding(): Promise<number | null> {
     date: flow.date,
   })))
 
-  if (canPersistRates && missingFlows.length > 0) {
+  if (missingFlows.length > 0) {
     const idsByRate = new Map<number, string[]>()
     for (const flow of missingFlows) {
       if (!flow.transactionId) continue
@@ -385,6 +372,7 @@ export function computePortfolioTotals(
     positionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez').length,
     hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => p.valor_actual !== null),
     estimatedPositionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez' && (p.valor_actual === null || p.price_is_stale)).length,
+    accountingIssueCount: positions.filter((p) => p.accounting_unit_mismatch).length,
   }
 }
 
