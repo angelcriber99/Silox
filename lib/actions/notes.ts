@@ -12,7 +12,7 @@ export interface CloudNote {
 }
 
 export async function fetchNotes(): Promise<CloudNote[]> {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as any
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -20,7 +20,6 @@ export async function fetchNotes(): Promise<CloudNote[]> {
   }
 
   const { data, error } = await supabase
-    // @ts-ignore
     .from('user_notes')
     .select('*')
     .order('updated_at', { ascending: false })
@@ -34,7 +33,7 @@ export async function fetchNotes(): Promise<CloudNote[]> {
 }
 
 export async function syncNoteAction(note: CloudNote) {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as any
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -42,7 +41,6 @@ export async function syncNoteAction(note: CloudNote) {
   }
 
   const { error } = await supabase
-    // @ts-ignore
     .from('user_notes')
     .upsert({
       id: note.id,
@@ -59,7 +57,7 @@ export async function syncNoteAction(note: CloudNote) {
 }
 
 export async function deleteNoteAction(id: string) {
-  const supabase = await createClient()
+  const supabase = (await createClient()) as any
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -67,7 +65,6 @@ export async function deleteNoteAction(id: string) {
   }
 
   const { error } = await supabase
-    // @ts-ignore
     .from('user_notes')
     .delete()
     .eq('id', id)
