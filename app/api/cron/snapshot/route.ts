@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
-import { calculateFixedNetInvestmentEur, calculateNetInvestmentByCurrency, historicalFxKey } from '@/lib/domain/portfolio/contributions'
+import { calculateFixedNetInvestmentEur, historicalFxKey } from '@/lib/domain/portfolio/contributions'
 import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
 import { isInvestablePortfolioAsset } from '@/lib/domain/assets/normalization'
 import { fetchMarketPrices } from '@/lib/actions/market'
+import { applyPortfolioAccounting, calculatePortfolioAccounting, type PortfolioAccountingTransaction } from '@/lib/domain/portfolio/accounting-engine'
+import { collectAllPages } from '@/lib/utils/pagination'
 
 export const revalidate = 0
 
@@ -30,15 +32,18 @@ export async function GET(request: Request) {
       { auth: { persistSession: false } }
     )
 
-    const { data: users, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
-    
-    if (usersError || !users) {
-      throw new Error(`Failed to fetch users: ${usersError?.message}`)
+    const users = []
+    for (let page = 1; ; page += 1) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1_000 })
+      if (error) throw new Error(`Failed to fetch users: ${error.message}`)
+      users.push(...data.users)
+      if (data.users.length < 1_000) break
     }
 
     let snapshotsSaved = 0
+    let usersSkippedForReconciliation = 0
 
-    for (const user of users.users) {
+    for (const user of users) {
       const { data: positions } = await supabaseAdmin
         .from('posiciones')
         .select('*')
@@ -46,30 +51,25 @@ export async function GET(request: Request) {
 
       if (!positions || positions.length === 0) continue
 
-      const { data: pendingTxs } = await supabaseAdmin
+      const fundingTransactions = await collectAllPages((from, to) => supabaseAdmin
         .from('transacciones')
-        .select('*, activo:posiciones(*)')
+        .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, estado, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
         .eq('user_id', user.id)
-        .eq('estado', 'PENDIENTE')
+        .eq('estado', 'Completada')
+        .order('fecha', { ascending: true })
+        .order('created_at', { ascending: true })
+        .range(from, to))
+      const accounting = calculatePortfolioAccounting(fundingTransactions as PortfolioAccountingTransaction[])
+      const projection = applyPortfolioAccounting(
+        positions.filter(isInvestablePortfolioAsset),
+        accounting,
+      )
+      if (projection.issues.length > 0) {
+        usersSkippedForReconciliation += 1
+        continue
+      }
 
-      const adjustedPositions = positions.map(pos => {
-        const posPending = pendingTxs?.filter(tx => tx.activo?.ticker === pos.ticker) || []
-        let newUnidades = pos.unidades
-        let newCoste = pos.coste_total
-        
-        for (const tx of posPending) {
-          if (tx.tipo_operacion === 'Compra') {
-            newUnidades -= tx.cantidad
-            newCoste -= (tx.cantidad * tx.precio_unitario)
-          } else if (tx.tipo_operacion === 'Venta') {
-            newUnidades += tx.cantidad
-            newCoste += (tx.cantidad * tx.precio_unitario)
-          }
-        }
-        return { ...pos, unidades: newUnidades, coste_total: newCoste }
-      })
-
-      const visiblePositions = adjustedPositions.filter(isInvestablePortfolioAsset)
+      const visiblePositions = projection.positions
       const tickers = visiblePositions
         .filter((p) => p.unidades > 0)
         .map((p) => p.ticker)
@@ -84,12 +84,7 @@ export async function GET(request: Request) {
       }
 
       const enriched = enrichPositions(visiblePositions, pricePayload)
-      const { data: fundingTransactions } = await supabaseAdmin
-        .from('transacciones')
-        .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
-        .eq('user_id', user.id)
-        .eq('estado', 'Completada')
-      const funding = calculateNetInvestmentByCurrency(fundingTransactions ?? [])
+      const funding = accounting.funding
       const missingFx = funding.datedFlows.filter((flow) => flow.currency !== 'EUR' && flow.fixedRate === null)
       const historicalRates = await fetchHistoricalFxRates(missingFx.map((flow) => ({
         currency: flow.currency,
@@ -121,14 +116,16 @@ export async function GET(request: Request) {
         // Get the last snapshot to prevent saving identical data (0 PnL instante)
         const { data: lastSnapshot } = await supabaseAdmin
           .from('portfolio_history')
-          .select('total_value')
+          .select('total_value, total_invested')
           .eq('user_id', user.id)
           .order('timestamp', { ascending: false })
           .limit(1)
-          .single()
+          .maybeSingle()
 
         // If the value is exactly the same (less than 1 cent difference), skip it
-        if (lastSnapshot && Math.abs(lastSnapshot.total_value - totals.totalValue) < 0.01) {
+        if (lastSnapshot
+          && Math.abs(lastSnapshot.total_value - totals.totalValue) < 0.01
+          && Math.abs(lastSnapshot.total_invested - totals.totalCost) < 0.01) {
           continue
         }
 
@@ -148,7 +145,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, snapshotsSaved })
+    return NextResponse.json({ success: true, snapshotsSaved, usersSkippedForReconciliation })
   } catch (error: unknown) {
     console.error('Cron Snapshot Error:', error)
     return NextResponse.json({

@@ -428,16 +428,15 @@ export async function fetchHistory(): Promise<{ timestamp: string, total_value: 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data, error } = await supabase
-    .from('portfolio_history')
-    .select('timestamp, total_value, total_invested')
-    .eq('user_id', user.id)
-    .order('timestamp', { ascending: true })
-
-  if (error) {
+  try {
+    return await collectAllPages((from, to) => supabase
+      .from('portfolio_history')
+      .select('timestamp, total_value, total_invested')
+      .eq('user_id', user.id)
+      .order('timestamp', { ascending: true })
+      .range(from, to))
+  } catch (error) {
     console.error("Error fetching history:", error)
     return []
   }
-
-  return data ?? []
 }

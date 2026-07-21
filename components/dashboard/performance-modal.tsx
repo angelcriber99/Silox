@@ -281,6 +281,7 @@ export function PerformanceModal({
                     range={timeRange}
                     currentDailyPnl={currentDailyPnl}
                     currentDailyPnlPercent={currentDailyPnlPercent}
+                    timeOffset={timeOffset}
                   />
                 )}
               </section>

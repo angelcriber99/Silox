@@ -81,4 +81,22 @@ describe('portfolio performance history', () => {
     expect(result.profit).toBe(250)
     expect(result.profitPercent).toBeCloseTo(25)
   })
+
+  it('moves daily bars with the selected historical window instead of staying on today', () => {
+    const points = aggregateDailyPnl(buildPerformanceSeries([
+      snapshot('2026-05-25T20:00:00.000Z', 100, 100),
+      snapshot('2026-06-10T20:00:00.000Z', 110, 100),
+      snapshot('2026-06-20T20:00:00.000Z', 120, 100),
+      snapshot('2026-07-10T20:00:00.000Z', 130, 100),
+    ]))
+
+    const priorWindow = filterPerformanceSeries(points, '1M', -1, new Date('2026-07-22T12:00:00Z'))
+      .filter((point) => !point.isBoundary)
+
+    expect(priorWindow.map((point) => point.timestamp.slice(0, 10))).toEqual([
+      '2026-05-25',
+      '2026-06-10',
+      '2026-06-20',
+    ])
+  })
 })

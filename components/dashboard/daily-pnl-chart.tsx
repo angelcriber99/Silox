@@ -59,6 +59,7 @@ interface DailyPnlChartProps {
   currentDailyPnl?: number
   currentDailyPnlPercent?: number
   currentMarketDate?: string
+  timeOffset?: number
 }
 
 export function DailyPnlChart({
@@ -67,6 +68,7 @@ export function DailyPnlChart({
   currentDailyPnl,
   currentDailyPnlPercent,
   currentMarketDate,
+  timeOffset = 0,
 }: DailyPnlChartProps) {
   const { displayCurrency, convert } = useDisplayCurrency()
   const isMonthly = range === '1Y' || range === 'ALL'
@@ -77,7 +79,7 @@ export function DailyPnlChart({
     : aggregateDailyPnl(chartData)
 
   const effectiveMarketDate = currentMarketDate ?? getMarketDateKey(new Date())
-  const plotData = filterPerformanceSeries(aggregatedData, range).filter((point) => !point.isBoundary).map((point) => {
+  const plotData = filterPerformanceSeries(aggregatedData, range, timeOffset).filter((point) => !point.isBoundary).map((point) => {
     const converted = {
       ...point,
       pnl: convert(point.pnl),
