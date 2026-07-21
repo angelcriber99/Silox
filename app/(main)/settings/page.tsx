@@ -27,6 +27,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
+import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
 
 type Tab = 'appearance' | 'security' | 'notifications' | 'integrations' | 'data'
 
@@ -129,6 +130,8 @@ export default function SettingsPage() {
   } = usePreferences()
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [deletePending, setDeletePending] = useState(false)
 
@@ -170,8 +173,60 @@ export default function SettingsPage() {
       window.location.href = "/login"
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "No se pudo borrar la cuenta")
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
     } finally {
       setDeletePending(false)
+    }
+  }
+
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true)
+      toast.loading("Generando archivo CSV...", { id: "export-csv" })
+      
+      const transactions = await fetchAllTransactionsForTax()
+      
+      if (!transactions || transactions.length === 0) {
+        toast.error("No hay transacciones para exportar", { id: "export-csv" })
+        return
+      }
+      
+      const headers = ["ID", "Fecha", "Activo", "Ticker", "Operacion", "Cantidad", "Precio", "Moneda", "Comision", "Estado"]
+      const rows = transactions.map(tx => [
+        tx.id,
+        tx.fecha,
+        `"${tx.activo?.nombre || ''}"`,
+        tx.activo?.ticker || '',
+        tx.tipo_operacion,
+        tx.cantidad,
+        tx.precio_unitario,
+        tx.activo?.moneda || '',
+        tx.comision || 0,
+        tx.estado
+      ])
+      
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(e => e.join(","))
+      ].join("\n")
+      
+      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.setAttribute("href", url)
+      link.setAttribute("download", `movimientos_silox_${new Date().toISOString().split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      
+      toast.success("Exportación completada", { id: "export-csv" })
+    } catch (error) {
+      console.error(error)
+      toast.error("Error al exportar los datos", { id: "export-csv" })
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -613,8 +668,12 @@ export default function SettingsPage() {
                       <h3 className="font-bold text-foreground">Exportar Historial</h3>
                       <p className="text-sm text-muted-foreground mt-1">Descarga todas tus transacciones en formato CSV.</p>
                     </div>
-                    <button onClick={() => toast.success("Exportación iniciada")} className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors">
-                      <Download className="w-4 h-4" /> CSV Export
+                    <button 
+                      onClick={handleExportCSV} 
+                      disabled={isExporting}
+                      className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                    >
+                      {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} CSV Export
                     </button>
                   </div>
                 </div>
