@@ -76,6 +76,20 @@ final class NavigationUITests: XCTestCase {
         }
     }
 
+    func testPortfolioShareCardIsPresentedFromTheNativeToolbar() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-test-authenticated", "-ui-test-fixtures"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons["Compartir cartera"].waitForExistence(timeout: 5))
+        app.buttons["Compartir cartera"].tap()
+
+        XCTAssertTrue(app.navigationBars["Compartir cartera"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Comparte una tarjeta, no una captura"].exists)
+        XCTAssertTrue(app.buttons["Compartir tarjeta"].isEnabled)
+        capture("tarjeta-compartir-cartera")
+    }
+
     func testDeepLinkSelectsSettingsTab() {
         let app = XCUIApplication()
         app.launchArguments += ["-ui-test-authenticated", "-ui-test-deep-link", "silox://settings"]

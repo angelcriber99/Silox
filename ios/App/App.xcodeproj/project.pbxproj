@@ -44,6 +44,7 @@
 		BB24973E096A461D7DF120D8 /* ContractFixtureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B71742447A6BD2331BE3CC3 /* ContractFixtureTests.swift */; };
 		C5E63670846CB56059D40DE7 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA4E2E1ED74A894A95CD7B7 /* DesignSystem.swift */; };
 		C66819B5F84A642A6CD83796 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76989E05CECAD7B8B3C424A7 /* Assets.xcassets */; };
+		CE6693C6BE9E4642DFA903A0 /* PortfolioSharingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB1AFD52432C2677836BC9C /* PortfolioSharingTests.swift */; };
 		D644DD499B51E6BDD8C102DD /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266092BA6835AAD1C7C07A0D /* SignInView.swift */; };
 		D6651672AAB67CE2C1903FCE /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1CE0178B5A172679112FCFF /* DomainModels.swift */; };
 		DBDD579D5A381045FE806B28 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BAD2A9F67301329A9420F8E /* BiometricAuth.swift */; };
@@ -52,6 +53,7 @@
 		EC44712307FA9C2598263492 /* OAuthWebSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04A6F1B8143ADF82E501C1E /* OAuthWebSession.swift */; };
 		F1CCF91BA87BAC6F0D74364A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 14882EE7E68AFD84442C7A6D /* PrivacyInfo.xcprivacy */; };
 		F587B6624F0CE87684337A8B /* ReadCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */; };
+		FBE10F06A86F1A1628B733F8 /* PortfolioSharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893FBEAD74EFE57220460D87 /* PortfolioSharing.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,11 +115,13 @@
 		4A496B104EA03BEF3FD03592 /* Staging.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Staging.xcconfig; sourceTree = "<group>"; };
 		4AA40E7E44AA6C38ECDB78E7 /* SiloxAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxAppIntents.swift; sourceTree = "<group>"; };
 		4FD567DAF9B5570415C58941 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5AB1AFD52432C2677836BC9C /* PortfolioSharingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioSharingTests.swift; sourceTree = "<group>"; };
 		5CB2D6BFC5FA4E5202435128 /* RoutingContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingContractTests.swift; sourceTree = "<group>"; };
 		61C68CA33CD6DBC35EA67090 /* SecureKeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureKeychainStore.swift; sourceTree = "<group>"; };
 		6BB591B320038C0FDA4E27F6 /* SiloxWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiloxWidget.swift; sourceTree = "<group>"; };
 		76989E05CECAD7B8B3C424A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7C2AC2476E9B83F2B7CD0145 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		893FBEAD74EFE57220460D87 /* PortfolioSharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioSharing.swift; sourceTree = "<group>"; };
 		8B71742447A6BD2331BE3CC3 /* ContractFixtureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractFixtureTests.swift; sourceTree = "<group>"; };
 		8CA4E2E1ED74A894A95CD7B7 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		949C1D190D1760AF802F1DF0 /* SiloxTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SiloxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -253,6 +257,7 @@
 				113330F34B21CC3662FC912C /* AdaptiveLogoTileTests.swift */,
 				8B71742447A6BD2331BE3CC3 /* ContractFixtureTests.swift */,
 				371569EDD02FA61FCD5EC01D /* ModelDecodingTests.swift */,
+				5AB1AFD52432C2677836BC9C /* PortfolioSharingTests.swift */,
 				BF00AA6EA708A0A24DC29A77 /* ReadCacheTests.swift */,
 				5CB2D6BFC5FA4E5202435128 /* RoutingContractTests.swift */,
 				E475D55B61A657246221B32E /* SessionStoreTests.swift */,
@@ -313,6 +318,7 @@
 		D23FBC238E2D78516B259273 /* Portfolio */ = {
 			isa = PBXGroup;
 			children = (
+				893FBEAD74EFE57220460D87 /* PortfolioSharing.swift */,
 				31B0E75AF7F19ED1D20610AF /* PortfolioView.swift */,
 			);
 			path = Portfolio;
@@ -569,6 +575,7 @@
 				B733EF1372D395F7EFD29DD3 /* LoadState.swift in Sources */,
 				32F146AAD881123F5656F7BF /* MoreView.swift in Sources */,
 				EC44712307FA9C2598263492 /* OAuthWebSession.swift in Sources */,
+				FBE10F06A86F1A1628B733F8 /* PortfolioSharing.swift in Sources */,
 				3650275793443D9FDF0B5759 /* PortfolioView.swift in Sources */,
 				156C9422768051B4421D82FF /* RadarView.swift in Sources */,
 				244ABEF066408BD23A13779D /* ReadCache.swift in Sources */,
@@ -606,6 +613,7 @@
 				4F768D131542495FF80FF952 /* AdaptiveLogoTileTests.swift in Sources */,
 				BB24973E096A461D7DF120D8 /* ContractFixtureTests.swift in Sources */,
 				91748B7A40388AEF36C0FF4E /* ModelDecodingTests.swift in Sources */,
+				CE6693C6BE9E4642DFA903A0 /* PortfolioSharingTests.swift in Sources */,
 				F587B6624F0CE87684337A8B /* ReadCacheTests.swift in Sources */,
 				1D46FBC537F68A371E4C61A3 /* RoutingContractTests.swift in Sources */,
 				56B450A37DE7ECE3D5D21E55 /* SessionStoreTests.swift in Sources */,

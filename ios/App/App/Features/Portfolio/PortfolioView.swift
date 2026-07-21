@@ -28,7 +28,7 @@ final class PortfolioViewModel: ObservableObject {
     }
 }
 
-private enum PositionSort: String, CaseIterable, Identifiable {
+enum PortfolioPositionSort: String, CaseIterable, Identifiable {
     case day
     case value
 
@@ -40,14 +40,16 @@ private enum PositionSort: String, CaseIterable, Identifiable {
 struct PortfolioView: View {
     @StateObject private var model: PortfolioViewModel
     @AppStorage("hideBalances") private var hideBalances = false
-    @AppStorage("portfolioSort") private var positionSortRaw = PositionSort.day.rawValue
+    @AppStorage("portfolioSort") private var positionSortRaw = PortfolioPositionSort.day.rawValue
     @AppStorage("compactPositions") private var compactPositions = false
     @AppStorage("quantityPrecision") private var quantityPrecision = 4
     @AppStorage("liveRefreshSeconds") private var liveRefreshSeconds = 5
     @AppStorage("showDailyAmount") private var showDailyAmount = true
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var search = ""
+    @State private var sharePresentation: PortfolioSharePresentation?
 
     private let repository: PortfolioRepository
     let onAdd: (String?) -> Void
@@ -90,6 +92,12 @@ struct PortfolioView: View {
                     }
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        presentShareCard(originatedFromScreenshot: false)
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Compartir cartera")
                     Button { onAdd(nil) } label: { Image(systemName: "plus") }
                         .accessibilityLabel("Añadir movimiento")
                     Button { hideBalances.toggle() } label: {
@@ -110,6 +118,13 @@ struct PortfolioView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .siloxPortfolioChanged)) { _ in
                 Task { await model.refresh() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.userDidTakeScreenshotNotification)) { _ in
+                presentShareCard(originatedFromScreenshot: true)
+            }
+            .sheet(item: $sharePresentation) { presentation in
+                PortfolioSharePreviewSheet(presentation: presentation)
+                    .presentationDetents([.large])
             }
         }
     }
@@ -156,6 +171,7 @@ struct PortfolioView: View {
                             }
                         }
                     }
+                    .animation(reduceMotion ? nil : .snappy(duration: 0.34, extraBounce: 0.08), value: visible)
                     .background(SiloxColors.backgroundSecondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -313,14 +329,14 @@ struct PortfolioView: View {
             Spacer()
             Menu {
                 Picker("Orden", selection: Binding(
-                    get: { PositionSort(rawValue: positionSortRaw) ?? .day },
+                    get: { PortfolioPositionSort(rawValue: positionSortRaw) ?? .day },
                     set: { positionSortRaw = $0.rawValue }
                 )) {
-                    ForEach(PositionSort.allCases) { Text($0.title).tag($0) }
+                    ForEach(PortfolioPositionSort.allCases) { Text($0.title).tag($0) }
                 }
             } label: {
                 HStack(spacing: 5) {
-                    Text((PositionSort(rawValue: positionSortRaw) ?? .day).shortTitle)
+                    Text((PortfolioPositionSort(rawValue: positionSortRaw) ?? .day).shortTitle)
                     Image(systemName: "arrow.up.arrow.down")
                 }
                 .font(.caption.weight(.semibold))
@@ -335,26 +351,23 @@ struct PortfolioView: View {
     }
 
     private func visiblePositions(_ positions: [Position]) -> [Position] {
-        let term = search.trimmingCharacters(in: .whitespacesAndNewlines)
-        return positions
-            .filter { position in
-                term.isEmpty
-                    || position.asset.displayName.localizedCaseInsensitiveContains(term)
-                    || position.asset.name.localizedCaseInsensitiveContains(term)
-                    || position.asset.shortLabel.localizedCaseInsensitiveContains(term)
-                    || (position.asset.ticker?.localizedCaseInsensitiveContains(term) ?? false)
-            }
-            .sorted { left, right in
-                if (PositionSort(rawValue: positionSortRaw) ?? .day) == .day {
-                    return abs(left.dailyChange?.amount.decimalValue.doubleValue ?? 0)
-                        > abs(right.dailyChange?.amount.decimalValue.doubleValue ?? 0)
-                }
-                return left.currentValue.amount.decimalValue > right.currentValue.amount.decimalValue
-            }
+        PortfolioPositionPresentation.visiblePositions(
+            positions,
+            search: search,
+            sort: PortfolioPositionSort(rawValue: positionSortRaw) ?? .day
+        )
     }
 
     private func activePositions(_ positions: [Position]) -> [Position] {
         positions.filter { $0.asset.kind != .cash && $0.quantity.decimalValue > 0 }
+    }
+
+    private func presentShareCard(originatedFromScreenshot: Bool) {
+        guard let portfolio = currentPortfolio else { return }
+        sharePresentation = PortfolioSharePresentation(
+            snapshot: PortfolioShareSnapshot(portfolio: portfolio, balancesHidden: hideBalances),
+            originatedFromScreenshot: originatedFromScreenshot
+        )
     }
 }
 
@@ -448,6 +461,7 @@ private struct PositionRow: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(SiloxColors.textPrimary)
                 .monospacedDigit()
+                .contentTransition(.numericText())
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 5) { dailyValue }
                 VStack(alignment: alignment, spacing: 2) { dailyValue }
