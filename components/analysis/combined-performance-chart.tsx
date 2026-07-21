@@ -124,7 +124,7 @@ export function CombinedPerformanceChart({
             data={chartData} 
             margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
             onMouseMove={(data: any) => {
-              if (data?.isTooltipActive && data?.activePayload && data.activePayload.length > 0) {
+              if (data?.activePayload?.[0]?.payload) {
                 setHoveredPoint(data.activePayload[0].payload)
               }
             }}
