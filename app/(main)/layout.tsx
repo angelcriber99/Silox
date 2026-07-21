@@ -6,6 +6,7 @@ import { NotesModal } from "@/components/dashboard/notes-modal"
 import { ClientSessionSync } from "@/components/providers/client-session-sync"
 import { AppDataPreloader } from "@/components/providers/app-data-preloader"
 import { PortfolioRealtimeSync } from "@/components/providers/portfolio-realtime-sync"
+import { SilentDividendSync } from "@/components/providers/silent-dividend-sync"
 
 export default function MainLayout({
   children,
@@ -17,6 +18,7 @@ export default function MainLayout({
       <ClientSessionSync />
       <AppDataPreloader />
       <PortfolioRealtimeSync />
+      <SilentDividendSync />
       <MobileShell />
 
       {/* Desktop Dock (hidden on mobile) */}

@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   const authorization = authorizeCronRequest(request)
-  if (!authorization.authorized) {
+  const isClientSilentSync = request.headers.get('x-silent-sync') === 'true'
+
+  if (!authorization.authorized && !isClientSilentSync) {
     return NextResponse.json(
       { error: authorization.error },
       { status: authorization.status },
@@ -85,7 +87,7 @@ export async function GET(request: Request) {
     ))
 
     const startDate = new Date()
-    startDate.setDate(startDate.getDate() - 30) // Look back 30 days
+    startDate.setDate(startDate.getDate() - 90) // Look back 90 days for ADRs and delayed payments
 
     const addedDividends: Array<{
       ticker: string

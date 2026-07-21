@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
 import { calculateFIFO } from "@/lib/utils/fifo-calculator"
 import { formatCurrency } from "@/lib/utils/formatters"
-import { Scale, TrendingUp, TrendingDown, ArrowLeft, Info, HelpCircle, FileText } from "lucide-react"
+import { Scale, TrendingUp, TrendingDown, ArrowLeft, Info, HelpCircle, FileText, AlertCircle } from "lucide-react"
 import { TaxGuide } from "@/components/tax/tax-guide"
 import { TaxChat } from "@/components/tax/tax-chat"
 import { TaxPdfExport } from "@/components/tax/tax-pdf-export"
@@ -65,16 +65,21 @@ export default function DeclararPage() {
   }, [yearEvents])
 
   const getTotalsForEvents = (events: typeof yearEvents) => {
-    let gains = 0, losses = 0, saleValue = 0, purchaseValue = 0, retOrigen = 0, retDestino = 0
+    let gains = 0, losses = 0, blockedLosses = 0, saleValue = 0, purchaseValue = 0, retOrigen = 0, retDestino = 0
     events.forEach(e => {
-      if (e.gananciaPatrimonial > 0) gains += e.gananciaPatrimonial
-      else losses += Math.abs(e.gananciaPatrimonial)
+      if (e.gananciaPatrimonial > 0) {
+        gains += e.gananciaPatrimonial
+      } else {
+        losses += Math.abs(e.gananciaPatrimonial)
+        blockedLosses += (e.perdidaBloqueada || 0)
+      }
       saleValue += e.ingresoVenta || 0
       purchaseValue += e.costeAdquisicion || 0
       retOrigen += e.retencionOrigen || 0
       retDestino += e.retencionDestino || 0
     })
-    return { gains, losses, net: gains - losses, saleValue, purchaseValue, retOrigen, retDestino }
+    const deductibleLosses = losses - blockedLosses
+    return { gains, losses, blockedLosses, deductibleLosses, net: gains - deductibleLosses, saleValue, purchaseValue, retOrigen, retDestino }
   }
 
   // Calculate totals
@@ -196,14 +201,22 @@ export default function DeclararPage() {
               <div className="bg-card/40 border border-border rounded-xl p-6 backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-muted-foreground mb-2 font-medium">
                   <TrendingDown className="h-5 w-5 text-rose-400" />
-                  Total Pérdidas
+                  Total Pérdidas (Deducibles)
                 </div>
                 <div className="text-3xl font-bold text-foreground tabular-nums">
-                  {formatCurrency(totals.losses)}
+                  {formatCurrency(totals.deductibleLosses)}
                 </div>
-                <p className="text-sm text-muted-foreground/80 mt-2">
-                  Suma de todas las ventas con minusvalía.
-                </p>
+                <div className="flex flex-col gap-1 mt-2">
+                  <p className="text-sm text-muted-foreground/80">
+                    Suma de ventas con minusvalía compensable.
+                  </p>
+                  {totals.blockedLosses > 0 && (
+                    <p className="text-[11px] font-medium text-amber-500/90 flex items-center gap-1.5 mt-1 bg-amber-500/10 px-2.5 py-1.5 rounded-md border border-amber-500/20 w-fit">
+                      <AlertCircle className="h-3 w-3 shrink-0" />
+                      {formatCurrency(totals.blockedLosses)} bloqueadas (Regla 2 meses)
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div
@@ -279,7 +292,7 @@ export default function DeclararPage() {
                   <div className="group relative">
                     <HelpCircle className="h-4 w-4 text-muted-foreground/80 cursor-help" />
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-muted text-xs text-foreground/90 p-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-border">
-                      Este desglose une cada venta con sus correspondientes lotes de compra (FIFO) restando las comisiones aplicables en cada tramo.
+                      Este desglose une cada venta con sus correspondientes lotes de compra (FIFO). También detecta recompras para la Regla de los 2 meses.
                     </div>
                   </div>
                 </h3>
@@ -334,10 +347,21 @@ export default function DeclararPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-muted-foreground align-top">
                               {formatCurrency(e.costeAdquisicion)}
                             </td>
-                            <td className={`px-6 py-4 whitespace-nowrap text-right tabular-nums font-bold align-top ${
-                              isGain ? "text-emerald-400" : "text-rose-400"
-                            }`}>
-                              {isGain ? "+" : ""}{formatCurrency(e.gananciaPatrimonial)}
+                            <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums font-bold align-top">
+                              <div className="flex flex-col items-end">
+                                <span className={isGain ? "text-emerald-400" : "text-rose-400"}>
+                                  {isGain ? "+" : ""}{formatCurrency(e.gananciaPatrimonial)}
+                                </span>
+                                {e.isWashSale && e.perdidaBloqueada && (
+                                  <div className="group relative mt-1 flex items-center justify-end gap-1 text-amber-500/90 text-xs font-semibold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 cursor-help">
+                                    <AlertCircle className="h-3 w-3" />
+                                    <span>{formatCurrency(e.perdidaBloqueada)} bloqueada</span>
+                                    <div className="absolute top-full right-0 mt-2 w-48 bg-muted text-xs text-foreground/90 p-2.5 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-border text-left font-normal whitespace-normal">
+                                      <strong>Regla de los 2 meses:</strong> Has comprado este mismo activo en los 60 días antes o después de la venta, por lo que esta pérdida queda bloqueada hasta que vendas esas acciones.
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         )
