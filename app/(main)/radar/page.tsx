@@ -188,15 +188,23 @@ export default function RadarPage() {
           {data && data.assets.length > 0 && (
             <div className="flex flex-wrap gap-2" aria-label="Filtrar por activo">
               <FilterButton active={selectedTicker === null} onClick={() => setSelectedTicker(null)}>Todos</FilterButton>
-              {data.assets.map((asset) => (
-                <FilterButton
-                  key={asset.id}
-                  active={selectedTicker === asset.ticker}
-                  onClick={() => setSelectedTicker(selectedTicker === asset.ticker ? null : asset.ticker)}
-                >
-                  {asset.ticker.split(".")[0]}
-                </FilterButton>
-              ))}
+              {data.assets.map((asset) => {
+                const displaySymbol = (asset.type === "Fondo Indexado" || asset.type === "Fondo Monetario")
+                  ? (asset.name?.split(' ')[0].toUpperCase() || "FONDO")
+                  : (asset.ticker.length > 6 && asset.name) 
+                    ? asset.name.split(' ')[0].toUpperCase() 
+                    : asset.ticker.split('.')[0]
+
+                return (
+                  <FilterButton
+                    key={asset.id}
+                    active={selectedTicker === asset.ticker}
+                    onClick={() => setSelectedTicker(selectedTicker === asset.ticker ? null : asset.ticker)}
+                  >
+                    {displaySymbol}
+                  </FilterButton>
+                )
+              })}
             </div>
           )}
         </div>

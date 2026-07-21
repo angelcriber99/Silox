@@ -348,21 +348,45 @@ async function _fetchMarketPrices(
       }
 
       const cachedSparkline = sparklineCache.get(ticker)
+      
+      // Mutual funds like MSCI World usually start with 0P and need a suffix like .F on Yahoo Finance
+      let fetchTicker = ticker
+      if (fetchTicker.startsWith('0P') && !fetchTicker.includes('.')) {
+        fetchTicker = `${fetchTicker}.F`
+      }
+
       const chart1dPromise = cachedSparkline && cachedSparkline.expiresAt > Date.now()
         ? Promise.resolve(null)
-        : getYahooFinance().chart(ticker, { period1: d, interval: '1d' }).catch(() => null)
-      const [chart1m, chart1d] = await Promise.all([
-        getYahooFinance().chart(ticker, { interval: '1m', period1: new Date(Date.now() - 24 * 60 * 60 * 1000), includePrePost: true }).catch(() => null),
+        : getYahooFinance().chart(fetchTicker, { period1: d, interval: '1d' }).catch(() => null)
+        
+      let [chart1m, chart1d] = await Promise.all([
+        getYahooFinance().chart(fetchTicker, { interval: '1m', period1: new Date(Date.now() - 24 * 60 * 60 * 1000), includePrePost: true }).catch(() => null),
         chart1dPromise,
       ])
 
+      // Fallback: If chart1m fails (e.g., no intraday data), try getting quote instead of throwing
+      let fallbackQuote = null;
       if (!chart1m) {
-        throw new Error(`Failed to fetch 1m chart for ${ticker}`)
+        fallbackQuote = await getYahooFinance().quote(fetchTicker).catch(() => null)
+        if (!fallbackQuote) {
+          throw new Error(`Failed to fetch market data for ${ticker}`)
+        }
       }
 
-      const meta = chart1m.meta
-      const quotes = (chart1m.quotes as ChartQuote[]) || []
-      
+      let meta: any = chart1m?.meta;
+      let quotes = (chart1m?.quotes as ChartQuote[]) || [];
+
+      if (!chart1m && fallbackQuote) {
+        // Construct a synthetic meta from quote
+        meta = {
+          currency: fallbackQuote.currency,
+          regularMarketPrice: fallbackQuote.regularMarketPrice,
+          regularMarketTime: fallbackQuote.regularMarketTime,
+          exchangeTimezoneName: fallbackQuote.exchangeTimezoneName,
+          chartPreviousClose: fallbackQuote.regularMarketPreviousClose,
+        }
+      }
+
       const yahooCurrency = meta.currency || 'USD'
       const originalCurrency = normalizeYahooCurrency(yahooCurrency)
       const performance = extractMarketPerformance(meta as ChartMeta, quotes, (chart1d?.quotes as ChartQuote[]) || [])
