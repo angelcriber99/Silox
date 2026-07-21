@@ -12,7 +12,7 @@ export interface CloudNote {
 }
 
 export async function fetchNotes(): Promise<CloudNote[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -33,7 +33,7 @@ export async function fetchNotes(): Promise<CloudNote[]> {
 }
 
 export async function syncNoteAction(note: CloudNote) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
@@ -57,7 +57,7 @@ export async function syncNoteAction(note: CloudNote) {
 }
 
 export async function deleteNoteAction(id: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
