@@ -11,11 +11,12 @@ export function SilentDividendSync() {
     if (hasRun.current) return
     hasRun.current = true
 
-    // Fire and forget, completely silent
-    fetch("/api/cron/sync-dividends", {
+    // Fire and forget, completely silent, with cache busting
+    fetch(`/api/cron/sync-dividends?t=${Date.now()}`, {
       headers: {
         "x-silent-sync": "true"
-      }
+      },
+      cache: "no-store"
     }).then(res => res.json())
       .then(data => {
         if (data && data.dividendsAdded && data.dividendsAdded > 0) {
