@@ -191,19 +191,22 @@ export default function SettingsPage() {
         toast.error("No hay transacciones para exportar", { id: "export-csv" })
         return
       }
+
+      // Ordenar por fecha descendente (más recientes primero)
+      const sortedTransactions = [...transactions].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
       
-      const headers = ["ID", "Fecha", "Activo", "Ticker", "Operacion", "Cantidad", "Precio", "Moneda", "Comision", "Estado"]
-      const rows = transactions.map(tx => [
-        tx.id,
-        tx.fecha,
+      const headers = ["Nombre", "ISIN", "Ticker", "Operación", "Fecha", "Cantidad", "Precio", "Comisión", "Moneda", "Estado"]
+      const rows = sortedTransactions.map(tx => [
         `"${tx.activo?.nombre || ''}"`,
+        tx.activo?.isin || '',
         tx.activo?.ticker || '',
         tx.tipo_operacion,
+        tx.fecha,
         tx.cantidad,
         tx.precio_unitario,
-        tx.activo?.moneda || '',
         tx.comision || 0,
-        tx.estado
+        tx.activo?.moneda || '',
+        tx.estado || 'Completada'
       ])
       
       const csvContent = [

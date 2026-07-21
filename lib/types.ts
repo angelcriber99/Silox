@@ -65,6 +65,7 @@ export interface Transaccion {
   created_at: string
   activo?: {
     ticker: string
+    isin: string | null
     nombre: string | null
     tipo: string
     moneda: string
