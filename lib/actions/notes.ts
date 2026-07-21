@@ -30,7 +30,7 @@ export async function fetchNotes(): Promise<CloudNote[]> {
     return []
   }
 
-  return data as CloudNote[]
+  return data as any as CloudNote[]
 }
 
 export async function syncNoteAction(note: CloudNote) {
