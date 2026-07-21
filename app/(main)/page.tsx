@@ -104,7 +104,7 @@ export default function Home() {
                 <div className="flex-shrink-0">
                   <PendingOrders transactions={pendingTxs} />
                 </div>
-                <div className="flex-1 overflow-auto custom-scrollbar">
+                <div className="flex-1 overflow-hidden min-h-0">
                   <PositionsTable
                     positions={positions}
                     loading={isLoading}

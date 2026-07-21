@@ -276,8 +276,8 @@ export function PositionsTable({
 
 
   return (
-    <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden w-full">
-      <CardHeader className="p-4 md:p-5 pb-4 flex flex-col w-full gap-4 border-b border-border/20">
+    <Card className="animate-fade-in stagger-3 bg-card/40 border-border/40 backdrop-blur-md shadow-sm overflow-hidden w-full h-full flex flex-col">
+      <CardHeader className="p-4 md:p-5 pb-4 flex flex-col w-full gap-4 border-b border-border/20 shrink-0">
         {/* TOP ROW: Title, Badges, Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
@@ -382,11 +382,11 @@ export function PositionsTable({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex-1 overflow-auto hide-scrollbar min-h-0 relative">
         {/* Desktop View (Table) */}
-        <div className="hidden md:block overflow-x-auto hide-scrollbar w-full">
-          <Table className="w-full">
-            <TableHeader className="bg-muted/40">
+        <div className="hidden md:block w-full h-full">
+          <Table className="w-full relative">
+            <TableHeader className="bg-muted/40 sticky top-0 z-10 shadow-sm">
               <TableRow className="border-border/50 hover:bg-transparent">
                 {sortableHeader({ label: t('symbol'), sortKeyName: "ticker", className: "pl-4 sm:pl-6" })}
                 <TableHead className="text-muted-foreground/80 hidden md:table-cell">{t('name')}</TableHead>

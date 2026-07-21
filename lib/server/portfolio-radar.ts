@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
+import Parser from 'rss-parser'
 
 export type RadarCertainty = 'confirmed' | 'scheduled' | 'estimated' | 'speculative' | 'manual'
 export type RadarImpact = 'high' | 'medium' | 'low'
@@ -391,6 +392,40 @@ async function loadMarketData(assets: RadarAsset[], now: Date, langCode: string)
     const calendar = summaryResult.status === 'fulfilled' ? summaryResult.value.calendarEvents : undefined
     const news = [newsResult, announcementResult].flatMap((result) =>
       result.status === 'fulfilled' ? result.value.news : [])
+
+    // Add Google News fallback
+    try {
+      const hl = langCode === 'es' ? 'es' : langCode === 'en' ? 'en-US' : langCode === 'fr' ? 'fr' : 'en-US'
+      const gl = langCode === 'es' ? 'ES' : langCode === 'en' ? 'US' : langCode === 'fr' ? 'FR' : 'US'
+      const ceid = langCode === 'es' ? 'ES:es' : langCode === 'en' ? 'US:en' : langCode === 'fr' ? 'FR:fr' : 'US:en'
+      const googleQuery = encodeURIComponent(`"${asset.name.split(' ')[0]}" OR "${asset.ticker.split('.')[0]}" stock`)
+      const rssUrl = `https://news.google.com/rss/search?q=${googleQuery}&hl=${hl}&gl=${gl}&ceid=${ceid}`
+      
+      const parser = new Parser({ timeout: 5000 })
+      const feed = await parser.parseURL(rssUrl).catch(() => null)
+      
+      if (feed && feed.items) {
+        for (const item of feed.items.slice(0, 10)) {
+          if (item.title && item.link && item.pubDate) {
+            const parts = item.title.split(' - ')
+            const publisher = parts.length > 1 ? parts.pop()?.trim() : 'Google News'
+            const title = parts.join(' - ').trim()
+            
+            news.push({
+              uuid: item.guid || item.link,
+              title: title || item.title,
+              publisher: publisher || 'Google News',
+              providerPublishTime: new Date(item.pubDate).getTime(),
+              link: item.link,
+              relatedTickers: [asset.ticker]
+            } as any)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`[Radar] Google News fallback failed for ${asset.ticker}`, e)
+    }
+
     const events: PortfolioRadarEvent[] = []
     const sourceUrl = calendarSourceUrl(asset.ticker)
 
