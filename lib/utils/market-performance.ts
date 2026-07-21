@@ -103,12 +103,12 @@ export function extractMarketPerformance(
   
   // Prefer official meta prices over 1m chart ticks to prevent extreme after-hours volatility bugs
   let currentPrice = meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
-  if (marketState === 'PRE' && meta.preMarketPrice) {
-    currentPrice = meta.preMarketPrice
-  } else if ((marketState === 'POST' || marketState === 'CLOSED') && meta.postMarketPrice) {
-    currentPrice = meta.postMarketPrice
-  } else if (marketState === 'REGULAR' && latestQuote?.close != null) {
-    currentPrice = latestQuote.close
+  if (marketState === 'PRE') {
+    currentPrice = meta.preMarketPrice ?? validQuotes.at(-1)?.close ?? currentPrice
+  } else if ((marketState === 'POST' || marketState === 'CLOSED')) {
+    currentPrice = meta.postMarketPrice ?? validQuotes.at(-1)?.close ?? currentPrice
+  } else if (marketState === 'REGULAR') {
+    currentPrice = latestQuote?.close ?? meta.regularMarketPrice ?? validQuotes.at(-1)?.close ?? null
   }
 
   let dailyBaseline = meta.chartPreviousClose ?? meta.previousClose ?? null
