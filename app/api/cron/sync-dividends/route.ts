@@ -60,9 +60,11 @@ export async function GET(request: Request) {
     const getSharesAtDate = (activoId: string, userId: string, date: Date) => {
       let shares = 0
       const holdingKey = `${userId}:${activoId}`
+      const divDateStr = date.toISOString().split('T')[0]
       for (const tx of transactionsByHolding.get(holdingKey) ?? []) {
-        const txDate = new Date(tx.fecha)
-        if (txDate > date) break
+        // Ex-dividend date rule: you must hold the asset BEFORE the ex-div date. 
+        // Transactions ON or AFTER the ex-div date do not affect eligibility.
+        if (tx.fecha >= divDateStr) break
         if (tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') {
           shares += tx.cantidad
         }
@@ -165,6 +167,39 @@ export async function GET(request: Request) {
               serverLogger.warn('dividends.insert.failed', { assetId: activo.id }, insertError)
             } else {
               registeredDividends.add(`${activo.user_id}:${activo.id}:${divDate.toISOString().split('T')[0]}`)
+              
+              // ADD CASH TRANSACTION SO PORTFOLIO VALUE INCREASES
+              let cashAsset = activos.find(a => a.user_id === activo.user_id && a.ticker === 'CASH')
+              if (!cashAsset) {
+                const { data: newCash } = await supabase.from('activos').insert({
+                  user_id: activo.user_id,
+                  ticker: 'CASH',
+                  moneda: 'EUR',
+                  tipo: 'Liquidez',
+                  estrategia: 'Liquidez',
+                  nombre: 'Efectivo',
+                }).select('id, ticker, user_id, moneda, tipo').single()
+                
+                if (newCash) {
+                  cashAsset = newCash
+                  activos.push(newCash) // Cache it for future iterations
+                }
+              }
+
+              if (cashAsset) {
+                const netAmount = gross - retencionOrigen - retencionDestino
+                await supabase.from('transacciones').insert({
+                  user_id: activo.user_id,
+                  activo_id: cashAsset.id,
+                  tipo_operacion: 'Compra',
+                  cantidad: Number(netAmount.toFixed(2)),
+                  precio_unitario: 1,
+                  fecha: divDate.toISOString().split('T')[0],
+                  estado: 'Completada',
+                  notas: `[REVOLUT_CASH] dividendo (Autocalculado: ${baseTicker})`
+                })
+              }
+
               addedDividends.push({
                 ticker: baseTicker,
                 user_id: activo.user_id,
