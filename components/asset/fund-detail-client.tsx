@@ -520,7 +520,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                       )}
                     </td>
                     <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
-                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda, position.tipo === "Fondo Indexado" ? 4 : 2)}</td>
                     <td className="px-5 py-4 text-right tabular-nums font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
                     <td className="px-5 py-4 text-right tabular-nums text-muted-foreground/80">
                       {tx.comision > 0 ? formatCurrency(tx.comision, position.moneda) : "—"}

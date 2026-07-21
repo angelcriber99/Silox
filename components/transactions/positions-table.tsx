@@ -115,12 +115,15 @@ function LivePrice({
   value, 
   currency, 
   hideBalances,
-  isStale 
+  isStale,
+  decimals
+
 }: { 
   value: number | null;
   currency?: string;
   hideBalances: boolean;
   isStale?: boolean;
+  decimals?: number;
 }) {
   const [flash, setFlash] = useState<'up'|'down'|null>(null);
   const prevValue = useRef(value);
@@ -157,7 +160,7 @@ function LivePrice({
         className={`${baseClasses} ${flash === 'down' ? 'animate-pulse' : ''}`}
         style={flashStyle}
       >
-        {formatCurrency(value, currency || 'EUR')}
+        {formatCurrency(value, currency || 'EUR', decimals)}
       </span>
       <div className="w-1.5 h-1.5 shrink-0 flex items-center justify-center">
         {isStale && (
@@ -264,7 +267,7 @@ const PositionRow = memo(function PositionRow({
       </TableCell>
       <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden lg:table-cell ${cellPadding}`}>
         {p.precio_medio > 0
-          ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda))
+          ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda, p.tipo === "Fondo Indexado" ? 4 : 2))
           : "—"}
       </TableCell>
       <TableCell className={`text-right tabular-nums ${cellPadding}`}>
@@ -273,6 +276,7 @@ const PositionRow = memo(function PositionRow({
           currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
           hideBalances={hideBalances}
           isStale={p.price_is_stale}
+          decimals={p.tipo === "Fondo Indexado" ? 4 : 2}
         />
       </TableCell>
       <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>

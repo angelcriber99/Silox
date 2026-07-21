@@ -223,7 +223,7 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
                       )}
                     </td>
                     <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{Number(tx.cantidad).toFixed(6)}</td>
-                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda, position.tipo === "Fondo Indexado" ? 4 : 2)}</td>
                     <td className="px-5 py-4 text-right">
                       {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
                         <div className="flex flex-col items-end">

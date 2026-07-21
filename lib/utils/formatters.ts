@@ -1,12 +1,12 @@
 import { format, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-export function formatCurrency(value: number, currency = 'EUR'): string {
+export function formatCurrency(value: number, currency = 'EUR', decimals = 2): string {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(value)
 }
 

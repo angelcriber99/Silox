@@ -99,11 +99,11 @@ export function PurchaseLotsCard({ position, transactions }: PurchaseLotsCardPro
                   <div className="flex justify-between gap-3 md:block">
                     <span className="text-xs text-muted-foreground">Precio de compra</span>
                     <p className="font-medium tabular-nums text-foreground">
-                      {formatCurrency(lot.purchasePrice, position.moneda)}
+                      {formatCurrency(lot.purchasePrice, position.moneda, position.tipo === "Fondo Indexado" ? 4 : 2)}
                     </p>
                     {lot.commission > 0 && (
                       <p className="text-[11px] text-muted-foreground">
-                        Coste con comisión: {formatCurrency(lot.performanceUnitCost, position.moneda)}
+                        Coste con comisión: {formatCurrency(lot.performanceUnitCost, position.moneda, position.tipo === "Fondo Indexado" ? 4 : 2)}
                       </p>
                     )}
                   </div>

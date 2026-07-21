@@ -194,65 +194,62 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
           <StockExtendedStats ticker={position.ticker} moneda={position.moneda} precioActual={position.precio_actual_nativo ?? position.precio_actual} />
         </div>
 
-        {/* ═══════════ HISTORIAL DE TRANSACCIONES Y ALERTAS ═══════════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 animate-fade-in stagger-4">
-          <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-muted-foreground" />
-              Operaciones Recientes
-            </h2>
-            <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
-                  <tr>
-                    <th className="px-5 py-4">Fecha</th>
-                    <th className="px-5 py-4">Tipo</th>
-                    <th className="px-5 py-4 text-right">Acciones</th>
-                    <th className="px-5 py-4 text-right">Precio</th>
-                    <th className="px-5 py-4 text-right">Rendimiento</th>
-                    <th className="px-5 py-4 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/50">
-                  {txTableData.slice().reverse().map((tx) => (
-                    <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
-                        {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                          {tx.tipo_operacion}
+        {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
+        <div className="mb-10 animate-fade-in stagger-4">
+          <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-muted-foreground" />
+            Operaciones Recientes
+          </h2>
+          <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
+                <tr>
+                  <th className="px-5 py-4">Fecha</th>
+                  <th className="px-5 py-4">Tipo</th>
+                  <th className="px-5 py-4 text-right">Acciones</th>
+                  <th className="px-5 py-4 text-right">Precio</th>
+                  <th className="px-5 py-4 text-right">Rendimiento</th>
+                  <th className="px-5 py-4 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/50">
+                {txTableData.slice().reverse().map((tx) => (
+                  <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
+                      {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                        {tx.tipo_operacion}
+                      </span>
+                      {tx.estado === 'Pendiente' && (
+                        <span className="ml-1 inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          Pendiente
                         </span>
-                        {tx.estado === 'Pendiente' && (
-                          <span className="ml-1 inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                            Pendiente
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
+                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda, position.tipo === "Fondo Indexado" ? 4 : 2)}</td>
+                    <td className="px-5 py-4 text-right">
+                      {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
+                        <div className="flex flex-col items-end">
+                          <span className={`tabular-nums font-medium ${tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotalEur ?? tx.pnlTotal, 'EUR')}
                           </span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
-                      <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda)}</td>
-                      <td className="px-5 py-4 text-right">
-                        {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
-                          <div className="flex flex-col items-end">
-                            <span className={`tabular-nums font-medium ${tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                              {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotalEur ?? tx.pnlTotal, 'EUR')}
-                            </span>
-                            <span className={`text-[10px] tabular-nums ${tx.pnlPct >= 0 ? "text-emerald-500/70" : "text-rose-500/70"}`}>
-                              {tx.pnlPct >= 0 ? "+" : ""}{tx.pnlPct.toFixed(2)}%
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground/50">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 text-right tabular-nums font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          <span className={`text-[10px] tabular-nums ${tx.pnlPct >= 0 ? "text-emerald-500/70" : "text-rose-500/70"}`}>
+                            {tx.pnlPct >= 0 ? "+" : ""}{tx.pnlPct.toFixed(2)}%
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right tabular-nums font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-
         </div>
 
         {/* ═══════════ NOTICIAS RELEVANTES ═══════════ */}
