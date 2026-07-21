@@ -36,7 +36,7 @@ final class NavigationUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Añadir movimiento"].waitForExistence(timeout: 5))
         app.buttons["Añadir movimiento"].tap()
 
-        XCTAssertTrue(app.navigationBars["Añadir movimiento"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Nuevo movimiento"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["Crear activo"].exists)
         XCTAssertFalse(app.textFields["ID del activo (opcional)"].exists)
     }
@@ -56,9 +56,9 @@ final class NavigationUITests: XCTestCase {
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["Añadir movimiento"].tap()
-        XCTAssertTrue(app.navigationBars["Añadir movimiento"].waitForExistence(timeout: 3))
-        app.buttons["Otros movimientos"].tap()
+        XCTAssertTrue(app.navigationBars["Nuevo movimiento"].waitForExistence(timeout: 3))
         app.buttons["Dividendo"].tap()
+        app.buttons["Comisiones, impuestos y más"].tap()
         XCTAssertTrue(app.staticTexts["Retención en origen"].exists)
         XCTAssertTrue(app.staticTexts["Retención en destino"].exists)
         capture("dividendo-retenciones-efectivo")
@@ -115,8 +115,8 @@ final class NavigationUITests: XCTestCase {
         app.launchArguments += ["-ui-test-authenticated", "-ui-test-deep-link", "silox://transactions/add"]
         app.launch()
 
-        XCTAssertTrue(app.navigationBars["Añadir movimiento"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Guardar"].exists)
+        XCTAssertTrue(app.navigationBars["Nuevo movimiento"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Registrar compra"].exists)
     }
 
     func testAssetDeepLinkResolvesTickerIntoNativeDetail() {

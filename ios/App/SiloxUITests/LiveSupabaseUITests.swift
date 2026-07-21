@@ -17,7 +17,7 @@ final class LiveSupabaseUITests: XCTestCase {
 
         XCTAssertTrue(app.navigationBars["Cartera"].waitForExistence(timeout: 5))
         app.buttons["Añadir"].tap()
-        XCTAssertTrue(app.navigationBars["Añadir movimiento"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Nuevo movimiento"].waitForExistence(timeout: 5))
         capture("04-anadir-movimiento")
         app.buttons["Crear activo"].tap()
         XCTAssertTrue(app.navigationBars["Nuevo activo"].waitForExistence(timeout: 5))
@@ -29,7 +29,7 @@ final class LiveSupabaseUITests: XCTestCase {
         app.textFields["Nombre (opcional)"].typeText("Microsoft")
         app.navigationBars["Nuevo activo"].buttons["Crear"].tap()
 
-        XCTAssertTrue(app.navigationBars["Añadir movimiento"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.navigationBars["Nuevo movimiento"].waitForExistence(timeout: 12))
         XCTAssertFalse(app.staticTexts["No hay activos"].exists)
         capture("06-activo-creado-y-seleccionado")
     }
