@@ -9,6 +9,7 @@
     "lint": "next lint",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
+    "tauri": "tauri",
     "test": "vitest run",
     "ios:sync": "cd ios/App && xcodegen generate",
     "ios:open": "open ios/App/App.xcodeproj",
