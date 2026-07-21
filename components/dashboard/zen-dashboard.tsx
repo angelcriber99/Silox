@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useEffect, useRef } from "react"
 import type { EnrichedPosition } from "@/lib/types"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatPercent } from "@/lib/utils/formatters"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 import { computePortfolioTotals } from "@/lib/api/assets"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePreferences } from "@/lib/stores/use-preferences"
@@ -64,6 +65,7 @@ function ZenLiveValue({
 export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
   const t = useTranslations("Dashboard")
   const { setZenMode } = usePreferences()
+  const { format: formatDisplay } = useDisplayCurrency()
   const totals = useMemo(() => computePortfolioTotals(positions), [positions])
   const [time, setTime] = useState(new Date())
   const [memeMode, setMemeMode] = useState(false)
@@ -254,7 +256,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
             {memeMode ? "🚀 TO THE MOON PORTFOLIO 🚀" : "Valor del Portfolio"}
           </p>
           <h1 className={`text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold tabular-nums tracking-tighter leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'} ${memeMode ? 'drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]' : ''}`}>
-            <ZenLiveValue value={totals.totalValue} formatter={formatCurrency} glow={true} />
+            <ZenLiveValue value={totals.totalValue} formatter={formatDisplay} glow={true} />
           </h1>
         </motion.div>
 
@@ -269,7 +271,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
             {isPositive ? <TrendingUp className="w-6 h-6 md:w-8 md:h-8" /> : <TrendingDown className="w-6 h-6 md:w-8 md:h-8" />}
             <ZenLiveValue
               value={totals.totalPnl24h}
-              formatter={(v) => `${v >= 0 ? "+" : ""}${formatCurrency(v)}`}
+              formatter={(v) => `${v >= 0 ? "+" : ""}${formatDisplay(v)}`}
               glow={true}
             />
           </div>
@@ -390,7 +392,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
                         </span>
                       </div>
                       <span className={`text-[12px] font-medium tabular-nums w-[80px] text-right ${isPosPositive ? "text-emerald-400/70" : "text-rose-400/70"}`}>
-                        {pnl24h >= 0 ? "+" : ""}{formatCurrency(pnl24h)}
+                        {pnl24h >= 0 ? "+" : ""}{formatDisplay(pnl24h)}
                       </span>
                     </div>
                   </motion.div>

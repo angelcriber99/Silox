@@ -3,12 +3,12 @@
 import { useMemo, useEffect, useState, useRef } from "react"
 import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { FundHoldingsResponse } from "@/lib/actions/market-data"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { Loader2, Wallet, Globe2, Briefcase, Lightbulb, Activity } from "lucide-react"
+import { Loader2, Wallet, Globe2, Briefcase, Lightbulb } from "lucide-react"
 import { useHistory } from "@/lib/hooks/use-portfolio"
 import { buildPerformanceSeries, filterPerformanceSeries, aggregateDailyPnl, type PerformanceRange } from "@/lib/utils/performance-history"
 import { CombinedPerformanceChart } from "./combined-performance-chart"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 // Theme colors
 const COLORS = [
@@ -34,6 +34,7 @@ interface DistributionItem extends DistributionAsset {
 
 function DistributionRow({ item, totalValue, index }: { item: DistributionItem, totalValue: number, index: number }) {
   const [expanded, setExpanded] = useState(false);
+  const { format: formatDisplay } = useDisplayCurrency()
   const weight = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
 
   return (
@@ -47,7 +48,7 @@ function DistributionRow({ item, totalValue, index }: { item: DistributionItem, 
           {item.name}
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-muted-foreground tabular-nums hidden sm:inline-block">{formatCurrency(item.value)}</span>
+          <span className="text-xs font-medium text-muted-foreground tabular-nums hidden sm:inline-block">{formatDisplay(item.value)}</span>
           <span className="font-bold text-foreground tabular-nums w-12 text-right">{weight.toFixed(1)}%</span>
         </div>
       </div>
@@ -69,7 +70,7 @@ function DistributionRow({ item, totalValue, index }: { item: DistributionItem, 
               <div key={`${asset.name}-${asset.value}`} className="flex items-center justify-between text-xs">
                 <span className="font-medium text-muted-foreground truncate max-w-[140px]" title={asset.name}>{asset.name}</span>
                 <span className="tabular-nums text-muted-foreground whitespace-nowrap ml-2 flex items-center gap-2">
-                  {formatCurrency(asset.value)}
+                  {formatDisplay(asset.value)}
                   <span className="text-foreground font-semibold w-8 text-right">{assetWeight.toFixed(1)}%</span>
                 </span>
               </div>
@@ -108,6 +109,7 @@ function translateAssetClass(key: string): string {
 }
 
 export function ComprehensiveAnalysis() {
+  const { format: formatDisplay } = useDisplayCurrency()
   const { positions, totals, isLoading: portfolioLoading } = usePortfolioContext()
   const { data: snapshots = [] } = useHistory()
   const [timeRange, setTimeRange] = useState<PerformanceRange>("1Y")
@@ -513,7 +515,7 @@ export function ComprehensiveAnalysis() {
                       return (
                         <div className="bg-card border border-border/50 px-3 py-2 rounded-lg shadow-xl backdrop-blur-md">
                           <p className="text-sm font-bold text-foreground">{payload[0].payload.name}</p>
-                          <p className="text-sm font-bold text-primary tabular-nums mt-0.5">{formatCurrency(payload[0].value as number)}</p>
+                          <p className="text-sm font-bold text-primary tabular-nums mt-0.5">{formatDisplay(payload[0].value as number)}</p>
                         </div>
                       )
                     }

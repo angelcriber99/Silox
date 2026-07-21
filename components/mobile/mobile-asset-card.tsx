@@ -10,6 +10,7 @@ import { useQuickAdd } from "@/lib/stores/use-quick-add"
 import type { EnrichedPosition } from "@/lib/types"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { hapticFeedback } from "@/lib/utils/haptics"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface MobileAssetCardProps {
   position: EnrichedPosition
@@ -23,6 +24,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   performanceMode,
 }: MobileAssetCardProps) {
   const { hideBalances } = usePreferences()
+  const { format: formatDisplay } = useDisplayCurrency()
   const { openWithAsset } = useQuickAdd()
   const visibleChange = performanceMode === "session"
     ? position.change_percent_24h ?? 0
@@ -77,7 +79,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
 
           <div className="shrink-0 text-right">
             <p className="text-sm font-semibold tabular-nums">
-              {hideBalances ? "••••" : formatCurrency(positionValue)}
+              {hideBalances ? "••••" : formatDisplay(positionValue)}
             </p>
             <div className={`mt-1 flex items-center justify-end gap-1.5 text-xs font-semibold tabular-nums ${changePositive ? "text-emerald-500" : "text-rose-500"}`}>
               <span>{hideBalances ? "••" : formatPercent(visibleChange)}</span>
@@ -86,7 +88,7 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
               </span>
             </div>
             <p className="mt-0.5 text-[9px] tabular-nums text-muted-foreground">
-              {hideBalances ? "••" : `${dayAmount >= 0 ? "+" : ""}${formatCurrency(dayAmount)} hoy`}
+              {hideBalances ? "••" : `${dayAmount >= 0 ? "+" : ""}${formatDisplay(dayAmount)} hoy`}
               <span aria-hidden="true"> · </span>
               <span className={totalChange >= 0 ? "text-emerald-500/75" : "text-rose-500/75"}>
                 {hideBalances ? "••" : `${formatPercent(totalChange)} total`}

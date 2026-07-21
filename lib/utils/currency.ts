@@ -19,6 +19,29 @@ export function convertToEur(
   return amount / rate
 }
 
+/**
+ * Converts between any two supported currencies through EUR.
+ * Rates use the market convention stored by Silox: foreign units per 1 EUR.
+ * When a rate is unavailable we keep the amount and its source currency rather
+ * than silently applying a made-up exchange rate.
+ */
+export function convertCurrency(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rates: FxRatesToEur,
+): number | null {
+  const from = fromCurrency.toUpperCase()
+  const to = toCurrency.toUpperCase()
+  if (from === to) return amount
+
+  const fromRate = from === 'EUR' ? 1 : rates[from]
+  const toRate = to === 'EUR' ? 1 : rates[to]
+  if (!fromRate || fromRate <= 0 || !toRate || toRate <= 0) return null
+
+  return (amount / fromRate) * toRate
+}
+
 export function convertSeriesToEur(
   values: number[],
   fromCurrency: string,

@@ -3,8 +3,8 @@ import { useState, useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowLeft, TrendingUp, TrendingDown, Wallet, BarChart3, Layers, Activity,
-  Calculator, History, Target, Sparkles, PiggyBank, CalendarDays, Clock,
-  Zap, Award, LineChart as LineChartIcon, DollarSign
+  Calculator, Target, Sparkles, CalendarDays, Clock,
+  Zap, Award, DollarSign
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +28,7 @@ import { MarketStats } from "./detail/market-stats"
 import { TraspasoModal } from "@/components/transactions/traspaso-modal"
 import { ArrowRightLeft } from "lucide-react"
 import { PurchaseLotsCard } from "./detail/purchase-lots-card"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 const AssetEvolutionChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetEvolutionChart), { ssr: false })
 const AssetCapitalDonut = dynamic(() => import('./detail/asset-charts').then(m => m.AssetCapitalDonut), { ssr: false })
@@ -63,10 +64,9 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
     evolutionData,
     monthlyContributionsData,
     stats,
-    operacionesDonut,
     capitalDonut,
-    txTableData
   } = useAssetCalculations(position, transactions)
+  const { format: formatDisplay } = useDisplayCurrency()
 
   // ── Simulador Interés Compuesto ──
   const simulationData = useMemo(() => {
@@ -221,14 +221,14 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in stagger-1">
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual ?? 0, 'EUR')}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatDisplay(position.valor_actual ?? 0)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
               <Wallet className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Total Invertido</span>
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums">{formatCurrency(position.coste_total, 'EUR')}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatDisplay(position.coste_total)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
@@ -236,7 +236,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <span className="text-xs font-medium uppercase tracking-wider">Ganado por Mercado</span>
             </div>
             <p className={`text-2xl font-bold tabular-nums ${(position.pnl ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatCurrency(position.pnl ?? 0, 'EUR')}
+              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatDisplay(position.pnl ?? 0)}
             </p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
@@ -486,77 +486,6 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
           </Card>
         )}
 
-
-        {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
-        <div className="animate-fade-in stagger-4">
-          <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-muted-foreground" />
-            Historial de Transacciones
-          </h2>
-          <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
-                <tr>
-                  <th className="px-5 py-4">Fecha</th>
-                  <th className="px-5 py-4">Tipo</th>
-                  <th className="px-5 py-4 text-right">Unidades</th>
-                  <th className="px-5 py-4 text-right">Precio</th>
-                  <th className="px-5 py-4 text-right">Total</th>
-                  <th className="px-5 py-4 text-right">Comisión</th>
-                  <th className="px-5 py-4 text-right">Rendimiento</th>
-                  <th className="px-5 py-4 text-right">Acumulado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/50">
-                {txTableData.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
-                      {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                        {tx.tipo_operacion}
-                      </span>
-                      {tx.estado === 'Pendiente' && (
-                        <span className="ml-1 inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                          Pendiente
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
-                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda, position.tipo === "Fondo Indexado" ? 4 : 2)}</td>
-                    <td className="px-5 py-4 text-right tabular-nums font-medium text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
-                    <td className="px-5 py-4 text-right tabular-nums text-muted-foreground/80">
-                      {tx.comision > 0 ? formatCurrency(tx.comision, position.moneda) : "—"}
-                    </td>
-                    <td className="px-5 py-4 text-right tabular-nums">
-                      {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
-                        <div className="flex flex-col items-end">
-                          <span className={`tabular-nums font-medium ${tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotalEur ?? tx.pnlTotal, 'EUR')}
-                          </span>
-                          <span className={`text-[10px] tabular-nums ${tx.pnlPct >= 0 ? "text-emerald-500/70" : "text-rose-500/70"}`}>
-                            {tx.pnlPct >= 0 ? "+" : ""}{tx.pnlPct.toFixed(2)}%
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground/50">—</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">{formatCurrency(tx.accumulated, position.moneda)}</td>
-                  </tr>
-                ))}
-                {transactions.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="px-5 py-8 text-center text-muted-foreground/80">
-                      No hay transacciones para este activo.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
         {/* ═══════════ NOTICIAS RELEVANTES ═══════════ */}
         <div className="mt-10 animate-fade-in stagger-5">

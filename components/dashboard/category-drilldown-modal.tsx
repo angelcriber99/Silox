@@ -7,9 +7,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import type { EnrichedPosition } from "@/lib/types"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatPercent } from "@/lib/utils/formatters"
 import Link from "next/link"
 import { Layers, ChevronRight, TrendingUp, TrendingDown } from "lucide-react"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface CategoryDrilldownModalProps {
   open: boolean
@@ -30,6 +31,7 @@ export function CategoryDrilldownModal({
   groupBy,
   hideBalances
 }: CategoryDrilldownModalProps) {
+  const { format: formatDisplay } = useDisplayCurrency()
 
   const categoryPositions = positions.filter(p => {
     const key = groupBy === "tipo" ? p.tipo : p.estrategia
@@ -53,7 +55,7 @@ export function CategoryDrilldownModal({
           <div className="mt-4 flex flex-col gap-3">
             <div className="flex items-baseline gap-2">
               <span className="font-semibold text-foreground text-3xl tracking-tight">
-                {hideBalances ? "****" : formatCurrency(totalValue)}
+                {hideBalances ? "****" : formatDisplay(totalValue)}
               </span>
               <span className="text-sm text-muted-foreground font-medium">Total en activos</span>
             </div>
@@ -62,14 +64,14 @@ export function CategoryDrilldownModal({
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Invertido</span>
                 <span className="font-medium text-sm text-foreground">
-                  {hideBalances ? "****" : formatCurrency(totalCost)}
+                  {hideBalances ? "****" : formatDisplay(totalCost)}
                 </span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ganado (Total)</span>
                 <div className="flex items-center gap-1.5">
                   <span className={`font-medium text-sm ${isPnlPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {hideBalances ? "****" : `${isPnlPositive ? '+' : ''}${formatCurrency(totalPnl)}`}
+                    {hideBalances ? "****" : `${isPnlPositive ? '+' : ''}${formatDisplay(totalPnl)}`}
                   </span>
                   {!hideBalances && (
                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isPnlPositive ? 'bg-emerald-400/10 text-emerald-400' : 'bg-rose-400/10 text-rose-400'}`}>
@@ -107,7 +109,7 @@ export function CategoryDrilldownModal({
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end">
                       <span className="font-medium text-foreground">
-                        {hideBalances ? "****" : formatCurrency(value)}
+                        {hideBalances ? "****" : formatDisplay(value)}
                       </span>
                       {p.change_percent_24h !== null && p.change_percent_24h !== undefined && (
                         <div className={`text-[10px] font-medium flex items-center gap-0.5 ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>

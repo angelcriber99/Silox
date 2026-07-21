@@ -10,6 +10,7 @@ interface AnimatedNumberProps {
   className?: string
   hide?: boolean
   prefix?: string
+  currency?: string
 }
 
 export function AnimatedNumber({
@@ -17,7 +18,8 @@ export function AnimatedNumber({
   format = "none",
   className,
   hide = false,
-  prefix = ""
+  prefix = "",
+  currency = "EUR",
 }: AnimatedNumberProps) {
   const ref = useRef<HTMLSpanElement>(null)
   const motionValue = useMotionValue(0)
@@ -50,16 +52,16 @@ export function AnimatedNumber({
 
         let formattedStr = latest.toFixed(2)
         if (format === "currency") {
-          formattedStr = formatCurrency(latest)
+          formattedStr = formatCurrency(latest, currency)
         } else if (format === "percent") {
           formattedStr = formatPercent(latest)
         } else if (format === "pnl") {
-          formattedStr = formatPnl(latest)
+          formattedStr = formatPnl(latest, currency)
         }
         ref.current.textContent = prefix + formattedStr
       }
     })
-  }, [springValue, format, hide, prefix])
+  }, [springValue, format, hide, prefix, currency])
 
   // Initial render (fallback)
   let initial = "0"

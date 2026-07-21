@@ -10,7 +10,7 @@ import {
   Moon, Sun, Monitor, Palette, Eye, EyeOff, Bell,
   Volume2, Shield, Download, CreditCard, Link as LinkIcon,
   Smartphone, Fingerprint, Zap, ChevronRight, LogOut, Check, Settings,
-  AlertTriangle, Loader2, Trash2
+  AlertTriangle, Loader2, Trash2, CircleDollarSign
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -157,6 +157,7 @@ export default function SettingsPage() {
 
   const { 
     language, setLanguage,
+    displayCurrency, setDisplayCurrency,
     themePreset, setThemePreset,
     zenMode, setZenMode,
     accentColor, setAccentColor,
@@ -300,6 +301,27 @@ export default function SettingsPage() {
                 <div className="flex bg-muted/50 p-1 rounded-xl">
                   <button onClick={() => setTheme('light')} className={`px-3 py-1 text-sm font-semibold rounded-lg ${theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>Claro</button>
                   <button onClick={() => setTheme('dark')} className={`px-3 py-1 text-sm font-semibold rounded-lg ${theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>Oscuro</button>
+                </div>
+              </div>
+              <div className="p-4 flex items-center justify-between bg-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><CircleDollarSign className="w-5 h-5" /></div>
+                  <div>
+                    <span className="font-semibold text-[15px]">Moneda de visualización</span>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Cartera, ganancias y rendimiento</p>
+                  </div>
+                </div>
+                <div className="flex bg-muted/50 p-1 rounded-xl" role="group" aria-label="Moneda de visualización">
+                  {(['EUR', 'USD'] as const).map((currency) => (
+                    <button
+                      key={currency}
+                      type="button"
+                      onClick={() => setDisplayCurrency(currency)}
+                      className={`px-3 py-1 text-sm font-semibold rounded-lg ${displayCurrency === currency ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                    >
+                      {currency === 'EUR' ? '€ EUR' : '$ USD'}
+                    </button>
+                  ))}
                 </div>
               </div>
                 <div className="p-4 flex items-center justify-between bg-card">
@@ -470,6 +492,27 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Moneda de visualización</label>
+                    <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border/40 bg-card/40 p-2">
+                      {(['EUR', 'USD'] as const).map((currency) => (
+                        <button
+                          key={currency}
+                          type="button"
+                          onClick={() => setDisplayCurrency(currency)}
+                          aria-pressed={displayCurrency === currency}
+                          className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${displayCurrency === currency ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'}`}
+                        >
+                          <CircleDollarSign className="h-4 w-4" />
+                          {currency === 'EUR' ? 'Euro · EUR' : 'Dólar · USD'}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="px-2 text-xs leading-relaxed text-muted-foreground">
+                      Cambia cartera, ganancias e importes consolidados. Los precios de compra y cotizaciones permanecen en la moneda original del activo.
+                    </p>
+                  </div>
+
                   {/* Theme */}
                   <div className="space-y-3">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Tema de la aplicación</label>

@@ -16,7 +16,8 @@ import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useQuickAdd } from "@/lib/stores/use-quick-add"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatPercent } from "@/lib/utils/formatters"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface MobileDashboardProps {
   positions: EnrichedPosition[]
@@ -63,6 +64,7 @@ export function MobileDashboard({
   pendingCount = 0,
 }: MobileDashboardProps) {
   const { hideBalances, setHideBalances } = usePreferences()
+  const { format: formatDisplay } = useDisplayCurrency()
   const { openEmpty } = useQuickAdd()
   const [search, setSearch] = useState("")
   const [sortMode, setSortMode] = useState<SortMode>("value")
@@ -153,7 +155,7 @@ export function MobileDashboard({
           </div>
 
           <p className="mt-2 truncate text-[34px] font-bold leading-none tracking-[-0.045em] tabular-nums">
-            {isLoading || hideBalances ? "••••••" : formatCurrency(totals.totalValue)}
+            {isLoading || hideBalances ? "••••••" : formatDisplay(totals.totalValue)}
           </p>
 
           <div className="mt-4 flex rounded-xl bg-muted/70 p-1" aria-label="Periodo del rendimiento">
@@ -172,7 +174,7 @@ export function MobileDashboard({
               </p>
               <div className={`mt-1 flex items-baseline gap-2 font-semibold tabular-nums ${performancePositive ? "text-emerald-500" : "text-rose-500"}`}>
                 <span className="text-base">
-                  {hideBalances ? "••••" : `${performancePositive ? "+" : ""}${formatCurrency(performanceAmount)}`}
+                  {hideBalances ? "••••" : `${performancePositive ? "+" : ""}${formatDisplay(performanceAmount)}`}
                 </span>
                 <span className="text-sm">{hideBalances ? "••" : formatPercent(performancePercent)}</span>
               </div>
@@ -180,10 +182,10 @@ export function MobileDashboard({
           </div>
 
           <div className="mt-4 grid grid-cols-3 border-t border-border/60 pt-3">
-            <Metric label="Aportado neto" value={hideBalances ? "••••" : formatCurrency(totals.totalCost)} />
+            <Metric label="Aportado neto" value={hideBalances ? "••••" : formatDisplay(totals.totalCost)} />
             <Metric
               label="P&L total"
-              value={hideBalances ? "••••" : `${totalPositive ? "+" : ""}${formatCurrency(totals.totalPnl)}`}
+              value={hideBalances ? "••••" : `${totalPositive ? "+" : ""}${formatDisplay(totals.totalPnl)}`}
               valueClassName={totalPositive ? "text-emerald-500" : "text-rose-500"}
             />
             <Metric label="Posiciones" value={String(activePositions.length)} />

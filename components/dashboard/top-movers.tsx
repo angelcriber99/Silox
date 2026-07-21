@@ -7,11 +7,13 @@ import { TrendingUp, TrendingDown, Zap } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { motion } from "framer-motion"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: EnrichedPosition[], marketState?: string }) {
   const [sortBy, setSortBy] = useState<"percent" | "amount">("amount")
   const t = useTranslations('Dashboard')
   const { hideBalances } = usePreferences()
+  const { displayCurrency, convert } = useDisplayCurrency()
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
@@ -136,7 +138,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(p.change_amount_24h!)}
+                    : hideBalances ? "***" : formatPnl(convert(p.change_amount_24h!), displayCurrency)}
                 </span>
               </motion.div>
             ))
@@ -184,7 +186,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(p.change_amount_24h!)}
+                    : hideBalances ? "***" : formatPnl(convert(p.change_amount_24h!), displayCurrency)}
                 </span>
               </motion.div>
             ))

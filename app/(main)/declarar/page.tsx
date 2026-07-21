@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
-import { calculateFIFO } from "@/lib/utils/fifo-calculator"
+import { calculateDividendTaxAmounts, calculateFIFO } from "@/lib/utils/fifo-calculator"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { Scale, TrendingUp, TrendingDown, ArrowLeft, Info, HelpCircle, FileText, AlertCircle } from "lucide-react"
 import { TaxGuide } from "@/components/tax/tax-guide"
@@ -11,7 +11,7 @@ import { TaxPdfExport } from "@/components/tax/tax-pdf-export"
 import Link from "next/link"
 
 export default function DeclararPage() {
-  const { data: allTransactions, isLoading } = useAllTransactions()
+  const { data: allTransactions, isLoading, error } = useAllTransactions()
 
   const currentYear = new Date().getFullYear()
   const defaultYear = currentYear === 2026 ? 2025 : currentYear
@@ -106,13 +106,11 @@ export default function DeclararPage() {
     let retOrigen = 0
     let retDestino = 0
     yearDividends.forEach(d => {
-      // Gross is now based on precio_unitario only (since cantidad is 0 for dividends after fix)
-      const isLegacy = Number(d.cantidad) === 0.000001
-      const g = isLegacy ? Number(d.precio_unitario) : (Number(d.precio_unitario))
-      gross += g
-      fees += Number(d.comision)
-      retOrigen += Number(d.retencion_origen || 0)
-      retDestino += Number(d.retencion_destino || 0)
+      const amounts = calculateDividendTaxAmounts(d)
+      gross += amounts.gross
+      fees += amounts.fees
+      retOrigen += amounts.retOrigen
+      retDestino += amounts.retDestino
     })
     return { gross, fees, retOrigen, retDestino, baseImponible: gross - fees, net: gross - fees - retOrigen - retDestino }
   }, [yearDividends])
@@ -147,6 +145,9 @@ export default function DeclararPage() {
             <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
               Cálculo automatizado de ganancias y pérdidas patrimoniales (Método FIFO).
             </p>
+            <p className="text-xs pl-[52px] text-muted-foreground/70">
+              Todos los importes se expresan en EUR usando el cambio histórico fijado en la fecha de cada operación.
+            </p>
           </div>
             <div className="flex items-center gap-3">
               <TaxPdfExport targetId="tax-report-content" filename={`Silox_Informe_Fiscal_${selectedYear}.pdf`} />
@@ -180,6 +181,16 @@ export default function DeclararPage() {
               {[1, 2, 3].map(i => <div key={i} className="h-32 bg-card/50 rounded-xl" />)}
             </div>
             <div className="h-64 bg-card/50 rounded-xl" />
+          </div>
+        ) : error ? (
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">
+            <div className="flex items-center gap-2 font-semibold">
+              <AlertCircle className="h-4 w-4" />
+              No se pudo completar el informe fiscal
+            </div>
+            <p className="mt-2 text-rose-200/80">
+              {error instanceof Error ? error.message : "Error desconocido al calcular los importes en euros."}
+            </p>
           </div>
         ) : (
           <>
@@ -336,6 +347,11 @@ export default function DeclararPage() {
                                 <span className="font-medium text-foreground/90">{e.ticker}</span>
                                 <span className="text-xs text-muted-foreground/80 truncate max-w-[200px] mb-1">{e.nombre}</span>
                                 <span className="text-[10px] text-muted-foreground/60 leading-tight max-w-[250px]">{e.detalles}</span>
+                                {e.monedaOriginal !== 'EUR' && (
+                                  <span className="mt-1 text-[10px] text-muted-foreground/60">
+                                    Cambio venta: 1 EUR = {e.tipoCambioVenta.toLocaleString('es-ES', { maximumFractionDigits: 6 })} {e.monedaOriginal}
+                                  </span>
+                                )}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right tabular-nums text-foreground/80 align-top">
@@ -406,12 +422,8 @@ export default function DeclararPage() {
                           month: 'short',
                           day: 'numeric'
                         })
-                        const isLegacy = Number(e.cantidad) === 0.000001
-                        const gross = isLegacy ? Number(e.precio_unitario) : (Number(e.precio_unitario))
-                        const fee = Number(e.comision)
-                        const retOrigen = Number(e.retencion_origen || 0)
-                        const retDestino = Number(e.retencion_destino || 0)
-                        const net = gross - fee - retOrigen - retDestino
+                        const amounts = calculateDividendTaxAmounts(e)
+                        const { gross, fees: fee, retOrigen, retDestino, net } = amounts
 
                         return (
                           <tr key={idx} className="hover:bg-violet-900/10 transition-colors group">
@@ -422,6 +434,11 @@ export default function DeclararPage() {
                               <div className="flex flex-col">
                                 <span className="font-medium text-foreground/90">{e.activo?.ticker || "—"}</span>
                                 <span className="text-xs text-muted-foreground/80 truncate max-w-[200px] mb-1">{e.activo?.nombre || ""}</span>
+                                {amounts.currency !== 'EUR' && (
+                                  <span className="text-[10px] text-muted-foreground/60">
+                                    1 EUR = {amounts.exchangeRate.toLocaleString('es-ES', { maximumFractionDigits: 6 })} {amounts.currency}
+                                  </span>
+                                )}
                                 {e.notas && <span className="text-[10px] text-muted-foreground/60 leading-tight max-w-[250px]">{e.notas}</span>}
                               </div>
                             </td>

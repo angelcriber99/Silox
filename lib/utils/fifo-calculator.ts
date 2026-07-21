@@ -7,13 +7,15 @@ export interface TaxEvent {
   fechaVenta: string
   añoFiscal: number
   cantidadVendida: number
-  ingresoVenta: number // (qty * price) - comision
-  costeAdquisicion: number // sum of (qty * buyPrice + buyComision) of sold lots
-  gananciaPatrimonial: number // ingresoVenta - costeAdquisicion
+  ingresoVenta: number // EUR: (qty * price - comision) / FX de venta
+  costeAdquisicion: number // EUR: suma de cada lote al FX de su compra
+  gananciaPatrimonial: number // EUR: ingresoVenta - costeAdquisicion
   retencionDestino?: number
   retencionOrigen?: number
   detalles: string // Explicación de qué lotes se vendieron
   tipoActivo: string
+  monedaOriginal: string
+  tipoCambioVenta: number
   isWashSale?: boolean
   perdidaBloqueada?: number
 }
@@ -22,7 +24,58 @@ interface BuyLot {
   id: string
   fecha: string
   qtyRemaining: number
-  unitCostBasis: number // (qty * price + comision) / qty
+  unitCostBasisEur: number
+  currency: string
+  exchangeRate: number
+}
+
+const FIFO_EPSILON = 0.000001
+
+export interface DividendTaxAmounts {
+  gross: number
+  fees: number
+  retOrigen: number
+  retDestino: number
+  baseImponible: number
+  net: number
+  currency: string
+  exchangeRate: number
+}
+
+export function getTaxExchangeRate(transaction: Transaccion): number {
+  const currency = transaction.activo?.moneda?.toUpperCase()
+  if (!currency) throw new Error(`La operación ${transaction.id} no tiene moneda`)
+  if (currency === 'EUR') return 1
+
+  const rate = Number(transaction.tipo_cambio_eur)
+  if (!Number.isFinite(rate) || rate <= 0) {
+    throw new Error(`Falta el cambio histórico ${currency}/EUR para ${transaction.fecha.slice(0, 10)}`)
+  }
+  return rate
+}
+
+export function convertTaxAmountToEur(amount: number, transaction: Transaccion): number {
+  return amount / getTaxExchangeRate(transaction)
+}
+
+export function calculateDividendTaxAmounts(transaction: Transaccion): DividendTaxAmounts {
+  const currency = transaction.activo?.moneda?.toUpperCase() ?? 'EUR'
+  const exchangeRate = getTaxExchangeRate(transaction)
+  const gross = convertTaxAmountToEur(Number(transaction.precio_unitario) || 0, transaction)
+  const fees = convertTaxAmountToEur(Math.max(0, Number(transaction.comision) || 0), transaction)
+  const retOrigen = convertTaxAmountToEur(Math.max(0, Number(transaction.retencion_origen) || 0), transaction)
+  const retDestino = convertTaxAmountToEur(Math.max(0, Number(transaction.retencion_destino) || 0), transaction)
+
+  return {
+    gross,
+    fees,
+    retOrigen,
+    retDestino,
+    baseImponible: gross - fees,
+    net: gross - fees - retOrigen - retDestino,
+    currency,
+    exchangeRate,
+  }
 }
 
 export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
@@ -30,6 +83,7 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
   
   // Agrupar transacciones por activo (excluyendo Efectivo/CASH)
   const txByAsset = transactions.reduce((acc, tx) => {
+    if (tx.estado && tx.estado !== 'Completada') return acc
     // Skip cash/efectivo completely from capital gains calculations
     if (
       tx.activo?.tipo === 'Efectivo'
@@ -63,12 +117,21 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
 
     for (const tx of sorted) {
       if (tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada") {
-        const unitCostBasis = (tx.cantidad * tx.precio_unitario + tx.comision) / tx.cantidad
+        if (!Number.isFinite(tx.cantidad) || tx.cantidad <= FIFO_EPSILON) {
+          throw new Error(`Cantidad de compra inválida para ${tx.activo?.ticker ?? tx.activo_id} el ${tx.fecha.slice(0, 10)}`)
+        }
+        const exchangeRate = getTaxExchangeRate(tx)
+        const unitCostBasisEur = convertTaxAmountToEur(
+          (tx.cantidad * tx.precio_unitario + tx.comision) / tx.cantidad,
+          tx,
+        )
         buyLots.push({
           id: tx.id,
           fecha: tx.fecha,
           qtyRemaining: tx.cantidad,
-          unitCostBasis,
+          unitCostBasisEur,
+          currency: tx.activo?.moneda?.toUpperCase() ?? 'EUR',
+          exchangeRate,
         })
       } else if (tx.tipo_operacion === "Venta" || tx.tipo_operacion === "Traspaso Salida") {
         let remainingToSell = tx.cantidad
@@ -77,25 +140,35 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
         const soldLotsIds = new Set<string>()
 
         // Vender desde los lotes más antiguos (FIFO)
-        while (remainingToSell > 0.000001 && buyLots.length > 0) {
+        while (remainingToSell > FIFO_EPSILON && buyLots.length > 0) {
           const oldestLot = buyLots[0]
           const qtyFromThisLot = Math.min(oldestLot.qtyRemaining, remainingToSell)
           
-          totalCostBasis += qtyFromThisLot * oldestLot.unitCostBasis
+          totalCostBasis += qtyFromThisLot * oldestLot.unitCostBasisEur
           remainingToSell -= qtyFromThisLot
           oldestLot.qtyRemaining -= qtyFromThisLot
 
           const lotDate = new Date(oldestLot.fecha).toLocaleDateString("es-ES")
-          soldLotsDetails.push(`${qtyFromThisLot.toLocaleString("es-ES", {maximumFractionDigits: 4})} uds. compradas el ${lotDate}`)
+          const fxDetail = oldestLot.currency === 'EUR'
+            ? ''
+            : ` a 1 EUR = ${oldestLot.exchangeRate.toLocaleString('es-ES', { maximumFractionDigits: 6 })} ${oldestLot.currency}`
+          soldLotsDetails.push(`${qtyFromThisLot.toLocaleString("es-ES", {maximumFractionDigits: 4})} uds. compradas el ${lotDate}${fxDetail}`)
           soldLotsIds.add(oldestLot.id)
 
-          if (oldestLot.qtyRemaining <= 0.000001) {
+          if (oldestLot.qtyRemaining <= FIFO_EPSILON) {
             buyLots.shift() // Eliminar lote agotado
           }
         }
 
+        if (remainingToSell > FIFO_EPSILON) {
+          throw new Error(
+            `Faltan ${remainingToSell.toLocaleString('es-ES', { maximumFractionDigits: 8 })} unidades FIFO de ${tx.activo?.ticker ?? tx.activo_id} para la salida del ${tx.fecha.slice(0, 10)}`,
+          )
+        }
+
         if (tx.tipo_operacion !== "Traspaso Salida") {
-          const ingresoVenta = (tx.cantidad * tx.precio_unitario) - tx.comision
+          const tipoCambioVenta = getTaxExchangeRate(tx)
+          const ingresoVenta = convertTaxAmountToEur((tx.cantidad * tx.precio_unitario) - tx.comision, tx)
           const gananciaPatrimonial = ingresoVenta - totalCostBasis
 
           const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
@@ -121,14 +194,14 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
               
               if (diffDays <= sixtyDays) {
                 const available = otherTx.cantidad - (washSaleUsedShares.get(otherTx.id) || 0)
-                if (available > 0.000001) {
+                if (available > FIFO_EPSILON) {
                   const qtyToWash = Math.min(available, remainingLossShares)
                   washSaleUsedShares.set(otherTx.id, (washSaleUsedShares.get(otherTx.id) || 0) + qtyToWash)
                   
                   perdidaBloqueada += qtyToWash * lossPerShare
                   remainingLossShares -= qtyToWash
                   
-                  if (remainingLossShares <= 0.000001) break
+                  if (remainingLossShares <= FIFO_EPSILON) break
                 }
               }
             }
@@ -147,10 +220,12 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           ingresoVenta,
           costeAdquisicion: totalCostBasis,
           gananciaPatrimonial,
-          retencionDestino: tx.retencion_destino || 0,
-          retencionOrigen: tx.retencion_origen || 0,
+          retencionDestino: convertTaxAmountToEur(tx.retencion_destino || 0, tx),
+          retencionOrigen: convertTaxAmountToEur(tx.retencion_origen || 0, tx),
           detalles: `Corresponde a: ${soldLotsDetails.join(" y ")}.`,
           tipoActivo: tx.activo?.tipo || "Desconocido",
+          monedaOriginal: tx.activo?.moneda?.toUpperCase() ?? 'EUR',
+          tipoCambioVenta,
           isWashSale,
           perdidaBloqueada
         })

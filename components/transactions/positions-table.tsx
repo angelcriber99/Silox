@@ -26,6 +26,7 @@ import { useTranslations } from "next-intl"
 import { WaveTrackerModal, parseAssetNotes } from "@/components/asset/wave-tracker-modal"
 import { Waves } from "lucide-react"
 import { AssetLogo } from "@/components/ui/asset-logo"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface PositionsTableProps {
   positions: EnrichedPosition[]
@@ -70,6 +71,7 @@ type SortDir = "asc" | "desc"
 
 function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
   const { hideBalances } = usePreferences()
+  const { displayCurrency, convert } = useDisplayCurrency()
   const [flash, setFlash] = useState<'up'|'down'|null>(null);
   const prevValue = useRef(value);
 
@@ -93,7 +95,7 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
   if (value === null) return <span className="text-muted-foreground/60">—</span>
 
   const textColor = value > 0 ? "#30D158" : value < 0 ? "#FF453A" : "var(--muted-foreground)"
-  const formatted = type === "currency" ? formatPnl(value) : formatPercent(value)
+  const formatted = type === "currency" ? formatPnl(convert(value), displayCurrency) : formatPercent(value)
 
   const flashStyle = flash === 'up'
     ? { background: "rgba(48,209,88,0.2)" }
@@ -197,6 +199,7 @@ const PositionRow = memo(function PositionRow({
   setWaveAsset,
   setWaveModalOpen
 }: any) {
+  const { format: formatDisplay } = useDisplayCurrency()
   const hasHistory = p.sparkline && p.sparkline.length > 1;
   const sparklineColor = hasHistory
     ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
@@ -283,12 +286,12 @@ const PositionRow = memo(function PositionRow({
         <div className="flex flex-col items-end gap-1">
           <span>
             {hideBalances ? "****" : (p.valor_actual !== null
-              ? formatCurrency(p.valor_actual, 'EUR')
+              ? formatDisplay(p.valor_actual)
               : "—")}
           </span>
           {!hideBalances && (p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
             <span className="text-[10px] text-muted-foreground/70 font-normal">
-              Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
+              Inv: {formatDisplay(p.dinero_invertido_eur ?? p.coste_total_eur)}
             </span>
           )}
         </div>
@@ -377,6 +380,7 @@ const PositionCard = memo(function PositionCard({
   setWaveAsset,
   setWaveModalOpen
 }: any) {
+  const { format: formatDisplay } = useDisplayCurrency()
   const hasHistory = p.sparkline && p.sparkline.length > 1;
   const sparklineColor = hasHistory
     ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
@@ -427,11 +431,11 @@ const PositionCard = memo(function PositionCard({
           <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
           <div className="flex flex-col items-end">
             <span className="text-base font-bold tabular-nums text-foreground">
-              {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
+              {p.valor_actual !== null ? formatDisplay(p.valor_actual) : "—"}
             </span>
             {(p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
               <span className="text-[10px] text-muted-foreground/70 font-normal -mt-1">
-                Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
+                Inv: {formatDisplay(p.dinero_invertido_eur ?? p.coste_total_eur)}
               </span>
             )}
           </div>

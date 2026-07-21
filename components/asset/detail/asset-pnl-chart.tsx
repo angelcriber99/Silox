@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { fetchAssetHistoricalPerformance } from "@/lib/actions/asset-history"
 import { PerformanceRange } from "@/lib/utils/performance-history"
 import { cn } from "@/lib/utils"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 const RANGES: { label: string, value: PerformanceRange }[] = [
   { label: "1D", value: "1D" },
@@ -25,6 +26,7 @@ interface AssetPnlChartProps {
 
 export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartProps) {
   const [range, setRange] = useState<PerformanceRange>("1M")
+  const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['asset-pnl-history', assetId, range],
@@ -71,7 +73,7 @@ export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartPr
             "text-2xl md:text-3xl font-bold tracking-tight",
             isPositive ? "text-emerald-500" : "text-rose-500"
           )}>
-            {currentPnl > 0 ? "+" : ""}{formatCurrency(currentPnl, "EUR")}
+            {currentPnl > 0 ? "+" : ""}{formatDisplay(currentPnl)}
           </div>
         </div>
 
@@ -103,7 +105,7 @@ export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartPr
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+            <AreaChart data={data.map((point) => ({ ...point, pnl: convert(point.pnl), value: convert(point.value) }))} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorPnl" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={dynamicColor} stopOpacity={0.3} />
@@ -130,7 +132,7 @@ export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartPr
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 11, fill: '#888' }}
-                tickFormatter={(val) => formatCurrency(val, "EUR")}
+                tickFormatter={(val) => formatCurrency(val, displayCurrency)}
                 width={60}
                 orientation="right"
               />
@@ -150,12 +152,12 @@ export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartPr
                         <div className="flex justify-between items-center gap-4">
                           <span className="text-sm font-medium">Beneficio:</span>
                           <span className={cn("text-sm font-bold", data.pnl >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                            {data.pnl > 0 ? "+" : ""}{formatCurrency(data.pnl, "EUR")}
+                            {data.pnl > 0 ? "+" : ""}{formatCurrency(data.pnl, displayCurrency)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center gap-4">
                           <span className="text-xs text-muted-foreground">Valor Posición:</span>
-                          <span className="text-xs">{formatCurrency(data.value, "EUR")}</span>
+                          <span className="text-xs">{formatCurrency(data.value, displayCurrency)}</span>
                         </div>
                       </div>
                     </div>

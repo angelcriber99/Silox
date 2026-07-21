@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useHistory } from "@/lib/hooks/use-portfolio"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatPercent } from "@/lib/utils/formatters"
 import {
   buildPerformanceSeries,
   filterPerformanceSeries,
@@ -16,6 +16,7 @@ import {
   type PerformanceRange,
 } from "@/lib/utils/performance-history"
 import type { EnrichedPosition } from "@/lib/types"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 import { DailyPnlChart } from "./daily-pnl-chart"
 import { CombinedPerformanceChart } from "../analysis/combined-performance-chart"
@@ -155,6 +156,7 @@ export function PerformanceModal({
   const [hoveredPoint, setHoveredPoint] = useState<ChartDataPoint | null>(null)
   const { data: snapshots = [], isLoading } = useHistory({ enabled: open })
   const { hideBalances } = usePreferences()
+  const { displayCurrency, format: formatDisplay } = useDisplayCurrency()
 
   const processedData = useMemo(() => buildPerformanceSeries(snapshots, {
     timestamp: new Date().toISOString(),
@@ -192,7 +194,7 @@ export function PerformanceModal({
 
   const money = (value: number, signed = false) => hideBalances
     ? "••••"
-    : `${signed && value >= 0 ? "+" : ""}${formatCurrency(value)}`
+    : `${signed && value >= 0 ? "+" : ""}${formatDisplay(value)}`
   const percent = (value: number) => hideBalances ? "•••" : formatPercent(value)
 
   return (
@@ -225,7 +227,7 @@ export function PerformanceModal({
               <MetricCard
                 label="Patrimonio actual"
                 value={money(currentTotalValue)}
-                detail="Valor de mercado en EUR"
+                detail={`Valor de mercado en ${displayCurrency}`}
                 icon={WalletCards}
               />
               <MetricCard

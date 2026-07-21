@@ -1,13 +1,12 @@
 "use client"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import {
-  ArrowLeft, TrendingUp, TrendingDown, Wallet, Layers, Activity,
-  LineChart as LineChartIcon, DollarSign, PiggyBank, Briefcase
+  ArrowLeft, Briefcase
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { formatCurrency, formatPercent, formatUnits } from "@/lib/utils/formatters"
+import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
 import type { EnrichedPosition } from '@/lib/types'
 import { useAssetCalculations, RawTransaction } from './detail/use-asset-calculations'
 import dynamic from 'next/dynamic'
@@ -18,6 +17,7 @@ import { AssetPnlChart } from "./detail/asset-pnl-chart"
 import { MarketStats } from "./detail/market-stats"
 import type { AssetDetails } from '@/lib/actions/market'
 import { PurchaseLotsCard } from "./detail/purchase-lots-card"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 const AssetContributionsChart = dynamic(() => import('./detail/asset-charts').then(m => m.AssetContributionsChart), { ssr: false })
 
@@ -33,11 +33,10 @@ const TIPO_BADGE_STYLES: Record<string, string> = {
 
 export function EtfDetailClient({ position, transactions, assetDetails }: EtfDetailClientProps) {
   const {
-    evolutionData,
     monthlyContributionsData,
     stats,
-    txTableData
   } = useAssetCalculations(position, transactions)
+  const { format: formatDisplay } = useDisplayCurrency()
 
 
   const [rangePerformance, setRangePerformance] = useState<{ label: string, absolute: number, percent: number } | null>(null)
@@ -108,7 +107,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
             </div>
             <div className="flex items-center md:justify-end gap-2 mt-2">
               <p className={`text-lg font-bold tabular-nums flex items-center ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
-                {isPositive ? "+" : ""}{formatCurrency(currentPerformance.absolute, position.original_currency || position.moneda)} 
+                {isPositive ? "+" : ""}{formatDisplay(currentPerformance.absolute, position.original_currency || position.moneda)}
                 <span className="ml-1 opacity-80">({isPositive ? "+" : ""}{currentPerformance.percent.toFixed(2)}%)</span>
                 <span className="text-muted-foreground text-sm ml-2 font-medium">{currentPerformance.label}</span>
               </p>
@@ -203,7 +202,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual ?? 0, 'EUR')}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatDisplay(position.valor_actual ?? 0)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Precio Medio</span>
@@ -212,7 +211,7 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Beneficio</span>
             <p className={`text-2xl font-bold tabular-nums mt-1 ${(position.pnl ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatCurrency(position.pnl ?? 0, 'EUR')}
+              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatDisplay(position.pnl ?? 0)}
             </p>
             <p className={`text-sm font-bold tabular-nums ${(position.pnl_percent ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {(position.pnl_percent ?? 0) >= 0 ? "+" : ""}{(position.pnl_percent ?? 0).toFixed(2)}%
@@ -238,64 +237,6 @@ export function EtfDetailClient({ position, transactions, assetDetails }: EtfDet
           {/* ═══════════ APORTACIONES DCA ═══════════ */}
           <div className="lg:col-span-2 animate-fade-in stagger-3">
              <AssetContributionsChart monthlyContributionsData={monthlyContributionsData} />
-          </div>
-        </div>
-
-        {/* ═══════════ HISTORIAL DE TRANSACCIONES ═══════════ */}
-        <div className="animate-fade-in stagger-4">
-          <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-muted-foreground" />
-            Operaciones Recientes
-          </h2>
-          <div className="bg-card border border-border rounded-xl overflow-hidden backdrop-blur-sm overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-background/50 text-muted-foreground text-xs uppercase font-medium">
-                <tr>
-                  <th className="px-5 py-4">Fecha</th>
-                  <th className="px-5 py-4">Tipo</th>
-                  <th className="px-5 py-4 text-right">Participaciones</th>
-                  <th className="px-5 py-4 text-right">Precio</th>
-                  <th className="px-5 py-4 text-right">Rendimiento</th>
-                  <th className="px-5 py-4 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/50">
-                {txTableData.slice().reverse().map((tx) => (
-                  <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-5 py-4 text-foreground/80 whitespace-nowrap">
-                      {new Date(tx.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${tx.tipo_operacion === 'Compra' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                        {tx.tipo_operacion}
-                      </span>
-                      {tx.estado === 'Pendiente' && (
-                        <span className="ml-1 inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                          Pendiente
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatUnits(Number(tx.cantidad))}</td>
-                    <td className="px-5 py-4 text-right tabular-nums text-foreground/80">{formatCurrency(Number(tx.precio_unitario), position.moneda, position.tipo === "Fondo Indexado" ? 4 : 2)}</td>
-                    <td className="px-5 py-4 text-right">
-                      {(tx.tipo_operacion === 'Compra' || tx.tipo_operacion === 'Traspaso Entrada') && tx.pnlTotal !== null && tx.pnlPct !== null ? (
-                        <div className="flex flex-col items-end">
-                          <span className={`tabular-nums font-medium ${tx.pnlTotal >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {tx.pnlTotal >= 0 ? "+" : ""}{formatCurrency(tx.pnlTotalEur ?? tx.pnlTotal, 'EUR')}
-                          </span>
-                          <span className={`text-[10px] tabular-nums ${tx.pnlPct >= 0 ? "text-emerald-500/70" : "text-rose-500/70"}`}>
-                            {tx.pnlPct >= 0 ? "+" : ""}{tx.pnlPct.toFixed(2)}%
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground/50">—</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-right tabular-nums font-bold text-foreground">{formatCurrency(tx.total, position.moneda)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
 

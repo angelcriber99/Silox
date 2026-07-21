@@ -14,9 +14,9 @@ import {
 } from "recharts"
 
 import { usePreferences } from "@/lib/stores/use-preferences"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
-import type { PerformancePoint, PerformanceRange } from "@/lib/utils/performance-history"
+import type { PerformancePoint } from "@/lib/utils/performance-history"
 import { AnimatedNumber } from "@/components/ui/animated-number"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface CombinedPerformanceChartProps {
   chartData: PerformancePoint[]
@@ -57,6 +57,7 @@ export function CombinedPerformanceChart({
   children
 }: CombinedPerformanceChartProps) {
   const { hideBalances } = usePreferences()
+  const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
   const chartId = useId()
   const [hoveredPoint, setHoveredPoint] = useState<PerformancePoint | null>(null)
 
@@ -106,7 +107,7 @@ export function CombinedPerformanceChart({
         <div className="flex flex-col">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground tabular-nums">
             {hideBalances ? "••••••" : (
-               !hoveredPoint ? <AnimatedNumber value={displayPoint.value} format="currency" hide={hideBalances} /> : formatCurrency(displayPoint.value)
+               !hoveredPoint ? <AnimatedNumber value={convert(displayPoint.value)} format="currency" currency={displayCurrency} hide={hideBalances} /> : formatDisplay(displayPoint.value)
             )}
           </h2>
           <div className="flex items-center gap-2 mt-1.5">
@@ -117,7 +118,7 @@ export function CombinedPerformanceChart({
             <span className={`text-xs font-bold flex items-center tabular-nums ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>
               {hideBalances ? "•••" : (
                 <>
-                  {isPositive ? "+" : ""}{formatCurrency(pnlInPeriod)}
+                  {isPositive ? "+" : ""}{formatDisplay(pnlInPeriod)}
                   <span className="mx-0.5">{isPositive ? "▴" : "▾"}</span>
                   {Math.abs(pnlPercentInPeriod).toFixed(2)}%
                 </>

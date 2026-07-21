@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts"
 import type { EnrichedPosition } from '@/lib/types'
-import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
+import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { computePortfolioTotals } from "@/lib/api/assets"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { PieChart as PieChartIcon, BarChart3 } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { CategoryDrilldownModal } from "@/components/dashboard/category-drilldown-modal"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface AllocationChartProps {
   positions: EnrichedPosition[]
@@ -45,6 +46,7 @@ interface ChartDatum {
 
 export function DistributionExtended({ positions }: AllocationChartProps) {
   const { hideBalances } = usePreferences()
+  const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
   const [viewMode, setViewMode] = useState<ViewMode>("composition")
   const [groupBy, setGroupBy] = useState<GroupBy>("tipo")
   const [drilldownModalOpen, setDrilldownModalOpen] = useState(false)
@@ -167,7 +169,7 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 border border-border/40">
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Hoy</span>
             <span className={`text-sm font-bold ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {formatPnl(totals.totalPnl24h)}
+              {formatPnl(convert(totals.totalPnl24h), displayCurrency)}
             </span>
             <span className={`text-[11px] font-medium opacity-80 ${totals.totalDailyPnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               ({formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
@@ -219,7 +221,7 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
                           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Rendimiento Hoy</p>
                           <div className="flex items-baseline gap-2">
                             <p className={`text-2xl font-bold tabular-nums ${d.dailyPnlAmount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {d.dailyPnlAmount > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.dailyPnlAmount)}
+                              {d.dailyPnlAmount > 0 ? '+' : ''}{hideBalances ? "****" : formatDisplay(d.dailyPnlAmount)}
                             </p>
                             <p className={`text-sm font-medium ${d.dailyPnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                               ({d.dailyPnlPercent > 0 ? '+' : ''}{formatPercent(d.dailyPnlPercent).replace('+', '')})
@@ -287,7 +289,7 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
                               <p className="text-sm font-bold text-foreground uppercase tracking-wider">{d.name}</p>
                             </div>
                             <p className="text-2xl font-bold tabular-nums text-foreground">
-                              {hideBalances ? "****" : formatCurrency(d.value)}
+                              {hideBalances ? "****" : formatDisplay(d.value)}
                             </p>
                             <p className="text-sm font-medium text-muted-foreground mt-1">
                               Representa el {formatPercent(d.percent).replace("+", "")} de tu cartera
@@ -304,7 +306,7 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
                 <p className="text-muted-foreground text-sm font-bold tracking-widest uppercase mb-1">Total</p>
                 <p className="text-3xl font-bold text-foreground tabular-nums">
-                  {hideBalances ? "****" : formatCurrency(totals.totalValue)}
+                  {hideBalances ? "****" : formatDisplay(totals.totalValue)}
                 </p>
               </div>
             </div>
@@ -327,7 +329,7 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
                       <p className="text-sm font-semibold text-foreground">{d.name}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <p className={`text-[11px] font-bold ${d.dailyPnlAmount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {d.dailyPnlAmount > 0 ? '+' : ''}{hideBalances ? "****" : formatCurrency(d.dailyPnlAmount)}
+                          {d.dailyPnlAmount > 0 ? '+' : ''}{hideBalances ? "****" : formatDisplay(d.dailyPnlAmount)}
                         </p>
                         <p className={`text-[10px] font-medium ${d.dailyPnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                           ({d.dailyPnlPercent > 0 ? '+' : ''}{formatPercent(d.dailyPnlPercent).replace('+', '')})
@@ -336,7 +338,7 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold tabular-nums text-foreground">{hideBalances ? "****" : formatCurrency(d.value)}</p>
+                    <p className="text-sm font-bold tabular-nums text-foreground">{hideBalances ? "****" : formatDisplay(d.value)}</p>
                     <p className="text-xs text-muted-foreground font-medium">{formatPercent(d.percent).replace("+", "")}</p>
                   </div>
                 </div>

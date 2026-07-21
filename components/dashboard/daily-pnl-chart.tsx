@@ -13,6 +13,7 @@ import {
   type PerformanceRange,
 } from "@/lib/utils/performance-history"
 import { getMarketDateKey } from "@/lib/utils/market-performance"
+import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 
 interface DailyTooltipProps {
   active?: boolean
@@ -23,6 +24,7 @@ interface DailyTooltipProps {
 
 function DailyTooltip({ active, payload, label, isMonthly }: DailyTooltipProps) {
   const { hideBalances } = usePreferences()
+  const { displayCurrency } = useDisplayCurrency()
 
   if (active && payload?.length && label) {
     const data = payload[0].payload
@@ -37,7 +39,7 @@ function DailyTooltip({ active, payload, label, isMonthly }: DailyTooltipProps) 
             {isMonthly ? 'P&L mensual completo' : 'P&L diario completo'}
           </p>
           <p className={`font-bold text-xl tabular-nums leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.pnl)}`}
+            {hideBalances ? "****" : `${isPositive ? '+' : ''}${formatCurrency(data.pnl, displayCurrency)}`}
           </p>
           <p className={`mt-1 text-xs font-semibold tabular-nums ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
             {hideBalances ? "***" : formatPercent(data.pnlPercent)}
@@ -65,6 +67,7 @@ export function DailyPnlChart({
   currentDailyPnlPercent,
   currentMarketDate,
 }: DailyPnlChartProps) {
+  const { displayCurrency, convert } = useDisplayCurrency()
   const isMonthly = range === '1Y' || range === 'ALL'
   
   const aggregatedData = isMonthly 
@@ -75,10 +78,10 @@ export function DailyPnlChart({
     getMarketDateKey(point.timestamp) === currentMarketDate && currentDailyPnl !== undefined && !isMonthly
       ? {
           ...point,
-          pnl: currentDailyPnl,
+          pnl: convert(currentDailyPnl),
           pnlPercent: currentDailyPnlPercent ?? point.pnlPercent,
         }
-      : point
+      : { ...point, pnl: convert(point.pnl), value: convert(point.value), totalPnl: convert(point.totalPnl), totalInvested: convert(point.totalInvested) }
   ))
 
   if (plotData.length === 0) {
@@ -106,7 +109,7 @@ export function DailyPnlChart({
           <YAxis
             axisLine={false}
             tickLine={false}
-            tickFormatter={(value: number) => `${value >= 0 ? "+" : ""}${Math.abs(value) >= 1_000 ? `${(value / 1_000).toFixed(1)}k` : value.toFixed(0)} €`}
+            tickFormatter={(value: number) => `${value >= 0 ? "+" : ""}${Math.abs(value) >= 1_000 ? `${(value / 1_000).toFixed(1)}k` : value.toFixed(0)} ${displayCurrency === 'EUR' ? '€' : '$'}`}
             tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontWeight: 500 }}
             width={64}
           />

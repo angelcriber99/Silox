@@ -18,7 +18,7 @@ export default function MainError({
     <DashboardErrorState
       onRetry={unstable_retry}
       title="Se ha producido un error inesperado"
-      description="La pantalla no pudo completarse. Puedes reintentar sin perder tus datos."
+      description={`La pantalla no pudo completarse. Puedes reintentar sin perder tus datos. Detalles: ${error.message}`}
     />
   )
 }

@@ -127,6 +127,7 @@ export function usePortfolio(options?: { enabled?: boolean; persistHistory?: boo
     refetchPrices,
     pricesUpdatedAt,
     marketState: pricePayload?.marketState ?? 'CLOSED',
+    fxRates: pricePayload?.fxRates ?? { EUR: 1 },
     pendingTxs: pendingTxs ?? [],
   }
 }

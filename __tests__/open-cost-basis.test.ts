@@ -86,6 +86,8 @@ describe('calculateOpenCostBasis', () => {
     expect(bases.get('silver')).toEqual({
       performanceCost: 320,
       investedCost: 200,
+      performanceCostEur: 320,
+      investedCostEur: 200,
     })
   })
 
@@ -104,6 +106,8 @@ describe('calculateOpenCostBasis', () => {
     expect(bases.get('silver')).toEqual({
       performanceCost: 120,
       investedCost: 0,
+      performanceCostEur: 120,
+      investedCostEur: 0,
     })
   })
 
