@@ -39,6 +39,23 @@ describe('mobile portfolio history', () => {
     ])
   })
 
+  it('completes a legacy valuation without capital from the imported movement ledger', () => {
+    const points = buildMobilePortfolioHistory(
+      [],
+      [{ date: '2024-02-02', total_value: 125, total_invested: null, updated_at: '2024-02-02T20:00:00.000Z' }],
+      [
+        { id: 'buy', fecha: '2024-02-01', tipo_operacion: 'Compra', cantidad: 1, precio_unitario: 100, comision: 0, activo: asset('EUR') },
+        { id: 'dividend', fecha: '2024-02-02', tipo_operacion: 'Dividendo', cantidad: 1, precio_unitario: 5, comision: 0, activo: asset('EUR') },
+      ],
+      {},
+    )
+
+    expect(points).toEqual([
+      expect.objectContaining({ date: '2024-02-01', value: null, invested: '100', source: 'transaction' }),
+      expect.objectContaining({ date: '2024-02-02', value: '125', invested: '95', source: 'snapshot' }),
+    ])
+  })
+
   it('does not keep emitting an inaccurate EUR capital curve after an unresolved historic FX flow', () => {
     const result = buildTransactionInvestmentHistory([
       { id: 'eur', fecha: '2024-03-01', tipo_operacion: 'Compra', cantidad: 1, precio_unitario: 100, comision: 0, activo: asset('EUR') },

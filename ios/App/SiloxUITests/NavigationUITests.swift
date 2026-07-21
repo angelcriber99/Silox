@@ -28,6 +28,20 @@ final class NavigationUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Actualizando en segundo plano"].waitForExistence(timeout: 1))
     }
 
+    func testAnalysisHistoryDistinguishesPortfolioValueFromContributions() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-test-authenticated", "-ui-test-fixtures"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons["Análisis"].waitForExistence(timeout: 5))
+        app.buttons["Análisis"].tap()
+        XCTAssertTrue(app.staticTexts["Evolución del patrimonio"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Valor de cartera"].exists)
+        XCTAssertTrue(app.staticTexts["Dinero aportado"].exists)
+        XCTAssertFalse(app.staticTexts["Evolución y ganancias diarias"].exists)
+        capture("evolucion-patrimonio-y-aportado")
+    }
+
     func testAddFlowUsesAssetSelectionInsteadOfInternalIdentifier() {
         let app = XCUIApplication()
         app.launchArguments.append("-ui-test-authenticated")

@@ -163,7 +163,18 @@ export function buildMobilePortfolioHistory(
   const fallback = buildTransactionInvestmentHistory(transactions, historicalRates)
   const points = new Map(snapshots)
   for (const point of fallback.points) {
-    if (!points.has(point.date)) points.set(point.date, point)
+    const snapshot = points.get(point.date)
+    if (!snapshot) {
+      points.set(point.date, point)
+      continue
+    }
+    // Older snapshots can contain a real portfolio valuation without the
+    // capital column. The import ledger is authoritative for contributions,
+    // so use it only to complete that missing series — never to fabricate a
+    // historical market value or overwrite a persisted contribution.
+    if (snapshot.invested === null && point.invested !== null) {
+      points.set(point.date, { ...snapshot, invested: point.invested })
+    }
   }
 
   const from = day(range.from)

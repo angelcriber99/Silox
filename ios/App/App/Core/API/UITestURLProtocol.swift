@@ -80,6 +80,17 @@ final class UITestURLProtocol: URLProtocol, @unchecked Sendable {
               }]
             }}
             """#
+        case "/api/mobile/v1/portfolio/history":
+            json = #"""
+            {"data":[
+              {"date":"2026-05-01","value":null,"invested":"500","updatedAt":null,"source":"transaction"},
+              {"date":"2026-05-08","value":null,"invested":"750","updatedAt":null,"source":"transaction"},
+              {"date":"2026-05-15","value":"790","invested":"750","updatedAt":"2026-05-15T20:00:00Z","source":"snapshot"},
+              {"date":"2026-05-19","value":"812","invested":"750","updatedAt":"2026-05-19T20:00:00Z","source":"snapshot"},
+              {"date":"2026-06-03","value":"805","invested":"750","updatedAt":"2026-06-03T20:00:00Z","source":"snapshot"},
+              {"date":"2026-06-10","value":"840","invested":"750","updatedAt":"2026-06-10T20:00:00Z","source":"snapshot"}
+            ]}
+            """#
         case "/api/mobile/v1/assets":
             json = #"""
             {"data":[{"id":"11111111-1111-4111-8111-111111111111","ticker":"AAPL","name":"Apple","type":"Acción","strategy":"Core","currency":"USD"}]}

@@ -162,20 +162,17 @@ struct AnalysisView: View {
 
     private func combinedPerformanceCard(_ portfolio: PortfolioResponse) -> some View {
         let allPoints = chartPoints(portfolio)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        
         let filteredPoints = allPoints.filter { point in
-            guard let cutoff = timeRange.cutoff, let date = dateFormatter.date(from: point.date) else { return true }
-            return date >= cutoff
+            guard let cutoff = timeRange.cutoff else { return true }
+            return (HistoryDateParser.date(from: point.date) ?? .distantPast) >= cutoff
         }
         
         return SiloxCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Rendimiento Histórico").font(.headline)
-                        Text("Evolución y ganancias diarias").font(.caption).foregroundStyle(.secondary)
+                        Text("Evolución del patrimonio").font(.headline)
+                        Text("Valor de cartera frente a dinero aportado").font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                     Image(systemName: "chart.xyaxis.line").foregroundStyle(SiloxColors.accent)
@@ -196,46 +193,38 @@ struct AnalysisView: View {
                     .frame(height: 190)
                 } else {
                     VStack(spacing: 12) {
+                        portfolioChartLegend
+
                         Chart(filteredPoints) { point in
+                            if let chartDate = point.chartDate {
                             if let value = point.value, let valuationSegment = point.valuationSegment {
                                 LineMark(
-                                    x: .value("Fecha", point.date),
+                                    x: .value("Fecha", chartDate),
                                     y: .value("Patrimonio", value),
                                     series: .value("Tramo valorado", valuationSegment)
                                 )
                                 .foregroundStyle(SiloxColors.accent)
                                 .interpolationMethod(.monotone)
-
-                                AreaMark(
-                                    x: .value("Fecha", point.date),
-                                    yStart: .value("Base", filteredPoints.compactMap(\.value).min() ?? 0),
-                                    yEnd: .value("Patrimonio", value),
-                                    series: .value("Tramo valorado", valuationSegment)
-                                )
-                                .foregroundStyle(LinearGradient(
-                                    colors: [SiloxColors.accent.opacity(0.35), .clear],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ))
+                                .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
                             }
                             
                             if let invested = point.invested {
                                 LineMark(
-                                    x: .value("Fecha", point.date),
+                                    x: .value("Fecha", chartDate),
                                     y: .value("Aportado", invested),
                                     series: .value("Serie", "Aportado")
                                 )
-                                .foregroundStyle(.secondary.opacity(0.65))
-                                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                                .foregroundStyle(SiloxColors.textSecondary)
+                                .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 4]))
                             }
 
                             if let value = point.value, let rawSelectedDate, rawSelectedDate == point.date {
-                                RuleMark(x: .value("Fecha", point.date))
+                                RuleMark(x: .value("Fecha", chartDate))
                                     .foregroundStyle(.secondary.opacity(0.5))
                                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                                 
                                 PointMark(
-                                    x: .value("Fecha", point.date),
+                                    x: .value("Fecha", chartDate),
                                     y: .value("Patrimonio", value)
                                 )
                                 .foregroundStyle(SiloxColors.accent)
@@ -254,8 +243,20 @@ struct AnalysisView: View {
                                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
                                 }
                             }
+                            }
                         }
-                        .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
+                        .chartLegend(.hidden)
+                        .chartXAxis {
+                            AxisMarks(values: .automatic(desiredCount: 4)) { value in
+                                AxisGridLine()
+                                AxisTick()
+                                if let date = value.as(Date.self) {
+                                    AxisValueLabel {
+                                        Text(date, format: .dateTime.month(.abbreviated).day())
+                                    }
+                                }
+                            }
+                        }
                         .chartYAxis { 
                             AxisMarks(position: .leading) { value in
                                 AxisGridLine()
@@ -270,47 +271,26 @@ struct AnalysisView: View {
                         .frame(height: 200)
                         .chartOverlay { proxy in
                             GeometryReader { geo in
-                                Rectangle().fill(.clear).contentShape(Rectangle())
-                                    .gesture(
-                                        DragGesture(minimumDistance: 0)
-                                            .onChanged { value in
-                                                let x = value.location.x - geo[proxy.plotAreaFrame].origin.x
-                                                if let date: String = proxy.value(atX: x) {
-                                                    rawSelectedDate = date
+                                if let plotFrame = proxy.plotFrame {
+                                    Rectangle().fill(.clear).contentShape(Rectangle())
+                                        .gesture(
+                                            DragGesture(minimumDistance: 0)
+                                                .onChanged { value in
+                                                    let x = value.location.x - geo[plotFrame].origin.x
+                                                    if let date: Date = proxy.value(atX: x) {
+                                                        rawSelectedDate = filteredPoints
+                                                            .compactMap(\.chartDate)
+                                                            .min(by: { abs($0.timeIntervalSince(date)) < abs($1.timeIntervalSince(date)) })?
+                                                            .formatted(.iso8601.year().month().day())
+                                                    }
                                                 }
-                                            }
-                                            .onEnded { _ in rawSelectedDate = nil }
-                                    )
-                            }
-                        }
-                        
-                        if filteredPoints.contains(where: { $0.dailyPnL != nil }) {
-                            Chart(filteredPoints) { point in
-                                if let dailyPnl = point.dailyPnL {
-                                    BarMark(
-                                        x: .value("Fecha", point.date),
-                                        y: .value("P&L Diario", dailyPnl)
-                                    )
-                                    .foregroundStyle(dailyPnl >= 0 ? SiloxColors.positive : SiloxColors.negative)
-                                    .cornerRadius(3)
+                                                .onEnded { _ in rawSelectedDate = nil }
+                                        )
                                 }
                             }
-                            .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) }
-                            .chartYAxis {
-                                AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
-                                    AxisGridLine()
-                                    AxisTick()
-                                    if let doubleValue = value.as(Double.self) {
-                                        AxisValueLabel {
-                                            Text(doubleValue >= 1000 ? "€\(Int(doubleValue / 1000))k" : doubleValue <= -1000 ? "-€\(Int(abs(doubleValue) / 1000))k" : "€\(Int(doubleValue))")
-                                        }
-                                    }
-                                }
-                            }
-                            .frame(height: 90)
                         }
                     }
-                    .accessibilityLabel("Evolución del patrimonio y P&L diario")
+                    .accessibilityLabel("Evolución del valor de cartera y del dinero aportado")
 
                     if filteredPoints.contains(where: { $0.source == .transaction }) {
                         Label(
@@ -322,6 +302,25 @@ struct AnalysisView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var portfolioChartLegend: some View {
+        HStack(spacing: 16) {
+            chartLegendItem("Valor de cartera", color: SiloxColors.accent)
+            chartLegendItem("Dinero aportado", color: SiloxColors.textSecondary, dashed: true)
+        }
+        .font(.caption2)
+        .foregroundStyle(SiloxColors.textSecondary)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func chartLegendItem(_ title: String, color: Color, dashed: Bool = false) -> some View {
+        HStack(spacing: 6) {
+            Capsule()
+                .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dashed ? [5, 4] : []))
+                .frame(width: 24, height: 2)
+            Text(title)
         }
     }
 
@@ -485,6 +484,7 @@ private struct AnalysisChartPoint: Identifiable {
     var valuationSegment: String?
 
     var hasValuation: Bool { value != nil }
+    var chartDate: Date? { HistoryDateParser.date(from: date) }
 }
 
 @MainActor
@@ -550,27 +550,16 @@ struct PortfolioHistoryView: View {
                                     )
                                     .foregroundStyle(by: .value("Serie", "Patrimonio"))
                                     .interpolationMethod(.catmullRom)
-
-                                    AreaMark(
-                                        x: .value("Fecha", date),
-                                        yStart: .value("Base", visible.compactMap { $0.value?.decimalValue.doubleValue }.min() ?? 0),
-                                        yEnd: .value("Patrimonio", value),
-                                        series: .value("Tramo valorado", valuationSegment)
-                                    )
-                                    .foregroundStyle(LinearGradient(
-                                        colors: [SiloxColors.accent.opacity(0.35), .clear],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ))
+                                    .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
                                     }
 
                                     if let invested = point.invested?.decimalValue.doubleValue {
                                         LineMark(
                                             x: .value("Fecha", date),
                                             y: .value("Capital invertido", invested)
-                                        )
-                                        .foregroundStyle(by: .value("Serie", "Invertido"))
-                                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                                    )
+                                    .foregroundStyle(by: .value("Serie", "Invertido"))
+                                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 4]))
                                     }
 
                                     if let value = point.value?.decimalValue.doubleValue, let rawSelectedDate, rawSelectedDate == date {
@@ -619,19 +608,21 @@ struct PortfolioHistoryView: View {
                             .frame(height: 240)
                             .chartOverlay { proxy in
                                 GeometryReader { geo in
-                                    Rectangle().fill(.clear).contentShape(Rectangle())
-                                        .gesture(
-                                            DragGesture(minimumDistance: 0)
-                                                .onChanged { value in
-                                                    let x = value.location.x - geo[proxy.plotAreaFrame].origin.x
-                                                    if let date: Date = proxy.value(atX: x) {
-                                                        rawSelectedDate = visible
-                                                            .compactMap(\.chartDate)
-                                                            .min(by: { abs($0.timeIntervalSince(date)) < abs($1.timeIntervalSince(date)) })
+                                    if let plotFrame = proxy.plotFrame {
+                                        Rectangle().fill(.clear).contentShape(Rectangle())
+                                            .gesture(
+                                                DragGesture(minimumDistance: 0)
+                                                    .onChanged { value in
+                                                        let x = value.location.x - geo[plotFrame].origin.x
+                                                        if let date: Date = proxy.value(atX: x) {
+                                                            rawSelectedDate = visible
+                                                                .compactMap(\.chartDate)
+                                                                .min(by: { abs($0.timeIntervalSince(date)) < abs($1.timeIntervalSince(date)) })
+                                                        }
                                                     }
-                                                }
-                                                .onEnded { _ in rawSelectedDate = nil }
-                                        )
+                                                    .onEnded { _ in rawSelectedDate = nil }
+                                            )
+                                    }
                                 }
                             }
                             .accessibilityLabel("Gráfico de patrimonio e inversión")
@@ -737,7 +728,10 @@ private enum HistoryDateParser {
         let elapsedDays = Calendar(identifier: .iso8601)
             .dateComponents([.day], from: previousDate, to: currentDate)
             .day ?? Int.max
-        return elapsedDays >= 0 && elapsedDays <= 2
+        // Daily snapshots can legitimately skip weekends and market holidays.
+        // Missing valuations themselves still break the line; a short calendar
+        // gap must not make an otherwise continuous portfolio look disconnected.
+        return elapsedDays >= 0 && elapsedDays <= 7
     }
 }
 
