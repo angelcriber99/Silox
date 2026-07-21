@@ -1,4 +1,4 @@
-\"use client\"
+"use client"
 
 import { createContext, useContext, type ReactNode } from 'react'
 import { usePortfolio } from '@/lib/hooks/use-portfolio'
