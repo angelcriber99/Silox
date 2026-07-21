@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  aggregateMarketState,
   determineMarketState,
   extractMarketPerformance,
   isQuoteFromCurrentMarketDate,
@@ -30,6 +31,12 @@ const meta: ChartMeta = {
 }
 
 describe('market session performance', () => {
+  it('prioritizes a regular session when a multi-market portfolio is actively trading', () => {
+    expect(aggregateMarketState(['CLOSED', 'POST', 'REGULAR'])).toBe('REGULAR')
+    expect(aggregateMarketState(['CLOSED', 'PRE'])).toBe('PRE')
+    expect(aggregateMarketState(['CLOSED'])).toBe('CLOSED')
+  })
+
   it('uses the exchange periods supplied by the provider', () => {
     expect(determineMarketState(meta, new Date('2026-07-16T12:00:00Z'))).toBe('PRE')
     expect(determineMarketState(meta, new Date('2026-07-16T15:00:00Z'))).toBe('REGULAR')

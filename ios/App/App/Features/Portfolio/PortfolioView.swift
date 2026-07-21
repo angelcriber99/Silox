@@ -469,12 +469,17 @@ private struct PositionRow: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(dailyColor)
             .monospacedDigit()
-            if position.isPriceStale, !compact {
-                Text("Precio retrasado")
+            if !compact && (position.isPriceStale || position.asset.kind == .fund) {
+                Text(position.asset.kind == .fund ? navStatusText : "Precio retrasado")
                     .font(.caption2.weight(.medium))
-                    .foregroundStyle(SiloxColors.warning)
+                    .foregroundStyle(position.isPriceStale ? SiloxColors.warning : SiloxColors.textTertiary)
             }
         }
+    }
+
+    private var navStatusText: String {
+        guard let updatedAt = position.priceUpdatedAt else { return "NAV" }
+        return "NAV Â· \(updatedAt.formatted(.dateTime.day().month()))"
     }
 
     @ViewBuilder private var dailyValue: some View {
@@ -670,14 +675,14 @@ private struct PositionDetailView: View {
                         Circle()
                             .fill(position.isPriceStale ? SiloxColors.warning : SiloxColors.accentSecondary)
                             .frame(width: 6, height: 6)
-                        Text(position.isPriceStale ? "Retrasado" : "En directo")
+                        Text(position.asset.kind == .fund ? "NAV publicado" : (position.isPriceStale ? "Retrasado" : "En directo"))
                     }
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(position.isPriceStale ? SiloxColors.warning : SiloxColors.accentSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("PRECIO ACTUAL")
+                    Text(position.asset.kind == .fund ? "ÃšLTIMO NAV" : "PRECIO ACTUAL")
                         .font(.system(size: 10, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(SiloxColors.textSecondary)
@@ -702,7 +707,9 @@ private struct PositionDetailView: View {
                 .foregroundStyle(dailyColor)
                 .monospacedDigit()
 
-                Text("Incluye premercado, mercado regular y postmercado.")
+                Text(position.asset.kind == .fund
+                    ? "El fondo publica un valor liquidativo, no una cotizaciÃ³n intradÃ­a."
+                    : "Incluye premercado, mercado regular y postmercado.")
                     .font(.caption2)
                     .foregroundStyle(SiloxColors.textSecondary)
             }

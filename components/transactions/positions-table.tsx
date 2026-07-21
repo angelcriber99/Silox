@@ -66,6 +66,13 @@ const translateType = (type: string, t: (key: string) => string) => {
   return map[type] ? t(map[type]) : type
 }
 
+function formatNavDate(value?: string): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit' }).format(date)
+}
+
 type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent" | "change_amount_24h"
 type SortDir = "asc" | "desc"
 
@@ -274,13 +281,20 @@ const PositionRow = memo(function PositionRow({
           : "—"}
       </TableCell>
       <TableCell className={`text-right tabular-nums ${cellPadding}`}>
-        <LivePrice 
-          value={p.precio_actual_nativo !== null ? p.precio_actual_nativo : p.precio_actual}
-          currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
-          hideBalances={hideBalances}
-          isStale={p.price_is_stale}
-          decimals={p.tipo === "Fondo Indexado" ? 4 : 2}
-        />
+        <div className="flex flex-col items-end gap-0.5">
+          <LivePrice
+            value={p.precio_actual_nativo !== null ? p.precio_actual_nativo : p.precio_actual}
+            currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
+            hideBalances={hideBalances}
+            isStale={p.price_is_stale}
+            decimals={p.tipo === "Fondo Indexado" ? 4 : 2}
+          />
+          {p.price_kind === 'NAV' && (
+            <span className="text-[10px] font-medium text-muted-foreground/70">
+              NAV{formatNavDate(p.price_updated_at) ? ` · ${formatNavDate(p.price_updated_at)}` : ''}
+            </span>
+          )}
+        </div>
       </TableCell>
       <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>
         <div className="flex flex-col items-end gap-1">

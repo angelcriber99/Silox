@@ -20,6 +20,7 @@ export interface Posicion {
   has_daily_activity?: boolean
   daily_net_units?: number
   daily_net_flow_nativo?: number
+  daily_net_flow_eur?: number | null
 }
 
 export interface EnrichedPosition extends Posicion {
@@ -45,6 +46,8 @@ export interface EnrichedPosition extends Posicion {
   price_is_stale?: boolean
   market_session_ends_at?: string
   market_timezone?: string
+  price_kind?: 'INTRADAY' | 'NAV' | 'FIXED'
+  price_source?: string
 }
 
 export interface Transaccion {
@@ -134,4 +137,6 @@ export interface PriceData {
   nextTransition?: string
   isStale?: boolean
   marketDate?: string
+  priceKind?: 'INTRADAY' | 'NAV' | 'FIXED'
+  priceSource?: string
 }

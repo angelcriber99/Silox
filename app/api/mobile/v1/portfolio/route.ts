@@ -14,11 +14,12 @@ async function portfolioEtag(data: Record<string, unknown>): Promise<string> {
 }
 
 function responseHeaders(requestId: string, etag: string, marketState: unknown) {
+  const isActiveMarket = ['PRE', 'REGULAR', 'POST', 'OPEN', 'REGULAR_OPEN'].includes(String(marketState))
   return new Headers({
     'x-request-id': requestId,
     'cache-control': 'private, no-cache',
     etag,
-    'x-silox-refresh-after': marketState === 'REGULAR_OPEN' ? '5' : '30',
+    'x-silox-refresh-after': isActiveMarket ? '5' : '30',
   })
 }
 

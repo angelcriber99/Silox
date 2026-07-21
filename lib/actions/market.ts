@@ -11,10 +11,12 @@ import {
   type FxRatesToEur,
 } from '@/lib/utils/currency'
 import {
+  aggregateMarketState,
   extractMarketPerformance,
   type ChartMeta,
   type ChartQuote,
 } from '@/lib/utils/market-performance'
+import { deriveFundPricing } from '@/lib/utils/fund-pricing'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
 import {
   buildMetalChartPoints,
@@ -188,13 +190,19 @@ const lastKnownFxRates: FxRatesToEur = {
   CHF: 0.97, // 1 EUR = 0.97 CHF approx
 }
 
-async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
+interface FxRateSnapshot {
+  current: FxRatesToEur
+  previous: FxRatesToEur
+}
+
+async function fetchFxRatesToEur(): Promise<FxRateSnapshot> {
   const pairs = Object.values(FX_PAIRS)
   const results = await Promise.allSettled(
     pairs.map((pair) => getYahooFinance().quote(pair) as Promise<YahooQuote>)
   )
 
   const rates: FxRatesToEur = { EUR: 1 }
+  const previousRates: FxRatesToEur = { EUR: 1 }
   let allFailed = true
 
   pairs.forEach((pair, index) => {
@@ -202,26 +210,34 @@ async function fetchFxRatesToEur(): Promise<FxRatesToEur> {
     const foreign = pair.replace('EUR', '').replace('=X', '')
     
     if (result.status !== 'fulfilled') {
-      if (lastKnownFxRates[foreign]) rates[foreign] = lastKnownFxRates[foreign]
+      if (lastKnownFxRates[foreign]) {
+        rates[foreign] = lastKnownFxRates[foreign]
+        previousRates[foreign] = lastKnownFxRates[foreign]
+      }
       return
     }
 
     const raw = result.value.regularMarketPrice
     if (!raw || raw <= 0) {
-      if (lastKnownFxRates[foreign]) rates[foreign] = lastKnownFxRates[foreign]
+      if (lastKnownFxRates[foreign]) {
+        rates[foreign] = lastKnownFxRates[foreign]
+        previousRates[foreign] = lastKnownFxRates[foreign]
+      }
       return
     }
 
     rates[foreign] = raw
+    const previous = result.value.regularMarketPreviousClose
+    previousRates[foreign] = previous && previous > 0 ? previous : raw
     lastKnownFxRates[foreign] = raw
     allFailed = false
   })
 
   if (allFailed && Object.keys(lastKnownFxRates).length > 1) {
-    return { ...lastKnownFxRates }
+    return { current: { ...lastKnownFxRates }, previous: { ...lastKnownFxRates } }
   }
 
-  return rates
+  return { current: rates, previous: previousRates }
 }
 
 export interface PriceEntry {
@@ -240,11 +256,14 @@ export interface PriceEntry {
   nextTransition?: string
   isStale?: boolean
   marketDate?: string
+  priceKind?: 'INTRADAY' | 'NAV' | 'FIXED'
+  priceSource?: string
 }
 
 export interface MarketPricesResult {
   prices: Record<string, PriceEntry>
   fxRates?: FxRatesToEur
+  fxPreviousRates?: FxRatesToEur
   displayCurrency: string
   marketState: string
 }
@@ -262,6 +281,12 @@ const lastKnownPriceCache = new Map<string, PriceEntry>()
 const ACTIVE_CACHE_TTL = 8_000
 const CLOSED_CACHE_TTL = 60_000
 const sparklineCache = new Map<string, { values: number[]; expiresAt: number }>()
+interface FundMarketCacheEntry {
+  quote: YahooQuote
+  chart: { meta?: ChartMeta; quotes?: ChartQuote[] } | null
+  expiresAt: number
+}
+const fundMarketCache = new Map<string, FundMarketCacheEntry>()
 
 /** Tickers that only have end-of-day NAV (Mutual Funds / Fondos Indexados) */
 function isMutualFundTicker(ticker: string): boolean {
@@ -271,6 +296,7 @@ function isMutualFundTicker(ticker: string): boolean {
 
 /** Cache TTL for sparklines of end-of-day funds (12 h) */
 const FUND_SPARKLINE_TTL = 12 * 60 * 60 * 1000
+const FUND_QUOTE_TTL = 15 * 60 * 1000
 
 function getResultCacheTtl(result: MarketPricesResult): number {
   return ['PRE', 'REGULAR', 'POST', 'OPEN'].includes(result.marketState)
@@ -312,7 +338,7 @@ export async function fetchMarketPricesDirect(
 
     for (const ticker of tickers) {
       const current = prices[ticker]
-      if (!current || current.price == null || !current.marketDate || current.originalPrice == null || current.dailyChangePercent24h == null) continue;
+      if (!current || current.priceKind === 'NAV' || current.priceKind === 'FIXED' || current.price == null || !current.marketDate || current.originalPrice == null || current.dailyChangePercent24h == null) continue;
 
       const snap = snapshotMap.get(ticker)
       const currentNative = current.originalPrice
@@ -389,7 +415,9 @@ async function _fetchMarketPrices(
   const d = new Date()
   d.setDate(d.getDate() - 7)
 
-  const fxRates = convertToEurFlag ? await fetchFxRatesToEur() : undefined
+  const fxSnapshot = convertToEurFlag ? await fetchFxRatesToEur() : undefined
+  const fxRates = fxSnapshot?.current
+  const fxPreviousRates = fxSnapshot?.previous
   const metalMarketPromise = tickers.some((ticker) => getMetalCode(ticker) != null)
     ? fetchMetalMarketHistory()
     : Promise.resolve(null)
@@ -411,6 +439,8 @@ async function _fetchMarketPrices(
           marketState: 'OPEN',
           latestTime: new Date().toISOString(),
           isStale: false,
+          priceKind: 'FIXED' as const,
+          priceSource: 'fixed',
         }
       }
 
@@ -444,13 +474,27 @@ async function _fetchMarketPrices(
       let chart1d = null
 
       if (isFund) {
-        // Parallel fetch: current quote + daily price history
-        const [quoteResult, chart1dResult] = await Promise.all([
-          getYahooFinance().quote(fetchTicker).catch(() => null),
-          chart1dPromise,
-        ])
-        fallbackQuote = quoteResult
-        chart1d = chart1dResult
+        const cachedFund = fundMarketCache.get(fetchTicker)
+        if (cachedFund && cachedFund.expiresAt > Date.now()) {
+          fallbackQuote = cachedFund.quote
+          chart1d = cachedFund.chart
+        } else {
+          // A NAV changes once per business day. A short dedicated cache avoids
+          // polling the provider every few seconds with no loss of useful freshness.
+          const [quoteResult, chart1dResult] = await Promise.all([
+            getYahooFinance().quote(fetchTicker).catch(() => null),
+            chart1dPromise,
+          ])
+          fallbackQuote = quoteResult
+          chart1d = chart1dResult
+          if (quoteResult) {
+            fundMarketCache.set(fetchTicker, {
+              quote: quoteResult as unknown as YahooQuote,
+              chart: chart1dResult,
+              expiresAt: Date.now() + FUND_QUOTE_TTL,
+            })
+          }
+        }
         if (!fallbackQuote) {
           throw new Error(`Failed to fetch market data for fund ${ticker}`)
         }
@@ -491,12 +535,20 @@ async function _fetchMarketPrices(
       const yahooCurrency = meta.currency || 'USD'
       const originalCurrency = normalizeYahooCurrency(yahooCurrency)
       const performance = extractMarketPerformance(meta as ChartMeta, quotes, (chart1d?.quotes as ChartQuote[]) || [])
-
-      const rawPrice = performance.currentPrice === null
+      const fundPricing = isFund
+        ? deriveFundPricing({
+            currentPrice: fallbackQuote?.regularMarketPrice,
+            previousClose: fallbackQuote?.regularMarketPreviousClose,
+            asOf: fallbackQuote?.regularMarketTime,
+            exchangeTimezone: fallbackQuote?.exchangeTimezoneName,
+          })
+        : null
+      const providerPrice = fundPricing?.currentPrice ?? performance.currentPrice
+      const rawPrice = providerPrice === null
         ? null
-        : normalizeYahooPrice(performance.currentPrice, yahooCurrency)
-      const changePercent24h = performance.sessionChangePercent
-      const dailyChangePercent24h = performance.dailyChangePercent
+        : normalizeYahooPrice(providerPrice, yahooCurrency)
+      const changePercent24h = isFund ? 0 : performance.sessionChangePercent
+      const dailyChangePercent24h = fundPricing?.dailyChangePercent ?? performance.dailyChangePercent
 
       let sparkline: number[] = cachedSparkline?.values ?? []
       if (chart1d?.quotes) {
@@ -528,26 +580,28 @@ async function _fetchMarketPrices(
         originalPrice: rawPrice,
         originalCurrency,
         marketState: isFund ? 'CLOSED' : performance.marketState,
-        latestTime: performance.latestTime?.toISOString(),
+        latestTime: (fundPricing?.asOf ?? performance.latestTime)?.toISOString(),
         exchangeTimezone: performance.exchangeTimezone,
         sessionStart: performance.sessionStart?.toISOString(),
         sessionEnd: performance.sessionEnd?.toISOString(),
         nextTransition: performance.nextTransition?.toISOString(),
-        isStale: isFund ? false : performance.isStale,
-        marketDate: performance.marketDate,
+        isStale: fundPricing?.isStale ?? performance.isStale,
+        marketDate: fundPricing?.effectiveDate ?? performance.marketDate,
+        priceKind: isFund ? 'NAV' as const : 'INTRADAY' as const,
+        priceSource: 'yahoo-finance',
       }
     },
   )
 
   const prices: Record<string, PriceEntry> = {}
-  let globalMarketState = 'CLOSED'
+  const marketStates: string[] = []
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i]
     const ticker = tickers[i]
 
     if (result.status === 'fulfilled') {
-      const { price, sparkline, currency, changePercent24h, dailyChangePercent24h, originalPrice, originalCurrency, marketState, latestTime, exchangeTimezone, sessionStart, sessionEnd, nextTransition, isStale, marketDate } = result.value
+      const { price, sparkline, currency, changePercent24h, dailyChangePercent24h, originalPrice, originalCurrency, marketState, latestTime, exchangeTimezone, sessionStart, sessionEnd, nextTransition, isStale, marketDate, priceKind, priceSource } = result.value
       prices[ticker] = {
         price,
         sparkline,
@@ -564,17 +618,10 @@ async function _fetchMarketPrices(
         nextTransition,
         isStale,
         marketDate,
+        priceKind,
+        priceSource,
       }
-      
-      if (marketState === 'PRE') {
-        globalMarketState = 'PRE'
-      } else if (marketState === 'POST' && globalMarketState !== 'PRE') {
-        globalMarketState = 'POST'
-      } else if (marketState === 'REGULAR' && globalMarketState !== 'PRE' && globalMarketState !== 'POST') {
-        globalMarketState = 'REGULAR'
-      } else if (marketState === 'OPEN' && globalMarketState === 'CLOSED') {
-        globalMarketState = 'OPEN'
-      }
+      if (marketState) marketStates.push(marketState)
     } else if (ticker) {
       prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null, dailyChangePercent24h: null }
     }
@@ -583,8 +630,9 @@ async function _fetchMarketPrices(
   return {
     prices,
     fxRates,
+    fxPreviousRates,
     displayCurrency: convertToEurFlag ? 'EUR' : 'native',
-    marketState: globalMarketState,
+    marketState: aggregateMarketState(marketStates),
   }
 }
 

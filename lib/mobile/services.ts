@@ -231,6 +231,7 @@ export async function portfolio(context: Context) {
         has_daily_activity: Boolean(activity),
         daily_net_units: activity?.netUnits ?? 0,
         daily_net_flow_nativo: activity?.netFlowNative ?? 0,
+        daily_net_flow_eur: activity?.netFlowEur ?? null,
       }
     })
   const tickers = positions

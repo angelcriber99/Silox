@@ -9,11 +9,13 @@ interface DailyActivityTransaction {
   retencion_origen?: number | null
   retencion_destino?: number | null
   fecha: string
+  tipo_cambio_eur?: number | null
 }
 
 export interface DailyPositionActivity {
   netUnits: number
   netFlowNative: number
+  netFlowEur: number | null
 }
 
 const BUY_OPERATIONS = new Set(['Compra', 'Traspaso Entrada'])
@@ -39,18 +41,27 @@ export function calculateDailyPositionActivity(
     if (!Number.isFinite(quantity) || quantity < 0 || !Number.isFinite(price) || price < 0) continue
 
     const gross = quantity * price
-    const current = result.get(transaction.activo_id) ?? { netUnits: 0, netFlowNative: 0 }
+    const current = result.get(transaction.activo_id) ?? { netUnits: 0, netFlowNative: 0, netFlowEur: 0 }
+    const fixedFxRate = Number(transaction.tipo_cambio_eur)
+    const hasFixedFxRate = Number.isFinite(fixedFxRate) && fixedFxRate > 0
+    const toEur = (amount: number) => hasFixedFxRate ? amount / fixedFxRate : null
 
     if (BUY_OPERATIONS.has(transaction.tipo_operacion)) {
       current.netUnits += quantity
       current.netFlowNative += gross + commission
+      const eurFlow = toEur(gross + commission)
+      current.netFlowEur = current.netFlowEur !== null && eurFlow !== null ? current.netFlowEur + eurFlow : null
     } else if (SALE_OPERATIONS.has(transaction.tipo_operacion)) {
       current.netUnits -= quantity
       current.netFlowNative -= gross - commission
+      const eurFlow = toEur(gross - commission)
+      current.netFlowEur = current.netFlowEur !== null && eurFlow !== null ? current.netFlowEur - eurFlow : null
     } else if (transaction.tipo_operacion === 'Dividendo') {
       const withholding = Math.max(0, Number(transaction.retencion_origen) || 0)
         + Math.max(0, Number(transaction.retencion_destino) || 0)
       current.netFlowNative -= gross - commission - withholding
+      const eurFlow = toEur(gross - commission - withholding)
+      current.netFlowEur = current.netFlowEur !== null && eurFlow !== null ? current.netFlowEur - eurFlow : null
     } else {
       continue
     }

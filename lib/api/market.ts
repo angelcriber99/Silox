@@ -58,7 +58,7 @@ export async function deleteEventoRecurrente(id: string): Promise<void> {
 
 export async function fetchPrices(
   tickers: string[]
-): Promise<{ prices: Record<string, PriceData>, fxRates?: Record<string, number>, marketState?: string }> {
+): Promise<{ prices: Record<string, PriceData>, fxRates?: Record<string, number>, fxPreviousRates?: Record<string, number>, marketState?: string }> {
   if (tickers.length === 0) return { prices: {} }
 
   try {
@@ -87,9 +87,11 @@ export async function fetchPrices(
         nextTransition: val.nextTransition,
         isStale: val.isStale ?? true,
         marketDate: val.marketDate,
+        priceKind: val.priceKind,
+        priceSource: val.priceSource,
       }
     }
-    return { prices, fxRates: data.fxRates, marketState: data.marketState }
+    return { prices, fxRates: data.fxRates, fxPreviousRates: data.fxPreviousRates, marketState: data.marketState }
   } catch (error: unknown) {
     throw new Error(error instanceof Error ? error.message : 'Error obteniendo precios')
   }

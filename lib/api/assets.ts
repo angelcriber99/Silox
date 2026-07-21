@@ -50,6 +50,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
         has_daily_activity: true,
         daily_net_units: activity.netUnits,
         daily_net_flow_nativo: activity.netFlowNative,
+        daily_net_flow_eur: activity.netFlowEur,
       } : {}),
     }
   })
@@ -195,9 +196,9 @@ export async function getOrCreateCashAsset(): Promise<Activo> {
 
 export function enrichPositions(
   positions: Posicion[],
-  priceDataPayload: { prices: Record<string, PriceData>, fxRates?: Record<string, number> }
+  priceDataPayload: { prices: Record<string, PriceData>, fxRates?: Record<string, number>, fxPreviousRates?: Record<string, number> }
 ): EnrichedPosition[] {
-  const { prices, fxRates = {} } = priceDataPayload
+  const { prices, fxRates = {}, fxPreviousRates = {} } = priceDataPayload
 
   return positions.map((pos) => {
     const p = { ...pos }
@@ -214,6 +215,7 @@ export function enrichPositions(
 
     const isCashAsset = p.ticker.startsWith('CASH')
     const fxRate = p.moneda === 'EUR' ? 1 : (fxRates[p.moneda] || 1)
+    const previousFxRate = p.moneda === 'EUR' ? 1 : (fxPreviousRates[p.moneda] || fxRate)
     
     // NUNCA hacer fallback al precio de compra para acciones/ETFs si falla la API, 
     // porque distorsiona completamente el valor del portfolio.
@@ -269,10 +271,12 @@ export function enrichPositions(
         const previousUnits = p.has_daily_activity
           ? Math.max(0, currentUnits - (p.daily_net_units ?? 0))
           : currentUnits
-        const previousPriceEur = precio_actual / dailyFactor
         const previousPriceNative = precio_actual_nativo / dailyFactor
+        const previousPriceEur = previousPriceNative / previousFxRate
         const netFlowNative = p.has_daily_activity ? (p.daily_net_flow_nativo ?? 0) : 0
-        const netFlowEur = netFlowNative / fxRate
+        const netFlowEur = p.has_daily_activity
+          ? (p.daily_net_flow_eur ?? (netFlowNative / fxRate))
+          : 0
         const currentValueEur = currentUnits * precio_actual
         const currentValueNative = currentUnits * precio_actual_nativo
         const previousValueEur = previousUnits * previousPriceEur
@@ -311,6 +315,8 @@ export function enrichPositions(
       price_is_stale: priceData?.isStale ?? true,
       market_session_ends_at: priceData?.sessionEnd,
       market_timezone: priceData?.exchangeTimezone,
+      price_kind: priceData?.priceKind,
+      price_source: priceData?.priceSource,
     }
   })
 }

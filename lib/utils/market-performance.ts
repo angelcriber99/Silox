@@ -1,5 +1,18 @@
 export type MarketSession = 'PRE' | 'REGULAR' | 'POST' | 'CLOSED'
 
+/**
+ * Portfolio-level state. A portfolio can span several exchanges, so the badge
+ * must describe whether any price is actively trading instead of letting a
+ * closed/post-market European listing mask an open US session.
+ */
+export function aggregateMarketState(states: Array<string | undefined>): MarketSession | 'OPEN' {
+  if (states.includes('REGULAR')) return 'REGULAR'
+  if (states.includes('PRE')) return 'PRE'
+  if (states.includes('POST')) return 'POST'
+  if (states.includes('OPEN')) return 'OPEN'
+  return 'CLOSED'
+}
+
 export interface TradingPeriod {
   start: number | Date
   end: number | Date
