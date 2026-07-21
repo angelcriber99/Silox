@@ -199,6 +199,26 @@ export function PositionsTable({
   const [searchQuery, setSearchQuery] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("valor_actual")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+    try {
+      const savedKey = localStorage.getItem("silox_sortKey") as SortKey
+      const savedDir = localStorage.getItem("silox_sortDir") as SortDir
+      if (savedKey) setSortKey(savedKey)
+      if (savedDir) setSortDir(savedDir)
+    } catch (e) {}
+  }, [])
+
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        localStorage.setItem("silox_sortKey", sortKey)
+        localStorage.setItem("silox_sortDir", sortDir)
+      } catch (e) {}
+    }
+  }, [sortKey, sortDir, isMounted])
   const [addAssetOpen, setAddAssetOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [alertsOpen, setAlertsOpen] = useState(false)
