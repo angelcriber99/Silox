@@ -396,34 +396,36 @@ async function _fetchMarketPrices(
           throw new Error(`Failed to fetch market data for fund ${ticker}`)
         }
       } else {
-        // Standard assets: try 1m chart first, fall back to quote if unavailable
-        const [chart1mResult, chart1dResult] = await Promise.all([
+        // Standard assets: fetch 1m chart for sparkline, AND quote for real-time price
+        const [chart1mResult, chart1dResult, quoteResult] = await Promise.all([
           getYahooFinance().chart(fetchTicker, { interval: '1m', period1: new Date(Date.now() - 24 * 60 * 60 * 1000), includePrePost: true }).catch(() => null),
           chart1dPromise,
+          getYahooFinance().quote(fetchTicker).catch(() => null),
         ])
         chart1m = chart1mResult
         chart1d = chart1dResult
+        fallbackQuote = quoteResult
 
-        if (!chart1m) {
-          fallbackQuote = await getYahooFinance().quote(fetchTicker).catch(() => null)
-          if (!fallbackQuote) {
-            throw new Error(`Failed to fetch market data for ${ticker}`)
-          }
+        if (!chart1m && !fallbackQuote) {
+          throw new Error(`Failed to fetch market data for ${ticker}`)
         }
       }
 
-      let meta: any = chart1m?.meta
+      let meta: any = chart1m?.meta || {}
       let quotes = (chart1m?.quotes as ChartQuote[]) || []
 
-      if (!chart1m && fallbackQuote) {
-        // Build synthetic meta from the quote, including previousClose for dailyChangePercent
+      if (fallbackQuote) {
+        // Merge real-time quote data into meta (quote endpoint is much faster than chart meta)
         meta = {
-          currency: fallbackQuote.currency,
-          regularMarketPrice: fallbackQuote.regularMarketPrice,
-          regularMarketTime: fallbackQuote.regularMarketTime,
-          exchangeTimezoneName: fallbackQuote.exchangeTimezoneName,
-          chartPreviousClose: fallbackQuote.regularMarketPreviousClose,
-          previousClose: fallbackQuote.regularMarketPreviousClose,
+          ...meta,
+          currency: fallbackQuote.currency ?? meta.currency,
+          regularMarketPrice: fallbackQuote.regularMarketPrice ?? meta.regularMarketPrice,
+          preMarketPrice: fallbackQuote.preMarketPrice ?? meta.preMarketPrice,
+          postMarketPrice: fallbackQuote.postMarketPrice ?? meta.postMarketPrice,
+          regularMarketTime: fallbackQuote.regularMarketTime ?? meta.regularMarketTime,
+          exchangeTimezoneName: fallbackQuote.exchangeTimezoneName ?? meta.exchangeTimezoneName,
+          chartPreviousClose: fallbackQuote.regularMarketPreviousClose ?? meta.chartPreviousClose,
+          previousClose: fallbackQuote.regularMarketPreviousClose ?? meta.previousClose,
         }
       }
 
