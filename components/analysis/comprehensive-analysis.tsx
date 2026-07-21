@@ -443,75 +443,34 @@ export function ComprehensiveAnalysis() {
     <div className="space-y-6">
       
       {/* Gráfica Combinada de Evolución y P&L */}
-      <div className="p-6 rounded-[32px] border border-border flex flex-col relative overflow-hidden" style={{ background: "var(--card)" }}>
+      <div className="p-6 rounded-[32px] border border-border relative overflow-hidden bg-card shadow-sm">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[64px] pointer-events-none" />
         
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
-                <Activity className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold tracking-tight text-foreground">Rendimiento Histórico</h3>
-                <p className="text-xs font-medium text-muted-foreground">Evolución del patrimonio y ganancias diarias</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 mt-2 ml-13">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider mb-0.5">
-                  Rendimiento Global
-                </span>
-                <div className={`flex items-baseline gap-1.5 ${(totals.totalPnl ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                  <span className="text-base font-bold tabular-nums tracking-tight">
-                    {(totals.totalPnl ?? 0) >= 0 ? "+" : ""}{formatCurrency(totals.totalPnl ?? 0)}
-                  </span>
-                  <span className="text-xs font-semibold tabular-nums">
-                    ({(totals.totalPnl ?? 0) >= 0 ? "+" : ""}{formatPercent(totals.totalPnlPercent ?? 0)})
-                  </span>
-                </div>
-              </div>
-
-              <div className="w-px h-8 bg-border/50 mx-2" />
-
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider mb-0.5">
-                  En el periodo ({timeRange === "1W" ? "1S" : timeRange === "ALL" ? "TODO" : timeRange})
-                </span>
-                <div className={`flex items-baseline gap-1.5 ${filteredData.reduce((acc, p) => acc + p.pnl, 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                  <span className="text-base font-bold tabular-nums tracking-tight">
-                    {filteredData.reduce((acc, p) => acc + p.pnl, 0) >= 0 ? "+" : ""}{formatCurrency(filteredData.reduce((acc, p) => acc + p.pnl, 0))}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center rounded-full border border-border/40 bg-muted/30 p-1 sm:self-start mt-4 sm:mt-0 shadow-inner">
-            {(["1D", "1W", "1M", "YTD", "1Y", "ALL"] as PerformanceRange[]).map((range) => (
-              <button
-                key={range}
-                type="button"
-                onClick={() => setTimeRange(range)}
-                className={`min-w-10 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold transition-all duration-200 ${
-                  timeRange === range
-                    ? "bg-foreground text-background shadow-md scale-105"
-                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
-              >
-                {range === "1W" ? "1S" : range === "ALL" ? "TODO" : range}
-              </button>
-            ))}
-          </div>
-        
-        <div className="relative mt-2">
+        <div className="relative">
           <CombinedPerformanceChart 
             chartData={filteredData}
             dailyData={dailyAggregatedData}
             timeRange={timeRange}
             currentDailyPnl={totals.totalSessionPnl}
             currentDailyPnlPercent={totals.totalDailyPnlPercent}
-          />
+          >
+            <div className="flex items-center rounded-full border border-border/40 bg-muted/30 p-1 shadow-inner">
+              {(["1D", "1W", "1M", "YTD", "1Y", "ALL"] as PerformanceRange[]).map((range) => (
+                <button
+                  key={range}
+                  type="button"
+                  onClick={() => setTimeRange(range)}
+                  className={`min-w-10 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold transition-all duration-200 ${
+                    timeRange === range
+                      ? "bg-foreground text-background shadow-md scale-105"
+                      : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                  }`}
+                >
+                  {range === "1W" ? "1S" : range === "ALL" ? "TODO" : range}
+                </button>
+              ))}
+            </div>
+          </CombinedPerformanceChart>
         </div>
       </div>
       
