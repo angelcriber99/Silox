@@ -344,13 +344,13 @@ export default function SettingsPage() {
           <section>
             <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">App Nativa</h2>
             <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
-              <a href="https://github.com/angelcriber99/Silox/releases/latest" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
+              <a href="/api/download?os=windows" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Download className="w-5 h-5" /></div>
                   <span className="font-semibold text-[15px] text-left">Descargar para Windows</span>
                 </div>
               </a>
-              <a href="https://github.com/angelcriber99/Silox/releases/latest" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
+              <a href="/api/download?os=mac" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-zinc-500/10 text-zinc-500 rounded-lg"><Monitor className="w-5 h-5" /></div>
                   <span className="font-semibold text-[15px] text-left">Descargar para Mac</span>
@@ -635,7 +635,7 @@ export default function SettingsPage() {
                     </div>
                     <h3 className="text-lg font-bold">macOS</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-6">Instalador nativo (.dmg) optimizado para procesadores Apple Silicon (M1/M2/M3) e Intel.</p>
-                    <a href="https://github.com/angelcriber99/Silox/releases/latest" target="_blank" rel="noreferrer" className="w-full py-2.5 rounded-xl bg-foreground text-background shadow-sm hover:shadow-md text-sm font-bold transition-all mt-auto flex items-center justify-center">
+                    <a href="/api/download?os=mac" target="_blank" rel="noreferrer" className="w-full py-2.5 rounded-xl bg-foreground text-background shadow-sm hover:shadow-md text-sm font-bold transition-all mt-auto flex items-center justify-center">
                       Descargar para Mac
                     </a>
                   </div>
@@ -647,7 +647,7 @@ export default function SettingsPage() {
                     </div>
                     <h3 className="text-lg font-bold">Windows</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-6">Instalador nativo (.msi) para Windows 10 y 11. Rendimiento nativo usando WebView2.</p>
-                    <a href="https://github.com/angelcriber99/Silox/releases/latest" target="_blank" rel="noreferrer" className="w-full py-2.5 rounded-xl bg-foreground text-background shadow-sm hover:shadow-md text-sm font-bold transition-all mt-auto flex items-center justify-center">
+                    <a href="/api/download?os=windows" target="_blank" rel="noreferrer" className="w-full py-2.5 rounded-xl bg-foreground text-background shadow-sm hover:shadow-md text-sm font-bold transition-all mt-auto flex items-center justify-center">
                       Descargar para Windows
                     </a>
                   </div>
