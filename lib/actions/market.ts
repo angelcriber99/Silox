@@ -26,6 +26,12 @@ import {
   type MetalRateSnapshot,
 } from '@/lib/utils/metal-market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { createClient } from '@supabase/supabase-js'
+
+const adminClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 const METAL_RATE_API_BASE = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api'
 const METAL_HISTORY_DAYS = 6
@@ -285,6 +291,51 @@ export async function fetchMarketPricesDirect(
 
   const freshData = await _fetchMarketPrices(tickers, convertToEurFlag)
   const prices = { ...freshData.prices }
+  
+  // Apply Market Snapshots to stabilize daily P&L
+  try {
+    const { data: snapshots } = await adminClient
+      .from('market_snapshots')
+      .select('*')
+      .in('ticker', tickers)
+
+    const snapshotMap = new Map(snapshots?.map(s => [s.ticker, s]) || [])
+    const snapshotsToUpsert: any[] = []
+
+    for (const ticker of tickers) {
+      const current = prices[ticker]
+      if (!current || current.price == null || !current.marketDate || current.originalPrice == null || current.dailyChangePercent24h == null) continue;
+
+      const snap = snapshotMap.get(ticker)
+      const currentNative = current.originalPrice
+
+      if (!snap || snap.market_date !== current.marketDate) {
+        // First valid quote of the session! Save the mathematically derived previous close
+        const factor = 1 + (current.dailyChangePercent24h / 100);
+        const calculatedPrev = currentNative / factor;
+        
+        snapshotsToUpsert.push({
+          ticker,
+          market_date: current.marketDate,
+          price: calculatedPrev,
+          updated_at: new Date().toISOString()
+        })
+      } else {
+        // We have a snapshot for this session. Force the dailyChangePercent24h to be relative to the stable snapshot
+        const stablePrev = Number(snap.price)
+        if (stablePrev > 0) {
+          prices[ticker].dailyChangePercent24h = ((currentNative / stablePrev) - 1) * 100
+        }
+      }
+    }
+
+    if (snapshotsToUpsert.length > 0) {
+      await adminClient.from('market_snapshots').upsert(snapshotsToUpsert, { onConflict: 'ticker' })
+    }
+  } catch (err) {
+    console.error('Error applying market snapshots:', err)
+  }
+
   for (const ticker of tickers) {
     const current = prices[ticker]
     const previous = lastKnownPriceCache.get(`${ticker}:${convertToEurFlag}`)
