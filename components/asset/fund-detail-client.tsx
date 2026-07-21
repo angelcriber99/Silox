@@ -220,6 +220,10 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         {/* ═══════════ KPIs GRID ═══════════ */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in stagger-1">
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual ?? 0, 'EUR')}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
               <Wallet className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Total Invertido</span>

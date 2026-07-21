@@ -170,7 +170,7 @@ export function StockDetailClient({ position, transactions, assetDetails, realti
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual_nativo ?? position.valor_actual ?? 0, position.original_currency || position.moneda)}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatCurrency(position.valor_actual ?? 0, 'EUR')}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Precio Medio</span>
