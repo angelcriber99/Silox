@@ -29,6 +29,7 @@ import {
 import { z } from "zod"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { AssetLogo } from "@/components/ui/asset-logo"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 
 const RadarEventSchema = z.object({
   id: z.string(),
@@ -119,7 +120,6 @@ export default function RadarPage() {
   const language = usePreferences((state) => state.language)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
-  const [previewDateKey, setPreviewDateKey] = useState<string | null>(null)
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["radar", language],
     queryFn: () => loadRadar(language),
@@ -260,42 +260,51 @@ export default function RadarPage() {
                         const dayEvents = data.events.filter((event) => (!selectedTicker || event.ticker === selectedTicker) && eventOccursOn(event, day))
                         const isSelected = selectedDate ? isSameDay(selectedDate, day) : false
                         const dayKey = format(day, "yyyy-MM-dd")
-                        const isPreviewed = previewDateKey === dayKey
-                        const column = (month.padding + dayIndex) % 7
-                        const tooltipPosition = column <= 1
-                          ? "left-0"
-                          : column >= 5
-                            ? "right-0"
-                            : "left-1/2 -translate-x-1/2"
+                        
                         return (
-                          <div key={day.toISOString()} className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedDate(isSelected ? null : day)}
-                              onMouseEnter={() => setPreviewDateKey(dayKey)}
-                              onMouseLeave={() => setPreviewDateKey(null)}
-                              onFocus={() => setPreviewDateKey(dayKey)}
-                              onBlur={() => setPreviewDateKey(null)}
-                              aria-pressed={isSelected}
-                              aria-describedby={isPreviewed ? `radar-preview-${dayKey}` : undefined}
-                              aria-label={`${format(day, "d 'de' MMMM", { locale: es })}: ${dayEvents.length} eventos`}
-                              className={`flex h-9 w-full flex-col items-center justify-center rounded-lg text-xs transition-colors ${isSelected ? "bg-foreground text-background" : "hover:bg-muted focus-visible:bg-muted"}`}
-                            >
-                              <span>{format(day, "d")}</span>
-                              <span className="mt-0.5 flex h-1 gap-0.5">
-                                {dayEvents.slice(0, 3).map((event) => <span key={event.id} className={`h-1 w-1 rounded-full ${CERTAINTY[event.certainty].dot}`} />)}
-                              </span>
-                            </button>
-                            {isPreviewed && (
-                              <DayPreview
-                                id={`radar-preview-${dayKey}`}
-                                day={day}
-                                events={dayEvents}
-                                assets={data.assets}
-                                positionClassName={tooltipPosition}
-                              />
-                            )}
-                          </div>
+                          <HoverCard key={day.toISOString()} openDelay={200} closeDelay={100}>
+                            <HoverCardTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDate(isSelected ? null : day)}
+                                aria-pressed={isSelected}
+                                aria-label={`${format(day, "d 'de' MMMM", { locale: es })}: ${dayEvents.length} eventos`}
+                                className={`flex h-9 w-full flex-col items-center justify-center rounded-lg text-xs transition-colors ${isSelected ? "bg-foreground text-background" : "hover:bg-muted focus-visible:bg-muted"}`}
+                              >
+                                <span>{format(day, "d")}</span>
+                                <span className="mt-0.5 flex h-1 gap-0.5">
+                                  {dayEvents.slice(0, 3).map((event) => <span key={event.id} className={`h-1 w-1 rounded-full ${CERTAINTY[event.certainty].dot}`} />)}
+                                </span>
+                              </button>
+                            </HoverCardTrigger>
+                            <HoverCardContent side="top" className="w-60 p-3" sideOffset={8}>
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <p className="text-xs font-semibold capitalize">{format(day, "EEEE, d MMMM", { locale: es })}</p>
+                                <span className="shrink-0 text-[10px] text-muted-foreground">
+                                  {dayEvents.length === 1 ? "1 evento" : `${dayEvents.length} eventos`}
+                                </span>
+                              </div>
+                              {dayEvents.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">Sin eventos previstos para este día.</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {dayEvents.slice(0, 3).map((event) => (
+                                    <div key={event.id} className="flex items-start gap-2">
+                                      <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${CERTAINTY[event.certainty].dot}`} />
+                                      <div className="min-w-0">
+                                        <p className="text-[10px] font-bold text-primary">
+                                          {data.assets.find(a => a.ticker === event.ticker)?.name ?? event.ticker.split(".")[0]}
+                                        </p>
+                                        <p className="line-clamp-2 text-xs leading-snug">{event.title}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {dayEvents.length > 3 && <p className="text-[10px] text-muted-foreground">+{dayEvents.length - 3} eventos más</p>}
+                                </div>
+                              )}
+                              <p className="mt-2 border-t border-border/60 pt-2 text-[10px] text-muted-foreground">Haz click para fijar el detalle debajo.</p>
+                            </HoverCardContent>
+                          </HoverCard>
                         )
                       })}
                     </div>
@@ -401,50 +410,3 @@ function EmptyPanel({ text }: { text: string }) {
   return <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">{text}</div>
 }
 
-function DayPreview({
-  id,
-  day,
-  events,
-  assets,
-  positionClassName,
-}: {
-  id: string
-  day: Date
-  events: RadarEvent[]
-  assets: { ticker: string; name: string }[]
-  positionClassName: string
-}) {
-  return (
-    <div
-      id={id}
-      role="tooltip"
-      className={`pointer-events-none absolute bottom-full z-50 mb-2 w-60 rounded-xl border border-border bg-popover p-3 text-popover-foreground shadow-2xl ${positionClassName}`}
-    >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold capitalize">{format(day, "EEEE, d MMMM", { locale: es })}</p>
-        <span className="shrink-0 text-[10px] text-muted-foreground">
-          {events.length === 1 ? "1 evento" : `${events.length} eventos`}
-        </span>
-      </div>
-      {events.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Sin eventos previstos para este día.</p>
-      ) : (
-        <div className="space-y-2">
-          {events.slice(0, 3).map((event) => (
-            <div key={event.id} className="flex items-start gap-2">
-              <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${CERTAINTY[event.certainty].dot}`} />
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-primary">
-                  {assets.find(a => a.ticker === event.ticker)?.name ?? event.ticker.split(".")[0]}
-                </p>
-                <p className="line-clamp-2 text-xs leading-snug">{event.title}</p>
-              </div>
-            </div>
-          ))}
-          {events.length > 3 && <p className="text-[10px] text-muted-foreground">+{events.length - 3} eventos más</p>}
-        </div>
-      )}
-      <p className="mt-2 border-t border-border/60 pt-2 text-[10px] text-muted-foreground">Haz click para fijar el detalle debajo.</p>
-    </div>
-  )
-}
