@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
 import type { EnrichedPosition, EventoRecurrente } from "@/lib/types"
 
@@ -22,7 +22,7 @@ import { DashboardErrorState } from "@/components/dashboard/dashboard-error-stat
 
 export default function Home() {
   const queryClient = useQueryClient()
-  const { positions, totals, isLoading, error, pricesUpdatedAt, marketState, pendingTxs, refetch } = usePortfolio()
+  const { positions, totals, isLoading, error, pricesUpdatedAt, marketState, pendingTxs, refetch } = usePortfolioContext()
   const { data: allTransactions } = useAllTransactions()
   const { zenMode } = usePreferences()
 

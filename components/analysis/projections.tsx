@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Loader2, TrendingUp, PiggyBank, Wallet } from "lucide-react"
@@ -14,7 +14,7 @@ function readStoredNumber(key: string, fallback: number): number {
 }
 
 export function Projections() {
-  const { positions, isLoading } = usePortfolio()
+  const { positions, isLoading } = usePortfolioContext()
   
   const currentTotal = useMemo(() => {
     if (!positions) return 0

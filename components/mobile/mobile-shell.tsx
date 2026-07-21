@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { MobileBottomNav } from "@/components/mobile/mobile-bottom-nav"
 import { MobileBottomSheet } from "@/components/mobile/mobile-bottom-sheet"
 import { MobileMoreMenu } from "@/components/mobile/mobile-more-menu"
@@ -11,7 +11,7 @@ import { useQuickAdd } from "@/lib/stores/use-quick-add"
 export function MobileShell() {
   const [moreOpen, setMoreOpen] = useState(false)
   const { isOpen, preselectedAsset, openEmpty, close } = useQuickAdd()
-  const { positions } = usePortfolio({ persistHistory: true })
+  const { positions } = usePortfolioContext()
 
   return (
     <>

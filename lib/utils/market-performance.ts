@@ -43,6 +43,7 @@ export interface MarketPerformance {
   sessionEnd?: Date
   nextTransition?: Date
   isStale: boolean
+  marketDate: string
 }
 
 const DEFAULT_MARKET_TIME_ZONE = 'America/New_York'
@@ -168,6 +169,7 @@ export function extractMarketPerformance(
     sessionEnd: activePeriod ? new Date(sessionEndMs) : undefined,
     nextTransition: activePeriod ? new Date(sessionEndMs) : undefined,
     isStale,
+    marketDate,
   }
 }
 

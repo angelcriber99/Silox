@@ -2,11 +2,11 @@
 
 import { useEffect, useRef } from "react"
 import confetti from "canvas-confetti"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
 export function Celebration() {
-  const { totals } = usePortfolio()
+  const { totals } = usePortfolioContext()
   const { celebrationMode } = usePreferences()
   const hasCelebrated = useRef(false)
 

@@ -41,7 +41,7 @@ export function AppDataPreloader() {
     void Promise.allSettled([
       queryClient.prefetchQuery({ queryKey: ["positions"], queryFn: fetchPosiciones, staleTime: PRIMARY_STALE_TIME }),
       queryClient.prefetchQuery({ queryKey: ["pending-transactions"], queryFn: fetchPendingTransactions, staleTime: PRIMARY_STALE_TIME }),
-      queryClient.prefetchQuery({ queryKey: ["portfolio-funding"], queryFn: fetchPortfolioFunding, staleTime: PRIMARY_STALE_TIME }),
+      queryClient.prefetchQuery({ queryKey: ["portfolio-funding"], queryFn: fetchPortfolioFunding, staleTime: SECONDARY_STALE_TIME }),
       queryClient.prefetchQuery({ queryKey: ["activos"], queryFn: fetchActivos, staleTime: SECONDARY_STALE_TIME }),
     ])
 

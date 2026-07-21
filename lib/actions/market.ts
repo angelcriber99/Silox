@@ -472,6 +472,7 @@ async function _fetchMarketPrices(
         sessionEnd: performance.sessionEnd?.toISOString(),
         nextTransition: performance.nextTransition?.toISOString(),
         isStale: isFund ? false : performance.isStale,
+        marketDate: performance.marketDate,
       }
     },
   )
@@ -484,7 +485,7 @@ async function _fetchMarketPrices(
     const ticker = tickers[i]
 
     if (result.status === 'fulfilled') {
-      const { price, sparkline, currency, changePercent24h, dailyChangePercent24h, originalPrice, originalCurrency, marketState, latestTime, exchangeTimezone, sessionStart, sessionEnd, nextTransition, isStale } = result.value
+      const { price, sparkline, currency, changePercent24h, dailyChangePercent24h, originalPrice, originalCurrency, marketState, latestTime, exchangeTimezone, sessionStart, sessionEnd, nextTransition, isStale, marketDate } = result.value
       prices[ticker] = {
         price,
         sparkline,
@@ -500,6 +501,7 @@ async function _fetchMarketPrices(
         sessionEnd,
         nextTransition,
         isStale,
+        marketDate,
       }
       
       if (marketState === 'PRE') {

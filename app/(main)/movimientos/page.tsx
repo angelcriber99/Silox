@@ -11,7 +11,7 @@ import { ExportExcelButton } from "@/components/transactions/export-excel-button
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import Link from "next/link"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { IOSHeader } from "@/components/ui/ios-header"
@@ -26,7 +26,7 @@ import {
 export default function MovimientosPage() {
   const { data: transactions, isLoading } = useTransactions(1000)
   const deleteTransaction = useDeleteTransaction()
-  const { positions } = usePortfolio()
+  const { positions } = usePortfolioContext()
   const { hideBalances } = usePreferences()
 
   // State for modals

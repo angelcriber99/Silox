@@ -31,7 +31,7 @@ export function usePortfolioFunding(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["portfolio-funding"],
     queryFn: fetchPortfolioFunding,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
     enabled: options?.enabled ?? true,
   })
 }

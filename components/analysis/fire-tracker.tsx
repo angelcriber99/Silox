@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { Loader2, Target, PiggyBank, TrendingUp } from "lucide-react"
 
 export function FireTracker() {
-  const { positions, isLoading } = usePortfolio()
+  const { positions, isLoading } = usePortfolioContext()
   const [targetAmount, setTargetAmount] = useState(300000)
   const [monthlySaving, setMonthlySaving] = useState(500)
   const [annualReturn, setAnnualReturn] = useState(7)

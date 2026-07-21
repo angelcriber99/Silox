@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect, useRef } from "react"
+import { useMemo, useState, useEffect, useRef, memo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -184,6 +184,333 @@ function SkeletonRow() {
     </TableRow>
   )
 }
+
+const PositionRow = memo(function PositionRow({
+  p,
+  t,
+  hideBalances,
+  cellPadding,
+  showPnlPercentOnly,
+  onAddTransaction,
+  onEditAsset,
+  setWaveAsset,
+  setWaveModalOpen
+}: any) {
+  const hasHistory = p.sparkline && p.sparkline.length > 1;
+  const sparklineColor = hasHistory
+    ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
+    : "#71717a";
+
+  const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
+    ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
+    : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
+
+  const assetNotes = parseAssetNotes(p.notas);
+  const hasActiveWaves = assetNotes.waves.some(w => w.active);
+  const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => {
+    const currentPrice = w.currency === "USD"
+      ? (p.precio_actual_usd ?? 0)
+      : (p.precio_actual_nativo ?? p.precio_actual ?? 0);
+    return w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price));
+  });
+
+  return (
+    <TableRow
+      className={`transition-all duration-500 group relative ${
+        hasTriggeredWave
+          ? "bg-amber-500/20 hover:bg-amber-500/30 border-y-2 border-y-amber-500 z-10 animate-pulse"
+          : "border-b border-border/30 hover:bg-muted/30"
+      }`}
+      style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(245 158 11), 0 0 20px rgba(245, 158, 11, 0.4)" } : undefined}
+    >
+      <TableCell className={`font-medium text-foreground tabular-nums pl-4 sm:pl-6 ${cellPadding}`}>
+        <Link href={`/activo/${p.activo_id}`} className="flex items-center gap-3 hover:text-amber-500 transition-colors">
+          <AssetLogo 
+            ticker={p.ticker} 
+            name={p.nombre} 
+            type={p.tipo} 
+            size={28}
+            className="hidden sm:flex"
+          />
+          <div className="flex flex-col">
+            <span>
+              {displaySymbol}
+              {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
+                <span className="text-muted-foreground/80 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
+              )}
+            </span>
+            {p.isin && (
+              <span className="text-[10px] text-muted-foreground/80 tracking-wide font-normal mt-0.5">
+                {p.isin}
+              </span>
+            )}
+          </div>
+        </Link>
+      </TableCell>
+      <TableCell className={`text-muted-foreground/80 text-sm max-w-[160px] truncate hidden md:table-cell ${cellPadding}`}>
+        <Link href={`/activo/${p.activo_id}`} className="hover:text-foreground/80 transition-colors">
+          {p.nombre || "—"}
+        </Link>
+      </TableCell>
+      <TableCell className={cellPadding}>
+        <Badge
+          variant="outline"
+          className="border-none"
+          style={TIPO_BADGE_STYLES[p.tipo] || { background: "rgba(161,161,170,0.1)", color: "#a1a1aa" }}
+        >
+          {translateType(p.tipo, t)}
+        </Badge>
+      </TableCell>
+      <TableCell className={`text-right tabular-nums text-foreground/80 ${cellPadding}`}>
+        {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
+      </TableCell>
+      <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden lg:table-cell ${cellPadding}`}>
+        {p.precio_medio > 0
+          ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda))
+          : "—"}
+      </TableCell>
+      <TableCell className={`text-right tabular-nums ${cellPadding}`}>
+        <LivePrice 
+          value={p.precio_actual_nativo !== null ? p.precio_actual_nativo : p.precio_actual}
+          currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
+          hideBalances={hideBalances}
+          isStale={p.price_is_stale}
+        />
+      </TableCell>
+      <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>
+        <div className="flex flex-col items-end gap-1">
+          <span>
+            {hideBalances ? "****" : (p.valor_actual !== null
+              ? formatCurrency(p.valor_actual, 'EUR')
+              : "—")}
+          </span>
+          {!hideBalances && (p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
+            <span className="text-[10px] text-muted-foreground/70 font-normal">
+              Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
+            </span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className={`text-right hidden sm:table-cell ${cellPadding}`}>
+        <PnlDisplay 
+          value={p.change_amount_24h}
+          type="currency" 
+        />
+      </TableCell>
+      {!showPnlPercentOnly && (
+        <TableCell className={`text-right ${cellPadding}`}>
+          <PnlDisplay value={p.pnl} type="currency" />
+        </TableCell>
+      )}
+      <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"} ${cellPadding}`}>
+        <PnlDisplay value={p.pnl_percent} type="percent" />
+      </TableCell>
+      <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
+        <div className="flex items-center justify-end gap-1 pr-6 transition-opacity duration-200">
+          {(() => {
+            const showWavesPermanently = hasActiveWaves || hasTriggeredWave;
+            
+            return (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
+                  title={`Olas (Waves) — ${p.ticker}`}
+                  className={`h-7 w-7 transition-all duration-200 ${
+                    showWavesPermanently ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  } ${
+                    hasTriggeredWave 
+                      ? "text-amber-400 bg-amber-500/20" 
+                      : hasActiveWaves 
+                        ? "text-muted-foreground/80 bg-muted/40 hover:text-amber-400 hover:bg-amber-500/10" 
+                        : "text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10"
+                  }`}
+                >
+                  <Waves className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEditAsset(p)}
+                  title={`Editar activo — ${p.ticker}`}
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-200"
+                >
+                  <Edit3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onAddTransaction(p)}
+                  title={`Añadir transacción — ${p.ticker}`}
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground/60 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                </Button>
+              </>
+            );
+          })()}
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+}, (prev, next) => {
+  return (
+    prev.p.precio_actual === next.p.precio_actual &&
+    prev.p.change_amount_24h === next.p.change_amount_24h &&
+    prev.p.pnl === next.p.pnl &&
+    prev.p.unidades === next.p.unidades &&
+    prev.hideBalances === next.hideBalances &&
+    prev.showPnlPercentOnly === next.showPnlPercentOnly &&
+    prev.cellPadding === next.cellPadding
+  )
+})
+
+const PositionCard = memo(function PositionCard({
+  p,
+  t,
+  hideBalances,
+  onAddTransaction,
+  onEditAsset,
+  setWaveAsset,
+  setWaveModalOpen
+}: any) {
+  const hasHistory = p.sparkline && p.sparkline.length > 1;
+  const sparklineColor = hasHistory
+    ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
+    : "#71717a";
+
+  const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
+    ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
+    : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
+
+  return (
+    <div className="p-4 flex flex-col gap-3 hover:bg-muted/30 transition-colors">
+      {/* Top: Title & Badge */}
+      <div className="flex items-center justify-between">
+        <Link href={`/activo/${p.activo_id}`} className="flex flex-col flex-1">
+          <span className="font-medium text-foreground">
+            {displaySymbol}
+          </span>
+          {p.nombre && (
+            <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">
+              {p.nombre}
+            </span>
+          )}
+        </Link>
+        <Badge
+          variant="outline"
+          className={`text-[10px] px-2 py-0 h-5 ${
+            TIPO_BADGE_STYLES[p.tipo] ?? "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
+          }`}
+        >
+          {translateType(p.tipo, t)}
+        </Badge>
+      </div>
+
+      {/* Middle: Units x Price -> Total Value */}
+      <div className="flex justify-between items-end">
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground/80 mb-0.5">Posición</span>
+          <span className="text-sm font-medium tabular-nums text-foreground/80 flex items-center gap-1">
+            {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-muted-foreground/60">x</span>
+            <LivePrice 
+            value={p.precio_actual}
+            currency="EUR"
+            hideBalances={hideBalances}
+            />
+          </span>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
+          <div className="flex flex-col items-end">
+            <span className="text-base font-bold tabular-nums text-foreground">
+              {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
+            </span>
+            {(p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
+              <span className="text-[10px] text-muted-foreground/70 font-normal -mt-1">
+                Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom: P&L and Actions */}
+      <div className="flex items-center justify-between mt-1 pt-3 border-t border-border/50">
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground/80 mb-0.5">Rentabilidad Total</span>
+          <div className="flex items-center gap-2">
+            <PnlDisplay value={p.pnl} type="currency" />
+            <span className="text-zinc-700 text-xs">|</span>
+            <PnlDisplay value={p.pnl_percent} type="percent" />
+          </div>
+        </div>
+        <div className="flex flex-col items-end mr-4">
+          <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy</span>
+          <PnlDisplay 
+            value={p.change_amount_24h}
+            type="currency" 
+          />
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {(() => {
+            const assetNotes = parseAssetNotes(p.notas);
+            const hasActiveWaves = assetNotes.waves.some(w => w.active);
+            const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => {
+              const currentPrice = w.currency === "USD"
+                ? (p.precio_actual_usd ?? 0)
+                : (p.precio_actual_nativo ?? p.precio_actual ?? 0);
+              return w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price));
+            });
+            
+            return (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
+                className={`h-8 w-8 transition-colors ${
+                  hasTriggeredWave 
+                    ? "text-amber-400 bg-amber-500/20" 
+                    : hasActiveWaves 
+                      ? "text-muted-foreground/80 bg-muted/40 hover:text-amber-400 hover:bg-amber-500/10" 
+                      : "text-muted-foreground bg-muted/50 hover:text-amber-400 hover:bg-amber-500/10"
+                }`}
+              >
+                <Waves className="h-4 w-4" />
+              </Button>
+            );
+          })()}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onEditAsset(p)}
+            className="h-8 w-8 text-muted-foreground bg-muted/50 hover:text-foreground"
+          >
+            <Edit3 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onAddTransaction(p)}
+            className="h-8 w-8 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
+          >
+            <PlusCircle className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}, (prev, next) => {
+  return (
+    prev.p.precio_actual === next.p.precio_actual &&
+    prev.p.change_amount_24h === next.p.change_amount_24h &&
+    prev.p.pnl === next.p.pnl &&
+    prev.p.unidades === next.p.unidades &&
+    prev.hideBalances === next.hideBalances
+  )
+})
 
 export function PositionsTable({
   positions,
@@ -450,167 +777,20 @@ export function PositionsTable({
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAndSorted.map((p) => {
-                  const hasHistory = p.sparkline && p.sparkline.length > 1;
-                  const sparklineColor = hasHistory
-                    ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
-                    : "#71717a";
-
-                  const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
-                    ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
-                    : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
-
-                  const assetNotes = parseAssetNotes(p.notas);
-                  const hasActiveWaves = assetNotes.waves.some(w => w.active);
-                  const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => {
-                    const currentPrice = w.currency === "USD"
-                      ? (p.precio_actual_usd ?? 0)
-                      : (p.precio_actual_nativo ?? p.precio_actual ?? 0);
-                    return w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price));
-                  });
-
-                  return (
-                    <TableRow
-                      key={p.activo_id}
-                      className={`transition-all duration-500 group relative ${
-                        hasTriggeredWave
-                          ? "bg-amber-500/20 hover:bg-amber-500/30 border-y-2 border-y-amber-500 z-10 animate-pulse"
-                          : "border-b border-border/30 hover:bg-muted/30"
-                      }`}
-                      style={hasTriggeredWave ? { boxShadow: "inset 8px 0 0 0 rgb(245 158 11), 0 0 20px rgba(245, 158, 11, 0.4)" } : undefined}
-                    >
-                      <TableCell className={`font-medium text-foreground tabular-nums pl-4 sm:pl-6 ${cellPadding}`}>
-                        <Link href={`/activo/${p.activo_id}`} className="flex items-center gap-3 hover:text-amber-500 transition-colors">
-                          <AssetLogo 
-                            ticker={p.ticker} 
-                            name={p.nombre} 
-                            type={p.tipo} 
-                            size={28}
-                            className="hidden sm:flex"
-                          />
-                          <div className="flex flex-col">
-                            <span>
-                              {displaySymbol}
-                              {p.ticker.includes('.') && p.tipo !== "Fondo Indexado" && p.tipo !== "Fondo Monetario" && (
-                                <span className="text-muted-foreground/80 text-xs">.{p.ticker.split('.').slice(1).join('.')}</span>
-                              )}
-                            </span>
-                            {p.isin && (
-                              <span className="text-[10px] text-muted-foreground/80 tracking-wide font-normal mt-0.5">
-                                {p.isin}
-                              </span>
-                            )}
-                          </div>
-                        </Link>
-                      </TableCell>
-                      <TableCell className={`text-muted-foreground/80 text-sm max-w-[160px] truncate hidden md:table-cell ${cellPadding}`}>
-                        <Link href={`/activo/${p.activo_id}`} className="hover:text-foreground/80 transition-colors">
-                          {p.nombre || "—"}
-                        </Link>
-                      </TableCell>
-                      <TableCell className={cellPadding}>
-                        <Badge
-                          variant="outline"
-                          className="border-none"
-                          style={TIPO_BADGE_STYLES[p.tipo] || { background: "rgba(161,161,170,0.1)", color: "#a1a1aa" }}
-                        >
-                          {translateType(p.tipo, t)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className={`text-right tabular-nums text-foreground/80 ${cellPadding}`}>
-                        {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
-                      </TableCell>
-                      <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden lg:table-cell ${cellPadding}`}>
-                        {p.precio_medio > 0
-                          ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda))
-                          : "—"}
-                      </TableCell>
-                      <TableCell className={`text-right tabular-nums ${cellPadding}`}>
-                        <LivePrice 
-                          value={p.precio_actual_nativo !== null ? p.precio_actual_nativo : p.precio_actual}
-                          currency={p.precio_actual_nativo !== null ? (p.original_currency || p.moneda) : 'EUR'}
-                          hideBalances={hideBalances}
-                          isStale={p.price_is_stale}
-                        />
-                      </TableCell>
-                      <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>
-                        <div className="flex flex-col items-end gap-1">
-                          <span>
-                            {hideBalances ? "****" : (p.valor_actual !== null
-                              ? formatCurrency(p.valor_actual, 'EUR')
-                              : "—")}
-                          </span>
-                          {!hideBalances && (p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
-                            <span className="text-[10px] text-muted-foreground/70 font-normal">
-                              Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className={`text-right hidden sm:table-cell ${cellPadding}`}>
-                        <PnlDisplay 
-                          value={p.change_amount_24h}
-                          type="currency" 
-                        />
-                      </TableCell>
-                      {!showPnlPercentOnly && (
-                        <TableCell className={`text-right ${cellPadding}`}>
-                          <PnlDisplay value={p.pnl} type="currency" />
-                        </TableCell>
-                      )}
-                      <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"} ${cellPadding}`}>
-                        <PnlDisplay value={p.pnl_percent} type="percent" />
-                      </TableCell>
-                      <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
-                        <div className="flex items-center justify-end gap-1 pr-6 transition-opacity duration-200">
-                          {(() => {
-                            const showWavesPermanently = hasActiveWaves || hasTriggeredWave;
-                            
-                            return (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
-                                  title={`Olas (Waves) — ${p.ticker}`}
-                                  className={`h-7 w-7 transition-all duration-200 ${
-                                    showWavesPermanently ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                  } ${
-                                    hasTriggeredWave 
-                                      ? "text-amber-400 bg-amber-500/20" 
-                                      : hasActiveWaves 
-                                        ? "text-muted-foreground/80 bg-muted/40 hover:text-amber-400 hover:bg-amber-500/10" 
-                                        : "text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10"
-                                  }`}
-                                >
-                                  <Waves className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => onEditAsset(p)}
-                                  title={`Editar activo — ${p.ticker}`}
-                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground/60 hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-200"
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => onAddTransaction(p)}
-                                  title={`Añadir transacción — ${p.ticker}`}
-                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground/60 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200"
-                                >
-                                  <PlusCircle className="h-4 w-4" />
-                                </Button>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
+                filteredAndSorted.map((p) => (
+                  <PositionRow
+                    key={p.activo_id}
+                    p={p}
+                    t={t}
+                    hideBalances={hideBalances}
+                    cellPadding={cellPadding}
+                    showPnlPercentOnly={showPnlPercentOnly}
+                    onAddTransaction={onAddTransaction}
+                    onEditAsset={onEditAsset}
+                    setWaveAsset={setWaveAsset}
+                    setWaveModalOpen={setWaveModalOpen}
+                  />
+                ))
               )}
             </TableBody>
           </Table>
@@ -643,135 +823,18 @@ export function PositionsTable({
                </div>
             </div>
           ) : (
-            filteredAndSorted.map((p) => {
-               const hasHistory = p.sparkline && p.sparkline.length > 1;
-               const sparklineColor = hasHistory
-                 ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
-                 : "#71717a";
-
-               const displaySymbol = (p.tipo === "Fondo Indexado" || p.tipo === "Fondo Monetario") 
-                 ? (p.nombre?.split(' ')[0].toUpperCase() || "FONDO")
-                 : (p.ticker.length > 6 && p.nombre) ? p.nombre.split(' ')[0].toUpperCase() : p.ticker.split('.')[0];
-
-               return (
-                 <div key={p.activo_id} className="p-4 flex flex-col gap-3 hover:bg-muted/30 transition-colors">
-                   {/* Top: Title & Badge */}
-                   <div className="flex items-center justify-between">
-                     <Link href={`/activo/${p.activo_id}`} className="flex flex-col flex-1">
-                        <span className="font-medium text-foreground">
-                          {displaySymbol}
-                        </span>
-                        {p.nombre && (
-                          <span className="text-xs text-muted-foreground/80 truncate max-w-[200px]">
-                            {p.nombre}
-                          </span>
-                        )}
-                     </Link>
-                     <Badge
-                        variant="outline"
-                        className={`text-[10px] px-2 py-0 h-5 ${
-                          TIPO_BADGE_STYLES[p.tipo] ?? "bg-zinc-500/10 text-muted-foreground border-zinc-500/20"
-                        }`}
-                      >
-                        {translateType(p.tipo, t)}
-                      </Badge>
-                   </div>
-
-                   {/* Middle: Units x Price -> Total Value */}
-                   <div className="flex justify-between items-end">
-                     <div className="flex flex-col">
-                       <span className="text-xs text-muted-foreground/80 mb-0.5">Posición</span>
-                       <span className="text-sm font-medium tabular-nums text-foreground/80 flex items-center gap-1">
-                         {p.unidades > 0 ? formatUnits(p.unidades) : "0"} <span className="text-muted-foreground/60">x</span>
-                         <LivePrice 
-                          value={p.precio_actual}
-                          currency="EUR"
-                          hideBalances={hideBalances}
-                         />
-                       </span>
-                     </div>
-                     <div className="flex flex-col items-end">
-                       <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
-                       <div className="flex flex-col items-end">
-                         <span className="text-base font-bold tabular-nums text-foreground">
-                           {p.valor_actual !== null ? formatCurrency(p.valor_actual, 'EUR') : "—"}
-                         </span>
-                         {(p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
-                           <span className="text-[10px] text-muted-foreground/70 font-normal -mt-1">
-                             Inv: {formatCurrency(p.dinero_invertido_eur ?? p.coste_total_eur, 'EUR')}
-                           </span>
-                         )}
-                       </div>
-                     </div>
-                   </div>
-
-                   {/* Bottom: P&L and Actions */}
-                   <div className="flex items-center justify-between mt-1 pt-3 border-t border-border/50">
-                     <div className="flex flex-col">
-                       <span className="text-xs text-muted-foreground/80 mb-0.5">Rentabilidad Total</span>
-                       <div className="flex items-center gap-2">
-                         <PnlDisplay value={p.pnl} type="currency" />
-                         <span className="text-zinc-700 text-xs">|</span>
-                         <PnlDisplay value={p.pnl_percent} type="percent" />
-                       </div>
-                     </div>
-                     <div className="flex flex-col items-end mr-4">
-                       <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy</span>
-                       <PnlDisplay 
-                          value={p.change_amount_24h}
-                          type="currency" 
-                        />
-                     </div>
-                     
-                     <div className="flex items-center gap-2">
-                        {(() => {
-                          const assetNotes = parseAssetNotes(p.notas);
-                          const hasActiveWaves = assetNotes.waves.some(w => w.active);
-                          const hasTriggeredWave = hasActiveWaves && assetNotes.waves.some(w => {
-                            const currentPrice = w.currency === "USD"
-                              ? (p.precio_actual_usd ?? 0)
-                              : (p.precio_actual_nativo ?? p.precio_actual ?? 0);
-                            return w.active && ((w.type === "SELL" && currentPrice >= w.price) || (w.type === "BUY" && currentPrice <= w.price));
-                          });
-                          
-                          return (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => { setWaveAsset(p); setWaveModalOpen(true); }}
-                              className={`h-8 w-8 transition-colors ${
-                                hasTriggeredWave 
-                                  ? "text-amber-400 bg-amber-500/20" 
-                                  : hasActiveWaves 
-                                    ? "text-muted-foreground/80 bg-muted/40 hover:text-amber-400 hover:bg-amber-500/10" 
-                                    : "text-muted-foreground bg-muted/50 hover:text-amber-400 hover:bg-amber-500/10"
-                              }`}
-                            >
-                              <Waves className="h-4 w-4" />
-                            </Button>
-                          );
-                        })()}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEditAsset(p)}
-                          className="h-8 w-8 text-muted-foreground bg-muted/50 hover:text-foreground"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onAddTransaction(p)}
-                          className="h-8 w-8 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
-                        >
-                          <PlusCircle className="h-4 w-4" />
-                        </Button>
-                     </div>
-                   </div>
-                 </div>
-               )
-            })
+            filteredAndSorted.map((p) => (
+              <PositionCard
+                key={p.activo_id}
+                p={p}
+                t={t}
+                hideBalances={hideBalances}
+                onAddTransaction={onAddTransaction}
+                onEditAsset={onEditAsset}
+                setWaveAsset={setWaveAsset}
+                setWaveModalOpen={setWaveModalOpen}
+              />
+            ))
           )}
         </div>
       </CardContent>

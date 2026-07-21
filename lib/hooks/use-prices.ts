@@ -5,6 +5,7 @@ import { fetchPrices } from '@/lib/api/market'
 import { useRef, useEffect } from 'react'
 import type { PriceData } from '@/lib/types'
 import { usePreferences } from '@/lib/stores/use-preferences'
+import { saveDailyOpenSnapshot, getDailyOpenSnapshot } from '@/lib/utils/daily-open-snapshot'
 
 export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
   const lastKnownPrices = useRef<Record<string, PriceData>>({})
@@ -51,6 +52,29 @@ export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
           // Update last known good price
           lastKnownPrices.current[ticker] = mergedPrices[ticker]
           hasUpdates = true
+
+          // Manage daily open snapshot if we have a stable market session date
+          if (mergedPrices[ticker].marketDate && mergedPrices[ticker].dailyChangePercent24h != null) {
+            const snap = getDailyOpenSnapshot(ticker);
+            const currentNative = mergedPrices[ticker].originalPrice ?? mergedPrices[ticker].price;
+            
+            if (currentNative != null) {
+              const factor = 1 + (mergedPrices[ticker].dailyChangePercent24h! / 100);
+              const calculatedPrev = currentNative / factor;
+
+              if (!snap || snap.date !== mergedPrices[ticker].marketDate) {
+                // First valid quote of the session! Save the mathematically derived previous close
+                saveDailyOpenSnapshot(ticker, calculatedPrev, mergedPrices[ticker].marketDate!);
+              } else {
+                // We have a snapshot for this session. Force the dailyChangePercent24h to be relative to the stable snapshot
+                // This prevents PnL "botes raros" if Yahoo suddenly changes its previousClose mid-day
+                const stablePrev = snap.price;
+                if (stablePrev > 0) {
+                  mergedPrices[ticker].dailyChangePercent24h = ((currentNative / stablePrev) - 1) * 100;
+                }
+              }
+            }
+          }
         }
       }
       

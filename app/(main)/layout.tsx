@@ -7,6 +7,7 @@ import { ClientSessionSync } from "@/components/providers/client-session-sync"
 import { AppDataPreloader } from "@/components/providers/app-data-preloader"
 import { PortfolioRealtimeSync } from "@/components/providers/portfolio-realtime-sync"
 import { SilentDividendSync } from "@/components/providers/silent-dividend-sync"
+import { PortfolioProvider } from "@/lib/context/portfolio-context"
 
 export default function MainLayout({
   children,
@@ -14,24 +15,27 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col min-h-full bg-background relative">
-      <ClientSessionSync />
-      <AppDataPreloader />
-      <PortfolioRealtimeSync />
-      <SilentDividendSync />
-      <MobileShell />
+    <PortfolioProvider>
+      <div className="flex flex-col min-h-full bg-background relative">
+        <ClientSessionSync />
+        <AppDataPreloader />
+        <PortfolioRealtimeSync />
+        <SilentDividendSync />
+        <MobileShell />
 
-      {/* Desktop Dock (hidden on mobile) */}
-      <DesktopDock />
-      
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 md:pb-0 pb-[calc(76px+env(safe-area-inset-bottom,0px))]">
-        {children}
-      </main>
+        {/* Desktop Dock (hidden on mobile) */}
+        <DesktopDock />
+        
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col min-w-0 md:pb-0 pb-[calc(76px+env(safe-area-inset-bottom,0px))]">
+          {children}
+        </main>
 
-      {/* Security Overlays */}
-      <TwoFactorModal />
-      <NotesModal />
-    </div>
+        {/* Security Overlays */}
+        <TwoFactorModal />
+        <NotesModal />
+      </div>
+    </PortfolioProvider>
   )
 }
+

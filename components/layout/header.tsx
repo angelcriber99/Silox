@@ -4,13 +4,13 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Activity, LayoutDashboard, History, Settings, PieChart } from "lucide-react"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { formatCurrency, formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
 export function Header() {
   const pathname = usePathname()
-  const { totals } = usePortfolio()
+  const { totals } = usePortfolioContext()
   const { hideBalances } = usePreferences()
 
   const pnlColor =

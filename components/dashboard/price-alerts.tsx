@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useAlerts } from "@/lib/hooks/use-alerts"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { Bell, BellRing, Plus, Trash2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
@@ -26,7 +26,7 @@ export function PriceAlerts({
   checkNotifications = true,
 }: PriceAlertsProps) {
   const { alerts, addAlert, removeAlert } = useAlerts()
-  const { positions: fetchedPositions } = usePortfolio({ enabled: !providedPositions })
+  const { positions: fetchedPositions } = usePortfolioContext()
   const positions = providedPositions ?? fetchedPositions
   const [ticker, setTicker] = useState(initialTicker || "")
   const [targetPrice, setTargetPrice] = useState("")

@@ -132,4 +132,5 @@ export interface PriceData {
   sessionEnd?: string
   nextTransition?: string
   isStale?: boolean
+  marketDate?: string
 }

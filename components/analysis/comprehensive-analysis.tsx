@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useEffect, useState, useRef } from "react"
-import { usePortfolio } from "@/lib/hooks/use-portfolio"
+import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { FundHoldingsResponse } from "@/lib/actions/market-data"
 import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
 import { Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
@@ -108,7 +108,7 @@ function translateAssetClass(key: string): string {
 }
 
 export function ComprehensiveAnalysis() {
-  const { positions, totals, isLoading: portfolioLoading } = usePortfolio()
+  const { positions, totals, isLoading: portfolioLoading } = usePortfolioContext()
   const { data: snapshots = [] } = useHistory()
   const [timeRange, setTimeRange] = useState<PerformanceRange>("1Y")
   

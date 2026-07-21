@@ -86,6 +86,7 @@ export async function fetchPrices(
         sessionEnd: val.sessionEnd,
         nextTransition: val.nextTransition,
         isStale: val.isStale ?? true,
+        marketDate: val.marketDate,
       }
     }
     return { prices, fxRates: data.fxRates, marketState: data.marketState }
