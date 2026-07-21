@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request) {
   return mobileHandler(request, async (requestId) => {
     const context = await requireMobileUser(request)
-    return mobileJson(await buildPortfolioRadar(context), requestId)
+    const { searchParams } = new URL(request.url)
+    const lang = searchParams.get('lang') || 'es'
+    return mobileJson(await buildPortfolioRadar(context, new Date(), lang), requestId)
   })
 }

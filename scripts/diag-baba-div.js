@@ -1,8 +1,9 @@
-import yahooFinance from 'yahoo-finance2';
+const yf = require('yahoo-finance2');
+const yahooFinance = yf.default || yf;
 
 async function main() {
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 150);
+  startDate.setDate(startDate.getDate() - 365);
 
   const historicalDivs = await yahooFinance.historical('BABA', {
     period1: startDate,

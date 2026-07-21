@@ -71,8 +71,8 @@ const RadarResponseSchema = z.object({
 type RadarEvent = z.infer<typeof RadarEventSchema>
 type RadarPayload = z.infer<typeof RadarResponseSchema>["data"]
 
-async function loadRadar(): Promise<RadarPayload> {
-  const response = await fetch("/api/mobile/v1/radar", { cache: "no-store" })
+async function loadRadar(language: string): Promise<RadarPayload> {
+  const response = await fetch(`/api/mobile/v1/radar?lang=${language}`, { cache: "no-store" })
   if (!response.ok) throw new Error(`Radar API returned ${response.status}`)
   return RadarResponseSchema.parse(await response.json()).data
 }
@@ -115,12 +115,14 @@ function eventDateLabel(event: RadarEvent): string {
 }
 
 export default function RadarPage() {
+  const t = useTranslations('Radar')
+  const language = usePreferences((state) => state.language)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
   const [previewDateKey, setPreviewDateKey] = useState<string | null>(null)
-  const { data, isLoading, isFetching, isError, refetch } = useQuery({
-    queryKey: ["portfolio-radar-v2"],
-    queryFn: loadRadar,
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ["radar", language],
+    queryFn: () => loadRadar(language),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: true,
   })

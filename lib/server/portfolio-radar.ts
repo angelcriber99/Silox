@@ -373,14 +373,20 @@ async function loadManualEvents(context: RadarContext, assets: RadarAsset[], now
   })
 }
 
-async function loadMarketData(assets: RadarAsset[], now: Date) {
+async function loadMarketData(assets: RadarAsset[], now: Date, langCode: string) {
   const yahoo = getYahooFinance()
+  const searchOptions = {
+    newsCount: 20,
+    lang: langCode === 'es' ? 'es-ES' : langCode === 'en' ? 'en-US' : langCode === 'fr' ? 'fr-FR' : 'en-US',
+    region: langCode === 'es' ? 'ES' : langCode === 'en' ? 'US' : langCode === 'fr' ? 'FR' : 'US',
+  }
+  
   const batches = await mapSettledWithConcurrency(assets, 4, async (asset) => {
     const announcementQuery = announcementSearchQuery(asset)
     const [summaryResult, newsResult, announcementResult] = await Promise.allSettled([
       yahoo.quoteSummary(asset.ticker, { modules: ['calendarEvents'] }),
-      yahoo.search(asset.ticker, { newsCount: 20 }),
-      yahoo.search(announcementQuery, { newsCount: 20 }),
+      yahoo.search(asset.ticker, searchOptions),
+      yahoo.search(announcementQuery, searchOptions),
     ])
     const calendar = summaryResult.status === 'fulfilled' ? summaryResult.value.calendarEvents : undefined
     const news = [newsResult, announcementResult].flatMap((result) =>
@@ -488,12 +494,12 @@ async function loadMarketData(assets: RadarAsset[], now: Date) {
   return { events: events.filter((event) => futureEvent(event, now)), articles }
 }
 
-export async function buildPortfolioRadar(context: RadarContext, now = new Date()): Promise<PortfolioRadarResponse> {
+export async function buildPortfolioRadar(context: RadarContext, now = new Date(), langCode = 'es'): Promise<PortfolioRadarResponse> {
   const assets = await loadActiveAssets(context)
   if (assets.length === 0) return { assets: [], events: [], news: [], updatedAt: now.toISOString() }
 
   const [market, manualEvents] = await Promise.all([
-    loadMarketData(assets, now),
+    loadMarketData(assets, now, langCode),
     loadManualEvents(context, assets, now),
   ])
   const catalysts = extractCatalystEvents(market.articles, now)
