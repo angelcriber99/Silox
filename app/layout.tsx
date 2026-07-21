@@ -69,6 +69,9 @@ export default async function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
       </head>
       <body className="flex flex-col h-[100vh] w-full overflow-hidden bg-background text-foreground" suppressHydrationWarning>
+        {/* Tauri Drag Region for macOS */}
+        <div data-tauri-drag-region className="h-8 w-full fixed top-0 left-0 z-50 bg-transparent" />
+        
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider
             attribute="class"
