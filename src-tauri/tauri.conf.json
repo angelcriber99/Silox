@@ -5,8 +5,8 @@
   "identifier": "com.angelcriber.silox",
   "build": {
     "frontendDist": "https://silox-chi.vercel.app",
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:3005",
+    "beforeDevCommand": "npm run dev -- -p 3005",
     "beforeBuildCommand": ""
   },
   "app": {
