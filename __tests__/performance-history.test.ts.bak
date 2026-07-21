@@ -57,7 +57,7 @@ describe('portfolio performance history', () => {
       snapshot('2026-07-17T00:00:00.000Z', 112, 100),
     ])
 
-    const dayPoints = filterPerformanceSeries(points, '1D', new Date('2026-07-17T00:30:00.000Z').getTime())
+    const dayPoints = filterPerformanceSeries(points, '1D', new Date('2026-07-17T00:30:00.000Z'))
     const daily = aggregateDailyPnl(dayPoints)
 
     expect(daily).toHaveLength(1)
@@ -70,7 +70,7 @@ describe('portfolio performance history', () => {
       snapshot('2025-01-01T12:00:00.000Z', 1_100, 1_000),
     ])
 
-    expect(filterPerformanceSeries(points, '1W', new Date('2026-07-18T12:00:00.000Z').getTime())).toEqual([])
+    expect(filterPerformanceSeries(points, '1W', new Date('2026-07-18T12:00:00.000Z'))).toEqual([])
   })
 
   it('shows exact all-time profit even when only the current snapshot exists', () => {
