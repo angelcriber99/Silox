@@ -43,7 +43,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
     <div className="min-h-screen bg-background selection:bg-emerald-500/30">
       {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 pt-10 pb-4 lg:pt-12 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm font-medium">Volver</span>
