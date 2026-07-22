@@ -429,18 +429,11 @@
 /* Base                                            */
 /* ─────────────────────────────────────────────── */
 
-/* Tauri native styling */
-html.tauri-app, html.tauri-app body {
+/* Tauri native styling (Only tray is transparent now) */
+html.tauri-app body.tray-window, html.tauri-app body.tray-window .bg-background {
   background: transparent !important;
-}
-
-html.tauri-app body.tray-window {
-  background: transparent !important;
-  overflow: hidden;
-}
-
-html.tauri-app .bg-background {
   background-color: transparent !important;
+  overflow: hidden;
 }
 
 @layer base {
