@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { z } from 'zod'
+import { requireApiUser } from '@/lib/server/api-auth'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
 
@@ -8,17 +9,31 @@ const ChatSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'model']),
     content: z.string().max(2000)
-  })).max(50),
-  portfolioContext: z.any()
-})
+  }).strict()).min(1).max(24),
+  portfolioContext: z.unknown()
+}).strict()
+
+const MAX_REQUEST_BYTES = 64 * 1024
 
 export async function POST(request: Request) {
+  const auth = await requireApiUser()
+  if (!auth.ok) return auth.response
+
+  const declaredLength = Number(request.headers.get('content-length') ?? 0)
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) {
+    return NextResponse.json({ error: 'Solicitud demasiado grande' }, { status: 413 })
+  }
+
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 })
   }
 
   try {
-    const body = await request.json()
+    const rawBody = await request.text()
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_REQUEST_BYTES) {
+      return NextResponse.json({ error: 'Solicitud demasiado grande' }, { status: 413 })
+    }
+    const body: unknown = JSON.parse(rawBody)
     
     const parsed = ChatSchema.safeParse(body)
     if (!parsed.success) {
@@ -60,7 +75,7 @@ ${contextStr}
           parts: [{ text: "Entendido. Estoy listo para ayudar al usuario con su cartera." }],
         },
         // Reconstruct the history from the user's messages
-        ...messages.slice(0, -1).map((msg: any) => ({
+        ...messages.slice(0, -1).map((msg) => ({
           role: msg.role === 'user' ? 'user' : 'model',
           parts: [{ text: msg.content }]
         }))
@@ -91,7 +106,8 @@ ${contextStr}
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
       },
     })
   } catch (error) {

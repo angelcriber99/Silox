@@ -13,6 +13,7 @@ import {
   isNonCashReward,
   nonCashRewardNote,
 } from '@/lib/domain/portfolio/contributions'
+import { collectAllPages } from '@/lib/utils/pagination'
 
 export const runtime = 'nodejs'
 
@@ -1273,15 +1274,19 @@ export async function POST(request: Request) {
     const internalCryptoMovements = cryptoResult.parsed
     skippedTransactions = skippedTransactions.concat(cryptoResult.skipped)
 
-    let { data: activos } = await supabase
+    let activos = await collectAllPages((from, to) => supabase
       .from('activos')
       .select('id, ticker, isin, tipo, sector, moneda')
       .eq('user_id', user.id)
+      .order('id', { ascending: true })
+      .range(from, to))
 
-    let { data: existingTransactions } = await supabase
+    let existingTransactions = await collectAllPages((from, to) => supabase
       .from('transacciones')
       .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas')
       .eq('user_id', user.id)
+      .order('id', { ascending: true })
+      .range(from, to))
 
     let removedInternalMovements = 0
     if (internalCryptoMovements.length > 0 && activos && existingTransactions) {

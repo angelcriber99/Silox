@@ -43,12 +43,23 @@ function createImportDatabase() {
   let assetSequence = 0
   let transactionSequence = 0
 
+  const paginated = <T,>(rows: T[]) => {
+    const query = {
+      order: vi.fn(() => query),
+      range: vi.fn(async (from: number, to: number) => ({
+        data: rows.slice(from, to + 1),
+        error: null,
+      })),
+    }
+    return { eq: vi.fn(() => query) }
+  }
+
   const client = {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'recreated-user' } } }) },
     from: vi.fn((table: string) => {
       if (table === 'activos') {
         return {
-          select: vi.fn(() => ({ eq: vi.fn(async () => ({ data: [...assets], error: null })) })),
+          select: vi.fn(() => paginated(assets)),
           insert: vi.fn((payload: Omit<AssetRow, 'id'>) => ({
             select: vi.fn(() => ({
               single: vi.fn(async () => {
@@ -64,7 +75,7 @@ function createImportDatabase() {
 
       if (table === 'transacciones') {
         return {
-          select: vi.fn(() => ({ eq: vi.fn(async () => ({ data: [...transactions], error: null })) })),
+          select: vi.fn(() => paginated(transactions)),
           insert: vi.fn(async (rows: Array<Omit<TransactionRow, 'id'>>) => {
             for (const row of rows) transactions.push({ id: `tx-${++transactionSequence}`, ...row })
             return { error: null }

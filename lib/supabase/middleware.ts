@@ -57,9 +57,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Add Security Headers
+  const developmentScriptPolicy = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com;
+    script-src 'self' 'unsafe-inline'${developmentScriptPolicy} https://va.vercel-scripts.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https://avatars.githubusercontent.com;
     font-src 'self' https://fonts.gstatic.com;
@@ -77,6 +78,8 @@ export async function updateSession(request: NextRequest) {
   supabaseResponse.headers.set('X-Frame-Options', 'DENY')
   supabaseResponse.headers.set('X-Content-Type-Options', 'nosniff')
   supabaseResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  supabaseResponse.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+  supabaseResponse.headers.set('Cross-Origin-Resource-Policy', 'same-origin')
   
   if (process.env.NODE_ENV === 'production') {
     supabaseResponse.headers.set(

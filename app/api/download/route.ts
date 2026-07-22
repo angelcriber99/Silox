@@ -8,16 +8,10 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Invalid OS parameter. Must be "mac" or "windows".', { status: 400 })
   }
 
-  const token = process.env.GITHUB_PAT
-  if (!token) {
-    return new NextResponse('GITHUB_PAT environment variable is not configured on the server.', { status: 500 })
-  }
-
   try {
     // 1. Fetch latest release info
     const releaseRes = await fetch('https://api.github.com/repos/angelcriber99/Silox/releases/latest', {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Accept': 'application/vnd.github.v3+json',
         'User-Agent': 'Silox-NextJS-App'
       },
@@ -29,40 +23,31 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Failed to fetch latest release from GitHub.', { status: releaseRes.status })
     }
 
-    const releaseData = await releaseRes.json()
-    const assets = releaseData.assets || []
+    const releaseData: unknown = await releaseRes.json()
+    const assets = typeof releaseData === 'object' && releaseData !== null && 'assets' in releaseData
+      && Array.isArray(releaseData.assets) ? releaseData.assets : []
 
     // 2. Find the correct asset
     const extension = os === 'mac' ? '.dmg' : '.msi'
-    const targetAsset = assets.find((asset: any) => asset.name.endsWith(extension))
+    const targetAsset = assets.find((asset): asset is { name: string; browser_download_url: string } => (
+      typeof asset === 'object'
+      && asset !== null
+      && 'name' in asset
+      && typeof asset.name === 'string'
+      && asset.name.endsWith(extension)
+      && 'browser_download_url' in asset
+      && typeof asset.browser_download_url === 'string'
+    ))
 
     if (!targetAsset) {
       return new NextResponse(`No installer found for ${os} in the latest release.`, { status: 404 })
     }
 
-    // 3. Get the S3 temporary download URL
-    // We must use redirect: 'manual' to prevent fetch from automatically following the redirect
-    // so we can intercept the Location header and send it to the client.
-    const downloadRes = await fetch(targetAsset.url, {
-      method: 'GET',
-      redirect: 'manual',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/octet-stream',
-        'User-Agent': 'Silox-NextJS-App'
-      }
-    })
-
-    // GitHub responds with a 302 Found and the S3 URL in the Location header
-    if (downloadRes.status === 302) {
-      const s3Url = downloadRes.headers.get('location')
-      if (s3Url) {
-        return NextResponse.redirect(s3Url)
-      }
+    const downloadUrl = new URL(targetAsset.browser_download_url)
+    if (downloadUrl.protocol !== 'https:' || downloadUrl.hostname !== 'github.com') {
+      return new NextResponse('Invalid release download URL.', { status: 502 })
     }
-
-    // Fallback if GitHub didn't return a 302 for some reason
-    return new NextResponse('Failed to retrieve the secure download URL from GitHub.', { status: 500 })
+    return NextResponse.redirect(downloadUrl)
 
   } catch (error) {
     console.error('Error in download route:', error)
