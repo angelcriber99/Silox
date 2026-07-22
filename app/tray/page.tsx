@@ -9,7 +9,7 @@ import { AnimatedNumber } from "@/components/ui/animated-number"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
 export default function TrayPage() {
-  const { totals, isLoading, isError, lastRefresh } = usePortfolioContext()
+  const { totals, isLoading, error, lastRefresh } = usePortfolioContext()
   const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
   const { hideBalances } = usePreferences()
 
@@ -27,7 +27,7 @@ export default function TrayPage() {
     )
   }
 
-  if (isError || !totals || !totals.dailyPnlMoney) {
+  if (error || !totals || !totals.dailyPnlMoney) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4 text-rose-500">
         Error al cargar datos o portfolio vacío
