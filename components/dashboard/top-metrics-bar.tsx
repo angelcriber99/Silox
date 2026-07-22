@@ -58,8 +58,8 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
           )}
         </div>
         
-        <div className="text-4xl xl:text-5xl font-black tracking-tighter leading-none text-foreground flex items-end gap-2">
-          <span>{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
+        <div className="text-3xl lg:text-4xl xl:text-4xl 2xl:text-5xl font-black tracking-tighter leading-none text-foreground flex items-end gap-2 truncate w-full">
+          <span className="truncate">{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
         </div>
         {!totals.hasAllPrices && (
           <span className="text-[10px] font-semibold text-amber-500 flex items-center gap-1 mt-1">
@@ -78,7 +78,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             style={{ color: isPositive ? "#30D158" : "#FF453A" }}
           >
             {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span className="text-base font-bold tabular-nums tracking-tight">
+            <span className="text-sm 2xl:text-base font-bold tabular-nums tracking-tight truncate">
               {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
             </span>
           </div>
@@ -95,7 +95,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}
           >
             {daily24Positive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span className="text-base font-bold tabular-nums tracking-tight">
+            <span className="text-sm 2xl:text-base font-bold tabular-nums tracking-tight truncate">
               {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
             </span>
           </div>

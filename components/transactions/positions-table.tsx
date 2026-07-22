@@ -648,14 +648,14 @@ export function PositionsTable({
   return (
     <Card className="animate-fade-in stagger-3 glass-card overflow-hidden w-full h-full flex flex-col relative z-10">
       <CardHeader className="p-2 md:p-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border/20 shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center gap-3 xl:gap-4 flex-1">
+        <div className="flex flex-col xl:flex-row xl:items-center gap-3 xl:gap-4 flex-1 min-w-0">
           <CardTitle className="text-base font-medium text-foreground flex items-center gap-2 shrink-0">
             <Layers className="h-4 w-4 text-muted-foreground" />
             <span className="tracking-tight">{t('positions')}</span>
           </CardTitle>
 
-          <div className="flex items-center gap-2 flex-1 w-full xl:w-auto">
-            <div className="relative w-full sm:w-[180px] shrink-0">
+          <div className="flex items-center gap-2 flex-1 w-full xl:w-auto min-w-0">
+            <div className="relative w-full sm:w-[150px] lg:w-[180px] shrink-0">
               <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
               <Input
                 placeholder={t('search_asset')}
@@ -665,7 +665,7 @@ export function PositionsTable({
               />
             </div>
 
-            <div className="flex gap-1 flex-wrap flex-1">
+            <div className="flex gap-1 overflow-x-auto hide-scrollbar flex-1 pb-0.5 items-center mask-fade-right">
               {FILTER_OPTIONS.map((opt) => {
                 const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
                 const disabled = opt !== "Todos" && !typesWithData.has(opt);
