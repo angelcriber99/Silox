@@ -1,6 +1,6 @@
 "use client"
 
-import { usePreferences, type AccentColor, type ThemePreset } from "@/lib/stores/use-preferences"
+import { usePreferences, type AccentColor } from "@/lib/stores/use-preferences"
 import { useTheme } from "next-themes"
 import { useEffect } from "react"
 
@@ -16,7 +16,7 @@ export const THEME_COLORS: Record<AccentColor, { light: string; dark: string }> 
 }
 
 export function ThemeEngine() {
-  const { accentColor, themePreset } = usePreferences()
+  const { accentColor } = usePreferences()
   const { resolvedTheme } = useTheme()
 
   useEffect(() => {
@@ -28,13 +28,9 @@ export function ThemeEngine() {
     root.style.setProperty("--primary", color)
     root.style.setProperty("--ring", color)
     
-    // Set preset as data attribute on documentElement to avoid next-themes conflicts
-    if (themePreset) {
-      document.documentElement.setAttribute('data-preset', themePreset)
-    } else {
-      document.documentElement.removeAttribute('data-preset')
-    }
-  }, [accentColor, themePreset, resolvedTheme])
+    // Default to crystal/macos style globally
+    document.documentElement.setAttribute('data-preset', 'crystal')
+  }, [accentColor, resolvedTheme])
 
   return null
 }

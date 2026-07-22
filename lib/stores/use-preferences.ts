@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type AccentColor = 'blue' | 'emerald' | 'violet' | 'rose' | 'amber' | 'indigo' | 'teal' | 'pink'
-export type ThemePreset = 'silox' | 'obsidian' | 'midnight' | 'aurora' | 'crystal' | 'macos'
 export type Language = 'es' | 'en' | 'fr' | 'de'
 export type RefreshInterval = 5_000 | 10_000 | 15_000 | 30_000 | 60_000
 export type DashboardDensity = 'auto' | 'compact' | 'comfortable'
@@ -12,7 +11,6 @@ export type DisplayCurrency = 'EUR' | 'USD'
 interface PreferencesState {
   language: Language
   displayCurrency: DisplayCurrency
-  themePreset: ThemePreset
   hideBalances: boolean
   compactView: boolean
   accentColor: AccentColor
@@ -43,7 +41,6 @@ interface PreferencesState {
   fontScale: 'small' | 'normal' | 'large'
   setLanguage: (lang: Language) => void
   setDisplayCurrency: (currency: DisplayCurrency) => void
-  setThemePreset: (preset: ThemePreset) => void
   setHideBalances: (val: boolean) => void
   setCompactView: (val: boolean) => void
   setAccentColor: (color: AccentColor) => void
@@ -79,7 +76,6 @@ export const usePreferences = create<PreferencesState>()(
     (set) => ({
       language: 'es',
       displayCurrency: 'EUR',
-      themePreset: 'crystal',
       hideBalances: false,
       compactView: false,
       accentColor: 'blue',
@@ -110,7 +106,6 @@ export const usePreferences = create<PreferencesState>()(
       fontScale: 'normal',
       setLanguage: (lang) => set({ language: lang }),
       setDisplayCurrency: (currency) => set({ displayCurrency: currency }),
-      setThemePreset: (preset) => set({ themePreset: preset }),
       setHideBalances: (val) => set({ hideBalances: val }),
       setCompactView: (val) => set({ compactView: val }),
       setAccentColor: (color) => set({ accentColor: color }),
