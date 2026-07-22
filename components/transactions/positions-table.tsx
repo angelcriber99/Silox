@@ -272,7 +272,7 @@ const PositionRow = memo(function PositionRow({
           {translateType(p.tipo, t)}
         </Badge>
       </TableCell>
-      <TableCell className={`text-right tabular-nums text-foreground/80 hidden lg:table-cell ${cellPadding}`}>
+      <TableCell className={`text-right tabular-nums text-foreground/80 hidden xl:table-cell ${cellPadding}`}>
         {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
       </TableCell>
       <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden xl:table-cell ${cellPadding}`}>
@@ -296,7 +296,7 @@ const PositionRow = memo(function PositionRow({
           )}
         </div>
       </TableCell>
-      <TableCell className={`text-right tabular-nums text-foreground font-medium hidden lg:table-cell ${cellPadding}`}>
+      <TableCell className={`text-right tabular-nums text-foreground font-medium hidden xl:table-cell ${cellPadding}`}>
         <div className="flex flex-col items-end gap-1">
           <span>
             {hideBalances ? "****" : ((p.displayValue?.amount ?? null) !== null
@@ -321,7 +321,7 @@ const PositionRow = memo(function PositionRow({
           <PnlDisplay value={(p.displayPnl?.amount ?? null)} type="currency" />
         </TableCell>
       )}
-      <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden lg:table-cell"} ${cellPadding}`}>
+      <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden xl:table-cell"} ${cellPadding}`}>
         <PnlDisplay value={p.pnl_percent} type="percent" />
       </TableCell>
       <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
@@ -741,13 +741,13 @@ export function PositionsTable({
                 {sortableHeader({ label: t('symbol'), sortKeyName: "ticker", className: "pl-4 sm:pl-6" })}
                 <TableHead className="text-muted-foreground/80 hidden xl:table-cell">{t('name')}</TableHead>
                 {sortableHeader({ label: t('dist_type'), sortKeyName: "tipo", className: "hidden xl:table-cell" })}
-                {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right hidden lg:table-cell" })}
+                {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right hidden xl:table-cell" })}
                 <TableHead className="text-muted-foreground/80 text-right hidden xl:table-cell">{t('purchase_price')}</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">{t('current_price')}</TableHead>
-                {sortableHeader({ label: t('value'), sortKeyName: "displayValue", className: "text-right whitespace-nowrap hidden lg:table-cell" })}
+                {sortableHeader({ label: t('value'), sortKeyName: "displayValue", className: "text-right whitespace-nowrap hidden xl:table-cell" })}
                 {sortableHeader({ label: t('today'), sortKeyName: "displayDailyPnL", className: "text-right" })}
                 {!showPnlPercentOnly && sortableHeader({ label: "P&L", sortKeyName: "displayPnl", className: "text-right" })}
-                {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden lg:table-cell"}` })}
+                {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden xl:table-cell"}` })}
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
               </TableRow>
             </TableHeader>

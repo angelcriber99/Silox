@@ -58,7 +58,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
           )}
         </div>
         
-        <div className="text-3xl lg:text-4xl xl:text-4xl 2xl:text-5xl font-black tracking-tighter leading-none text-foreground flex items-end gap-2 truncate w-full">
+        <div className="text-2xl sm:text-3xl lg:text-4xl 2xl:text-5xl font-black tracking-tighter leading-none text-foreground flex items-end gap-2 truncate w-full">
           <span className="truncate">{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
         </div>
         {!totals.hasAllPrices && (
@@ -108,7 +108,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
       {/* Contributions Pill & Actions */}
       <div className="flex flex-col gap-2 mt-1">
         <div className="flex flex-wrap items-center justify-between px-3 py-2.5 rounded-lg bg-card border shadow-sm gap-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">FIFO</span>
             <span className="text-xs sm:text-sm font-bold tabular-nums text-foreground/80 break-all">
               {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
@@ -117,7 +117,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
           
           <div className="hidden sm:block w-px h-4 bg-border" />
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Aportado</span>
             <span className="text-xs sm:text-sm font-bold tabular-nums text-foreground break-all">
               {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
