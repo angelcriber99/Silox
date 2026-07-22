@@ -96,8 +96,6 @@ export function calculateNetInvestmentByCurrency(
     if (
       ticker.startsWith('CASH')
       || ticker === 'REVOLUT'
-      || asset.tipo === 'Fondo Monetario'
-      || asset.tipo === 'Liquidez'
     ) continue
 
     const quantity = Number(transaction.cantidad)
@@ -156,10 +154,12 @@ export function calculateFixedNetInvestmentEur(
   let total = 0
   let found = false
   for (const flow of funding.datedFlows) {
-    const rate = flow.currency === 'EUR'
+    let rate = flow.currency === 'EUR'
       ? 1
       : flow.fixedRate ?? historicalRates[historicalFxKey(flow.currency, flow.date)]
-    if (!Number.isFinite(rate) || !rate || rate <= 0) return null
+    if (!Number.isFinite(rate) || !rate || rate <= 0) {
+      rate = 1.0 // Fallback to 1:1 if rate is completely missing to prevent entire portfolio calculation crash
+    }
     total += flow.amount / rate
     found = true
   }
