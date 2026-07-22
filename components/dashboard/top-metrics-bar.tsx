@@ -44,7 +44,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
   const daily24Positive = totals.pnl24hMoney.amount >= 0
 
   return (
-    <div className="w-full flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card/30 backdrop-blur-md border border-border/50 rounded-2xl p-4 md:px-5 md:py-3.5 shadow-sm mb-4 relative overflow-hidden">
+    <div className="w-full flex flex-col xl:flex-row xl:items-center justify-between gap-4 glass-card border rounded-2xl p-4 md:px-5 md:py-3.5 shadow-sm mb-4 relative overflow-hidden">
       {/* Subtle background glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
       
@@ -53,7 +53,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
         {/* Value */}
         <div className="flex flex-col items-start gap-1">
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
             <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground opacity-80">
               Valor del Portfolio
             </span>

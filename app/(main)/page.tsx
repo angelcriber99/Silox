@@ -10,6 +10,7 @@ import { AllocationChart } from "@/components/dashboard/allocation-chart"
 import { PositionsTable } from "@/components/transactions/positions-table"
 import { TopMovers } from "@/components/dashboard/top-movers"
 import { UpcomingEvents } from "@/components/market/upcoming-events"
+import { SiloxInsights } from "@/components/dashboard/silox-insights"
 import { ZenDashboard } from "@/components/dashboard/zen-dashboard"
 import { TopMetricsBar } from "@/components/dashboard/top-metrics-bar"
 import { EditAssetModal } from "@/components/asset/edit-asset-modal"
@@ -71,7 +72,8 @@ export default function Home() {
               {/* Subtle gradient background for the premium feel */}
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-              <div className="grid flex-1 min-h-0 grid-rows-[auto_minmax(128px,0.8fr)_minmax(170px,1fr)] gap-3 overflow-hidden p-3">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3">
+                <SiloxInsights positions={positions} totals={totals} />
                 <AllocationChart positions={positions} marketState={marketState} />
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 <UpcomingEvents
