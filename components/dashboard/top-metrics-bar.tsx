@@ -4,6 +4,7 @@ import { useState } from "react"
 import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { TrendingUp, TrendingDown, TriangleAlert, BarChart2 } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
+import Link from "next/link"
 import type { PortfolioTotals, EnrichedPosition } from "@/lib/types"
 import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 import { useNotes } from "@/lib/stores/use-notes"
@@ -20,7 +21,6 @@ interface TopMetricsBarProps {
 export function TopMetricsBar({ totals, positions, marketState, loading = false }: TopMetricsBarProps) {
   const { hideBalances } = usePreferences()
   const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
-  const [chartsOpen, setChartsOpen] = useState(false)
 
   if (loading) {
     return (
@@ -44,9 +44,9 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
   const daily24Positive = totals.pnl24hMoney.amount >= 0
 
   return (
-    <div className="w-full flex flex-col xl:flex-row xl:items-center justify-between gap-4 glass-card border rounded-2xl p-4 md:px-5 md:py-3.5 shadow-sm mb-4 relative overflow-hidden">
-      {/* Left side: Value & PnL */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 relative z-10">
+    <div className="w-full flex flex-col gap-4 glass-card border rounded-2xl p-4 md:px-5 md:py-4 shadow-sm relative overflow-hidden">
+      {/* Top section: Value */}
+      <div className="flex flex-col items-start gap-3 relative z-10">
         {/* Value */}
         <div className="flex flex-col items-start gap-1">
           <div className="flex items-center gap-2">
@@ -69,61 +69,63 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
           <div className="text-3xl xl:text-4xl font-bold tracking-tight leading-none text-foreground flex items-end gap-2">
             <span>{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
             {!totals.hasAllPrices && (
-              <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border text-amber-400/70 border-amber-500/20 bg-amber-500/5 mb-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border text-amber-400/70 border-amber-500/20 bg-amber-500/5">
                 Precios pendientes
               </span>
             )}
           </div>
         </div>
+      </div>
 
-        <div className="w-px h-10 bg-border/60 hidden md:block" />
+      <div className="w-full h-px bg-border/60" />
 
-        {/* PnL Metrics */}
-        <div className="flex items-center gap-5">
-          {/* Total Historical */}
-          <div className="flex flex-col items-start gap-0.5">
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Histórico Total</span>
-            <div
-              className="flex items-center gap-1"
-              style={{ color: isPositive ? "#30D158" : "#FF453A" }}
-            >
-              {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-              <span className="text-[15px] font-bold tabular-nums tracking-tight">
-                {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
-              </span>
-              <span className="text-[11px] font-bold opacity-80">
-                ({hideBalances ? "•••" : formatPercent(displayPnlPercent).replace('+', '')})
-              </span>
-            </div>
+      {/* PnL Metrics */}
+      <div className="flex flex-col gap-3 relative z-10">
+        {/* Total Historical */}
+        <div className="flex flex-col items-start gap-0.5">
+          <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Histórico Total</span>
+          <div
+            className="flex items-center gap-1"
+            style={{ color: isPositive ? "#30D158" : "#FF453A" }}
+          >
+            {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+            <span className="text-[15px] font-bold tabular-nums tracking-tight">
+              {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
+            </span>
+            <span className="text-[11px] font-bold opacity-80">
+              ({hideBalances ? "•••" : formatPercent(displayPnlPercent).replace('+', '')})
+            </span>
           </div>
+        </div>
 
-          <div className="w-px h-6 bg-border/40 hidden sm:block" />
+        <div className="w-full h-px bg-border/40" />
 
-          {/* Daily (Hoy) */}
-          <div className="flex flex-col items-start gap-0.5">
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Hoy</span>
-            <div
-              className="flex items-center gap-1"
-              style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}
-            >
-              {daily24Positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-              <span className="text-[15px] font-bold tabular-nums tracking-tight">
-                {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
-              </span>
-              <span className="text-[11px] font-bold opacity-80">
-                ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
-              </span>
-            </div>
+        {/* Daily (Hoy) */}
+        <div className="flex flex-col items-start gap-0.5">
+          <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Hoy</span>
+          <div
+            className="flex items-center gap-1"
+            style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}
+          >
+            {daily24Positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+            <span className="text-[15px] font-bold tabular-nums tracking-tight">
+              {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
+            </span>
+            <span className="text-[11px] font-bold opacity-80">
+              ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
+            </span>
           </div>
         </div>
       </div>
 
+      <div className="w-full h-px bg-border/60" />
+
       {/* Right side: Contributions & Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 relative z-10 shrink-0">
+      <div className="flex flex-col items-start gap-4 relative z-10 shrink-0">
         {/* Contributions */}
-        <div className="flex items-center gap-3 bg-background/50 border border-border/40 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-3 bg-background/50 border border-border/40 rounded-lg px-3 py-2 w-full">
           {totals.netContributionsMoney !== undefined && (
-            <div className="flex flex-col gap-0.5 hidden sm:flex">
+            <div className="flex flex-col gap-0.5">
               <span className="font-semibold uppercase tracking-widest text-[8px] text-muted-foreground">FIFO</span>
               <span className="text-[11px] font-semibold tabular-nums text-foreground/60">
                 {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
@@ -152,30 +154,15 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             <span className="hidden xl:inline">Plan Estratégico</span>
             <span className="inline xl:hidden">Plan</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setChartsOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-xs font-semibold shadow-sm"
+          <Link
+            href="/analisis"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-xs font-semibold shadow-sm w-full"
           >
             <BarChart2 className="w-4 h-4" />
             Análisis
-          </button>
+          </Link>
         </div>
       </div>
-
-      <PerformanceModal
-        open={chartsOpen}
-        onOpenChange={setChartsOpen}
-        positions={positions}
-        currentDailyPnl={totals.pnl24hMoney.amount}
-        currentDailyPnlPercent={totals.totalDailyPnlPercent}
-        currentDailyCoverage={totals.dailyPerformancePositionCount}
-        currentPositionCount={totals.positionCount}
-        currentTotalValue={totals.valueMoney.amount}
-        currentTotalCost={totals.costMoney.amount}
-        currentTotalPnl={totals.pnlMoney.amount}
-        currentTotalPnlPercent={totals.totalPnlPercent}
-      />
     </div>
   )
 }
