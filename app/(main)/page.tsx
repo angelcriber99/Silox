@@ -78,7 +78,7 @@ export default function Home() {
                 <div className="flex-col glass-card border rounded-xl overflow-hidden relative p-4 flex-shrink-0">
                   <AllocationChart positions={positions} marketState={marketState} />
                 </div>
-                <div className="flex-1 min-h-0">
+                <div className="flex-shrink-0">
                   <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 </div>
                 <div className="flex-1 min-h-0">

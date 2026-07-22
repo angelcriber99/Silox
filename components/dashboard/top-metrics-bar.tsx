@@ -42,92 +42,81 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
   const daily24Positive = totals.pnl24hMoney.amount >= 0
 
   return (
-    <div className="w-full flex flex-col gap-4 px-1">
-      {/* Top section: Value */}
-      <div className="flex flex-col items-start gap-1">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground opacity-80">
+    <div className="w-full flex flex-col gap-6 px-2 py-2">
+      {/* Hero Value Section (No card, elegant list style) */}
+      <div className="flex flex-col items-start gap-2 border-l-4 border-primary pl-4 relative">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-primary">
             Valor del Portfolio
           </span>
           {marketState !== 'REGULAR' && (
-            <div className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-muted text-muted-foreground border border-border/50">
+            <div className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
               {marketState === 'CLOSED' ? 'Cerrado' : marketState === 'PRE' ? 'Pre-Market' : 'Post-Market'}
             </div>
           )}
         </div>
         
-        <div className="text-3xl xl:text-4xl font-bold tracking-tight leading-none text-foreground flex items-end gap-2">
+        <div className="text-4xl xl:text-5xl font-black tracking-tighter leading-none text-foreground flex items-end gap-2">
           <span>{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
-          {!totals.hasAllPrices && (
-            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border text-amber-400/70 border-amber-500/20 bg-amber-500/5">
-              Precios pendientes
-            </span>
-          )}
         </div>
+        {!totals.hasAllPrices && (
+          <span className="text-[10px] font-semibold text-amber-500 flex items-center gap-1 mt-1">
+            <TriangleAlert className="w-3 h-3" /> Precios pendientes
+          </span>
+        )}
       </div>
 
-      <div className="w-full h-px bg-border/40" />
-
-      {/* PnL Metrics */}
-      <div className="flex flex-col gap-4">
+      {/* Modern PnL Grid */}
+      <div className="grid grid-cols-2 gap-3 mt-2">
         {/* Total Historical */}
-        <div className="flex flex-col items-start gap-1">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Histórico Total</span>
+        <div className="flex flex-col gap-1 p-3 rounded-xl bg-muted/30 border border-border/50">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Histórico Total</span>
           <div
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 mt-1"
             style={{ color: isPositive ? "#30D158" : "#FF453A" }}
           >
             {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span className="text-[15px] font-bold tabular-nums tracking-tight">
+            <span className="text-base font-bold tabular-nums tracking-tight">
               {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
             </span>
-            <span className="text-[12px] font-semibold opacity-80">
-              ({hideBalances ? "•••" : formatPercent(displayPnlPercent).replace('+', '')})
-            </span>
           </div>
+          <span className="text-xs font-semibold opacity-80" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
+            {hideBalances ? "•••" : formatPercent(displayPnlPercent)}
+          </span>
         </div>
 
-        <div className="w-full h-px bg-border/40" />
-
         {/* Daily (Hoy) */}
-        <div className="flex flex-col items-start gap-1">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Hoy</span>
+        <div className="flex flex-col gap-1 p-3 rounded-xl bg-muted/30 border border-border/50">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Hoy</span>
           <div
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 mt-1"
             style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}
           >
             {daily24Positive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span className="text-[15px] font-bold tabular-nums tracking-tight">
+            <span className="text-base font-bold tabular-nums tracking-tight">
               {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
             </span>
-            <span className="text-[12px] font-semibold opacity-80">
-              ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
-            </span>
           </div>
+          <span className="text-xs font-semibold opacity-80" style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}>
+            {hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent)}
+          </span>
         </div>
       </div>
 
-      <div className="w-full h-px bg-border/40" />
-
-      {/* Contributions */}
-      <div className="flex items-center gap-6 mt-1">
-        {totals.netContributionsMoney !== undefined && (
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold uppercase tracking-widest text-[9px] text-muted-foreground">FIFO</span>
-            <span className="text-[13px] font-semibold tabular-nums text-foreground/70">
-              {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
-            </span>
-          </div>
-        )}
+      {/* Contributions Pill */}
+      <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-card border shadow-sm mt-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">FIFO</span>
+          <span className="text-sm font-bold tabular-nums text-foreground/80">
+            {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
+          </span>
+        </div>
         
-        {totals.netContributionsMoney !== undefined && (
-          <div className="w-px h-6 bg-border/40" />
-        )}
+        <div className="w-px h-4 bg-border" />
 
-        <div className="flex flex-col gap-1">
-          <span className="font-semibold uppercase tracking-widest text-[9px] text-muted-foreground">Aportado</span>
-          <span className="text-[13px] font-bold tabular-nums text-foreground/90">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Aportado</span>
+          <span className="text-sm font-bold tabular-nums text-foreground">
             {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
           </span>
         </div>
