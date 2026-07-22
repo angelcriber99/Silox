@@ -24,7 +24,6 @@ function position(overrides: Partial<EnrichedPosition>): EnrichedPosition {
     precio_actual_nativo: 100,
     original_currency: "USD",
     displayValue: { amount: 100, currency: 'EUR' },
-    valor_actual_nativo: 100,
     displayCost: { amount: 80, currency: 'EUR' },
     pnl: 20,
     pnl_percent: 25,

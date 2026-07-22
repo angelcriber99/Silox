@@ -19,6 +19,7 @@ import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { PendingOrders } from "@/components/transactions/pending-orders"
 import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state"
+import { MacBadgeUpdater } from "@/components/dashboard/mac-badge-updater"
 
 export default function Home() {
   const queryClient = useQueryClient()
@@ -47,6 +48,7 @@ export default function Home() {
 
   return (
     <main className="min-h-full bg-transparent text-foreground flex flex-col flex-1 w-full relative">
+      {positions.length > 0 && <MacBadgeUpdater dailyPnl={totals.pnl24hMoney.amount} />}
       {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden flex-1 w-full">
         <MobileDashboard
@@ -100,7 +102,7 @@ export default function Home() {
 
             {/* ── Main Content (Positions Table) ── */}
             <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-2 lg:px-6 overflow-hidden relative">
-              <div className="flex-1 flex flex-col glass-card border overflow-hidden">
+              <div className="flex-1 flex flex-col glass-card border overflow-hidden min-w-0">
                 <div className="flex-shrink-0">
                   <PendingOrders transactions={pendingTxs} />
                 </div>

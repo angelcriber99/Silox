@@ -36,10 +36,29 @@ export function usePriceAlertNotifications(
         triggeredIdsRef.current.add(alert.id)
         removeAlert(alert.id)
         triggeredCount++
+        
+        const title = "¡Alerta de Silox!"
+        const body = `${alert.ticker} ha cruzado tu objetivo de ${formatCurrency(alert.target_price, pos.moneda || 'EUR')}. Precio actual: ${formatCurrency(currentPrice, pos.moneda || 'EUR')}`
 
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("¡Alerta de Silox!", {
-            body: `${alert.ticker} ha cruzado tu objetivo de ${formatCurrency(alert.target_price, pos.moneda || 'EUR')}. Precio actual: ${formatCurrency(currentPrice, pos.moneda || 'EUR')}`,
+        // Try Tauri native notification first
+        if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+          import('@tauri-apps/plugin-notification').then(({ isPermissionGranted, requestPermission, sendNotification }) => {
+            isPermissionGranted().then(granted => {
+              if (granted) {
+                sendNotification({ title, body })
+              } else {
+                requestPermission().then(permission => {
+                  if (permission === 'granted') {
+                    sendNotification({ title, body })
+                  }
+                })
+              }
+            })
+          }).catch(console.error)
+        } else if ("Notification" in window && Notification.permission === "granted") {
+          // Fallback to web notification
+          new Notification(title, {
+            body,
             icon: '/icons/icon-192.webp'
           })
         }

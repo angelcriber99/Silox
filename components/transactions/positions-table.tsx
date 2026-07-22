@@ -641,13 +641,9 @@ export function PositionsTable({
     </TableHead>
   )
 
-
-
-
-
   return (
-    <Card className="animate-fade-in stagger-3 glass-card overflow-hidden w-full h-full flex flex-col relative z-10">
-      <CardHeader className="p-2 md:p-3 flex flex-row flex-wrap items-center justify-between 2xl:justify-start gap-y-3 gap-x-2 border-b border-border/20 shrink-0">
+    <Card className="animate-fade-in stagger-3 glass-card overflow-hidden w-full h-full flex flex-col relative z-10 min-w-0">
+      <CardHeader className="p-2 md:p-3 flex flex-row flex-wrap items-center justify-between 2xl:justify-start gap-y-3 gap-x-2 border-b border-border/20 shrink-0 min-w-0">
         {/* 1. Title */}
         <CardTitle className="text-base font-medium text-foreground flex items-center gap-2 shrink-0">
           <Layers className="h-4 w-4 text-muted-foreground" />
@@ -708,7 +704,7 @@ export function PositionsTable({
             />
           </div>
 
-          <div className="flex gap-1 overflow-x-auto hide-scrollbar flex-1 items-center pb-0.5">
+          <div className="flex gap-1 overflow-x-auto hide-scrollbar flex-1 items-center pb-0.5 min-w-0">
             {FILTER_OPTIONS.map((opt) => {
               const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
               const disabled = opt !== "Todos" && !typesWithData.has(opt);
@@ -733,22 +729,21 @@ export function PositionsTable({
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-auto min-h-0 relative">
-        {/* Desktop View (Table) */}
-        <div className="hidden md:block w-full h-full">
+        <div className="w-full h-full">
           <Table className="w-full relative">
             <TableHeader className="bg-muted/40 sticky top-0 z-10 shadow-sm">
               <TableRow className="border-border/50 hover:bg-transparent">
                 {sortableHeader({ label: t('symbol'), sortKeyName: "ticker", className: "pl-4 sm:pl-6" })}
                 <TableHead className="text-muted-foreground/80 hidden xl:table-cell">{t('name')}</TableHead>
                 {sortableHeader({ label: t('dist_type'), sortKeyName: "tipo", className: "hidden xl:table-cell" })}
-                {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right hidden xl:table-cell" })}
+                {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right hidden lg:table-cell" })}
                 <TableHead className="text-muted-foreground/80 text-right hidden xl:table-cell">{t('purchase_price')}</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">{t('current_price')}</TableHead>
-                {sortableHeader({ label: t('value'), sortKeyName: "displayValue", className: "text-right whitespace-nowrap hidden xl:table-cell" })}
+                {sortableHeader({ label: t('value'), sortKeyName: "displayValue", className: "text-right whitespace-nowrap hidden lg:table-cell" })}
                 {sortableHeader({ label: t('today'), sortKeyName: "displayDailyPnL", className: "text-right" })}
                 {!showPnlPercentOnly && sortableHeader({ label: "P&L", sortKeyName: "displayPnl", className: "text-right" })}
                 {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden xl:table-cell"}` })}
-                <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
+                <TableHead className="text-right text-muted-foreground/80 min-w-[60px] w-[60px] sm:min-w-[100px] sm:w-[100px] pr-4 sm:pr-8" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -799,48 +794,6 @@ export function PositionsTable({
               )}
             </TableBody>
           </Table>
-        </div>
-
-        {/* Mobile View (Cards) */}
-        <div className="md:hidden flex flex-col divide-y divide-zinc-800/60">
-          {loading ? (
-             Array.from({ length: 3 }).map((_, i) => (
-               <div key={i} className="p-4 flex flex-col gap-3">
-                 <div className="h-4 w-32 bg-muted animate-shimmer rounded" />
-                 <div className="h-10 w-full bg-muted animate-shimmer rounded" />
-               </div>
-             ))
-          ) : filteredAndSorted.length === 0 ? (
-            <div className="text-center text-muted-foreground/60 py-16">
-               <div className="flex flex-col items-center gap-3">
-                 <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                   <Layers className="h-5 w-5 text-muted-foreground/60" />
-                 </div>
-                 <div>
-                   <p className="font-medium text-muted-foreground/80">
-                     {searchQuery.trim() !== ""
-                       ? `No hay resultados`
-                       : filter !== "Todos"
-                         ? `Sin posiciones`
-                         : "Tu cartera está vacía"}
-                   </p>
-                 </div>
-               </div>
-            </div>
-          ) : (
-            filteredAndSorted.map((p) => (
-              <PositionCard
-                key={p.activo_id}
-                p={p}
-                t={t}
-                hideBalances={hideBalances}
-                onAddTransaction={onAddTransaction}
-                onEditAsset={onEditAsset}
-                setWaveAsset={setWaveAsset}
-                setWaveModalOpen={setWaveModalOpen}
-              />
-            ))
-          )}
         </div>
       </CardContent>
       <AddAssetModal open={addAssetOpen} onOpenChange={setAddAssetOpen} />

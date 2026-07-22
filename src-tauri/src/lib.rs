@@ -45,6 +45,7 @@ pub fn run() {
       }
 
       let _tray = TrayIconBuilder::new()
+          .tooltip("Silox")
           .icon(app.default_window_icon().unwrap().clone())
           .on_tray_icon_event(|tray, event| match event {
               TrayIconEvent::Click {
