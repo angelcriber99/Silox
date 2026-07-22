@@ -166,7 +166,7 @@ export function CombinedPerformanceChart({
         {children}
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground">
+      <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-muted-foreground">
         <div className="rounded-lg border border-border/50 bg-background/45 px-3 py-2">
           <span className="block">Inicio</span>
           <strong className="mt-0.5 block tabular-nums text-foreground">{hideBalances ? "••••" : formatDisplay(period.startValue)}</strong>
@@ -179,6 +179,18 @@ export function CombinedPerformanceChart({
           <span className="block">Resultado ajustado</span>
           <strong className={`mt-0.5 block tabular-nums ${isPositive ? "text-emerald-500" : "text-rose-500"}`}>{hideBalances ? "••••" : formatDisplay(period.profit)}</strong>
         </div>
+        {currentDailyPnl !== undefined && (
+          <div className="rounded-lg border border-border/50 bg-background/45 px-3 py-2">
+            <span className="block">Hoy</span>
+            <strong className={`mt-0.5 block tabular-nums ${currentDailyPnl >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+              {hideBalances ? "••••" : (
+                <>
+                  {currentDailyPnl >= 0 ? "+" : ""}{formatDisplay(currentDailyPnl)}
+                </>
+              )}
+            </strong>
+          </div>
+        )}
       </div>
 
       <div className="h-[240px] sm:h-[290px] w-full relative">
