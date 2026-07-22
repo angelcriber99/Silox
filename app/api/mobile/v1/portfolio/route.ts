@@ -23,21 +23,17 @@ function responseHeaders(requestId: string, etag: string, marketState: unknown) 
   })
 }
 
-function etagMatches(header: string | null, etag: string): boolean {
-  return header?.split(',').some((candidate) => candidate.trim() === '*' || candidate.trim() === etag) ?? false
-}
-
 export async function GET(request: Request) {
   return mobileHandler(request, async (requestId) => {
     const context = await requireMobileUser(request)
     const data = await portfolio(context)
     const etag = await portfolioEtag(data)
     const headers = responseHeaders(requestId, etag, data.marketState)
-    if (etagMatches(request.headers.get('if-none-match'), etag)) {
-      return new Response(null, { status: 304, headers })
-    }
     const response = mobileJson(data, requestId, { headers })
-    response.headers.set('cache-control', 'private, no-cache')
+    // The native client owns its read-through cache. Always return a decodable
+    // JSON body: a bare 304 can leave a freshly installed app without a body to
+    // replace an incomplete cached portfolio.
+    response.headers.set('cache-control', 'private, no-store')
     return response
   })
 }

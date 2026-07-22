@@ -30,6 +30,11 @@ import {
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { createClient } from '@supabase/supabase-js'
 import { getMarketCacheValue, setMarketCacheValue } from '@/lib/cache/market-cache'
+import {
+  firstUsableMarketPrice,
+  hasCompleteMarketPrices,
+  hasUsableMarketPrice,
+} from '@/lib/cache/market-cache-policy'
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -314,13 +319,17 @@ export async function fetchMarketPricesDirect(
   const cacheKey = `${tickers.slice().sort().join(',')}:${convertToEurFlag}`
   
   const cached = actionCache.get(cacheKey)
-  if (cached && Date.now() < cached.expiresAt) {
+  if (
+    cached
+    && Date.now() < cached.expiresAt
+    && hasCompleteMarketPrices(tickers, cached.data.prices)
+  ) {
     return cached.data
   }
 
   const sharedCacheKey = `quotes:${cacheKey}`
   const sharedCached = await getMarketCacheValue<MarketPricesResult>(sharedCacheKey)
-  if (sharedCached) {
+  if (sharedCached && hasCompleteMarketPrices(tickers, sharedCached.prices)) {
     actionCache.set(cacheKey, {
       data: sharedCached,
       expiresAt: Date.now() + getResultCacheTtl(sharedCached),
@@ -328,6 +337,10 @@ export async function fetchMarketPricesDirect(
     return sharedCached
   }
   const sharedBackup = await getMarketCacheValue<MarketPricesResult>(`last-known:${cacheKey}`)
+  const tickerBackups = new Map(await Promise.all(tickers.map(async (ticker) => [
+    ticker,
+    await getMarketCacheValue<PriceEntry>(`last-known-ticker:${ticker}:${convertToEurFlag}`),
+  ] as const)))
 
   const freshData = await _fetchMarketPrices(tickers, convertToEurFlag)
   const prices = { ...freshData.prices }
@@ -384,11 +397,16 @@ export async function fetchMarketPricesDirect(
 
   for (const ticker of tickers) {
     const current = prices[ticker]
-    const previous = lastKnownPriceCache.get(`${ticker}:${convertToEurFlag}`)
-      ?? sharedBackup?.prices[ticker]
-    if (current?.price == null && previous?.price != null) {
+    const previous: PriceEntry | undefined = firstUsableMarketPrice<PriceEntry>(
+      lastKnownPriceCache.get(`${ticker}:${convertToEurFlag}`),
+      cached?.data.prices[ticker],
+      sharedCached?.prices[ticker],
+      sharedBackup?.prices[ticker],
+      tickerBackups.get(ticker),
+    )
+    if (!hasUsableMarketPrice(current) && previous && hasUsableMarketPrice(previous)) {
       prices[ticker] = { ...previous, isStale: true }
-    } else if (current?.price != null) {
+    } else if (hasUsableMarketPrice(current)) {
       lastKnownPriceCache.set(`${ticker}:${convertToEurFlag}`, current)
     }
   }
@@ -413,12 +431,42 @@ export async function fetchMarketPricesDirect(
     }
   }
 
-  actionCache.set(cacheKey, { data, expiresAt: Date.now() + getResultCacheTtl(data) })
-  const ttlSeconds = Math.max(1, Math.ceil(getResultCacheTtl(data) / 1_000))
-  await Promise.all([
+  const complete = hasCompleteMarketPrices(tickers, data.prices)
+  actionCache.set(cacheKey, {
+    data,
+    expiresAt: Date.now() + (complete ? getResultCacheTtl(data) : 5_000),
+  })
+  const ttlSeconds = complete
+    ? Math.max(1, Math.ceil(getResultCacheTtl(data) / 1_000))
+    : 5
+  const durablePrices = Object.fromEntries(tickers.flatMap((ticker) => {
+    const entry = firstUsableMarketPrice(
+      data.prices[ticker],
+      cached?.data.prices[ticker],
+      sharedCached?.prices[ticker],
+      sharedBackup?.prices[ticker],
+      tickerBackups.get(ticker),
+    )
+    return entry ? [[ticker, entry] as const] : []
+  }))
+  const cacheWrites: Promise<void>[] = [
     setMarketCacheValue(sharedCacheKey, data, ttlSeconds, ['market-prices']),
-    setMarketCacheValue(`last-known:${cacheKey}`, data, 7 * 24 * 60 * 60, ['market-last-known']),
-  ])
+  ]
+  if (Object.keys(durablePrices).length > 0) {
+    const durableData = { ...data, prices: durablePrices }
+    cacheWrites.push(
+      setMarketCacheValue(`last-known:${cacheKey}`, durableData, 7 * 24 * 60 * 60, ['market-last-known']),
+      ...Object.entries(durablePrices).map(([ticker, entry]) =>
+        setMarketCacheValue(
+          `last-known-ticker:${ticker}:${convertToEurFlag}`,
+          entry,
+          7 * 24 * 60 * 60,
+          ['market-last-known'],
+        )
+      ),
+    )
+  }
+  await Promise.all(cacheWrites)
   return data
 }
 

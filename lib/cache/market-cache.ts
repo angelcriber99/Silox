@@ -6,8 +6,8 @@ const localFallback = new Map<string, { value: unknown; expiresAt: number }>()
 
 export async function getMarketCacheValue<T>(key: string): Promise<T | undefined> {
   try {
-    const value = await getCache({ namespace: 'silox-market-v1' }).get(key)
-    if (value !== undefined) return value as T
+    const value = await getCache({ namespace: 'silox-market-v2' }).get(key)
+    if (value !== undefined && value !== null) return value as T
   } catch {
     // Runtime Cache is only guaranteed inside Vercel Functions.
   }
@@ -29,7 +29,7 @@ export async function setMarketCacheValue<T>(
   const ttl = Math.max(1, Math.floor(ttlSeconds))
   localFallback.set(key, { value, expiresAt: Date.now() + ttl * 1_000 })
   try {
-    await getCache({ namespace: 'silox-market-v1' }).set(key, value, {
+    await getCache({ namespace: 'silox-market-v2' }).set(key, value, {
       ttl,
       tags,
       name: 'silox-market-data',
