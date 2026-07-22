@@ -149,6 +149,20 @@ function AutostartToggle() {
   )
 }
 
+function CrystalModeToggle() {
+  const { crystalMode, setCrystalMode } = usePreferences()
+  
+  return (
+    <SettingRow 
+      icon={Monitor} 
+      title="Modo Cristal (macOS)" 
+      desc="Activa el efecto de transparencia nativa translúcida en la ventana de la aplicación."
+      iconColor="text-blue-500"
+      action={<CustomSwitch checked={crystalMode} onChange={() => setCrystalMode(!crystalMode)} />} 
+    />
+  )
+}
+
 export default function SettingsPage() {
   const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false)
   const [activeTab, setActiveTab] = useState<Tab>('appearance')
@@ -589,6 +603,11 @@ export default function SettingsPage() {
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold tracking-tight mb-2">App de Escritorio Nativa</h2>
                   <p className="text-muted-foreground">Disfruta de Silox como una aplicación nativa super-rápida y ligera en tu ordenador.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <AutostartToggle />
+                  <CrystalModeToggle />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

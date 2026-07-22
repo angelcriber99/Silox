@@ -170,16 +170,6 @@
   --glass-border: rgba(255,255,255,0.12);
   --glass-shadow: inset 0 1px 1px rgba(255,255,255,0.15), 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --sidebar-bg: transparent;
-  --sidebar-blur: 0px;
-    --sidebar-border: rgba(0,0,0,0.15);
-
-    --app-bg-image: none;
-    --card-radius: 0px; /* SHARP CORNERS */
-    --glass-bg: transparent;
-    --glass-blur: 0px;
-    --glass-border: rgba(0,0,0,0.15);
-    --glass-shadow: none;
-    --sidebar-bg: #FFFFFF;
     --sidebar-blur: 0px;
   }
 
@@ -430,8 +420,20 @@
 /* ─────────────────────────────────────────────── */
 
 /* Tauri native styling */
-html.tauri-app, html.tauri-app body {
+html.tauri-app.crystal-mode {
   background: transparent !important;
+  /* Use a subtle white tint for cards to contrast against the dark background */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --card: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --sidebar-bg: rgba(0, 0, 0, 0.2);
+}
+
+html.tauri-app.crystal-mode body {
+  /* Un degradado mucho más opaco (85%-95%) con un tono teal/esmeralda profundo.
+     Al ser casi opaco, la app tendrá SU PROPIO color premium y no dependerá de lo que haya detrás.
+     El 10% de transparencia permite que el blur nativo de macOS siga actuando sutilmente. */
+  background: radial-gradient(circle at top left, rgba(22, 45, 55, 0.85), rgba(10, 15, 20, 0.95) 100%) !important;
 }
 
 html.tauri-app body.tray-window, html.tauri-app body.tray-window .bg-background {
@@ -440,7 +442,7 @@ html.tauri-app body.tray-window, html.tauri-app body.tray-window .bg-background 
   overflow: hidden;
 }
 
-html.tauri-app .bg-background {
+html.tauri-app.crystal-mode .bg-background {
   background-color: transparent !important;
 }
 

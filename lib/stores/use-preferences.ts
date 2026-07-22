@@ -39,6 +39,7 @@ interface PreferencesState {
   showMarketStatus: boolean
   showLastUpdate: boolean
   fontScale: 'small' | 'normal' | 'large'
+  crystalMode: boolean
   setLanguage: (lang: Language) => void
   setDisplayCurrency: (currency: DisplayCurrency) => void
   setHideBalances: (val: boolean) => void
@@ -69,6 +70,7 @@ interface PreferencesState {
   setShowMarketStatus: (val: boolean) => void
   setShowLastUpdate: (val: boolean) => void
   setFontScale: (val: 'small' | 'normal' | 'large') => void
+  setCrystalMode: (val: boolean) => void
 }
 
 export const usePreferences = create<PreferencesState>()(
@@ -104,6 +106,7 @@ export const usePreferences = create<PreferencesState>()(
       showMarketStatus: true,
       showLastUpdate: true,
       fontScale: 'normal',
+      crystalMode: true,
       setLanguage: (lang) => set({ language: lang }),
       setDisplayCurrency: (currency) => set({ displayCurrency: currency }),
       setHideBalances: (val) => set({ hideBalances: val }),
@@ -134,6 +137,7 @@ export const usePreferences = create<PreferencesState>()(
       setShowMarketStatus: (val) => set({ showMarketStatus: val }),
       setShowLastUpdate: (val) => set({ showLastUpdate: val }),
       setFontScale: (val) => set({ fontScale: val }),
+      setCrystalMode: (val) => set({ crystalMode: val }),
     }),
     {
       name: 'silox-preferences',

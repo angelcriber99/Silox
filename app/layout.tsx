@@ -77,8 +77,8 @@ export default async function RootLayout({
           <NextIntlClientProvider messages={messages} locale={locale}>
             <ThemeProvider
               attribute="class"
-              defaultTheme="system"
-              enableSystem
+              defaultTheme="dark"
+              forcedTheme="dark"
               disableTransitionOnChange
             >
               <QueryProvider>

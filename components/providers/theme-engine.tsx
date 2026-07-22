@@ -16,7 +16,7 @@ export const THEME_COLORS: Record<AccentColor, { light: string; dark: string }> 
 }
 
 export function ThemeEngine() {
-  const { accentColor } = usePreferences()
+  const { accentColor, crystalMode } = usePreferences()
   const { resolvedTheme } = useTheme()
 
   useEffect(() => {
@@ -28,9 +28,13 @@ export function ThemeEngine() {
     root.style.setProperty("--primary", color)
     root.style.setProperty("--ring", color)
     
-    // Default to crystal/macos style globally
-    document.documentElement.setAttribute('data-preset', 'crystal')
-  }, [accentColor, resolvedTheme])
+    // Toggle crystal mode native transparency
+    if (crystalMode) {
+      root.classList.add('crystal-mode')
+    } else {
+      root.classList.remove('crystal-mode')
+    }
+  }, [accentColor, resolvedTheme, crystalMode])
 
   return null
 }

@@ -21,7 +21,8 @@
         "fullscreen": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
-        "transparent": true
+        "transparent": true,
+        "theme": "Dark"
       },
       {
         "label": "tray",
@@ -35,7 +36,8 @@
         "transparent": true,
         "visible": false,
         "alwaysOnTop": true,
-        "skipTaskbar": true
+        "skipTaskbar": true,
+        "theme": "Dark"
       }
     ],
     "security": {
