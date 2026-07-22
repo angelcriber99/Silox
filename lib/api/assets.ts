@@ -342,7 +342,8 @@ export function computePortfolioTotals(
   )
   
   const openPositionCost = positions.reduce((sum, p) => sum + p.displayCost.amount, 0)
-  const totalCost = netContributions ?? openPositionCost
+  // Ignoramos netContributions (cash flows) y usamos estrictamente el coste FIFO de posiciones abiertas
+  const totalCost = openPositionCost 
   const totalPnl = totalValue - totalCost
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
 

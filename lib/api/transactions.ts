@@ -57,7 +57,7 @@ export async function fetchTransactions(limitCount = 100): Promise<Transaccion[]
   return hydrateTransactionsFx(data)
 }
 
-async function hydrateTransactionsFx(data: Transaccion[]): Promise<Transaccion[]> {
+export async function hydrateTransactionsFx(data: Transaccion[]): Promise<Transaccion[]> {
   const requests = data
     .filter((transaction) => {
       const currency = transaction.activo?.moneda?.toUpperCase()
