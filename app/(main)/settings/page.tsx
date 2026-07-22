@@ -30,6 +30,7 @@ import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { fetchAllTransactionsForTax } from "@/lib/api/transactions"
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 import { useEffect } from "react"
+import { BackButton } from "@/components/ui/back-button"
 
 type Tab = 'appearance' | 'desktop' | 'data'
 
@@ -283,9 +284,12 @@ export default function SettingsPage() {
       {/* ── Mobile View (iOS Grouped List) ──────────────────────────────── */}
       <div className="md:hidden flex flex-col flex-1 pb-24 bg-background">
         <div className="px-5 pb-2 pt-6 sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-border/40">
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+          <div className="flex items-center gap-3">
+<BackButton />
+<h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
             {t('title')}
           </h1>
+</div>
         </div>
         
         <div className="flex flex-col gap-6 px-4 pt-6">

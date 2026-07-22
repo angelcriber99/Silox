@@ -648,16 +648,16 @@ export function PositionsTable({
 
   return (
     <Card className="animate-fade-in stagger-3 glass-card overflow-hidden w-full h-full flex flex-col relative z-10">
-      <CardHeader className="p-3 md:px-4 md:py-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border/20 shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center gap-3 xl:gap-4">
+      <CardHeader className="p-2 md:p-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border/20 shrink-0">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 xl:gap-4 flex-1">
           <CardTitle className="text-base font-medium text-foreground flex items-center gap-2 shrink-0">
             <Layers className="h-4 w-4 text-muted-foreground" />
             <span className="tracking-tight">{t('positions')}</span>
           </CardTitle>
 
-          <div className="flex items-center gap-3 flex-1 flex-wrap">
-            <div className="relative w-full sm:w-[200px] group shrink-0">
-              <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
+          <div className="flex items-center gap-2 flex-1 w-full xl:w-auto">
+            <div className="relative w-full sm:w-[180px] shrink-0">
+              <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
               <Input
                 placeholder={t('search_asset')}
                 value={searchQuery}
@@ -666,7 +666,7 @@ export function PositionsTable({
               />
             </div>
 
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex gap-1 flex-wrap flex-1">
               {FILTER_OPTIONS.map((opt) => {
                 const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
                 const disabled = opt !== "Todos" && !typesWithData.has(opt);
@@ -691,19 +691,20 @@ export function PositionsTable({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end xl:self-auto shrink-0">
+        <div className="flex items-center gap-1.5 self-end xl:self-auto shrink-0 mt-2 xl:mt-0">
           <button
             type="button"
             onClick={() => useNotes.getState().setIsOpen(true)}
-            className="hidden sm:flex h-7 items-center justify-center gap-1.5 px-3 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-xs font-semibold shadow-sm"
+            className="hidden sm:flex h-7 items-center justify-center gap-1.5 px-2.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[11px] font-semibold shadow-sm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
-            <span>Plan Estratégico</span>
+            <span className="hidden 2xl:inline">Plan Estratégico</span>
+            <span className="inline 2xl:hidden">Plan</span>
           </button>
           
           <Link
             href="/analisis"
-            className="hidden sm:flex h-7 items-center justify-center gap-1.5 px-3 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-xs font-semibold shadow-sm"
+            className="hidden sm:flex h-7 items-center justify-center gap-1.5 px-2.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-[11px] font-semibold shadow-sm"
           >
             <BarChart2 className="w-3.5 h-3.5" />
             Análisis
@@ -726,23 +727,23 @@ export function PositionsTable({
               className="h-7 px-2.5 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
               title="Sincronizar extracto (CSV/Excel)"
             >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:mr-1.5 shrink-0">
                 <path d="M14.6541 21.0118H9.33644V14.1611H5L12 3L19 14.1611H14.6541V21.0118Z" fill="currentColor"/>
               </svg>
-              <span className="text-xs">Importar</span>
+              <span className="text-[11px] hidden sm:inline">Importar</span>
             </Button>
           </RevolutSync>
 
           <Button
             size="sm"
             onClick={() => setAddAssetOpen(true)}
-            className="h-7 px-3 transition-colors duration-200 text-white shadow-sm"
+            className="h-7 px-2.5 transition-colors duration-200 text-white shadow-sm"
             style={{
               background: "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))",
             }}
           >
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            <span className="text-xs">{t('add_asset')}</span>
+            <Plus className="sm:mr-1.5 h-3.5 w-3.5" />
+            <span className="text-[11px] hidden sm:inline">{t('add_asset')}</span>
           </Button>
         </div>
       </CardHeader>

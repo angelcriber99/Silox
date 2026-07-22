@@ -9,6 +9,7 @@ import { TaxGuide } from "@/components/tax/tax-guide"
 import { TaxChat } from "@/components/tax/tax-chat"
 import { TaxPdfExport } from "@/components/tax/tax-pdf-export"
 import Link from "next/link"
+import { BackButton } from "@/components/ui/back-button"
 
 export default function DeclararPage() {
   const { data: allTransactions, isLoading, error } = useAllTransactions()
@@ -138,9 +139,12 @@ export default function DeclararPage() {
               >
                 <Scale className="h-5 w-5" style={{ color: "var(--primary)" }} />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+              <div className="flex items-center gap-3">
+<BackButton />
+<h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
                 Asistente de Declaración
               </h1>
+</div>
             </div>
             <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
               Cálculo automatizado de ganancias y pérdidas patrimoniales (Método FIFO).

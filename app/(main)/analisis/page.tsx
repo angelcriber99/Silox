@@ -2,7 +2,8 @@
 
 import { lazy, Suspense, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { PieChart, Target } from "lucide-react"
+import { PieChart, Target, ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 const ComprehensiveAnalysis = lazy(() =>
   import("@/components/analysis/comprehensive-analysis").then((mod) => ({
@@ -17,6 +18,7 @@ const Projections = lazy(() =>
 
 export default function AnalysisPage() {
   const [activeTab, setActiveTab] = useState<"exhaustivo" | "proyecciones">("exhaustivo")
+  const router = useRouter()
 
   const tabs = [
     { id: "exhaustivo", label: "Análisis Exhaustivo", icon: PieChart },
@@ -28,7 +30,16 @@ export default function AnalysisPage() {
       {/* Header */}
       <header className="hidden md:flex px-4 pt-12 pb-4 md:px-8 md:pt-10 sticky top-0 bg-background/80 backdrop-blur-xl z-30 border-b border-border/40">
         <div className="flex flex-col">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground mb-4">Análisis</h1>
+          <div className="flex items-center gap-3 mb-4">
+            <button 
+              onClick={() => router.back()}
+              className="p-1.5 md:p-2 -ml-2 md:ml-0 rounded-full bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              title="Volver"
+            >
+              <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Análisis</h1>
+          </div>
           <div className="flex p-1 space-x-1 bg-muted/50 rounded-xl overflow-x-auto hide-scrollbar">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id

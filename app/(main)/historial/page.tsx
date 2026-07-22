@@ -6,6 +6,7 @@ import { calculateFIFO } from "@/lib/utils/fifo-calculator"
 import { Activity, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { HistoryDashboard } from "@/components/history/history-dashboard"
+import { BackButton } from "@/components/ui/back-button"
 
 export default function HistorialPage() {
   const { data: allTransactions, isLoading } = useAllTransactions()
@@ -61,9 +62,12 @@ export default function HistorialPage() {
                 >
                   <Activity className="h-5 w-5" style={{ color: "oklch(0.65 0.17 270)" }} />
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+                <div className="flex items-center gap-3">
+<BackButton />
+<h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
                   Year in Review
                 </h1>
+</div>
               </div>
               <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
                 Resumen anual de tu actividad inversora, compras, ventas y rentabilidad.

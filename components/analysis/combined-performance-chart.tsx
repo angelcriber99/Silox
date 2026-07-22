@@ -142,6 +142,25 @@ export function CombinedPerformanceChart({
                 </>
               )}
             </span>
+            {timeRange !== "1D" && currentDailyPnl !== undefined && !hoveredPoint && (
+              <>
+                <span className="text-xs font-semibold text-muted-foreground">•</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest text-[9px]">Hoy</span>
+                <span className={`text-xs font-bold flex items-center tabular-nums ${currentDailyPnl >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                  {hideBalances ? "•••" : (
+                    <>
+                      {currentDailyPnl >= 0 ? "+" : ""}{formatDisplay(currentDailyPnl)}
+                      {currentDailyPnlPercent !== undefined && (
+                        <>
+                           <span className="mx-0.5">{currentDailyPnl >= 0 ? "▴" : "▾"}</span>
+                           {currentDailyPnlPercent >= 0 ? "+" : ""}{currentDailyPnlPercent.toFixed(2)}%
+                        </>
+                      )}
+                    </>
+                  )}
+                </span>
+              </>
+            )}
           </div>
         </div>
         {children}

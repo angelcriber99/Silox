@@ -29,6 +29,7 @@ import {
 import { z } from "zod"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { AssetLogo } from "@/components/ui/asset-logo"
+import { BackButton } from "@/components/ui/back-button"
 
 const RadarEventSchema = z.object({
   id: z.string(),
@@ -168,7 +169,10 @@ export default function RadarPage() {
                 <Radio className="h-3.5 w-3.5" aria-hidden="true" />
                 Solo posiciones abiertas
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">Radar de cartera</h1>
+              <div className="flex items-center gap-3">
+<BackButton />
+<h1 className="text-3xl font-bold tracking-tight">Radar de cartera</h1>
+</div>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                 Resultados, dividendos y catalizadores respaldados por una fuente. Las ventanas estimadas nunca se muestran como fechas confirmadas.
               </p>

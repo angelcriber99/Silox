@@ -7,6 +7,7 @@ import { Monitor, Moon, Sun, LayoutList, LogOut, User, Sparkles, Volume2, Flower
 import { usePreferences, AccentColor } from "@/lib/stores/use-preferences"
 import { createClient } from "@/lib/supabase/client"
 import confetti from "canvas-confetti"
+import { BackButton } from "@/components/ui/back-button"
 
 export default function PerfilPage() {
   const { theme, setTheme } = useTheme()
@@ -35,10 +36,13 @@ export default function PerfilPage() {
 
   return (
     <div className="max-w-4xl mx-auto w-full px-6 py-8 space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Perfil y Ajustes</h1>
-        <p className="text-muted-foreground mt-2">Gestiona tus preferencias de la aplicación y tu cuenta.</p>
-      </div>
+      <header className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <BackButton />
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Perfil y Ajustes</h1>
+        </div>
+        <p className="text-muted-foreground">Gestiona tus preferencias de la aplicación y tu cuenta.</p>
+      </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Appearance Settings */}

@@ -16,6 +16,7 @@ import Link from "next/link"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { IOSHeader } from "@/components/ui/ios-header"
 
+import { BackButton } from "@/components/ui/back-button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -278,9 +279,12 @@ export default function MovimientosPage() {
               >
                 <History className="h-5 w-5" style={{ color: "var(--primary)" }} />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
+              <div className="flex items-center gap-3">
+<BackButton />
+<h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
                 Movimientos
               </h1>
+</div>
             </div>
             <p className="text-sm pl-[52px]" style={{ color: "var(--muted-foreground)" }}>
               Historial completo de operaciones y contabilidad personal.
