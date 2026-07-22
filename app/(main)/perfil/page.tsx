@@ -43,8 +43,6 @@ export default function PerfilPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
         {/* App Preferences */}
         <Card className="bg-card border-border shadow-sm">
           <CardHeader>
