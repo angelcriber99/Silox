@@ -28,6 +28,7 @@ import {
   type MetalRateSnapshot,
 } from '@/lib/utils/metal-market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
+import { serverLogger } from '@/lib/server/logger'
 import { createClient } from '@supabase/supabase-js'
 import { getMarketCacheValue, setMarketCacheValue } from '@/lib/cache/market-cache'
 import {
@@ -693,7 +694,17 @@ async function _fetchMarketPrices(
       if (marketState) marketStates.push(marketState)
     } else if (ticker) {
       prices[ticker] = { price: null, sparkline: [], currency: 'EUR', changePercent24h: null, dailyChangePercent24h: null }
+      serverLogger.warn('market.quote.failed', { ticker }, result.reason)
     }
+  }
+
+  const missingTickers = tickers.filter((ticker) => !hasUsableMarketPrice(prices[ticker]))
+  if (missingTickers.length > 0) {
+    serverLogger.warn('market.quote.incomplete', {
+      requested: tickers.length,
+      valid: tickers.length - missingTickers.length,
+      missingTickers,
+    })
   }
 
   return {
