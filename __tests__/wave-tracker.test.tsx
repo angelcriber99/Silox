@@ -11,7 +11,7 @@ vi.mock('@/lib/hooks/use-transactions', () => ({
 
 import { WaveTrackerModal } from '@/components/asset/wave-tracker-modal'
 
-const position: EnrichedPosition = {
+const position = {
   activo_id: 'asset-1',
   ticker: 'AAPL',
   isin: null,
@@ -41,7 +41,7 @@ const position: EnrichedPosition = {
   change_percent_24h: 0,
   daily_change_percent_24h: 0,
   displayDailyPnL: { amount: 0, currency: 'EUR' },
-}
+} as unknown as EnrichedPosition
 
 describe('WaveTrackerModal', () => {
   it('guarda las notas mediante la mutación que invalida posiciones', async () => {

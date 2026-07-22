@@ -9,7 +9,7 @@ vi.mock("@/lib/api/market", () => ({
   fetchEventosRecurrentes: vi.fn(),
 }))
 
-const position: EnrichedPosition = {
+const position = {
   activo_id: "asset-1",
   ticker: "AAPL",
   isin: null,
@@ -38,7 +38,7 @@ const position: EnrichedPosition = {
   change_percent_24h: 1,
   daily_change_percent_24h: 1,
   displayDailyPnL: { amount: 4, currency: 'EUR' },
-}
+} as unknown as EnrichedPosition
 
 describe("UpcomingEvents", () => {
   beforeEach(() => {

@@ -22,11 +22,12 @@ function position(overrides: Partial<EnrichedPosition>): EnrichedPosition {
     notas: null,
     precio_actual: 100,
     precio_actual_nativo: 100,
+    nativeValue: null,
+    nativeCost: null,
+    nativeInvested: null,
     original_currency: "USD",
     displayValue: { amount: 100, currency: 'EUR' },
     displayCost: { amount: 80, currency: 'EUR' },
-    pnl: 20,
-    pnl_percent: 25,
     precio_medio: 80,
     sparkline: [95, 100],
     change_percent_24h: 1,
@@ -35,7 +36,7 @@ function position(overrides: Partial<EnrichedPosition>): EnrichedPosition {
     market_state: "REGULAR",
     price_is_stale: false,
     ...overrides,
-  }
+  } as unknown as EnrichedPosition
 }
 
 describe("buildDashboardIntelligence", () => {
