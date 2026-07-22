@@ -159,7 +159,6 @@ export default function SettingsPage() {
   const { 
     language, setLanguage,
     displayCurrency, setDisplayCurrency,
-    themePreset, setThemePreset,
     zenMode, setZenMode,
     accentColor, setAccentColor,
     biometrics, setBiometrics,
