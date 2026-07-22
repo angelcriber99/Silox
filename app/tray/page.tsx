@@ -27,7 +27,7 @@ export default function TrayPage() {
     )
   }
 
-  if (error || !totals || !totals.dailyPnlMoney) {
+  if (error || !totals || !totals.pnl24hMoney) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4 text-rose-500">
         Error al cargar datos o portfolio vacío
@@ -35,7 +35,7 @@ export default function TrayPage() {
     )
   }
 
-  const isPositive = totals.dailyPnlMoney.amount >= 0
+  const isPositive = totals.pnl24hMoney.amount >= 0
 
   return (
     <div className="flex-1 flex flex-col p-4 select-none">
@@ -49,7 +49,7 @@ export default function TrayPage() {
 
       <div className="flex flex-col gap-1 mb-6">
         <span className="text-3xl font-bold tracking-tight text-foreground tabular-nums">
-           {hideBalances ? "••••••" : <AnimatedNumber value={convert(totals.netValueMoney.amount)} format="currency" currency={displayCurrency} hide={hideBalances} />}
+           {hideBalances ? "••••••" : <AnimatedNumber value={convert(totals.valueMoney.amount)} format="currency" currency={displayCurrency} hide={hideBalances} />}
         </span>
         <div className="flex items-center gap-1.5">
           {isPositive ? (
@@ -60,9 +60,9 @@ export default function TrayPage() {
           <span className={`text-sm font-bold tabular-nums ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
             {hideBalances ? "•••" : (
               <>
-                {isPositive ? '+' : ''}{formatDisplay(totals.dailyPnlMoney.amount)}
+                {isPositive ? '+' : ''}{formatDisplay(totals.pnl24hMoney.amount)}
                 <span className="mx-1">•</span>
-                {isPositive ? '+' : ''}{totals.dailyPnlPercent.toFixed(2)}%
+                {isPositive ? '+' : ''}{totals.totalPnlPercent24h.toFixed(2)}%
               </>
             )}
           </span>
