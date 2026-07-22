@@ -111,12 +111,12 @@
 }
 
 .dark {
-  /* ── Ultra Glassmorphism (macOS Crystal) ───────────────────────────────────── */
+  /* ── Ultra Glassmorphism (macOS Crystal Nítido) ───────────────────────────────────── */
   --background: transparent;
   --foreground: #FFFFFF;
-  --card: rgba(20, 20, 25, 0.2);
+  --card: rgba(255, 255, 255, 0.04);
   --card-foreground: #FFFFFF;
-  --popover: rgba(20, 20, 25, 0.3);
+  --popover: rgba(255, 255, 255, 0.08);
   --popover-foreground: #FFFFFF;
 
   /* Apple Green — money, gains, actions */
@@ -132,8 +132,8 @@
 
   /* Apple Red */
   --destructive: #FF453A;
-  --border: rgba(255,255,255,0.15);
-  --input: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.12);
+  --input: rgba(255,255,255,0.06);
   --ring: #30D158;
 
   /* Semantic — financial */
@@ -143,8 +143,8 @@
 
   /* Surface layers */
   --surface-1: transparent;
-  --surface-2: rgba(20, 20, 25, 0.1);
-  --surface-3: rgba(20, 20, 25, 0.2);
+  --surface-2: rgba(255, 255, 255, 0.02);
+  --surface-3: rgba(255, 255, 255, 0.05);
 
   /* Charts */
   --chart-1: #30D158;
@@ -159,18 +159,18 @@
   --sidebar-primary-foreground: #000000;
   --sidebar-accent: rgba(255,255,255,0.08);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(255,255,255,0.15);
+  --sidebar-border: rgba(255,255,255,0.12);
   --sidebar-ring: #30D158;
 
   /* Layout & Glass Tokens */
-  --app-bg-image: radial-gradient(circle at 0% 0%, rgba(120, 50, 255, 0.15), transparent 40%), radial-gradient(circle at 100% 0%, rgba(0, 150, 255, 0.15), transparent 40%), radial-gradient(circle at 50% 100%, rgba(255, 50, 150, 0.1), transparent 50%);
+  --app-bg-image: none;
   --card-radius: 1.5rem;
-  --glass-bg: rgba(30, 30, 35, 0.3);
-  --glass-blur: 30px;
-  --glass-border: rgba(255,255,255,0.15);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-blur: 0px;
+  --glass-border: rgba(255,255,255,0.12);
   --glass-shadow: inset 0 1px 1px rgba(255,255,255,0.15), 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  --sidebar-bg: rgba(20, 20, 25, 0.2);
-  --sidebar-blur: 40px;
+  --sidebar-bg: transparent;
+  --sidebar-blur: 0px;
     --sidebar-border: rgba(0,0,0,0.15);
 
     --app-bg-image: none;
