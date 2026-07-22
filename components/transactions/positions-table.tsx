@@ -272,7 +272,7 @@ const PositionRow = memo(function PositionRow({
           {translateType(p.tipo, t)}
         </Badge>
       </TableCell>
-      <TableCell className={`text-right tabular-nums text-foreground/80 hidden xl:table-cell ${cellPadding}`}>
+      <TableCell className={`text-right tabular-nums text-foreground/80 hidden lg:table-cell ${cellPadding}`}>
         {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
       </TableCell>
       <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden xl:table-cell ${cellPadding}`}>
@@ -296,7 +296,7 @@ const PositionRow = memo(function PositionRow({
           )}
         </div>
       </TableCell>
-      <TableCell className={`text-right tabular-nums text-foreground font-medium hidden xl:table-cell ${cellPadding}`}>
+      <TableCell className={`text-right tabular-nums text-foreground font-medium hidden lg:table-cell ${cellPadding}`}>
         <div className="flex flex-col items-end gap-1">
           <span>
             {hideBalances ? "****" : ((p.displayValue?.amount ?? null) !== null
