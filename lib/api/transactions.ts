@@ -20,7 +20,7 @@ export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
 export async function fetchAssetTransactions(assetId: string): Promise<Transaccion[]> {
   const { data, error } = await createClient()
     .from('transacciones')
-    .select('*')
+    .select('*, activo:activos(*)')
     .eq('activo_id', assetId)
     .order('fecha', { ascending: true })
     .order('created_at', { ascending: true })
