@@ -16,9 +16,9 @@ export function usePrices(tickers: string[], options?: { enabled?: boolean }) {
       const saved = localStorage.getItem('silox_last_prices')
       if (saved) {
         const parsed = JSON.parse(saved)
-        // Discard prices saved more than 20 hours ago to prevent stale
-        // dailyChangePercent from a previous trading day bleeding into today.
-        const MAX_AGE_MS = 20 * 60 * 60 * 1000
+        // Keep a last-known quote across weekends/provider outages. Only price
+        // identity fields are restored below; old daily percentages never leak.
+        const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
         if (parsed.savedAt && Date.now() - parsed.savedAt < MAX_AGE_MS) {
           lastKnownPrices.current = parsed.prices ?? parsed
         }

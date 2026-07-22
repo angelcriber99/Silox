@@ -29,6 +29,7 @@ import {
 } from '@/lib/utils/metal-market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { createClient } from '@supabase/supabase-js'
+import { getMarketCacheValue, setMarketCacheValue } from '@/lib/cache/market-cache'
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -317,6 +318,17 @@ export async function fetchMarketPricesDirect(
     return cached.data
   }
 
+  const sharedCacheKey = `quotes:${cacheKey}`
+  const sharedCached = await getMarketCacheValue<MarketPricesResult>(sharedCacheKey)
+  if (sharedCached) {
+    actionCache.set(cacheKey, {
+      data: sharedCached,
+      expiresAt: Date.now() + getResultCacheTtl(sharedCached),
+    })
+    return sharedCached
+  }
+  const sharedBackup = await getMarketCacheValue<MarketPricesResult>(`last-known:${cacheKey}`)
+
   const freshData = await _fetchMarketPrices(tickers, convertToEurFlag)
   const prices = { ...freshData.prices }
   
@@ -373,6 +385,7 @@ export async function fetchMarketPricesDirect(
   for (const ticker of tickers) {
     const current = prices[ticker]
     const previous = lastKnownPriceCache.get(`${ticker}:${convertToEurFlag}`)
+      ?? sharedBackup?.prices[ticker]
     if (current?.price == null && previous?.price != null) {
       prices[ticker] = { ...previous, isStale: true }
     } else if (current?.price != null) {
@@ -401,6 +414,11 @@ export async function fetchMarketPricesDirect(
   }
 
   actionCache.set(cacheKey, { data, expiresAt: Date.now() + getResultCacheTtl(data) })
+  const ttlSeconds = Math.max(1, Math.ceil(getResultCacheTtl(data) / 1_000))
+  await Promise.all([
+    setMarketCacheValue(sharedCacheKey, data, ttlSeconds, ['market-prices']),
+    setMarketCacheValue(`last-known:${cacheKey}`, data, 7 * 24 * 60 * 60, ['market-last-known']),
+  ])
   return data
 }
 
@@ -475,6 +493,7 @@ async function _fetchMarketPrices(
 
       if (isFund) {
         const cachedFund = fundMarketCache.get(fetchTicker)
+          ?? await getMarketCacheValue<FundMarketCacheEntry>(`fund:${fetchTicker}`)
         if (cachedFund && cachedFund.expiresAt > Date.now()) {
           fallbackQuote = cachedFund.quote
           chart1d = cachedFund.chart
@@ -488,11 +507,13 @@ async function _fetchMarketPrices(
           fallbackQuote = quoteResult
           chart1d = chart1dResult
           if (quoteResult) {
-            fundMarketCache.set(fetchTicker, {
+            const fundEntry = {
               quote: quoteResult as unknown as YahooQuote,
               chart: chart1dResult,
               expiresAt: Date.now() + FUND_QUOTE_TTL,
-            })
+            }
+            fundMarketCache.set(fetchTicker, fundEntry)
+            await setMarketCacheValue(`fund:${fetchTicker}`, fundEntry, FUND_QUOTE_TTL / 1_000, ['fund-nav'])
           }
         }
         if (!fallbackQuote) {
