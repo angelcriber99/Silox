@@ -39,6 +39,6 @@ describe('daily P&L currency conversion', () => {
 
     // Native price rises from $100 to $110, but EUR/USD also moves from 1.0
     // to 1.1, leaving the EUR portfolio value unchanged.
-    expect(result.change_amount_24h).toBeCloseTo(0)
+    expect((result.displayDailyPnL?.amount ?? null)).toBeCloseTo(0)
   })
 })

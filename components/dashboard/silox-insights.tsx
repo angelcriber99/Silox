@@ -77,9 +77,9 @@ export function SiloxInsights({
     }
 
     // Insight 3: Concentration
-    if (positions.length > 2 && totals.totalValue > 0) {
-      const biggestPosition = [...positions].sort((a, b) => (b.valor_actual || 0) - (a.valor_actual || 0))[0]
-      const concentration = (biggestPosition.valor_actual || 0) / totals.totalValue * 100
+    if (positions.length > 2 && totals.valueMoney.amount > 0) {
+      const biggestPosition = [...positions].sort((a, b) => ((b.displayValue?.amount ?? null) || 0) - ((a.displayValue?.amount ?? null) || 0))[0]
+      const concentration = ((biggestPosition.displayValue?.amount ?? null) || 0) / totals.valueMoney.amount * 100
       
       if (concentration > 30) {
         list.push(`Alta concentración: El ${formatPercent(concentration)} de tu cartera depende de ${biggestPosition.nombre || biggestPosition.ticker.split('.')[0]}.`)

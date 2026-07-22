@@ -95,11 +95,11 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
     return () => clearInterval(timer)
   }, [])
 
-  const isPositive = totals.totalPnl24h >= 0
+  const isPositive = totals.pnl24hMoney.amount >= 0
 
   // Sort positions based on selected mode
   const activePositions = useMemo(() => {
-    const valid = [...positions].filter(p => p.unidades > 0 && (p.valor_actual ?? 0) > 0 && p.tipo !== 'Liquidez' && p.ticker !== 'CASH')
+    const valid = [...positions].filter(p => p.unidades > 0 && ((p.displayValue?.amount ?? null) ?? 0) > 0 && p.tipo !== 'Liquidez' && p.ticker !== 'CASH')
     
     if (sortMode === "gainers") {
       return valid.sort((a, b) => (b.change_percent_24h ?? 0) - (a.change_percent_24h ?? 0))
@@ -109,7 +109,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
     }
     if (sortMode === "money") {
       return valid.sort(
-        (a, b) => Math.abs(b.change_amount_24h ?? 0) - Math.abs(a.change_amount_24h ?? 0),
+        (a, b) => Math.abs((b.displayDailyPnL?.amount ?? null) ?? 0) - Math.abs((a.displayDailyPnL?.amount ?? null) ?? 0),
       )
     }
     
@@ -256,7 +256,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
             {memeMode ? "🚀 TO THE MOON PORTFOLIO 🚀" : "Valor del Portfolio"}
           </p>
           <h1 className={`text-6xl md:text-[7rem] lg:text-[8.5rem] font-bold tabular-nums tracking-tighter leading-none ${isPositive ? 'text-emerald-400' : 'text-rose-400'} ${memeMode ? 'drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]' : ''}`}>
-            <ZenLiveValue value={totals.totalValue} formatter={formatDisplay} glow={true} />
+            <ZenLiveValue value={totals.valueMoney.amount} formatter={formatDisplay} glow={true} />
           </h1>
         </motion.div>
 
@@ -270,7 +270,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
           <div className={`flex items-center gap-2 text-2xl md:text-4xl font-bold tabular-nums ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
             {isPositive ? <TrendingUp className="w-6 h-6 md:w-8 md:h-8" /> : <TrendingDown className="w-6 h-6 md:w-8 md:h-8" />}
             <ZenLiveValue
-              value={totals.totalPnl24h}
+              value={totals.pnl24hMoney.amount}
               formatter={(v) => `${v >= 0 ? "+" : ""}${formatDisplay(v)}`}
               glow={true}
             />
@@ -348,7 +348,7 @@ export function ZenDashboard({ positions, marketState }: ZenDashboardProps) {
             {/* Position rows */}
             <div className="flex-1 overflow-y-auto hide-scrollbar">
               {activePositions.map((p, i) => {
-                const val = p.valor_actual ?? p.coste_total
+                const val = (p.displayValue?.amount ?? null) ?? p.coste_total
                 const percent = p.change_percent_24h ?? 0
                 const pnl24h = val > 0 ? val - val / (1 + percent / 100) : 0
                 const isPosPositive = percent >= 0

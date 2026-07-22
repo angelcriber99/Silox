@@ -22,17 +22,17 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
     if (sortBy === "percent") {
       return typeof p.change_percent_24h === 'number' && p.change_percent_24h !== 0 && p.unidades > 0
     } else {
-      return typeof p.change_amount_24h === 'number' && p.change_amount_24h !== 0 && p.unidades > 0
+      return typeof (p.displayDailyPnL?.amount ?? null) === 'number' && (p.displayDailyPnL?.amount ?? null) !== 0 && p.unidades > 0
     }
   })
 
   const sorted = [...validPositions].sort((a, b) => {
     if (sortBy === "percent") return (b.change_percent_24h || 0) - (a.change_percent_24h || 0)
-    return (b.change_amount_24h || 0) - (a.change_amount_24h || 0)
+    return ((b.displayDailyPnL?.amount ?? null) || 0) - ((a.displayDailyPnL?.amount ?? null) || 0)
   })
 
-  const best = sorted.filter(p => sortBy === "percent" ? p.change_percent_24h! > 0 : p.change_amount_24h! > 0)
-  const worst = sorted.slice().reverse().filter(p => sortBy === "percent" ? p.change_percent_24h! < 0 : p.change_amount_24h! < 0)
+  const best = sorted.filter(p => sortBy === "percent" ? p.change_percent_24h! > 0 : (p.displayDailyPnL?.amount ?? null)! > 0)
+  const worst = sorted.slice().reverse().filter(p => sortBy === "percent" ? p.change_percent_24h! < 0 : (p.displayDailyPnL?.amount ?? null)! < 0)
 
   const getDisplayName = (p: EnrichedPosition) => {
     if (p.nombre?.toUpperCase().includes("MSCI")) return "MSCI"
@@ -138,7 +138,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(convert(p.change_amount_24h!), displayCurrency)}
+                    : hideBalances ? "***" : formatPnl(convert((p.displayDailyPnL?.amount ?? null)!), displayCurrency)}
                 </span>
               </motion.div>
             ))
@@ -186,7 +186,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(convert(p.change_amount_24h!), displayCurrency)}
+                    : hideBalances ? "***" : formatPnl(convert((p.displayDailyPnL?.amount ?? null)!), displayCurrency)}
                 </span>
               </motion.div>
             ))

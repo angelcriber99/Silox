@@ -71,14 +71,14 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
       if (p.tipo === 'Liquidez' || p.tipo === 'Fondo Monetario') continue;
       
       const key = groupBy === "tipo" ? p.tipo : p.estrategia
-      const value = p.valor_actual ?? p.coste_total
+      const value = (p.displayValue?.amount ?? null) ?? p.coste_total
       const dailyPercent = p.daily_change_percent_24h
       const dailyFactor = typeof dailyPercent === "number" ? 1 + dailyPercent / 100 : 0
-      const hasDailyPerformance = Number.isFinite(dailyFactor) && dailyFactor > 0 && p.change_amount_24h !== null
+      const hasDailyPerformance = Number.isFinite(dailyFactor) && dailyFactor > 0 && (p.displayDailyPnL?.amount ?? null) !== null
       const dailyBaseline = hasDailyPerformance
-        ? (p.daily_performance_base_eur ?? (value / dailyFactor))
+        ? ((p.displayDailyBaseline?.amount ?? null) ?? (value / dailyFactor))
         : 0
-      const dailyPnl = hasDailyPerformance ? (p.change_amount_24h ?? 0) : 0
+      const dailyPnl = hasDailyPerformance ? ((p.displayDailyPnL?.amount ?? null) ?? 0) : 0
 
       if (value > 0) {
         const existing = groups.get(key) ?? { value: 0, dailyPnl: 0, dailyBaseline: 0 }
@@ -168,8 +168,8 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
         {!hideBalances && hasData && viewMode === "composition" && (
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 border border-border/40">
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Hoy</span>
-            <span className={`text-sm font-bold ${totals.totalPnl24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {formatPnl(convert(totals.totalPnl24h), displayCurrency)}
+            <span className={`text-sm font-bold ${totals.pnl24hMoney.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {formatPnl(convert(totals.pnl24hMoney.amount), displayCurrency)}
             </span>
             <span className={`text-[11px] font-medium opacity-80 ${totals.totalDailyPnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               ({formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
@@ -306,7 +306,7 @@ export function DistributionExtended({ positions }: AllocationChartProps) {
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
                 <p className="text-muted-foreground text-sm font-bold tracking-widest uppercase mb-1">Total</p>
                 <p className="text-3xl font-bold text-foreground tabular-nums">
-                  {hideBalances ? "****" : formatDisplay(totals.totalValue)}
+                  {hideBalances ? "****" : formatDisplay(totals.valueMoney.amount)}
                 </p>
               </div>
             </div>

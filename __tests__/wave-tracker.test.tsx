@@ -31,16 +31,16 @@ const position: EnrichedPosition = {
   precio_actual_nativo: 200,
   precio_actual_usd: 200,
   original_currency: 'USD',
-  valor_actual: 200,
+  displayValue: { amount: 200, currency: 'EUR' },
   valor_actual_nativo: 200,
-  coste_total_eur: 100,
+  displayCost: { amount: 100, currency: 'EUR' },
   pnl: 100,
   pnl_percent: 100,
   precio_medio: 100,
   sparkline: [],
   change_percent_24h: 0,
   daily_change_percent_24h: 0,
-  change_amount_24h: 0,
+  displayDailyPnL: { amount: 0, currency: 'EUR' },
 }
 
 describe('WaveTrackerModal', () => {

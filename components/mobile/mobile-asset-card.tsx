@@ -29,11 +29,11 @@ export const MobileAssetCard = React.memo(function MobileAssetCard({
   const visibleChange = performanceMode === "session"
     ? position.change_percent_24h ?? 0
     : position.daily_change_percent_24h ?? 0
-  const dayAmount = position.change_amount_24h ?? 0
+  const dayAmount = (position.displayDailyPnL?.amount ?? null) ?? 0
   const totalChange = position.pnl_percent ?? 0
   const nativePrice = position.precio_actual_nativo ?? position.precio_actual
   const nativeCurrency = position.original_currency || position.moneda
-  const positionValue = position.valor_actual ?? position.coste_total_eur
+  const positionValue = (position.displayValue?.amount ?? null) ?? position.displayCost.amount
   const weight = totalPortfolioValue > 0 ? (positionValue / totalPortfolioValue) * 100 : 0
   const changePositive = visibleChange >= 0
 

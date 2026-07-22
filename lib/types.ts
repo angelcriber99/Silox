@@ -24,24 +24,38 @@ export interface Posicion {
   accounting_unit_mismatch?: boolean
 }
 
+export type Currency = 'EUR' | 'USD' | string
+
+export interface Money {
+  amount: number
+  currency: Currency
+}
+
 export interface EnrichedPosition extends Posicion {
   precio_actual: number | null
   precio_actual_nativo: number | null
   precio_actual_usd?: number | null
   original_currency: string | null
-  valor_actual: number | null // in EUR
-  valor_actual_nativo: number | null
-  coste_total_eur: number
-  dinero_invertido_eur?: number
-  pnl: number | null // in EUR
+  
+  nativeValue: Money | null
+  displayValue: Money | null
+  nativeCost: Money
+  displayCost: Money
+  nativeInvested: Money | null
+  displayInvested: Money | null
+  nativePnl: Money | null
+  displayPnl: Money | null
+  
+  nativeDailyPnL: Money | null
+  displayDailyPnL: Money | null
+  
+  nativeDailyBaseline: Money | null
+  displayDailyBaseline: Money | null
   pnl_percent: number | null // based on EUR
   precio_medio: number // in native currency
   sparkline: number[] // in EUR
   change_percent_24h: number | null // active market-session percentage
   daily_change_percent_24h: number | null // cumulative trading-day percentage
-  change_amount_24h: number | null // cumulative trading-day amount
-  change_amount_24h_nativo?: number | null
-  daily_performance_base_eur?: number | null
   market_state?: string
   price_updated_at?: string
   price_is_stale?: boolean
@@ -106,16 +120,15 @@ export interface EventoRecurrente {
 }
 
 export interface PortfolioTotals {
-  totalValue: number
-  totalCost: number
-  totalPnl: number
+  valueMoney: Money
+  costMoney: Money
+  pnlMoney: Money
+  pnl24hMoney: Money
+  sessionPnlMoney: Money
+  
   totalPnlPercent: number
-  totalPnl24h: number
-  /** Rendimiento del periodo activo (pre, regular o post). */
   totalPnlPercent24h: number
-  totalSessionPnl: number
   totalDailyPnlPercent: number
-  /** Positions with a valid full-day baseline, used to expose partial daily P&L. */
   dailyPerformancePositionCount: number
   positionCount: number
   hasAllPrices: boolean

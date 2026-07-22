@@ -28,16 +28,16 @@ const position: EnrichedPosition = {
   precio_actual: 200,
   precio_actual_nativo: 200,
   original_currency: "USD",
-  valor_actual: 400,
+  displayValue: { amount: 400, currency: 'EUR' },
   valor_actual_nativo: 400,
-  coste_total_eur: 300,
+  displayCost: { amount: 300, currency: 'EUR' },
   pnl: 100,
   pnl_percent: 33.33,
   precio_medio: 150,
   sparkline: [],
   change_percent_24h: 1,
   daily_change_percent_24h: 1,
-  change_amount_24h: 4,
+  displayDailyPnL: { amount: 4, currency: 'EUR' },
 }
 
 describe("UpcomingEvents", () => {

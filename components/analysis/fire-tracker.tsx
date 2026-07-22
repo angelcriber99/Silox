@@ -14,7 +14,7 @@ export function FireTracker() {
 
   const currentTotal = useMemo(() => {
     if (!positions) return 0
-    return positions.reduce((acc, pos) => acc + (pos.valor_actual || 0), 0)
+    return positions.reduce((acc, pos) => acc + ((pos.displayValue?.amount ?? null) || 0), 0)
   }, [positions])
 
   const projectionData = useMemo(() => {

@@ -111,17 +111,17 @@ export async function GET(request: Request) {
     }))
 
     // Construct response
-    const netSession = totals.totalPnl24h
+    const netSession = totals.pnl24hMoney.amount
 
     return NextResponse.json({
       netSession: netSession,
-      totalValue: totals.totalValue,
+      totalValue: totals.valueMoney.amount,
       volatileAssets: topVolatile,
       updatedAt: new Date().toISOString()
     })
 
   } catch (err: unknown) {
-    console.error('Widget API Error:', err)
+    console.error('Widget API Error:', err, (err as Error).stack)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

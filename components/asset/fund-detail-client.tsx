@@ -70,7 +70,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
 
   // ── Simulador Interés Compuesto ──
   const simulationData = useMemo(() => {
-    let capital = position.valor_actual ?? position.coste_total
+    let capital = (position.displayValue?.amount ?? null) ?? position.coste_total
     let invested = capital
     const pts = [{ year: 0, capital: Math.round(capital), invested: Math.round(invested), interest: 0 }]
     const monthlyRate = expectedReturn / 100 / 12
@@ -89,7 +89,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
       })
     }
     return pts
-  }, [position.valor_actual, position.coste_total, monthlyContribution, years, expectedReturn])
+  }, [(position.displayValue?.amount ?? null), position.coste_total, monthlyContribution, years, expectedReturn])
 
   const finalData = simulationData[simulationData.length - 1]
 
@@ -97,7 +97,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
 
   const currentPerformance = rangePerformance || {
     label: "hoy",
-    absolute: position.change_amount_24h ?? 0,
+    absolute: (position.displayDailyPnL?.amount ?? null) ?? 0,
     percent: position.change_percent_24h ?? 0
   }
 
@@ -179,7 +179,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground/80 uppercase font-bold tracking-wider mb-1">Valor Actual</p>
             <p className="text-4xl md:text-5xl font-bold text-foreground tabular-nums drop-shadow-md">
-              {position.valor_actual !== null ? formatCurrency(position.valor_actual_nativo ?? position.valor_actual, position.original_currency || position.moneda) : "—"}
+              {(position.displayValue?.amount ?? null) !== null ? formatCurrency((position.nativeValue?.amount ?? position.displayValue?.amount ?? 0), position.original_currency || position.moneda) : "—"}
             </p>
             <div className="flex flex-col md:flex-row items-end justify-end gap-3 mt-1">
               <p className={`text-base font-medium tabular-nums flex items-center gap-1 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
@@ -221,7 +221,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in stagger-1">
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatDisplay(position.valor_actual ?? 0)}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatDisplay((position.displayValue?.amount ?? null) ?? 0)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-2 text-muted-foreground">
@@ -235,8 +235,8 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
               <Sparkles className="h-4 w-4 text-emerald-400" />
               <span className="text-xs font-medium uppercase tracking-wider">Ganado por Mercado</span>
             </div>
-            <p className={`text-2xl font-bold tabular-nums ${(position.pnl ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatDisplay(position.pnl ?? 0)}
+            <p className={`text-2xl font-bold tabular-nums ${((position.displayPnl?.amount ?? null) ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {((position.displayPnl?.amount ?? null) ?? 0) >= 0 ? "+" : ""}{formatDisplay((position.displayPnl?.amount ?? null) ?? 0)}
             </p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
@@ -319,7 +319,7 @@ export function FundDetailClient({ position, transactions }: ActivoDetailClientP
                 colorHex={colorHex}
                 transactions={transactions}
                 units={position.unidades}
-                historicalPnl={{ absolute: position.pnl ?? 0, percent: position.pnl_percent ?? 0 }}
+                historicalPnl={{ absolute: (position.displayPnl?.amount ?? null) ?? 0, percent: position.pnl_percent ?? 0 }}
                 onRangePerformanceChange={setRangePerformance}
               />
             ) : (

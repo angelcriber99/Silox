@@ -57,7 +57,7 @@ export function buildDashboardIntelligence(
   let foreignValue = 0
 
   for (const position of active) {
-    const value = position.valor_actual ?? 0
+    const value = (position.displayValue?.amount ?? null) ?? 0
     const isCash = position.tipo === "Liquidez" || position.ticker.startsWith("CASH")
     const allocationName = isCash ? "Liquidez" : position.tipo
     allocationMap.set(allocationName, (allocationMap.get(allocationName) ?? 0) + value)
@@ -94,7 +94,7 @@ export function buildDashboardIntelligence(
         (right.daily_change_percent_24h ?? 0) - (left.daily_change_percent_24h ?? 0),
     )
   const largest = [...invested].sort(
-    (left, right) => (right.valor_actual ?? 0) - (left.valor_actual ?? 0),
+    (left, right) => ((right.displayValue?.amount ?? null) ?? 0) - ((left.displayValue?.amount ?? null) ?? 0),
   )[0]
 
   return {
@@ -108,7 +108,7 @@ export function buildDashboardIntelligence(
     worst: movers.at(-1),
     largest,
     concentration:
-      largest && totalValue > 0 ? ((largest.valor_actual ?? 0) / totalValue) * 100 : 0,
+      largest && totalValue > 0 ? (((largest.displayValue?.amount ?? null) ?? 0) / totalValue) * 100 : 0,
     cash,
     cashPercent: totalValue > 0 ? (cash / totalValue) * 100 : 0,
     freshPrices,

@@ -79,7 +79,7 @@ export function AssetCapitalDonut({ capitalDonut, position, stats }: AssetCapita
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground/80 uppercase font-medium">Total</p>
-              <p className="text-lg font-bold text-foreground tabular-nums">{formatCurrency(position.valor_actual_nativo ?? 0, position.moneda)}</p>
+              <p className="text-lg font-bold text-foreground tabular-nums">{formatCurrency((position.nativeValue?.amount ?? null) ?? 0, position.moneda)}</p>
             </div>
           </div>
         </div>

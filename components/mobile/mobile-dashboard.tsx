@@ -85,8 +85,8 @@ export function MobileDashboard({
       .slice()
       .sort((left, right) =>
         sortMode === "day"
-          ? Math.abs(right.change_amount_24h ?? 0) - Math.abs(left.change_amount_24h ?? 0)
-          : (right.valor_actual ?? 0) - (left.valor_actual ?? 0),
+          ? Math.abs((right.displayDailyPnL?.amount ?? null) ?? 0) - Math.abs((left.displayDailyPnL?.amount ?? null) ?? 0)
+          : ((right.displayValue?.amount ?? null) ?? 0) - ((left.displayValue?.amount ?? null) ?? 0),
       )
   }, [activePositions, search, sortMode])
 
@@ -94,7 +94,7 @@ export function MobileDashboard({
     const byType = new Map<string, number>()
 
     for (const position of activePositions) {
-      const value = position.valor_actual ?? position.coste_total_eur
+      const value = (position.displayValue?.amount ?? null) ?? position.displayCost.amount
       byType.set(position.tipo, (byType.get(position.tipo) ?? 0) + value)
     }
 
@@ -108,10 +108,10 @@ export function MobileDashboard({
 
   const marketOpen = ["PRE", "REGULAR", "POST", "OPEN"].includes(marketState)
   const sessionMode = performanceMode === "session"
-  const performanceAmount = sessionMode ? totals.totalSessionPnl : totals.totalPnl24h
+  const performanceAmount = sessionMode ? totals.sessionPnlMoney.amount : totals.pnl24hMoney.amount
   const performancePercent = sessionMode ? totals.totalPnlPercent24h : totals.totalDailyPnlPercent
   const performancePositive = performanceAmount >= 0
-  const totalPositive = totals.totalPnl >= 0
+  const totalPositive = totals.pnlMoney.amount >= 0
   const updatedLabel = pricesUpdatedAt
     ? new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(pricesUpdatedAt)
     : null
@@ -155,7 +155,7 @@ export function MobileDashboard({
           </div>
 
           <p className="mt-2 truncate text-[34px] font-bold leading-none tracking-[-0.045em] tabular-nums">
-            {isLoading || hideBalances ? "••••••" : formatDisplay(totals.totalValue)}
+            {isLoading || hideBalances ? "••••••" : formatDisplay(totals.valueMoney.amount)}
           </p>
 
           <div className="mt-4 flex rounded-xl bg-muted/70 p-1" aria-label="Periodo del rendimiento">
@@ -182,10 +182,10 @@ export function MobileDashboard({
           </div>
 
           <div className="mt-4 grid grid-cols-3 border-t border-border/60 pt-3">
-            <Metric label="Aportado neto" value={hideBalances ? "••••" : formatDisplay(totals.totalCost)} />
+            <Metric label="Aportado neto" value={hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)} />
             <Metric
               label="P&L total"
-              value={hideBalances ? "••••" : `${totalPositive ? "+" : ""}${formatDisplay(totals.totalPnl)}`}
+              value={hideBalances ? "••••" : `${totalPositive ? "+" : ""}${formatDisplay(totals.pnlMoney.amount)}`}
               valueClassName={totalPositive ? "text-emerald-500" : "text-rose-500"}
             />
             <Metric label="Posiciones" value={String(activePositions.length)} />
@@ -267,7 +267,7 @@ export function MobileDashboard({
             <MobileAssetCard
               key={position.activo_id}
               position={position}
-              totalPortfolioValue={totals.totalValue}
+              totalPortfolioValue={totals.valueMoney.amount}
               performanceMode={performanceMode}
             />
           ))}

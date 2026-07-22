@@ -173,7 +173,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
     const totalCompras = compras.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0), 0)
     const totalVentas = ventas.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0), 0)
     const totalDividendos = dividendos.reduce((s, t) => s + (Number(t.cantidad) || 0) * (Number(t.precio_unitario) || 0) - (Number(t.comision) || 0), 0)
-    const gananciaIntereses = (position.valor_actual_nativo ?? 0) - position.coste_total + totalDividendos
+    const gananciaIntereses = ((position.nativeValue?.amount ?? null) ?? 0) - position.coste_total + totalDividendos
 
     const precioMedio = position.precio_medio
     const precioActual = position.precio_actual_nativo ?? position.precio_actual ?? precioMedio
@@ -186,8 +186,8 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
       ? (calculationTime - firstTxDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
       : 0
     const monthsInvested = Math.round(yearsInvested * 12)
-    const cagr = yearsInvested > 0 && position.valor_actual_nativo && position.coste_total > 0
-      ? (Math.pow(position.valor_actual_nativo / position.coste_total, 1 / yearsInvested) - 1) * 100
+    const cagr = yearsInvested > 0 && (position.nativeValue?.amount ?? null) !== null && position.coste_total > 0
+      ? (Math.pow((position.nativeValue?.amount ?? 0) / position.coste_total, 1 / yearsInvested) - 1) * 100
       : 0
 
     const avgMonthly = monthsInvested > 0 ? totalCompras / monthsInvested : 0
@@ -225,7 +225,7 @@ export function useAssetCalculations(position: EnrichedPosition, transactions: R
 
   const capitalDonut = useMemo(() => {
     const invested = position.coste_total
-    const interest = Math.max(0, (position.valor_actual_nativo ?? 0) - invested)
+    const interest = Math.max(0, ((position.nativeValue?.amount ?? null) ?? 0) - invested)
     return [
       { name: "Tu Dinero", value: Math.round(invested), color: "#3b82f6" },
       { name: "Intereses", value: Math.round(interest), color: "#10b981" },

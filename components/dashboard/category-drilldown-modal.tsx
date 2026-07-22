@@ -35,11 +35,11 @@ export function CategoryDrilldownModal({
 
   const categoryPositions = positions.filter(p => {
     const key = groupBy === "tipo" ? p.tipo : p.estrategia
-    return key === originalCategoryName && (p.valor_actual !== null || p.coste_total > 0)
-  }).sort((a, b) => ((b.valor_actual ?? b.coste_total) - (a.valor_actual ?? a.coste_total)))
+    return key === originalCategoryName && ((p.displayValue?.amount ?? null) !== null || p.coste_total > 0)
+  }).sort((a, b) => (((b.displayValue?.amount ?? null) ?? b.coste_total) - ((a.displayValue?.amount ?? null) ?? a.coste_total)))
 
-  const totalValue = categoryPositions.reduce((sum, p) => sum + (p.valor_actual ?? p.coste_total), 0)
-  const totalCost = categoryPositions.reduce((sum, p) => sum + p.coste_total_eur, 0)
+  const totalValue = categoryPositions.reduce((sum, p) => sum + ((p.displayValue?.amount ?? null) ?? p.coste_total), 0)
+  const totalCost = categoryPositions.reduce((sum, p) => sum + p.displayCost.amount, 0)
   const totalPnl = totalValue - totalCost
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
   const isPnlPositive = totalPnl >= 0
@@ -91,7 +91,7 @@ export function CategoryDrilldownModal({
             </div>
           ) : (
             categoryPositions.map(p => {
-              const value = p.valor_actual ?? p.coste_total
+              const value = (p.displayValue?.amount ?? null) ?? p.coste_total
               const isPositive = (p.change_percent_24h ?? 0) >= 0
               
               return (

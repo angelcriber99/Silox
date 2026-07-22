@@ -112,7 +112,7 @@ export async function GET(request: Request) {
 
       // Never persist an estimated portfolio. A temporary quote outage would
       // otherwise look like a real market loss in the historical chart.
-      if (totals.totalValue > 0 && totals.hasAllPrices) {
+      if (totals.valueMoney.amount > 0 && totals.hasAllPrices) {
         // Get the last snapshot to prevent saving identical data (0 PnL instante)
         const { data: lastSnapshot } = await supabaseAdmin
           .from('portfolio_history')
@@ -124,8 +124,8 @@ export async function GET(request: Request) {
 
         // If the value is exactly the same (less than 1 cent difference), skip it
         if (lastSnapshot
-          && Math.abs(lastSnapshot.total_value - totals.totalValue) < 0.01
-          && Math.abs(lastSnapshot.total_invested - totals.totalCost) < 0.01) {
+          && Math.abs(lastSnapshot.total_value - totals.valueMoney.amount) < 0.01
+          && Math.abs(lastSnapshot.total_invested - totals.costMoney.amount) < 0.01) {
           continue
         }
 
@@ -133,8 +133,8 @@ export async function GET(request: Request) {
           .from('portfolio_history')
           .insert({
             user_id: user.id,
-            total_value: totals.totalValue,
-            total_invested: totals.totalCost,
+            total_value: totals.valueMoney.amount,
+            total_invested: totals.costMoney.amount,
           })
           
         if (!insertError) {

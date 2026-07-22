@@ -151,8 +151,8 @@ export function AssetPnlChart({ assetId, colorHex = "#10b981" }: AssetPnlChartPr
                       <div className="space-y-1">
                         <div className="flex justify-between items-center gap-4">
                           <span className="text-sm font-medium">Beneficio:</span>
-                          <span className={cn("text-sm font-bold", data.pnl >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                            {data.pnl > 0 ? "+" : ""}{formatCurrency(data.pnl, displayCurrency)}
+                          <span className={cn("text-sm font-bold", (data.displayPnl?.amount ?? null) >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                            {(data.displayPnl?.amount ?? null) > 0 ? "+" : ""}{formatCurrency((data.displayPnl?.amount ?? null), displayCurrency)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center gap-4">

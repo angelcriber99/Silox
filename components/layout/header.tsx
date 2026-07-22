@@ -14,7 +14,7 @@ export function Header() {
   const { hideBalances } = usePreferences()
 
   const pnlColor =
-    totals.totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"
+    totals.pnlMoney.amount >= 0 ? "text-emerald-400" : "text-rose-400"
 
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -62,14 +62,14 @@ export function Header() {
             </nav>
 
             {/* Quick stats in header */}
-            {totals.totalCost > 0 && (
+            {totals.costMoney.amount > 0 && (
               <div className="hidden lg:flex items-center gap-5 border-l border-border pl-6">
                 <div>
                   <p className="text-[10px] text-muted-foreground/80 uppercase tracking-wider">
                     Portfolio
                   </p>
                   <p className="text-sm font-bold tabular-nums text-foreground">
-                    {hideBalances ? "****" : formatCurrency(totals.totalValue)}
+                    {hideBalances ? "****" : formatCurrency(totals.valueMoney.amount)}
                   </p>
                 </div>
                 <div>
@@ -77,7 +77,7 @@ export function Header() {
                     P&L
                   </p>
                   <p className={`text-sm font-bold tabular-nums ${pnlColor}`}>
-                    {hideBalances ? "****" : `${formatPnl(totals.totalPnl)} (${formatPercent(totals.totalPnlPercent)})`}
+                    {hideBalances ? "****" : `${formatPnl(totals.pnlMoney.amount)} (${formatPercent(totals.totalPnlPercent)})`}
                   </p>
                 </div>
               </div>

@@ -29,13 +29,13 @@ describe('portfolio contributions', () => {
 
   it('uses net contributions for total historical return while retaining FIFO cost per position', () => {
     const positions = [
-      { valor_actual: 110, coste_total_eur: 130, unidades: 1, tipo: 'Acción' },
+      { displayValue: { amount: 110, currency: 'EUR' }, displayCost: { amount: 130, currency: 'EUR' }, unidades: 1, tipo: 'Acción' },
     ] as EnrichedPosition[]
 
     expect(computePortfolioTotals(positions, 90)).toMatchObject({
-      totalValue: 110,
-      totalCost: 90,
-      totalPnl: 20,
+      valueMoney: { amount: 110 },
+      costMoney: { amount: 90 },
+      pnlMoney: { amount: 20 },
       totalPnlPercent: 22.22222222222222,
     })
   })
@@ -43,18 +43,18 @@ describe('portfolio contributions', () => {
   it('does not dilute daily return with positions that lack a daily baseline', () => {
     const positions = [
       {
-        valor_actual: 110,
-        coste_total_eur: 100,
+        displayValue: { amount: 110, currency: 'EUR' },
+        displayCost: { amount: 100, currency: 'EUR' },
         unidades: 1,
         tipo: 'Acción',
-        change_amount_24h: 10,
+        displayDailyPnL: { amount: 10, currency: 'EUR' },
         daily_change_percent_24h: 10,
-        daily_performance_base_eur: 100,
+        displayDailyBaseline: { amount: 100, currency: 'EUR' },
         change_percent_24h: 1,
       },
       {
-        valor_actual: 100,
-        coste_total_eur: 100,
+        displayValue: { amount: 100, currency: 'EUR' },
+        displayCost: { amount: 100, currency: 'EUR' },
         unidades: 1,
         tipo: 'Acción',
         change_amount_24h: null,
@@ -65,7 +65,7 @@ describe('portfolio contributions', () => {
 
     const totals = computePortfolioTotals(positions)
     expect(totals).toMatchObject({
-      totalPnl24h: 10,
+      pnl24hMoney: { amount: 10 },
       dailyPerformancePositionCount: 1,
       positionCount: 2,
     })
@@ -102,7 +102,7 @@ describe('portfolio contributions', () => {
       },
     })
 
-    expect(enriched.change_amount_24h).toBeNull()
+    expect((enriched.displayDailyPnL?.amount ?? null)).toBeNull()
     expect(computePortfolioTotals([enriched]).dailyPerformancePositionCount).toBe(0)
   })
 
@@ -140,8 +140,8 @@ describe('portfolio contributions', () => {
       },
     })
 
-    expect(enriched.change_amount_24h).toBeCloseTo(98)
-    expect(enriched.daily_performance_base_eur).toBeCloseTo(1_002)
+    expect((enriched.displayDailyPnL?.amount ?? null)).toBeCloseTo(98)
+    expect((enriched.displayDailyBaseline?.amount ?? null)).toBeCloseTo(1_002)
     expect(computePortfolioTotals([enriched]).totalDailyPnlPercent).toBeCloseTo((98 / 1_002) * 100)
   })
 
@@ -180,8 +180,8 @@ describe('portfolio contributions', () => {
     })
     const totals = computePortfolioTotals([enriched])
 
-    expect(enriched.change_amount_24h).toBeCloseTo(149)
-    expect(totals.totalPnl24h).toBeCloseTo(149)
+    expect((enriched.displayDailyPnL?.amount ?? null)).toBeCloseTo(149)
+    expect(totals.pnl24hMoney.amount).toBeCloseTo(149)
     expect(totals.totalDailyPnlPercent).toBeCloseTo((149 / 900) * 100)
   })
 
@@ -284,7 +284,7 @@ describe('portfolio contributions', () => {
 
     const [cash] = enrichPositions([cashPosition], { prices: {}, fxRates: { USD: 1.14 } })
     expect(cash.tipo).toBe('Liquidez')
-    expect(cash.valor_actual).toBeCloseTo(0.26 / 1.14, 8)
+    expect((cash.displayValue?.amount ?? null)).toBeCloseTo(0.26 / 1.14, 8)
     expect(cash.precio_actual_nativo).toBe(1)
   })
 })

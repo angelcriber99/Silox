@@ -40,7 +40,7 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
 
   const currentPerformance = rangePerformance || {
     label: "Hoy",
-    absolute: position.change_amount_24h_nativo ?? position.change_amount_24h ?? 0,
+    absolute: (position.nativeDailyPnL?.amount ?? null) ?? (position.displayDailyPnL?.amount ?? null) ?? 0,
     percent: position.change_percent_24h ?? 0
   }
 
@@ -136,7 +136,7 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
               colorHex={colorHex} 
               transactions={transactions}
               units={position.unidades}
-              historicalPnl={{ absolute: position.pnl ?? 0, percent: position.pnl_percent ?? 0 }}
+              historicalPnl={{ absolute: (position.displayPnl?.amount ?? null) ?? 0, percent: position.pnl_percent ?? 0 }}
               onRangePerformanceChange={setRangePerformance}
             />
           ) : (
@@ -156,7 +156,7 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</span>
-            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatDisplay(position.valor_actual ?? 0)}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums mt-1">{formatDisplay((position.displayValue?.amount ?? null) ?? 0)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Precio Medio</span>
@@ -164,8 +164,8 @@ export function CryptoDetailClient({ position, transactions }: CryptoDetailClien
           </div>
           <div className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rentabilidad Total</span>
-            <p className={`text-2xl font-bold tabular-nums mt-1 ${(position.pnl ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {(position.pnl ?? 0) >= 0 ? "+" : ""}{formatDisplay(position.pnl ?? 0)}
+            <p className={`text-2xl font-bold tabular-nums mt-1 ${((position.displayPnl?.amount ?? null) ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {((position.displayPnl?.amount ?? null) ?? 0) >= 0 ? "+" : ""}{formatDisplay((position.displayPnl?.amount ?? null) ?? 0)}
             </p>
             <p className={`text-sm font-bold tabular-nums ${(position.pnl_percent ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {(position.pnl_percent ?? 0) >= 0 ? "+" : ""}{(position.pnl_percent ?? 0).toFixed(2)}%

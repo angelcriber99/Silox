@@ -69,11 +69,11 @@ export function AllocationChart({ positions, pendingTxs, marketState = 'CLOSED' 
       if (p.tipo === 'Liquidez' || p.tipo === 'Fondo Monetario') continue;
       
       const key = groupBy === "tipo" ? p.tipo : p.estrategia
-      const value = p.valor_actual ?? p.coste_total
+      const value = (p.displayValue?.amount ?? null) ?? p.coste_total
       const cp = p.change_percent_24h ?? 0
       const sessionBaseline = value > 0 ? value / (1 + cp / 100) : 0
       const sessionPnl = value - sessionBaseline
-      const pnl24h = p.change_amount_24h ?? 0
+      const pnl24h = (p.displayDailyPnL?.amount ?? null) ?? 0
 
       if (value > 0) {
         const existing = groups.get(key) ?? { value: 0, pnl24h: 0, sessionPnl: 0, sessionBaseline: 0 }

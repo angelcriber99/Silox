@@ -18,7 +18,7 @@ export function Projections() {
   
   const currentTotal = useMemo(() => {
     if (!positions) return 0
-    return positions.reduce((acc, pos) => acc + (pos.valor_actual || 0), 0)
+    return positions.reduce((acc, pos) => acc + ((pos.displayValue?.amount ?? null) || 0), 0)
   }, [positions])
 
   // Initial state derived from portfolio, but allow user to tweak it

@@ -76,7 +76,7 @@ export function LiquidityDetailClient({ position, transactions }: LiquidityDetai
           <div className="text-left md:text-right">
             <p className="text-sm text-muted-foreground uppercase font-bold tracking-wider mb-1">Saldo Actual</p>
             <p className="text-5xl font-bold text-foreground tabular-nums drop-shadow-md text-emerald-500">
-              {formatCurrency(position.valor_actual || 0, 'EUR')}
+              {formatCurrency((position.displayValue?.amount ?? null) || 0, 'EUR')}
             </p>
           </div>
         </div>

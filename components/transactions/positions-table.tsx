@@ -73,7 +73,7 @@ function formatNavDate(value?: string): string | null {
   return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit' }).format(date)
 }
 
-type SortKey = "ticker" | "tipo" | "unidades" | "valor_actual" | "pnl" | "pnl_percent" | "change_amount_24h"
+type SortKey = "ticker" | "tipo" | "unidades" | "displayValue" | "displayPnl" | "pnl_percent" | "displayDailyPnL"
 type SortDir = "asc" | "desc"
 
 function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
@@ -299,26 +299,26 @@ const PositionRow = memo(function PositionRow({
       <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>
         <div className="flex flex-col items-end gap-1">
           <span>
-            {hideBalances ? "****" : (p.valor_actual !== null
-              ? formatDisplay(p.valor_actual)
+            {hideBalances ? "****" : ((p.displayValue?.amount ?? null) !== null
+              ? formatDisplay((p.displayValue?.amount ?? null))
               : "—")}
           </span>
-          {!hideBalances && (p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
+          {!hideBalances && ((p.displayInvested?.amount ?? null) ?? p.displayCost.amount) > 0 && (
             <span className="text-[10px] text-muted-foreground/70 font-normal">
-              Inv: {formatDisplay(p.dinero_invertido_eur ?? p.coste_total_eur)}
+              Inv: {formatDisplay((p.displayInvested?.amount ?? null) ?? p.displayCost.amount)}
             </span>
           )}
         </div>
       </TableCell>
       <TableCell className={`text-right hidden sm:table-cell ${cellPadding}`}>
         <PnlDisplay 
-          value={p.change_amount_24h}
+          value={(p.displayDailyPnL?.amount ?? null)}
           type="currency" 
         />
       </TableCell>
       {!showPnlPercentOnly && (
         <TableCell className={`text-right ${cellPadding}`}>
-          <PnlDisplay value={p.pnl} type="currency" />
+          <PnlDisplay value={(p.displayPnl?.amount ?? null)} type="currency" />
         </TableCell>
       )}
       <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"} ${cellPadding}`}>
@@ -376,8 +376,8 @@ const PositionRow = memo(function PositionRow({
 }, (prev, next) => {
   return (
     prev.p.precio_actual === next.p.precio_actual &&
-    prev.p.change_amount_24h === next.p.change_amount_24h &&
-    prev.p.pnl === next.p.pnl &&
+    prev.p.displayDailyPnL?.amount === next.p.displayDailyPnL?.amount &&
+    prev.p.displayPnl?.amount === next.p.displayPnl?.amount &&
     prev.p.unidades === next.p.unidades &&
     prev.hideBalances === next.hideBalances &&
     prev.showPnlPercentOnly === next.showPnlPercentOnly &&
@@ -445,11 +445,11 @@ const PositionCard = memo(function PositionCard({
           <span className="text-xs text-muted-foreground/80 mb-0.5">Valor Actual</span>
           <div className="flex flex-col items-end">
             <span className="text-base font-bold tabular-nums text-foreground">
-              {p.valor_actual !== null ? formatDisplay(p.valor_actual) : "—"}
+              {(p.displayValue?.amount ?? null) !== null ? formatDisplay((p.displayValue?.amount ?? null)) : "—"}
             </span>
-            {(p.dinero_invertido_eur ?? p.coste_total_eur) > 0 && (
+            {((p.displayInvested?.amount ?? null) ?? p.displayCost.amount) > 0 && (
               <span className="text-[10px] text-muted-foreground/70 font-normal -mt-1">
-                Inv: {formatDisplay(p.dinero_invertido_eur ?? p.coste_total_eur)}
+                Inv: {formatDisplay((p.displayInvested?.amount ?? null) ?? p.displayCost.amount)}
               </span>
             )}
           </div>
@@ -461,7 +461,7 @@ const PositionCard = memo(function PositionCard({
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground/80 mb-0.5">Rentabilidad Total</span>
           <div className="flex items-center gap-2">
-            <PnlDisplay value={p.pnl} type="currency" />
+            <PnlDisplay value={(p.displayPnl?.amount ?? null)} type="currency" />
             <span className="text-zinc-700 text-xs">|</span>
             <PnlDisplay value={p.pnl_percent} type="percent" />
           </div>
@@ -469,7 +469,7 @@ const PositionCard = memo(function PositionCard({
         <div className="flex flex-col items-end mr-4">
           <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy</span>
           <PnlDisplay 
-            value={p.change_amount_24h}
+            value={(p.displayDailyPnL?.amount ?? null)}
             type="currency" 
           />
         </div>
@@ -525,8 +525,8 @@ const PositionCard = memo(function PositionCard({
 }, (prev, next) => {
   return (
     prev.p.precio_actual === next.p.precio_actual &&
-    prev.p.change_amount_24h === next.p.change_amount_24h &&
-    prev.p.pnl === next.p.pnl &&
+    prev.p.displayDailyPnL?.amount === next.p.displayDailyPnL?.amount &&
+    prev.p.displayPnl?.amount === next.p.displayPnl?.amount &&
     prev.p.unidades === next.p.unidades &&
     prev.hideBalances === next.hideBalances
   )
@@ -544,7 +544,7 @@ export function PositionsTable({
   const cellPadding = tableDensity === "compact" ? "py-1.5" : "py-4"
   const [filter, setFilter] = useState(t('filter_all'))
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortKey, setSortKey] = useState<SortKey>("valor_actual")
+  const [sortKey, setSortKey] = useState<SortKey>("displayValue")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
   const [isMounted, setIsMounted] = useState(false)
 
@@ -597,8 +597,17 @@ export function PositionsTable({
       list = list.filter((p) => p.tipo === filter)
     }
     return list.slice().sort((a, b) => {
-      const av = a[sortKey] ?? -Infinity
-      const bv = b[sortKey] ?? -Infinity
+      let av: number | string = -Infinity
+      let bv: number | string = -Infinity
+      
+      if (sortKey === 'displayValue' || sortKey === 'displayPnl' || sortKey === 'displayDailyPnL') {
+        av = a[sortKey]?.amount ?? -Infinity
+        bv = b[sortKey]?.amount ?? -Infinity
+      } else {
+        av = a[sortKey] ?? -Infinity
+        bv = b[sortKey] ?? -Infinity
+      }
+
       const cmp = typeof av === "string" ? av.localeCompare(bv as string) : (av as number) - (bv as number)
       return sortDir === "asc" ? cmp : -cmp
     })
@@ -742,9 +751,9 @@ export function PositionsTable({
                 {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right" })}
                 <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">{t('purchase_price')}</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">{t('current_price')}</TableHead>
-                {sortableHeader({ label: t('value'), sortKeyName: "valor_actual", className: "text-right whitespace-nowrap min-w-[120px]" })}
-                {sortableHeader({ label: t('today'), sortKeyName: "change_amount_24h", className: "text-right hidden sm:table-cell" })}
-                {!showPnlPercentOnly && sortableHeader({ label: "P&L", sortKeyName: "pnl", className: "text-right" })}
+                {sortableHeader({ label: t('value'), sortKeyName: "displayValue", className: "text-right whitespace-nowrap min-w-[120px]" })}
+                {sortableHeader({ label: t('today'), sortKeyName: "displayDailyPnL", className: "text-right hidden sm:table-cell" })}
+                {!showPnlPercentOnly && sortableHeader({ label: "P&L", sortKeyName: "displayPnl", className: "text-right" })}
                 {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}` })}
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
               </TableRow>

@@ -22,8 +22,8 @@ interface MarketTickerProps {
 export function MarketTicker({ positions = [] }: MarketTickerProps) {
   // Extract top 5 positions by value
   const topItems = positions
-    .filter(p => p.valor_actual !== null && p.tipo !== 'Fondo Monetario' && p.tipo !== 'Crypto')
-    .sort((a, b) => (b.valor_actual || 0) - (a.valor_actual || 0))
+    .filter(p => (p.displayValue?.amount ?? null) !== null && p.tipo !== 'Fondo Monetario' && p.tipo !== 'Crypto')
+    .sort((a, b) => ((b.displayValue?.amount ?? null) || 0) - ((a.displayValue?.amount ?? null) || 0))
     .slice(0, 5)
     .map(p => {
       const cleanTicker = p.ticker.split('.')[0]

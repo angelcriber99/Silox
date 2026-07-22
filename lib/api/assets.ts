@@ -284,19 +284,25 @@ export function enrichPositions(
       precio_actual_usd,
       original_currency,
       tipo: p.ticker.startsWith('CASH') || p.nombre?.toLowerCase().includes('efectivo') ? 'Liquidez' : p.tipo,
-      valor_actual: valor_actual_eur,
-      valor_actual_nativo,
-      coste_total_eur,
-      dinero_invertido_eur,
-      pnl,
+      
+      displayValue: valor_actual_eur !== null ? { amount: valor_actual_eur, currency: 'EUR' } : null,
+      nativeValue: valor_actual_nativo !== null ? { amount: valor_actual_nativo, currency: p.moneda } : null,
+      displayCost: { amount: coste_total_eur, currency: 'EUR' },
+      nativeCost: { amount: p.coste_total, currency: p.moneda },
+      nativeInvested: { amount: p.dinero_invertido ?? p.coste_total, currency: p.moneda },
+      displayInvested: { amount: dinero_invertido_eur, currency: 'EUR' },
+      nativePnl: pnl !== null ? { amount: valor_actual_nativo! - p.coste_total, currency: p.moneda } : null,
+      displayPnl: pnl !== null ? { amount: pnl, currency: 'EUR' } : null,
+      displayDailyPnL: change_amount_24h !== null ? { amount: change_amount_24h, currency: 'EUR' } : null,
+      nativeDailyPnL: change_amount_24h_nativo !== null ? { amount: change_amount_24h_nativo, currency: p.moneda } : null,
+      displayDailyBaseline: daily_performance_base_eur !== null ? { amount: daily_performance_base_eur, currency: 'EUR' } : null,
+      nativeDailyBaseline: daily_performance_base_eur !== null && change_amount_24h_nativo !== null ? { amount: valor_actual_nativo! - change_amount_24h_nativo, currency: p.moneda } : null,
+
       pnl_percent,
       precio_medio,
       sparkline,
       change_percent_24h,
       daily_change_percent_24h,
-      change_amount_24h,
-      change_amount_24h_nativo,
-      daily_performance_base_eur,
       market_state: priceData?.marketState,
       price_updated_at: priceData?.latestTime,
       price_is_stale: priceData?.isStale ?? true,
@@ -312,16 +318,16 @@ export function computePortfolioTotals(
   positions: EnrichedPosition[],
   netContributions?: number | null,
 ): PortfolioTotals {
-  const withValues = positions.filter((p) => p.valor_actual !== null)
+  const withValues = positions.filter((p) => (p.displayValue?.amount ?? null) !== null)
   
   // Para el total, sumamos el valor real de los cotizados y el coste de los no cotizados/fallidos
   // para evitar que el portfolio caiga a 0 por errores de API.
   const totalValue = positions.reduce(
-    (sum, p) => sum + (p.valor_actual !== null ? p.valor_actual : p.coste_total_eur),
+    (sum, p) => sum + (p.displayValue?.amount ?? p.displayCost.amount),
     0
   )
   
-  const openPositionCost = positions.reduce((sum, p) => sum + p.coste_total_eur, 0)
+  const openPositionCost = positions.reduce((sum, p) => sum + p.displayCost.amount, 0)
   const totalCost = netContributions ?? openPositionCost
   const totalPnl = totalValue - totalCost
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
@@ -333,10 +339,11 @@ export function computePortfolioTotals(
   let dailyPerformancePositionCount = 0
   
   withValues.forEach((p) => {
-    const v = p.valor_actual ?? 0
-    if (p.change_amount_24h !== null) {
-      totalPnl24h += p.change_amount_24h
-      const dailyBase = p.daily_performance_base_eur ?? 0
+    const v = p.displayValue?.amount ?? 0
+    const dailyPnL = p.displayDailyPnL?.amount ?? null
+    if (dailyPnL !== null) {
+      totalPnl24h += dailyPnL
+      const dailyBase = p.displayDailyBaseline?.amount ?? 0
       if (Number.isFinite(dailyBase) && dailyBase > 0) totalDailyBaseline += dailyBase
       if (p.unidades > 0 && dailyBase > 0) dailyPerformancePositionCount += 1
     }
@@ -360,18 +367,18 @@ export function computePortfolioTotals(
     : 0
 
   return {
-    totalValue,
-    totalCost,
-    totalPnl,
+    valueMoney: { amount: totalValue, currency: 'EUR' },
+    costMoney: { amount: totalCost, currency: 'EUR' },
+    pnlMoney: { amount: totalPnl, currency: 'EUR' },
+    pnl24hMoney: { amount: totalPnl24h, currency: 'EUR' },
+    sessionPnlMoney: { amount: totalSessionPnl, currency: 'EUR' },
     totalPnlPercent,
-    totalPnl24h,
     totalPnlPercent24h,
-    totalSessionPnl,
     totalDailyPnlPercent,
     dailyPerformancePositionCount,
     positionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez').length,
-    hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => p.valor_actual !== null),
-    estimatedPositionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez' && (p.valor_actual === null || p.price_is_stale)).length,
+    hasAllPrices: positions.filter((p) => p.unidades > 0).every((p) => (p.displayValue?.amount ?? null) !== null),
+    estimatedPositionCount: positions.filter((p) => p.unidades > 0 && p.tipo !== 'Liquidez' && ((p.displayValue?.amount ?? null) === null || p.price_is_stale)).length,
     accountingIssueCount: positions.filter((p) => p.accounting_unit_mismatch).length,
   }
 }

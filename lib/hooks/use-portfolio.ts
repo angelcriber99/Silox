@@ -88,17 +88,17 @@ export function usePortfolio(options?: { enabled?: boolean; persistHistory?: boo
   )
 
   const latestSnapshot = useRef({
-    totalValue: totals.totalValue,
-    totalCost: totals.totalCost,
+    totalValue: totals.valueMoney.amount,
+    totalCost: totals.costMoney.amount,
     hasAllPrices: totals.hasAllPrices,
   })
   useEffect(() => {
     latestSnapshot.current = {
-      totalValue: totals.totalValue,
-      totalCost: totals.totalCost,
+      totalValue: totals.valueMoney.amount,
+      totalCost: totals.costMoney.amount,
       hasAllPrices: totals.hasAllPrices,
     }
-  }, [totals.totalValue, totals.totalCost, totals.hasAllPrices])
+  }, [totals.valueMoney.amount, totals.costMoney.amount, totals.hasAllPrices])
 
   const historyReady = enabled
     && !positionsLoading

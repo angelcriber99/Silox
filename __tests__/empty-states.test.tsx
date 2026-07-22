@@ -20,13 +20,13 @@ vi.mock('recharts', () => ({
 describe('Empty States UI Verification', () => {
   const emptyPositions: EnrichedPosition[] = []
   const emptyTotals: PortfolioTotals = {
-    totalValue: 0,
-    totalCost: 0,
-    totalPnl: 0,
+    valueMoney: { amount: 0, currency: 'EUR' },
+    costMoney: { amount: 0, currency: 'EUR' },
+    pnlMoney: { amount: 0, currency: 'EUR' },
+    pnl24hMoney: { amount: 0, currency: 'EUR' },
+    sessionPnlMoney: { amount: 0, currency: 'EUR' },
     totalPnlPercent: 0,
-    totalPnl24h: 0,
     totalPnlPercent24h: 0,
-    totalSessionPnl: 0,
     totalDailyPnlPercent: 0,
     dailyPerformancePositionCount: 0,
     positionCount: 0,

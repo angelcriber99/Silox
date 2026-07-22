@@ -42,6 +42,17 @@ export function convertCurrency(
   return (amount / fromRate) * toRate
 }
 
+import { Money, Currency } from '@/lib/types'
+
+export function convertMoney(
+  money: Money,
+  toCurrency: Currency,
+  rates: FxRatesToEur
+): Money {
+  const converted = convertCurrency(money.amount, money.currency, toCurrency, rates)
+  return { amount: converted ?? money.amount, currency: converted !== null ? toCurrency : money.currency }
+}
+
 export function convertSeriesToEur(
   values: number[],
   fromCurrency: string,

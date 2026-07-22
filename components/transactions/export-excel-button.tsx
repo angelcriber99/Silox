@@ -74,9 +74,9 @@ const exportToExcel = async (
   }).sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
 
   // Calculate high-level stats
-  const totalValor = positions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
+  const totalValor = positions.reduce((acc, p) => acc + ((p.displayValue?.amount ?? null) || 0), 0)
   const totalInvertido = calculateNetContributions(transactions)
-    ?? positions.reduce((acc, p) => acc + (p.coste_total_eur || 0), 0)
+    ?? positions.reduce((acc, p) => acc + (p.displayCost.amount || 0), 0)
   const totalPnl = totalValor - totalInvertido
   const totalPnlPct = totalInvertido > 0 ? totalPnl / totalInvertido : 0
   const divs = filteredTxs.filter(tx => tx.tipo_operacion === 'Dividendo')
@@ -153,8 +153,8 @@ const exportToExcel = async (
     const row = wsPortfolio.addRow({
       ticker: p.ticker, nombre: p.nombre || '', tipo: p.tipo,
       unidades: p.unidades, precio_medio: p.precio_medio, precio_actual: p.precio_actual,
-      valor: p.valor_actual || 0, invertido: p.coste_total_eur,
-      pnl_eur: p.pnl || 0, pnl_pct: (p.pnl_percent || 0) / 100
+      valor: (p.displayValue?.amount ?? null) || 0, invertido: p.displayCost.amount,
+      pnl_eur: (p.displayPnl?.amount ?? null) || 0, pnl_pct: (p.pnl_percent || 0) / 100
     })
 
     if (portRow % 2 !== 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.altRow } } })
@@ -165,9 +165,9 @@ const exportToExcel = async (
     row.getCell('valor').numFmt = '#,##0.00" €"'
     row.getCell('invertido').numFmt = '#,##0.00" €"'
     // Formulas instead of hardcoded values for Excel interactivity
-    row.getCell('pnl_eur').value = { formula: `G${portRow}-H${portRow}`, result: p.pnl || 0 }
+    row.getCell('pnl_eur').value = { formula: `G${portRow}-H${portRow}`, result: (p.displayPnl?.amount ?? null) || 0 }
     row.getCell('pnl_eur').numFmt = '#,##0.00" €"'
-    row.getCell('pnl_eur').font = { color: { argb: (p.pnl || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
+    row.getCell('pnl_eur').font = { color: { argb: ((p.displayPnl?.amount ?? null) || 0) >= 0 ? colors.posText : colors.negText }, bold: true }
     
     // Protect against division by zero in formula
     row.getCell('pnl_pct').value = { formula: `IF(H${portRow}>0, I${portRow}/H${portRow}, 0)`, result: (p.pnl_percent || 0) / 100 }

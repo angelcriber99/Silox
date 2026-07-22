@@ -120,9 +120,9 @@ export function ComprehensiveAnalysis() {
 
   const processedData = useMemo(() => buildPerformanceSeries(snapshots, {
     timestamp: new Date().toISOString(),
-    total_value: totals.totalValue,
-    total_invested: totals.totalCost,
-  }), [snapshots, totals.totalValue, totals.totalCost])
+    total_value: totals.valueMoney.amount,
+    total_invested: totals.costMoney.amount,
+  }), [snapshots, totals.valueMoney.amount, totals.costMoney.amount])
 
   const filteredData = useMemo(
     () => filterPerformanceSeries(processedData, timeRange),
@@ -204,7 +204,7 @@ export function ComprehensiveAnalysis() {
     if (!positions) return { sectors: [], geos: [], assetTypes: [], topPositions: [], analysisTotal: 0 }
 
     const analysisPositions = positions.filter(p => p.tipo !== 'Liquidez' && p.tipo !== 'Fondo Monetario' && !p.ticker.startsWith('CASH'))
-    const analysisTotal = analysisPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0)
+    const analysisTotal = analysisPositions.reduce((acc, p) => acc + ((p.displayValue?.amount ?? null) || 0), 0)
 
     const sMap = new Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>()
     const gMap = new Map<string, { value: number, assets: { name: string, value: number, symbol: string }[] }>()
@@ -232,7 +232,7 @@ export function ComprehensiveAnalysis() {
     }
 
     analysisPositions.forEach(p => {
-      const val = p.valor_actual || 0
+      const val = (p.displayValue?.amount ?? null) || 0
       if (val <= 0) return
       
       const mData = marketDataMap[p.activo_id];
@@ -307,8 +307,8 @@ export function ComprehensiveAnalysis() {
       .sort((a, b) => b.value - a.value)
 
     const top = [...analysisPositions]
-      .filter(p => (p.valor_actual || 0) > 0)
-      .sort((a, b) => (b.valor_actual || 0) - (a.valor_actual || 0))
+      .filter(p => ((p.displayValue?.amount ?? null) || 0) > 0)
+      .sort((a, b) => ((b.displayValue?.amount ?? null) || 0) - ((a.displayValue?.amount ?? null) || 0))
       .slice(0, 5)
 
     return {
@@ -322,7 +322,7 @@ export function ComprehensiveAnalysis() {
 
   // Generate dynamic insights based on the portfolio data
   const insights = useMemo(() => {
-    if (!positions || totals.totalValue === 0 || analysisTotal === 0) return []
+    if (!positions || totals.valueMoney.amount === 0 || analysisTotal === 0) return []
     
     const messages = []
     
@@ -365,21 +365,21 @@ export function ComprehensiveAnalysis() {
     const top1 = topPositions[0]
     const isTop1GlobalFund = top1?.nombre?.toLowerCase().includes('msci') || top1?.nombre?.toLowerCase().includes('world') || top1?.nombre?.toLowerCase().includes('sp500') || top1?.nombre?.toLowerCase().includes('all world');
     
-    if (top1 && (top1.valor_actual || 0) / analysisTotal > 0.25 && !isTop1GlobalFund) {
+    if (top1 && ((top1.displayValue?.amount ?? null) || 0) / analysisTotal > 0.25 && !isTop1GlobalFund) {
       messages.push({
         type: 'caution',
         title: `Excesiva dependencia de ${top1.nombre || top1.ticker}`,
-        desc: `Un solo activo específico pesa el ${((top1.valor_actual || 0) / analysisTotal * 100).toFixed(1)}% de tu cartera. Es un riesgo altísimo. Deberías asegurar tu posición reduciendo exposición o diversificando las próximas compras.`
+        desc: `Un solo activo específico pesa el ${(((top1.displayValue?.amount ?? null) || 0) / analysisTotal * 100).toFixed(1)}% de tu cartera. Es un riesgo altísimo. Deberías asegurar tu posición reduciendo exposición o diversificando las próximas compras.`
       })
-    } else if (top1 && isTop1GlobalFund && (top1.valor_actual || 0) / analysisTotal > 0.5) {
+    } else if (top1 && isTop1GlobalFund && ((top1.displayValue?.amount ?? null) || 0) / analysisTotal > 0.5) {
       messages.push({
         type: 'tip',
         title: 'Núcleo Sólido (Core-Satellite)',
-        desc: `¡Genial! Tu posición principal es un fondo global (${top1.nombre || top1.ticker}) con un ${((top1.valor_actual || 0) / analysisTotal * 100).toFixed(1)}%. Estás aplicando perfectamente la filosofía pasiva para el núcleo de tu cartera.`
+        desc: `¡Genial! Tu posición principal es un fondo global (${top1.nombre || top1.ticker}) con un ${(((top1.displayValue?.amount ?? null) || 0) / analysisTotal * 100).toFixed(1)}%. Estás aplicando perfectamente la filosofía pasiva para el núcleo de tu cartera.`
       })
     }
 
-    const top5Weight = topPositions.reduce((acc, p) => acc + (p.valor_actual || 0), 0) / analysisTotal
+    const top5Weight = topPositions.reduce((acc, p) => acc + ((p.displayValue?.amount ?? null) || 0), 0) / analysisTotal
     if (top5Weight > 0.65 && !isTop1GlobalFund) {
       messages.push({
         type: 'caution',
@@ -430,7 +430,7 @@ export function ComprehensiveAnalysis() {
       const p = { warning: 3, caution: 2, info: 1, tip: 0 };
       return (p[b.type as keyof typeof p] || 0) - (p[a.type as keyof typeof p] || 0);
     }).slice(0, 4)
-  }, [sectors, geos, assetTypes, topPositions, totals.totalValue, analysisTotal])
+  }, [sectors, geos, assetTypes, topPositions, totals.valueMoney.amount, analysisTotal])
 
   if (portfolioLoading) {
     return (
@@ -453,7 +453,7 @@ export function ComprehensiveAnalysis() {
             chartData={filteredData}
             dailyData={dailyAggregatedData}
             timeRange={timeRange}
-            currentDailyPnl={totals.totalSessionPnl}
+            currentDailyPnl={totals.sessionPnlMoney.amount}
             currentDailyPnlPercent={totals.totalDailyPnlPercent}
           >
             <div className="flex items-center rounded-full border border-border/40 bg-muted/30 p-1 shadow-inner">
