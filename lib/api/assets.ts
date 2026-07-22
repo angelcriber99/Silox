@@ -387,6 +387,7 @@ export function computePortfolioTotals(
   return {
     valueMoney: { amount: totalValue, currency: 'EUR' },
     costMoney: { amount: totalCost, currency: 'EUR' },
+    netContributionsMoney: netContributions !== undefined && netContributions !== null ? { amount: netContributions, currency: 'EUR' } : undefined,
     pnlMoney: { amount: totalPnl, currency: 'EUR' },
     pnl24hMoney: { amount: totalPnl24h, currency: 'EUR' },
     sessionPnlMoney: { amount: totalSessionPnl, currency: 'EUR' },

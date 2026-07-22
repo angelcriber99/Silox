@@ -122,6 +122,7 @@ export interface EventoRecurrente {
 export interface PortfolioTotals {
   valueMoney: Money
   costMoney: Money
+  netContributionsMoney?: Money
   pnlMoney: Money
   pnl24hMoney: Money
   sessionPnlMoney: Money

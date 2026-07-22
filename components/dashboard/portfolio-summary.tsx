@@ -226,11 +226,24 @@ export function PortfolioSummary({
               {/* Invested */}
               <span className="w-px h-4 bg-border/60" />
               <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-                <span className="font-normal uppercase tracking-widest text-[10px]">Invertido</span>
+                <span className="font-normal uppercase tracking-widest text-[10px]" title="Coste Contable FIFO (valor a efectos fiscales)">Invertido (FIFO)</span>
                 <span className="font-semibold tabular-nums text-foreground/80">
-                  {hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)}
+                  {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
                 </span>
               </div>
+
+              {/* Net Contributions */}
+              {totals.netContributionsMoney !== undefined && (
+                <>
+                  <span className="w-px h-4 bg-border/60" />
+                  <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
+                    <span className="font-normal uppercase tracking-widest text-[10px]" title="Capital neto aportado de tu bolsillo (Compras - Ventas)">Aportado</span>
+                    <span className="font-semibold tabular-nums text-foreground/80">
+                      {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney.amount)}
+                    </span>
+                  </div>
+                </>
+              )}
 
               {/* Prices sync badge */}
               {!totals.hasAllPrices && (
