@@ -72,17 +72,23 @@ export default function Home() {
               {/* Subtle gradient background for the premium feel */}
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3">
-                <SiloxInsights positions={positions} totals={totals} />
-                <div className="flex flex-col glass-card border rounded-xl overflow-hidden relative p-4">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-4">
+                <div className="flex-shrink-0">
+                  <SiloxInsights positions={positions} totals={totals} />
+                </div>
+                <div className="flex-col glass-card border rounded-xl overflow-hidden relative p-4 flex-shrink-0">
                   <AllocationChart positions={positions} marketState={marketState} />
                 </div>
-                <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
-                <UpcomingEvents
-                  positions={positions.filter(p => p.tipo !== 'Liquidez')}
-                  onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
-                  onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
-                />
+                <div className="flex-shrink-0">
+                  <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
+                </div>
+                <div className="flex-shrink-0">
+                  <UpcomingEvents
+                    positions={positions.filter(p => p.tipo !== 'Liquidez')}
+                    onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
+                    onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
+                  />
+                </div>
               </div>
               
               {/* Price updated footer */}

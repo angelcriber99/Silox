@@ -164,7 +164,7 @@ export function UpcomingEvents({ positions, onAddEvent, onEditEvent }: UpcomingE
         </Button>
       </CardHeader>
 
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto max-h-[260px] p-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted/50 [&::-webkit-scrollbar-track]:bg-transparent">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="flex items-center gap-3">
