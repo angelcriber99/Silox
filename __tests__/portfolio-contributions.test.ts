@@ -34,9 +34,9 @@ describe('portfolio contributions', () => {
 
     expect(computePortfolioTotals(positions, 90)).toMatchObject({
       valueMoney: { amount: 110 },
-      costMoney: { amount: 90 },
-      pnlMoney: { amount: 20 },
-      totalPnlPercent: 22.22222222222222,
+      costMoney: { amount: 130 },
+      pnlMoney: { amount: -20 },
+      totalPnlPercent: -15.384615384615385,
     })
   })
 
@@ -193,7 +193,7 @@ describe('portfolio contributions', () => {
       { activo: asset, tipo_operacion: 'Dividendo', cantidad: 1, precio_unitario: 5, comision: 0, retencion_origen: 1, retencion_destino: 0 },
     ])
 
-    expect(funding.netByCurrency.USD).toBe(79)
+    expect(funding.netByCurrency.USD).toBe(83)
   })
 
   it('freezes every foreign-currency flow at its transaction-date FX rate', () => {

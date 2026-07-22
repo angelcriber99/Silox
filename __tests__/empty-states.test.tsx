@@ -65,7 +65,7 @@ describe('Empty States UI Verification', () => {
     it('renders the zero-value portfolio summary without inventing data', () => {
       renderWithProviders(<PortfolioSummary totals={emptyTotals} loading={false} />)
       expect(screen.getByText('Valor del Portfolio')).toBeInTheDocument()
-      expect(screen.getByText('Invertido')).toBeInTheDocument()
+      expect(screen.getByText('Aportado neto')).toBeInTheDocument()
       expect(screen.getByText('Sin datos de hoy')).toBeInTheDocument()
     })
   })

@@ -45,7 +45,7 @@ describe('mobile portfolio history', () => {
       [{ date: '2024-02-02', total_value: 125, total_invested: null, updated_at: '2024-02-02T20:00:00.000Z' }],
       [
         { id: 'buy', fecha: '2024-02-01', tipo_operacion: 'Compra', cantidad: 1, precio_unitario: 100, comision: 0, activo: asset('EUR') },
-        { id: 'dividend', fecha: '2024-02-02', tipo_operacion: 'Dividendo', cantidad: 1, precio_unitario: 5, comision: 0, activo: asset('EUR') },
+        { id: 'sale', fecha: '2024-02-02', tipo_operacion: 'Venta', cantidad: 0.05, precio_unitario: 100, comision: 0, activo: asset('EUR') },
       ],
       {},
     )
