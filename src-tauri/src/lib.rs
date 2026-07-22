@@ -35,7 +35,7 @@ pub fn run() {
 
       #[cfg(target_os = "macos")]
       if let Some(window) = app.get_webview_window("main") {
-          let _ = apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None);
+          let _ = apply_vibrancy(&window, NSVisualEffectMaterial::Sidebar, None, None);
       }
 
       #[cfg(target_os = "macos")]
