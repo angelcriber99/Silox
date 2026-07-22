@@ -33,7 +33,11 @@ pub fn run() {
         )?;
       }
 
-      // Removed vibrancy from main window as per user request to match DEV theme
+      #[cfg(target_os = "macos")]
+      if let Some(window) = app.get_webview_window("main") {
+          let _ = apply_vibrancy(&window, NSVisualEffectMaterial::UnderWindowBackground, None, None);
+      }
+
       #[cfg(target_os = "macos")]
       if let Some(tray_window) = app.get_webview_window("tray") {
           let _ = apply_vibrancy(&tray_window, NSVisualEffectMaterial::Popover, None, None);
