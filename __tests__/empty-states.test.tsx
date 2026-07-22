@@ -3,6 +3,7 @@ import { fireEvent, screen } from '@testing-library/react'
 import { PositionsTable } from '@/components/transactions/positions-table'
 import { AllocationChart } from '@/components/dashboard/allocation-chart'
 import { PortfolioSummary } from '@/components/dashboard/portfolio-summary'
+import { TopMetricsBar } from '@/components/dashboard/top-metrics-bar'
 import { MobileDashboard } from '@/components/mobile/mobile-dashboard'
 import { DashboardErrorState } from '@/components/dashboard/dashboard-error-state'
 import type { EnrichedPosition, PortfolioTotals } from '@/lib/types'
@@ -61,12 +62,11 @@ describe('Empty States UI Verification', () => {
     })
   })
 
-  describe('PortfolioSummary', () => {
-    it('renders the zero-value portfolio summary without inventing data', () => {
-      renderWithProviders(<PortfolioSummary totals={emptyTotals} loading={false} />)
+  describe('TopMetricsBar', () => {
+    it('renders the zero-value metrics without inventing data', () => {
+      renderWithProviders(<TopMetricsBar totals={emptyTotals} positions={emptyPositions} marketState="REGULAR" loading={false} />)
       expect(screen.getByText('Valor del Portfolio')).toBeInTheDocument()
-      expect(screen.getByText('Aportado neto')).toBeInTheDocument()
-      expect(screen.getByText('Sin datos de hoy')).toBeInTheDocument()
+      expect(screen.getByText('Aportado')).toBeInTheDocument()
     })
   })
 

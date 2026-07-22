@@ -95,29 +95,7 @@ export function PortfolioSummary({
   if (variant === 'sidebar') {
     return (
       <div className="flex flex-col gap-4 p-4 relative bg-transparent shrink-0">
-        <div className="flex flex-col items-center z-10 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-1.5 opacity-80">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
-              Valor del Portfolio
-            </p>
-            {marketState !== 'REGULAR' && (
-              <div className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-muted text-muted-foreground border border-border/50">
-                {marketState === 'CLOSED' ? 'Cerrado' : marketState === 'PRE' ? 'Pre-Market' : 'Post-Market'}
-              </div>
-            )}
-          </div>
-          <div className="text-4xl lg:text-5xl font-bold tracking-tight leading-none mb-6 bg-gradient-to-br from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent text-center drop-shadow-sm">
-            <AnimatedNumber value={convert(totals.valueMoney.amount)} format="currency" currency={displayCurrency} hide={hideBalances} />
-          </div>
-          {(totals.accountingIssueCount ?? 0) > 0 && (
-            <div className="mb-3 flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[10px] font-semibold text-amber-400">
-              <TriangleAlert className="h-3 w-3" />
-              ReconciliaciÃ³n pendiente en {totals.accountingIssueCount} activo{totals.accountingIssueCount === 1 ? '' : 's'}
-            </div>
-          )}
-          
-          <div className="flex flex-col gap-2 w-full max-w-[260px] mx-auto mt-6 p-4 rounded-xl bg-card/30 border border-border/40 shadow-sm backdrop-blur-sm">
+          <div className="flex flex-col gap-2 w-full max-w-[260px] mx-auto p-4 rounded-xl bg-card/30 border border-border/40 shadow-sm backdrop-blur-sm">
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-bold mb-1">Pulso del Día</span>
             
             {/* Top Asset */}
@@ -146,44 +124,6 @@ export function PortfolioSummary({
               </div>
             </div>
           </div>
-        </div>
-
-
-
-
-
-        <div className="flex gap-2 w-full mt-1">
-          <button
-            type="button"
-            onClick={() => useNotes.getState().setIsOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-[13px] font-semibold shadow-sm"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
-            Plan Estratégico
-          </button>
-          <button
-            type="button"
-            onClick={() => setChartsOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-[13px] font-semibold shadow-sm"
-          >
-            <BarChart2 className="w-4 h-4" />
-            Análisis
-          </button>
-        </div>
-        
-        <PerformanceModal
-          open={chartsOpen}
-          onOpenChange={setChartsOpen}
-          positions={positions}
-          currentDailyPnl={totals.pnl24hMoney.amount}
-          currentDailyPnlPercent={totals.totalDailyPnlPercent}
-          currentDailyCoverage={totals.dailyPerformancePositionCount}
-          currentPositionCount={totals.positionCount}
-          currentTotalValue={totals.valueMoney.amount}
-          currentTotalCost={totals.costMoney.amount}
-          currentTotalPnl={totals.pnlMoney.amount}
-          currentTotalPnlPercent={totals.totalPnlPercent}
-        />
       </div>
     )
   }

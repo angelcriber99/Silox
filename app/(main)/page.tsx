@@ -102,7 +102,7 @@ export default function Home() {
             {/* ── Main Content (Positions Table) ── */}
             <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-5 lg:px-6 overflow-hidden relative">
               <div className="flex-shrink-0">
-                <TopMetricsBar totals={totals} loading={isLoading} />
+                <TopMetricsBar totals={totals} positions={positions} marketState={marketState} loading={isLoading} />
               </div>
               <div className="flex-1 flex flex-col glass-card border overflow-hidden">
                 <div className="flex-shrink-0">
