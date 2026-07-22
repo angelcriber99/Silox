@@ -21,8 +21,7 @@
         "fullscreen": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
-        "transparent": true,
-        "fullscreenable": false
+        "transparent": true
       },
       {
         "label": "tray",
