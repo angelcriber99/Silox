@@ -12,6 +12,7 @@ import { PositionsTable } from "@/components/transactions/positions-table"
 import { TopMovers } from "@/components/dashboard/top-movers"
 import { UpcomingEvents } from "@/components/market/upcoming-events"
 import { ZenDashboard } from "@/components/dashboard/zen-dashboard"
+import { TopMetricsBar } from "@/components/dashboard/top-metrics-bar"
 import { EditAssetModal } from "@/components/asset/edit-asset-modal"
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal"
 import { AddEventModal } from "@/components/market/add-event-modal"
@@ -100,6 +101,9 @@ export default function Home() {
 
             {/* ── Main Content (Positions Table) ── */}
             <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-5 lg:px-6 overflow-hidden relative">
+              <div className="flex-shrink-0">
+                <TopMetricsBar totals={totals} loading={isLoading} />
+              </div>
               <div className="flex-1 flex flex-col glass-card border overflow-hidden">
                 <div className="flex-shrink-0">
                   <PendingOrders transactions={pendingTxs} />

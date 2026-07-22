@@ -60,6 +60,17 @@ export function PortfolioSummary({
       .sort((a, b) => ((b.displayDailyPnL?.amount ?? null) || 0) - ((a.displayDailyPnL?.amount ?? null) || 0))
   }, [positions])
 
+  const advanceDecline = useMemo(() => {
+    let advance = 0;
+    let decline = 0;
+    positions.forEach(p => {
+      const pnl = p.displayDailyPnL?.amount ?? 0;
+      if (pnl > 0.01) advance++;
+      else if (pnl < -0.01) decline++;
+    });
+    return { advance, decline };
+  }, [positions])
+
   if (loading) {
     return (
       <div className="w-full">
@@ -106,55 +117,34 @@ export function PortfolioSummary({
             </div>
           )}
           
-          <div className="flex flex-col gap-3 w-full max-w-[260px] mx-auto mt-6 p-4 rounded-xl bg-card/30 border border-border/40 shadow-sm backdrop-blur-sm">
-            {/* Row 1: Daily */}
-            <div className="flex justify-between items-center">
-              <span className="text-[11px] uppercase tracking-widest text-muted-foreground/70 font-semibold">Hoy</span>
-              <div className="flex items-center gap-1.5" style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}>
-                {daily24Positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                <span className="text-[13px] font-bold tabular-nums">
-                  {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
-                </span>
-                <span className="text-[11px] font-bold opacity-80">
-                  ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
-                </span>
-              </div>
-            </div>
-
-            {/* Row 2: Total Historical */}
-            <div className="flex justify-between items-center">
-              <span className="text-[11px] uppercase tracking-widest text-muted-foreground/70 font-semibold">Histórico</span>
-              <div className="flex items-center gap-1.5" style={{ color: isPositive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}>
-                {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                <span className="text-[13px] font-bold tabular-nums">
-                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
-                </span>
-                <span className="text-[11px] font-bold opacity-80">
-                  ({hideBalances ? "•••" : formatPercent(displayPnlPercent).replace('+', '')})
-                </span>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="w-full h-px bg-border/40 my-0.5" />
-
-            {/* Row 3: Aportado */}
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold" title="Capital neto aportado de tu bolsillo">Aportado Neto</span>
-              <span className="text-[12px] font-semibold tabular-nums text-foreground/90">
-                {hideBalances ? "••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
+          <div className="flex flex-col gap-2 w-full max-w-[260px] mx-auto mt-6 p-4 rounded-xl bg-card/30 border border-border/40 shadow-sm backdrop-blur-sm">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-bold mb-1">Pulso del Día</span>
+            
+            {/* Top Asset */}
+            <div className="flex justify-between items-center bg-background/40 p-2 rounded-lg border border-border/30">
+              <span className="text-[11px] font-semibold text-foreground/80 truncate max-w-[100px]">
+                {topDailyAsset ? (
+                  topDailyAsset.tipo === "Fondo Indexado" || topDailyAsset.tipo === "Fondo Monetario" 
+                    ? topDailyAsset.nombre?.split(" ")[0]?.toUpperCase() || "FONDO"
+                    : topDailyAsset.ticker.split(".")[0]
+                ) : "N/A"}
               </span>
+              {topDailyAsset && (
+                <span className={`text-[12px] font-bold tabular-nums ${((topDailyAsset.displayDailyPnL?.amount ?? null) || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {hideBalances ? "••••" : `${((topDailyAsset.displayDailyPnL?.amount ?? null) || 0) >= 0 ? "+" : ""}${formatDisplay((topDailyAsset.displayDailyPnL?.amount ?? null) || 0)}`}
+                </span>
+              )}
             </div>
 
-            {/* Row 4: FIFO */}
-            {totals.netContributionsMoney !== undefined && (
-              <div className="flex justify-between items-center -mt-1.5">
-                <span className="text-[9px] uppercase tracking-widest text-muted-foreground/40 font-semibold" title="Coste Contable FIFO (valor a efectos fiscales)">FIFO</span>
-                <span className="text-[10px] font-medium tabular-nums text-foreground/50">
-                  {hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)}
-                </span>
+            {/* Advance/Decline */}
+            <div className="flex justify-between items-center px-1 mt-1">
+              <span className="text-[11px] font-medium text-muted-foreground">Rendimiento</span>
+              <div className="flex items-center gap-2 text-[11px] font-bold tabular-nums">
+                <span className="text-emerald-500/90">{advanceDecline.advance} al alza</span>
+                <span className="text-muted-foreground/30">|</span>
+                <span className="text-rose-500/90">{advanceDecline.decline} a la baja</span>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
