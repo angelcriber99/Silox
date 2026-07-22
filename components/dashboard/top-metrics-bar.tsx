@@ -6,8 +6,8 @@ import { TrendingUp, TrendingDown, TriangleAlert, BarChart2 } from "lucide-react
 import { usePreferences } from "@/lib/stores/use-preferences"
 import type { PortfolioTotals, EnrichedPosition } from "@/lib/types"
 import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
-import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useNotes } from "@/lib/stores/use-notes"
+import { formatCurrency } from "@/lib/utils/formatters"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
 
 interface TopMetricsBarProps {
@@ -45,9 +45,6 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
 
   return (
     <div className="w-full flex flex-col xl:flex-row xl:items-center justify-between gap-4 glass-card border rounded-2xl p-4 md:px-5 md:py-3.5 shadow-sm mb-4 relative overflow-hidden">
-      {/* Subtle background glow */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
-      
       {/* Left side: Value & PnL */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 relative z-10">
         {/* Value */}
@@ -69,8 +66,8 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
               </div>
             )}
           </div>
-          <div className="text-3xl xl:text-4xl font-bold tracking-tight leading-none bg-gradient-to-br from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent drop-shadow-sm flex items-end gap-2">
-            <AnimatedNumber value={convert(totals.valueMoney.amount)} format="currency" currency={displayCurrency} hide={hideBalances} />
+          <div className="text-3xl xl:text-4xl font-bold tracking-tight leading-none text-foreground flex items-end gap-2">
+            <span>{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
             {!totals.hasAllPrices && (
               <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border text-amber-400/70 border-amber-500/20 bg-amber-500/5 mb-1.5">
                 Precios pendientes
