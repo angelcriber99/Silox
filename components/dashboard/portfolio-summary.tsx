@@ -40,7 +40,11 @@ export function PortfolioSummary({
   const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
   const [chartsOpen, setChartsOpen] = useState(false)
 
-  const isPositive = totals.pnlMoney.amount >= 0
+  const primaryCost = totals.netContributionsMoney?.amount ?? totals.costMoney.amount
+  const displayPnl = totals.valueMoney.amount - primaryCost
+  const displayPnlPercent = primaryCost > 0 ? (displayPnl / primaryCost) * 100 : 0
+  const isPositive = displayPnl >= 0
+  
   const daily24Positive = totals.pnl24hMoney.amount >= 0
 
 
@@ -117,17 +121,28 @@ export function PortfolioSummary({
               <div className="flex items-center gap-1.5">
                 <span className="uppercase tracking-widest text-[10px]">Total Histórico</span>
                 <span className="tabular-nums font-semibold" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
-                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(totals.pnlMoney.amount)}`}
-                  {!hideBalances && <span className="opacity-80 ml-1 text-[10px]">({formatPercent(totals.totalPnlPercent).replace('+', '')})</span>}
+                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
+                  {!hideBalances && <span className="opacity-80 ml-1 text-[10px]">({formatPercent(displayPnlPercent).replace('+', '')})</span>}
                 </span>
               </div>
               <span className="hidden sm:inline opacity-30 text-[10px]">•</span>
               <div className="flex items-center gap-1.5">
-                <span className="uppercase tracking-widest text-[10px]">Aportado neto</span>
+                <span className="uppercase tracking-widest text-[10px]" title="Capital neto aportado de tu bolsillo">Aportado neto</span>
                 <span className="tabular-nums font-semibold text-foreground/80">
-                  {hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)}
+                  {hideBalances ? "••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
                 </span>
               </div>
+              {totals.netContributionsMoney !== undefined && (
+                <>
+                  <span className="hidden sm:inline opacity-30 text-[10px]">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="uppercase tracking-widest text-[10px]" title="Coste Contable FIFO (valor a efectos fiscales)">FIFO</span>
+                    <span className="tabular-nums font-semibold text-foreground/60">
+                      {hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -198,10 +213,10 @@ export function PortfolioSummary({
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 <span className="text-[16px] font-bold tabular-nums">
-                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(totals.pnlMoney.amount)}`}
+                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
                 </span>
                 <span className="text-[14px] font-semibold opacity-80">
-                  ({hideBalances ? "•••" : formatPercent(totals.totalPnlPercent)})
+                  ({hideBalances ? "•••" : formatPercent(displayPnlPercent)})
                 </span>
               </div>
 
@@ -223,23 +238,23 @@ export function PortfolioSummary({
                 )}
               </div>
 
-              {/* Invested */}
+              {/* Net Contributions (Primary) */}
               <span className="w-px h-4 bg-border/60" />
               <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-                <span className="font-normal uppercase tracking-widest text-[10px]" title="Coste Contable FIFO (valor a efectos fiscales)">Invertido (FIFO)</span>
+                <span className="font-normal uppercase tracking-widest text-[10px]" title="Capital neto aportado de tu bolsillo">Aportado neto</span>
                 <span className="font-semibold tabular-nums text-foreground/80">
-                  {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
+                  {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
                 </span>
               </div>
 
-              {/* Net Contributions */}
+              {/* Invested FIFO (Secondary) */}
               {totals.netContributionsMoney !== undefined && (
                 <>
                   <span className="w-px h-4 bg-border/60" />
                   <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-                    <span className="font-normal uppercase tracking-widest text-[10px]" title="Capital neto aportado de tu bolsillo (Compras - Ventas)">Aportado</span>
-                    <span className="font-semibold tabular-nums text-foreground/80">
-                      {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney.amount)}
+                    <span className="font-normal uppercase tracking-widest text-[10px]" title="Coste Contable FIFO (valor a efectos fiscales)">FIFO</span>
+                    <span className="font-semibold tabular-nums text-foreground/60">
+                      {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
                     </span>
                   </div>
                 </>
@@ -293,11 +308,16 @@ export function PortfolioSummary({
             </div>
           </div>
           <p className="text-xl md:text-2xl font-bold tabular-nums text-foreground">
-            <AnimatedNumber value={convert(totals.costMoney.amount)} format="currency" currency={displayCurrency} hide={hideBalances} />
+            <AnimatedNumber value={convert(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)} format="currency" currency={displayCurrency} hide={hideBalances} />
           </p>
-          <p className="text-xs text-muted-foreground/60">
-            {totals.positionCount} posiciones activas
-          </p>
+          <div className="flex items-center justify-between text-xs text-muted-foreground/60">
+            <span>{totals.positionCount} posiciones activas</span>
+            {totals.netContributionsMoney !== undefined && (
+              <span title="Coste Contable (FIFO)">
+                FIFO: {hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* P&L */}
@@ -320,7 +340,7 @@ export function PortfolioSummary({
             className="text-xl md:text-2xl font-bold tabular-nums"
             style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
           >
-            <AnimatedNumber value={convert(totals.pnlMoney.amount)} format="pnl" currency={displayCurrency} hide={hideBalances} />
+            <AnimatedNumber value={convert(displayPnl)} format="pnl" currency={displayCurrency} hide={hideBalances} />
           </p>
           <p className="text-xs text-muted-foreground/60">
             Acumulado histórico
@@ -345,7 +365,7 @@ export function PortfolioSummary({
             className="text-xl md:text-2xl font-bold tabular-nums"
             style={{ color: isPositive ? "oklch(0.65 0.19 155)" : "oklch(0.62 0.20 20)" }}
           >
-            <AnimatedNumber value={totals.totalPnlPercent} format="percent" hide={hideBalances} />
+            <AnimatedNumber value={displayPnlPercent} format="percent" hide={hideBalances} />
           </p>
           <p
             className="text-xs"

@@ -111,7 +111,11 @@ export function MobileDashboard({
   const performanceAmount = sessionMode ? totals.sessionPnlMoney.amount : totals.pnl24hMoney.amount
   const performancePercent = sessionMode ? totals.totalPnlPercent24h : totals.totalDailyPnlPercent
   const performancePositive = performanceAmount >= 0
-  const totalPositive = totals.pnlMoney.amount >= 0
+  
+  const primaryCost = totals.netContributionsMoney?.amount ?? totals.costMoney.amount
+  const displayPnl = totals.valueMoney.amount - primaryCost
+  const totalPositive = displayPnl >= 0
+  
   const updatedLabel = pricesUpdatedAt
     ? new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(pricesUpdatedAt)
     : null
@@ -182,10 +186,20 @@ export function MobileDashboard({
           </div>
 
           <div className="mt-4 grid grid-cols-3 border-t border-border/60 pt-3">
-            <Metric label="Aportado neto" value={hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)} />
+            <div className="min-w-0 px-2 first:pl-0 last:pr-0 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-border/60">
+              <p className="truncate text-[10px] text-muted-foreground" title="Capital neto aportado de tu bolsillo">Aportado neto</p>
+              <p className="mt-1 truncate text-xs font-semibold tabular-nums text-foreground">
+                {hideBalances ? "••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
+              </p>
+              {totals.netContributionsMoney !== undefined && (
+                <p className="mt-0.5 truncate text-[9px] text-muted-foreground/70" title="Coste Contable FIFO (valor a efectos fiscales)">
+                  FIFO: {hideBalances ? "•••" : formatDisplay(totals.costMoney.amount)}
+                </p>
+              )}
+            </div>
             <Metric
               label="P&L total"
-              value={hideBalances ? "••••" : `${totalPositive ? "+" : ""}${formatDisplay(totals.pnlMoney.amount)}`}
+              value={hideBalances ? "••••" : `${totalPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
               valueClassName={totalPositive ? "text-emerald-500" : "text-rose-500"}
             />
             <Metric label="Posiciones" value={String(activePositions.length)} />
