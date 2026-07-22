@@ -38,14 +38,17 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
       .order('created_at', { ascending: true })
       .range(from, to))
 
-    // Añadir el activo (moneda) para que hydrateTransactionsFx funcione
+    // Añadir el activo completo para que hydrateTransactionsFx y calculatePortfolioAccounting funcionen
     const transactionsWithCurrency = rawTransactions.map((tx: any) => {
       const position = normalizedPositions.find((p) => p.activo_id === tx.activo_id)
       return {
         ...tx,
-        activo: {
-          moneda: position?.moneda ?? 'EUR'
-        }
+        activo: position ? {
+          ticker: position.ticker,
+          nombre: position.nombre,
+          tipo: position.tipo,
+          moneda: position.moneda,
+        } : { moneda: 'EUR', ticker: '', tipo: '' }
       }
     })
 
