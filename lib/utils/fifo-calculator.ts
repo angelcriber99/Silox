@@ -1,5 +1,9 @@
 import type { Transaccion } from '@/lib/types'
 
+export function getAsset(tx: Transaccion) {
+  return Array.isArray(tx.activo) ? tx.activo[0] : tx.activo;
+}
+
 export interface TaxEvent {
   activoId: string
   ticker: string
@@ -43,7 +47,7 @@ export interface DividendTaxAmounts {
 }
 
 export function getTaxExchangeRate(transaction: Transaccion): number {
-  const currency = transaction.activo?.moneda?.toUpperCase()
+  const currency = getAsset(transaction)?.moneda?.toUpperCase()
   if (!currency) throw new Error(`La operación ${transaction.id} no tiene moneda`)
   if (currency === 'EUR') return 1
 
@@ -59,7 +63,7 @@ export function convertTaxAmountToEur(amount: number, transaction: Transaccion):
 }
 
 export function calculateDividendTaxAmounts(transaction: Transaccion): DividendTaxAmounts {
-  const currency = transaction.activo?.moneda?.toUpperCase() ?? 'EUR'
+  const currency = getAsset(transaction)?.moneda?.toUpperCase() ?? 'EUR'
   const exchangeRate = getTaxExchangeRate(transaction)
   const gross = convertTaxAmountToEur(Number(transaction.precio_unitario) || 0, transaction)
   const fees = convertTaxAmountToEur(Math.max(0, Number(transaction.comision) || 0), transaction)
@@ -86,10 +90,10 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
     if (tx.estado && tx.estado !== 'Completada') return acc
     // Skip cash/efectivo completely from capital gains calculations
     if (
-      tx.activo?.tipo === 'Efectivo'
-      || tx.activo?.tipo === 'Liquidez'
-      || tx.activo?.ticker === 'EFECTIVO'
-      || tx.activo?.ticker?.startsWith('CASH')
+      getAsset(tx)?.tipo === 'Efectivo'
+      || getAsset(tx)?.tipo === 'Liquidez'
+      || getAsset(tx)?.ticker === 'EFECTIVO'
+      || getAsset(tx)?.ticker?.startsWith('CASH')
     ) {
       return acc
     }
@@ -118,7 +122,7 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
     for (const tx of sorted) {
       if (tx.tipo_operacion === "Compra" || tx.tipo_operacion === "Traspaso Entrada") {
         if (!Number.isFinite(tx.cantidad) || tx.cantidad <= FIFO_EPSILON) {
-          throw new Error(`Cantidad de compra inválida para ${tx.activo?.ticker ?? tx.activo_id} el ${tx.fecha.slice(0, 10)}`)
+          throw new Error(`Cantidad de compra inválida para ${getAsset(tx)?.ticker ?? tx.activo_id} el ${tx.fecha.slice(0, 10)}`)
         }
         const exchangeRate = getTaxExchangeRate(tx)
         const unitCostBasisEur = convertTaxAmountToEur(
@@ -130,7 +134,7 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           fecha: tx.fecha,
           qtyRemaining: tx.cantidad,
           unitCostBasisEur,
-          currency: tx.activo?.moneda?.toUpperCase() ?? 'EUR',
+          currency: getAsset(tx)?.moneda?.toUpperCase() ?? 'EUR',
           exchangeRate,
         })
       } else if (tx.tipo_operacion === "Venta" || tx.tipo_operacion === "Traspaso Salida") {
@@ -162,7 +166,7 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
 
         if (remainingToSell > FIFO_EPSILON) {
           throw new Error(
-            `Faltan ${remainingToSell.toLocaleString('es-ES', { maximumFractionDigits: 8 })} unidades FIFO de ${tx.activo?.ticker ?? tx.activo_id} para la salida del ${tx.fecha.slice(0, 10)}`,
+            `Faltan ${remainingToSell.toLocaleString('es-ES', { maximumFractionDigits: 8 })} unidades FIFO de ${getAsset(tx)?.ticker ?? tx.activo_id} para la salida del ${tx.fecha.slice(0, 10)}`,
           )
         }
 
@@ -171,9 +175,9 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           const ingresoVenta = convertTaxAmountToEur((tx.cantidad * tx.precio_unitario) - tx.comision, tx)
           const gananciaPatrimonial = ingresoVenta - totalCostBasis
 
-          const isFondo = tx.activo?.tipo === "Fondo Indexado" || tx.activo?.tipo === "Fondo Monetario"
-          const ticker = tx.activo 
-            ? (isFondo ? (tx.activo.nombre?.split(' ')[0].toUpperCase() || "") : tx.activo.ticker.split('.')[0])
+          const isFondo = getAsset(tx)?.tipo === "Fondo Indexado" || getAsset(tx)?.tipo === "Fondo Monetario"
+          const ticker = getAsset(tx) 
+            ? (isFondo ? (getAsset(tx).nombre?.split(' ')[0].toUpperCase() || "") : getAsset(tx).ticker.split('.')[0])
             : "—"
 
           let isWashSale = false
@@ -213,7 +217,7 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           events.push({
           activoId: tx.activo_id,
           ticker: ticker,
-          nombre: tx.activo?.nombre || "Activo Desconocido",
+          nombre: getAsset(tx)?.nombre || "Activo Desconocido",
           fechaVenta: tx.fecha,
           añoFiscal: new Date(tx.fecha).getFullYear(),
           cantidadVendida: tx.cantidad,
@@ -223,8 +227,8 @@ export function calculateFIFO(transactions: Transaccion[]): TaxEvent[] {
           retencionDestino: convertTaxAmountToEur(tx.retencion_destino || 0, tx),
           retencionOrigen: convertTaxAmountToEur(tx.retencion_origen || 0, tx),
           detalles: `Corresponde a: ${soldLotsDetails.join(" y ")}.`,
-          tipoActivo: tx.activo?.tipo || "Desconocido",
-          monedaOriginal: tx.activo?.moneda?.toUpperCase() ?? 'EUR',
+          tipoActivo: getAsset(tx)?.tipo || "Desconocido",
+          monedaOriginal: getAsset(tx)?.moneda?.toUpperCase() ?? 'EUR',
           tipoCambioVenta,
           isWashSale,
           perdidaBloqueada
