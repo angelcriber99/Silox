@@ -149,7 +149,7 @@ export function SiloxInsights({
 
       {/* Insight Text */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground/90 truncate animate-fade-in" key={currentIndex}>
+        <p className="text-sm font-medium text-foreground/90 leading-snug animate-fade-in" key={currentIndex}>
           {currentInsight}
         </p>
       </div>
