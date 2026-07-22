@@ -1,11 +1,12 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, BellRing } from "lucide-react"
+import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
-import { formatCurrency, formatPercent } from "@/lib/utils/formatters"
+import { formatPercent } from "@/lib/utils/formatters"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useAlerts } from "@/lib/hooks/use-alerts"
+import { motion, AnimatePresence } from "framer-motion"
 
 const FINANCIAL_TIPS = [
   "El interés compuesto es la octava maravilla del mundo. Mantén tu estrategia a largo plazo.",
@@ -15,25 +16,9 @@ const FINANCIAL_TIPS = [
   "Los mercados bajistas son el momento donde se construye la verdadera riqueza.",
   "Ten siempre un fondo de emergencia en efectivo antes de invertir dinero que puedas necesitar.",
   "Las emociones son el peor enemigo del inversor. Mantén la cabeza fría cuando el mercado caiga.",
-  "Rebalancea tu cartera al menos una vez al año para mantener tu perfil de riesgo objetivo.",
-  "Entiende los costes y comisiones; a largo plazo tienen un impacto gigante en tu rentabilidad.",
-  "Invertir no es un sprint, es una maratón de décadas.",
-  "Nunca inviertas en algo que no entiendes perfectamente.",
-  "Los dividendos reinvertidos son responsables de una gran parte de la rentabilidad histórica de la bolsa.",
-  "Cuidado con el sesgo de confirmación: busca también opiniones contrarias a tu tesis de inversión.",
-  "El mejor momento para plantar un árbol fue hace 20 años. El segundo mejor momento es hoy.",
-  "Mantén tus gastos de inversión (TER) lo más bajos posible.",
-  "La volatilidad es el precio que pagas por la rentabilidad superior a largo plazo.",
-  "No mires tu cartera todos los días. A largo plazo, el ruido diario no importa.",
-  "Tu mayor activo financiero es tu capacidad de generar ingresos en tu trabajo.",
-  "Evita el 'FOMO'. Si una inversión está en todas partes, a menudo ya es tarde.",
-  "Una caída del 50% requiere una subida del 100% solo para recuperar lo perdido.",
-  "Cíñete a tu plan, especialmente cuando todo el mundo está entrando en pánico.",
-  "Las caídas de mercado del 10-20% ocurren casi cada año. Acéptalas como algo normal.",
-  "No inviertas dinero que vayas a necesitar en los próximos 3-5 años.",
-  "La simplicidad en una cartera (como 2-3 fondos indexados) suele batir a la complejidad.",
-  "Lo que haces importa mucho más de lo que hace el mercado."
+  "Rebalancea tu cartera al menos una vez al año para mantener tu perfil de riesgo objetivo."
 ]
+
 export function SiloxInsights({
   positions,
   totals
@@ -88,92 +73,67 @@ export function SiloxInsights({
       }
     }
 
-    // Insight 4: Proximity to active alerts
-    if (alerts && alerts.length > 0) {
-      const activeAlerts = alerts.filter(a => !a.triggered)
-      let alertInsightAdded = false
-
-      for (const alert of activeAlerts) {
-        const position = positions.find(p => p.ticker.toUpperCase() === alert.ticker.toUpperCase())
-        const currentPrice = position?.precio_actual_nativo || position?.precio_actual
-        if (position && currentPrice && currentPrice > 0) {
-          const distance = Math.abs((currentPrice - alert.target_price) / alert.target_price)
-          // If within 5% of the target price
-          if (distance <= 0.05) {
-            const distancePercent = formatPercent(distance * 100)
-            list.push(`¡Ojo! ${position.nombre || position.ticker} está a solo un ${distancePercent} de tu alerta de ${formatCurrency(alert.target_price, position.moneda)}.`)
-            alertInsightAdded = true
-          }
-        }
-      }
-
-      if (!alertInsightAdded && activeAlerts.length > 0) {
-        list.push(`Tienes ${activeAlerts.length} ${activeAlerts.length === 1 ? 'alerta activa' : 'alertas activas'} vigilando el mercado por ti.`)
-      }
-    }
-
-    // Keep tips deterministic so rendering remains pure and hydration-safe.
-    const tipOffset = positions.length % FINANCIAL_TIPS.length
-    list.push(...Array.from({ length: 3 }, (_, index) =>
-      FINANCIAL_TIPS[(tipOffset + index) % FINANCIAL_TIPS.length],
-    ))
+    // Add random tip
+    const tipIndex = Math.floor(Math.random() * FINANCIAL_TIPS.length)
+    list.push(`💡 ${FINANCIAL_TIPS[tipIndex]}`)
 
     return list
-  }, [positions, totals, alerts])
+  }, [positions, totals.totalDailyPnlPercent, totals.valueMoney.amount, alerts])
 
-  // Auto-rotate insights every 30 seconds
   useEffect(() => {
-    if (insights.length <= 1) return
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % insights.length)
-    }, 30000)
+    }, 8000)
     return () => clearInterval(timer)
   }, [insights.length])
 
-  if (insights.length === 0) return null
+  if (!insights.length) return null
 
-  // Define icon based on current insight text to make it more dynamic
-  const currentInsight = insights[currentIndex]
-  const isAlert = currentInsight.includes("¡Ojo!") || currentInsight.includes("alerta")
-  
   return (
-    <div className="bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-violet-500/10 border border-border/50 rounded-xl p-4 flex items-center gap-4 relative overflow-hidden group">
-      {/* Dynamic Icon */}
-      <div className="bg-background/80 p-2 rounded-full shadow-sm backdrop-blur-md shrink-0">
-        {isAlert ? (
-          <BellRing className="w-5 h-5 text-amber-400 animate-pulse" />
-        ) : (
-          <Sparkles className="w-5 h-5 text-blue-400 animate-pulse" />
+    <div className="flex flex-col glass-card border rounded-xl overflow-hidden relative shadow-sm">
+      <div className="flex items-center justify-between border-b border-border/50 bg-muted/20 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
+          <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Resumen Inteligente</h3>
+        </div>
+        {/* Navigation */}
+        {insights.length > 1 && (
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setCurrentIndex((prev) => (prev === 0 ? insights.length - 1 : prev - 1))}
+              className="p-1 hover:bg-background/80 rounded-md transition-colors"
+            >
+              <ChevronLeft className="w-3 h-3 text-muted-foreground" />
+            </button>
+            <span className="text-[10px] text-muted-foreground font-medium tabular-nums px-1">
+              {currentIndex + 1}/{insights.length}
+            </span>
+            <button 
+              onClick={() => setCurrentIndex((prev) => (prev + 1) % insights.length)}
+              className="p-1 hover:bg-background/80 rounded-md transition-colors"
+            >
+              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Insight Text */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground/90 leading-snug animate-fade-in" key={currentIndex}>
-          {currentInsight}
-        </p>
+      <div className="px-4 py-4 min-h-[70px] flex items-center relative overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1"
+          >
+            <p className="text-[12px] leading-relaxed text-foreground/90 pr-2">
+              {insights[currentIndex]}
+            </p>
+          </motion.div>
+        </AnimatePresence>
       </div>
-
-      {/* Navigation */}
-      {insights.length > 1 && (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button 
-            onClick={() => setCurrentIndex((prev) => (prev === 0 ? insights.length - 1 : prev - 1))}
-            className="p-1 hover:bg-background/80 rounded-md transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <span className="text-[10px] text-muted-foreground font-medium tabular-nums px-1">
-            {currentIndex + 1}/{insights.length}
-          </span>
-          <button 
-            onClick={() => setCurrentIndex((prev) => (prev + 1) % insights.length)}
-            className="p-1 hover:bg-background/80 rounded-md transition-colors"
-          >
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
-      )}
     </div>
   )
 }

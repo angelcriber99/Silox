@@ -74,7 +74,9 @@ export default function Home() {
 
               <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3">
                 <SiloxInsights positions={positions} totals={totals} />
-                <AllocationChart positions={positions} marketState={marketState} />
+                <div className="flex flex-col glass-card border rounded-xl overflow-hidden relative p-4">
+                  <AllocationChart positions={positions} marketState={marketState} />
+                </div>
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 <UpcomingEvents
                   positions={positions.filter(p => p.tipo !== 'Liquidez')}
