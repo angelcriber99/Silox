@@ -4,7 +4,7 @@ import { useState } from "react"
 import { formatPercent, formatPnl } from "@/lib/utils/formatters"
 import { TrendingUp, TrendingDown, TriangleAlert, BarChart2 } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
-import type { PortfolioTotals, EnrichedPosition, MarketState } from "@/lib/types"
+import type { PortfolioTotals, EnrichedPosition } from "@/lib/types"
 import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useNotes } from "@/lib/stores/use-notes"
@@ -13,7 +13,7 @@ import { PerformanceModal } from "@/components/dashboard/performance-modal"
 interface TopMetricsBarProps {
   totals: PortfolioTotals
   positions: EnrichedPosition[]
-  marketState: MarketState
+  marketState: string
   loading?: boolean
 }
 
