@@ -99,7 +99,7 @@ export default function Home() {
             </div>
 
             {/* ── Main Content (Positions Table) ── */}
-            <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-5 lg:px-6 overflow-hidden relative">
+            <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-2 lg:px-6 overflow-hidden relative">
               <div className="flex-1 flex flex-col glass-card border overflow-hidden">
                 <div className="flex-shrink-0">
                   <PendingOrders transactions={pendingTxs} />

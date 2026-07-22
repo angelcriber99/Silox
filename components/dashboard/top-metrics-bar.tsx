@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import { formatPercent, formatPnl } from "@/lib/utils/formatters"
-import { TrendingUp, TrendingDown, TriangleAlert } from "lucide-react"
+import { TrendingUp, TrendingDown, TriangleAlert, BarChart2 } from "lucide-react"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import type { PortfolioTotals, EnrichedPosition } from "@/lib/types"
 import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 import { formatCurrency } from "@/lib/utils/formatters"
 import { PerformanceModal } from "@/components/dashboard/performance-modal"
+import { useNotes } from "@/lib/stores/use-notes"
+import Link from "next/link"
 
 interface TopMetricsBarProps {
   totals: PortfolioTotals
@@ -103,22 +105,44 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
         </div>
       </div>
 
-      {/* Contributions Pill */}
-      <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-card border shadow-sm mt-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">FIFO</span>
-          <span className="text-sm font-bold tabular-nums text-foreground/80">
-            {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
-          </span>
-        </div>
-        
-        <div className="w-px h-4 bg-border" />
+      {/* Contributions Pill & Actions */}
+      <div className="flex flex-col gap-2 mt-1">
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-card border shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">FIFO</span>
+            <span className="text-sm font-bold tabular-nums text-foreground/80">
+              {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
+            </span>
+          </div>
+          
+          <div className="w-px h-4 bg-border" />
 
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Aportado</span>
+            <span className="text-sm font-bold tabular-nums text-foreground">
+              {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
+            </span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Aportado</span>
-          <span className="text-sm font-bold tabular-nums text-foreground">
-            {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
-          </span>
+          <button
+            type="button"
+            onClick={() => useNotes.getState().setIsOpen(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-xs font-semibold shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
+            Plan
+          </button>
+          
+          <Link
+            href="/analisis"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-xs font-semibold shadow-sm"
+          >
+            <BarChart2 className="w-4 h-4" />
+            Análisis
+          </Link>
         </div>
       </div>
     </div>
