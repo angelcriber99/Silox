@@ -9,7 +9,7 @@ import { AnimatedNumber } from "@/components/ui/animated-number"
 import { usePreferences } from "@/lib/stores/use-preferences"
 
 export default function TrayPage() {
-  const { totals, isLoading, error, lastRefresh } = usePortfolioContext()
+  const { totals, isLoading, error } = usePortfolioContext()
   const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
   const { hideBalances } = usePreferences()
 
