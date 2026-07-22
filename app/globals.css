@@ -524,6 +524,11 @@ html.tauri-app, html.tauri-app body {
   background: transparent !important;
 }
 
+html.tauri-app body.tray-window {
+  background: transparent !important;
+  overflow: hidden;
+}
+
 html.tauri-app .bg-background {
   background-color: transparent !important;
 }

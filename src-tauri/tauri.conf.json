@@ -13,6 +13,7 @@
     "macOSPrivateApi": true,
     "windows": [
       {
+        "label": "main",
         "title": "Silox",
         "width": 1100,
         "height": 750,
@@ -21,6 +22,20 @@
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "transparent": true
+      },
+      {
+        "label": "tray",
+        "url": "/tray",
+        "title": "Silox Tray",
+        "width": 320,
+        "height": 450,
+        "resizable": false,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true,
+        "visible": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
       }
     ],
     "security": {
