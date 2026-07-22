@@ -11,6 +11,7 @@ import {
   historicalFxKey,
 } from '@/lib/domain/portfolio/contributions'
 import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
+import { hydrateTransactionsFx } from '@/lib/api/transactions'
 import { collectAllPages } from '@/lib/utils/pagination'
 
 export async function fetchPosiciones(): Promise<Posicion[]> {
@@ -28,7 +29,7 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
 
   let completedTransactions
   try {
-    completedTransactions = await collectAllPages((from, to) => supabase
+    const rawTransactions = await collectAllPages((from, to) => supabase
       .from('transacciones')
       .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, created_at, notas, tipo_cambio_eur')
       .in('activo_id', assetIds)
@@ -36,6 +37,19 @@ export async function fetchPosiciones(): Promise<Posicion[]> {
       .order('fecha', { ascending: true })
       .order('created_at', { ascending: true })
       .range(from, to))
+
+    // Añadir el activo (moneda) para que hydrateTransactionsFx funcione
+    const transactionsWithCurrency = rawTransactions.map((tx: any) => {
+      const position = normalizedPositions.find((p) => p.activo_id === tx.activo_id)
+      return {
+        ...tx,
+        activo: {
+          moneda: position?.moneda ?? 'EUR'
+        }
+      }
+    })
+
+    completedTransactions = await hydrateTransactionsFx(transactionsWithCurrency as any)
   } catch (error) {
     throw new Error(`Error calculando el coste FIFO de las posiciones: ${error instanceof Error ? error.message : 'error desconocido'}`)
   }
