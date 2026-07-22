@@ -102,6 +102,14 @@ struct MoreView: View {
                 }
 
                 Section("Cuenta") {
+                    NavigationLink { DeleteAccountView() } label: {
+                        SettingsDestinationLabel(
+                            title: "Eliminar cuenta",
+                            subtitle: "Borra definitivamente tu cuenta y tus datos",
+                            icon: "person.crop.circle.badge.minus",
+                            tint: SiloxColors.negative
+                        )
+                    }
                     Button(role: .destructive) { Task { await signOut() } } label: {
                         SettingsActionLabel(
                             title: "Cerrar sesión",
@@ -112,6 +120,25 @@ struct MoreView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                }
+
+                Section("Legal") {
+                    Link(destination: URL(string: "https://silox-chi.vercel.app/privacy")!) {
+                        SettingsActionLabel(
+                            title: "Política de privacidad",
+                            subtitle: "Datos tratados, seguridad y tus derechos",
+                            icon: "hand.raised",
+                            tint: SiloxColors.textPrimary
+                        )
+                    }
+                    Link(destination: URL(string: "https://silox-chi.vercel.app/terms")!) {
+                        SettingsActionLabel(
+                            title: "Términos de uso",
+                            subtitle: "Alcance y limitaciones del servicio",
+                            icon: "doc.text",
+                            tint: SiloxColors.textPrimary
+                        )
+                    }
                 }
 
                 Section { Text(appVersion).font(.caption2).foregroundStyle(SiloxColors.textTertiary) }
@@ -183,6 +210,85 @@ struct MoreView: View {
         session.signOut()
         WidgetCenter.shared.reloadAllTimelines()
     }
+}
+
+private struct DeleteAccountView: View {
+    @EnvironmentObject private var environment: AppEnvironment
+    @EnvironmentObject private var session: SessionStore
+    @State private var confirmation = ""
+    @State private var isDeleting = false
+    @State private var showFinalConfirmation = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Form {
+            Section {
+                Label("Esta acción es permanente", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(SiloxColors.negative)
+                Text("Se eliminarán tu cuenta, posiciones, movimientos, alertas, preferencias e histórico de Silox. Exporta antes cualquier dato que necesites conservar.")
+                    .font(.subheadline)
+                    .foregroundStyle(SiloxColors.textSecondary)
+            }
+
+            Section {
+                TextField("Escribe BORRAR", text: $confirmation)
+                    .textInputAutocapitalization(.characters)
+                    .autocorrectionDisabled()
+                Button("Eliminar mi cuenta", role: .destructive) {
+                    showFinalConfirmation = true
+                }
+                .disabled(confirmation != "BORRAR" || isDeleting)
+            } header: {
+                Text("Confirmación")
+            } footer: {
+                Text("La eliminación se aplica a todos los dispositivos asociados a esta cuenta.")
+            }
+
+            if let errorMessage {
+                Section {
+                    Label(errorMessage, systemImage: "exclamationmark.circle")
+                        .font(.caption)
+                        .foregroundStyle(SiloxColors.negative)
+                }
+            }
+        }
+        .siloxContentBackground()
+        .navigationTitle("Eliminar cuenta")
+        .navigationBarTitleDisplayMode(.inline)
+        .interactiveDismissDisabled(isDeleting)
+        .confirmationDialog(
+            "¿Eliminar definitivamente la cuenta?",
+            isPresented: $showFinalConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Eliminar cuenta y datos", role: .destructive) { Task { await deleteAccount() } }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("No podrás deshacer esta operación.")
+        }
+    }
+
+    private func deleteAccount() async {
+        isDeleting = true
+        errorMessage = nil
+        defer { isDeleting = false }
+        do {
+            let _: EmptyResponse = try await environment.api.send(
+                "api/mobile/v1/me",
+                method: .delete,
+                body: DeleteAccountRequest(confirmation: confirmation),
+                idempotencyKey: UUID().uuidString
+            )
+            session.signOut()
+            WidgetCenter.shared.reloadAllTimelines()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+
+private struct DeleteAccountRequest: Encodable, Sendable {
+    let confirmation: String
 }
 
 private struct WidgetRevocationResponse: Decodable, Sendable { let revoked: Bool }
@@ -304,10 +410,10 @@ private struct MobilePreferencesView: View {
 
             Section {
                 Picker("Actualizar cada", selection: $liveRefreshSeconds) {
-                    Text("3 segundos").tag(3)
                     Text("5 segundos · recomendado").tag(5)
                     Text("10 segundos").tag(10)
                     Text("30 segundos").tag(30)
+                    Text("60 segundos").tag(60)
                 }
                 LabeledContent("Estado") {
                     HStack(spacing: 5) {

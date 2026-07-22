@@ -110,7 +110,8 @@ struct PortfolioView: View {
             .task(id: scenePhase) {
                 guard scenePhase == .active else { return }
                 while !Task.isCancelled {
-                    do { try await Task.sleep(for: .seconds(Double(liveRefreshSeconds))) }
+                    let interval = await repository.recommendedRefreshInterval(userPreference: Double(liveRefreshSeconds))
+                    do { try await Task.sleep(for: .seconds(interval)) }
                     catch { return }
                     guard !Task.isCancelled, scenePhase == .active else { return }
                     await model.refresh()
@@ -563,7 +564,8 @@ private struct PositionDetailView: View {
             guard scenePhase == .active else { return }
             await refresh()
             while !Task.isCancelled {
-                do { try await Task.sleep(for: .seconds(Double(liveRefreshSeconds))) }
+                let interval = await repository.recommendedRefreshInterval(userPreference: Double(liveRefreshSeconds))
+                do { try await Task.sleep(for: .seconds(interval)) }
                 catch { return }
                 guard !Task.isCancelled, scenePhase == .active else { return }
                 await refresh()

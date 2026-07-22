@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
   const isDevelopmentPreview =
     process.env.NODE_ENV !== 'production' &&
     request.nextUrl.pathname.startsWith('/design-preview')
-  const isPublicRoute = isDevelopmentPreview || request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/auth/callback') || request.nextUrl.pathname.startsWith('/api/cron') || request.nextUrl.pathname.startsWith('/api/webhooks') || request.nextUrl.pathname.startsWith('/api/widget') || request.nextUrl.pathname.startsWith('/api/mobile') || request.nextUrl.pathname === '/api/logo'
+  const isPublicRoute = isDevelopmentPreview || request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/auth/callback') || request.nextUrl.pathname === '/privacy' || request.nextUrl.pathname === '/terms' || request.nextUrl.pathname.startsWith('/api/cron') || request.nextUrl.pathname.startsWith('/api/webhooks') || request.nextUrl.pathname.startsWith('/api/widget') || request.nextUrl.pathname.startsWith('/api/mobile') || request.nextUrl.pathname === '/api/logo'
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
 
   if (!user && !isPublicRoute) {

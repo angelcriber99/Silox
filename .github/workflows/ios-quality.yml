@@ -1,0 +1,66 @@
+name: iOS Quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-quality.yml'
+      - 'app/api/mobile/**'
+      - 'lib/mobile/**'
+      - 'lib/server/delete-account.ts'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-quality.yml'
+      - 'app/api/mobile/**'
+      - 'lib/mobile/**'
+      - 'lib/server/delete-account.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-analyze:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios/App
+        run: xcodegen generate
+
+      - name: Validate privacy manifests
+        run: |
+          plutil -lint ios/App/App/PrivacyInfo.xcprivacy
+          plutil -lint ios/App/SiloxWidget/PrivacyInfo.xcprivacy
+
+      - name: Compile app and tests
+        working-directory: ios/App
+        run: >-
+          xcodebuild build-for-testing
+          -project App.xcodeproj
+          -scheme Silox
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Analyze Release
+        working-directory: ios/App
+        run: >-
+          xcodebuild analyze
+          -project App.xcodeproj
+          -scheme Silox
+          -configuration Release
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO

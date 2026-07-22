@@ -60,6 +60,7 @@ actor APIClient {
     private let decoder = JSONDecoder()
     private let logger = Logger(subsystem: "com.angelcriber.silox", category: "APIClient")
     private let signposter = OSSignposter(subsystem: "com.angelcriber.silox", category: "APIClient")
+    private var refreshIntervals: [String: TimeInterval] = [:]
 
     init(configuration: APIConfiguration, session: URLSession = .shared, tokenProvider: @escaping TokenProvider) {
         self.configuration = configuration
@@ -79,6 +80,10 @@ actor APIClient {
 
     func get<Response: Decodable & Sendable>(_ path: String, query: [URLQueryItem] = []) async throws -> Response {
         try await request(path, method: .get, query: query, body: Optional<EmptyBody>.none)
+    }
+
+    func recommendedRefreshInterval(for path: String, fallback: TimeInterval) -> TimeInterval {
+        refreshIntervals[path] ?? fallback
     }
 
     func send<Body: Encodable & Sendable, Response: Decodable & Sendable>(
@@ -175,9 +180,12 @@ actor APIClient {
         let interval = signposter.beginInterval("API request")
         defer { signposter.endInterval("API request", interval) }
         var forceRefresh = false
+        var authorizationRefreshAttempted = false
+        var transientRetries = 0
+        let canRetry = method.isIdempotent || idempotencyKey != nil
 
-        for attempt in 0...1 {
-            logger.debug("request method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public) attempt=\(attempt + 1)")
+        while true {
+            logger.debug("request method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public) retry=\(transientRetries)")
             var request = URLRequest(url: url, timeoutInterval: configuration.requestTimeout)
             request.httpMethod = method.rawValue
             request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -202,23 +210,54 @@ actor APIClient {
                 throw CancellationError()
             } catch let error as URLError where error.code == .timedOut {
                 logger.error("timeout method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                if canRetry, transientRetries < 2 {
+                    transientRetries += 1
+                    try await retryDelay(attempt: transientRetries)
+                    continue
+                }
                 throw APIError.timedOut
             } catch {
                 logger.error("transport_error method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                if canRetry, transientRetries < 2 {
+                    transientRetries += 1
+                    try await retryDelay(attempt: transientRetries)
+                    continue
+                }
                 throw APIError.transport(String(describing: error))
             }
 
             guard let httpResponse = response as? HTTPURLResponse else { throw APIError.invalidResponse }
-            if httpResponse.statusCode == 401, attempt == 0, allowsUnauthorizedRetry {
+            if httpResponse.statusCode == 401, !authorizationRefreshAttempted, allowsUnauthorizedRetry {
                 logger.notice("retry_after_401 method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public)")
+                authorizationRefreshAttempted = true
                 forceRefresh = true
                 continue
             }
+            if canRetry, httpResponse.statusCode.isTransient, transientRetries < 2 {
+                transientRetries += 1
+                try await retryDelay(
+                    attempt: transientRetries,
+                    retryAfter: httpResponse.value(forHTTPHeaderField: "Retry-After")
+                )
+                continue
+            }
+            captureRefreshInterval(from: httpResponse, path: url.path)
             let durationMilliseconds = Date().timeIntervalSince(startedAt) * 1_000
             logger.info("response method=\(method.rawValue, privacy: .public) path=\(url.path, privacy: .public) status=\(httpResponse.statusCode) duration_ms=\(durationMilliseconds, format: .fixed(precision: 2))")
             return try decode(data: data, response: httpResponse, unwrapEnvelope: unwrapEnvelope)
         }
-        throw APIError.unauthorized
+    }
+
+    private func captureRefreshInterval(from response: HTTPURLResponse, path: String) {
+        guard let raw = response.value(forHTTPHeaderField: "x-silox-refresh-after"),
+              let seconds = TimeInterval(raw) else { return }
+        refreshIntervals[path] = min(300, max(3, seconds))
+    }
+
+    private func retryDelay(attempt: Int, retryAfter: String? = nil) async throws {
+        let serverDelay = retryAfter.flatMap(TimeInterval.init).map { min(5, max(0, $0)) }
+        let seconds = serverDelay ?? (attempt == 1 ? 0.35 : 0.8)
+        try await Task.sleep(for: .seconds(seconds))
     }
 
     private func decode<Response: Decodable>(
@@ -254,6 +293,10 @@ private extension HTTPMethod {
         case .post, .patch: false
         }
     }
+}
+
+private extension Int {
+    var isTransient: Bool { self == 429 || self == 502 || self == 503 || self == 504 }
 }
 
 private struct EmptyBody: Encodable {}

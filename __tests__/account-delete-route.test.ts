@@ -48,16 +48,20 @@ describe('DELETE /api/account/delete', () => {
 
     expect(response.status).toBe(200)
     expect(mocks.from.mock.calls.map(([table]) => table)).toEqual([
+      'widget_access_tokens',
+      'notification_preferences',
+      'mobile_api_idempotency',
       'alertas',
       'expenses',
       'budget_settings',
       'portfolio_history',
       'portfolio_snapshots',
       'eventos_recurrentes',
+      'user_notes',
       'transacciones',
       'activos',
     ])
-    expect(mocks.eq).toHaveBeenCalledTimes(8)
+    expect(mocks.eq).toHaveBeenCalledTimes(12)
     expect(mocks.eq).toHaveBeenCalledWith('user_id', 'user-to-delete')
     expect(mocks.deleteUser).toHaveBeenCalledWith('user-to-delete')
     await expect(response.json()).resolves.toEqual({ success: true })

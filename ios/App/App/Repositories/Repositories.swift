@@ -51,6 +51,14 @@ actor PortfolioRepository {
             throw error
         }
     }
+
+    func recommendedRefreshInterval(userPreference: TimeInterval) async -> TimeInterval {
+        let serverInterval = await api.recommendedRefreshInterval(
+            for: "/api/mobile/v1/portfolio",
+            fallback: userPreference
+        )
+        return max(userPreference, serverInterval)
+    }
 }
 
 final class RadarRepository: Sendable {
