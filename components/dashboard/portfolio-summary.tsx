@@ -106,44 +106,55 @@ export function PortfolioSummary({
             </div>
           )}
           
-          <div className="flex flex-col items-center gap-1.5 mt-2">
-            <div className="flex items-center gap-1.5" style={{ color: daily24Positive ? "#30D158" : "#FF453A" }}>
-              {daily24Positive ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
-              <span className="text-xl font-bold tabular-nums tracking-tight drop-shadow-sm">
-                {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
-              </span>
-              <span className="text-sm font-semibold opacity-90">
-                ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
-              </span>
+          <div className="flex flex-col gap-3 w-full max-w-[260px] mx-auto mt-6 p-4 rounded-xl bg-card/30 border border-border/40 shadow-sm backdrop-blur-sm">
+            {/* Row 1: Daily */}
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] uppercase tracking-widest text-muted-foreground/70 font-semibold">Hoy</span>
+              <div className="flex items-center gap-1.5" style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}>
+                {daily24Positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                <span className="text-[13px] font-bold tabular-nums">
+                  {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
+                </span>
+                <span className="text-[11px] font-bold opacity-80">
+                  ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
+                </span>
+              </div>
             </div>
-            
-            <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[12px] font-medium text-muted-foreground/80 mt-1.5">
-              <div className="flex items-center gap-1.5">
-                <span className="uppercase tracking-widest text-[10px]">Total Histórico</span>
-                <span className="tabular-nums font-semibold" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
+
+            {/* Row 2: Total Historical */}
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] uppercase tracking-widest text-muted-foreground/70 font-semibold">Histórico</span>
+              <div className="flex items-center gap-1.5" style={{ color: isPositive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}>
+                {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                <span className="text-[13px] font-bold tabular-nums">
                   {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
-                  {!hideBalances && <span className="opacity-80 ml-1 text-[10px]">({formatPercent(displayPnlPercent).replace('+', '')})</span>}
+                </span>
+                <span className="text-[11px] font-bold opacity-80">
+                  ({hideBalances ? "•••" : formatPercent(displayPnlPercent).replace('+', '')})
                 </span>
               </div>
-              <span className="hidden sm:inline opacity-30 text-[10px]">•</span>
-              <div className="flex items-center gap-1.5">
-                <span className="uppercase tracking-widest text-[10px]" title="Capital neto aportado de tu bolsillo">Aportado neto</span>
-                <span className="tabular-nums font-semibold text-foreground/80">
-                  {hideBalances ? "••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
-                </span>
-              </div>
-              {totals.netContributionsMoney !== undefined && (
-                <>
-                  <span className="hidden sm:inline opacity-30 text-[10px]">•</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="uppercase tracking-widest text-[10px]" title="Coste Contable FIFO (valor a efectos fiscales)">FIFO</span>
-                    <span className="tabular-nums font-semibold text-foreground/60">
-                      {hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)}
-                    </span>
-                  </div>
-                </>
-              )}
             </div>
+
+            {/* Divider */}
+            <div className="w-full h-px bg-border/40 my-0.5" />
+
+            {/* Row 3: Aportado */}
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold" title="Capital neto aportado de tu bolsillo">Aportado Neto</span>
+              <span className="text-[12px] font-semibold tabular-nums text-foreground/90">
+                {hideBalances ? "••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
+              </span>
+            </div>
+
+            {/* Row 4: FIFO */}
+            {totals.netContributionsMoney !== undefined && (
+              <div className="flex justify-between items-center -mt-1.5">
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground/40 font-semibold" title="Coste Contable FIFO (valor a efectos fiscales)">FIFO</span>
+                <span className="text-[10px] font-medium tabular-nums text-foreground/50">
+                  {hideBalances ? "••••" : formatDisplay(totals.costMoney.amount)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
