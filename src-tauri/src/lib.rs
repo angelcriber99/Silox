@@ -35,12 +35,12 @@ pub fn run() {
 
       #[cfg(target_os = "macos")]
       if let Some(window) = app.get_webview_window("main") {
-          let _ = apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None);
+          let _ = apply_vibrancy(&window, NSVisualEffectMaterial::UnderWindowBackground, None, None);
       }
 
       #[cfg(target_os = "macos")]
       if let Some(tray_window) = app.get_webview_window("tray") {
-          let _ = apply_vibrancy(&tray_window, NSVisualEffectMaterial::HudWindow, None, None);
+          let _ = apply_vibrancy(&tray_window, NSVisualEffectMaterial::Popover, None, None);
       }
 
       let _tray = TrayIconBuilder::new()
