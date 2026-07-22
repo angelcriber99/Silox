@@ -1,16 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Monitor, Moon, Sun, LayoutList, LogOut, User, Sparkles, Volume2, Flower2, Palette, Check } from "lucide-react"
+import { LayoutList, LogOut, User, Sparkles, Volume2, Flower2, Palette, Check } from "lucide-react"
 import { usePreferences, AccentColor } from "@/lib/stores/use-preferences"
 import { createClient } from "@/lib/supabase/client"
 import confetti from "canvas-confetti"
 import { BackButton } from "@/components/ui/back-button"
 
 export default function PerfilPage() {
-  const { theme, setTheme } = useTheme()
   const { 
     hideBalances, compactView, accentColor, celebrationMode, zenMode,
     setHideBalances, setCompactView, setAccentColor, setCelebrationMode, setZenMode
@@ -45,57 +43,7 @@ export default function PerfilPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Appearance Settings */}
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg text-foreground flex items-center gap-2">
-              <Monitor className="w-5 h-5 text-primary" />
-              Apariencia
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Personaliza el tema visual de Silox.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                onClick={() => setTheme("light")}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
-                  theme === "light"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/50"
-                }`}
-              >
-                <Sun className="w-6 h-6 mb-2" />
-                <span className="text-sm font-medium">Claro</span>
-              </button>
-              
-              <button
-                onClick={() => setTheme("dark")}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
-                  theme === "dark"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/50"
-                }`}
-              >
-                <Moon className="w-6 h-6 mb-2" />
-                <span className="text-sm font-medium">Oscuro</span>
-              </button>
-
-              <button
-                onClick={() => setTheme("system")}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
-                  theme === "system"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/50"
-                }`}
-              >
-                <Monitor className="w-6 h-6 mb-2" />
-                <span className="text-sm font-medium">Sistema</span>
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* App Preferences */}
         <Card className="bg-card border-border shadow-sm">

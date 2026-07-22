@@ -297,16 +297,7 @@ export default function SettingsPage() {
           <section>
             <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Apariencia</h2>
             <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
-              <div className="p-4 flex items-center justify-between bg-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Palette className="w-5 h-5" /></div>
-                  <span className="font-semibold text-[15px]">Tema</span>
-                </div>
-                <div className="flex bg-muted/50 p-1 rounded-xl">
-                  <button onClick={() => setTheme('light')} className={`px-3 py-1 text-sm font-semibold rounded-lg ${theme === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>Claro</button>
-                  <button onClick={() => setTheme('dark')} className={`px-3 py-1 text-sm font-semibold rounded-lg ${theme === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>Oscuro</button>
-                </div>
-              </div>
+
               <div className="p-4 flex items-center justify-between bg-card">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><CircleDollarSign className="w-5 h-5" /></div>
@@ -517,80 +508,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  {/* Theme */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Tema de la aplicación</label>
-                    <div className="grid grid-cols-3 gap-3 p-1.5 bg-muted/30 rounded-2xl border border-border/40">
-                      {(['light', 'dark', 'system'] as const).map((mode) => (
-                        <button 
-                          key={mode}
-                          onClick={() => setTheme(mode)} 
-                          className={`flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-xl transition-all ${theme === mode ? 'bg-background shadow-md text-foreground border border-border/50 scale-100' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground scale-95'}`}
-                        >
-                          {mode === 'light' ? <Sun className="w-4 h-4" /> : mode === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />} 
-                          <span className="hidden sm:inline capitalize">{mode === 'system' ? 'Automático' : mode === 'light' ? 'Claro' : 'Oscuro'}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Theme Presets */}
-                  <div className="space-y-3 pt-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Temas Premium</label>
-                      <div className="flex gap-4 p-4 rounded-2xl bg-card/40 border border-border/40 backdrop-blur-sm overflow-x-auto hide-scrollbar">
-                        <button
-                          onClick={() => setThemePreset('silox')}
-                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'silox' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
-                        >
-                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '1rem', background: resolvedTheme === 'dark' ? 'oklch(0.18 0.01 240)' : 'oklch(0.975 0.004 200)', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}></div>
-                          <span className="text-sm font-semibold">Clásico</span>
-                        </button>
-                        <button
-                          onClick={() => setThemePreset('obsidian')}
-                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'obsidian' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
-                        >
-                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '0px', background: resolvedTheme === 'dark' ? '#000000' : '#FFFFFF', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)' }}></div>
-                          <span className="text-sm font-semibold">Obsidian</span>
-                        </button>
-                        <button
-                          onClick={() => setThemePreset('midnight')}
-                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'midnight' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
-                        >
-                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '1.5rem', backgroundImage: resolvedTheme === 'dark' ? 'radial-gradient(circle at 10% 0%, oklch(0.2 0.05 250), oklch(0.12 0.02 260))' : 'radial-gradient(circle at 10% 0%, oklch(0.99 0.01 240), oklch(0.92 0.03 270))', borderColor: resolvedTheme === 'dark' ? 'rgba(100,140,255,0.2)' : 'rgba(0,0,0,0.08)' }}></div>
-                          <span className="text-sm font-semibold">Oasis</span>
-                        </button>
-                        <button
-                          onClick={() => setThemePreset('aurora')}
-                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'aurora' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
-                        >
-                          <div className="w-full h-16 mb-3 shadow-inner border" style={{ borderRadius: '1.25rem', backgroundImage: resolvedTheme === 'dark' ? 'linear-gradient(135deg, oklch(0.12 0.05 280), oklch(0.18 0.06 320))' : 'linear-gradient(135deg, oklch(0.99 0.01 280), oklch(0.95 0.03 320))', borderColor: resolvedTheme === 'dark' ? 'rgba(255,100,255,0.2)' : 'rgba(255,150,255,0.3)' }}></div>
-                          <span className="text-sm font-semibold">Aurora</span>
-                        </button>
-                        <button
-                          onClick={() => setThemePreset('crystal')}
-                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'crystal' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
-                        >
-                          <div className="w-full h-16 mb-3 shadow-inner border relative overflow-hidden" style={{ borderRadius: '1.5rem', background: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.3)', backdropFilter: 'blur(20px)', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.3), 0 4px 10px rgba(0,0,0,0.05)' }}>
-                             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent"></div>
-                          </div>
-                          <span className="text-sm font-semibold">Crystal</span>
-                        </button>
-                        <button
-                          onClick={() => setThemePreset('macos')}
-                          className={`flex-shrink-0 w-32 flex flex-col items-center p-4 rounded-2xl border transition-all ${themePreset === 'macos' ? 'border-primary shadow-md glass-card' : 'border-border/40 hover:bg-card/40'}`}
-                        >
-                          <div className="w-full h-16 mb-3 border relative overflow-hidden" style={{ borderRadius: '0.75rem', background: resolvedTheme === 'dark' ? '#2c2c2e' : '#ffffff', borderColor: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', boxShadow: resolvedTheme === 'dark' ? '0 4px 14px 0 rgba(0,0,0,0.4)' : '0 4px 14px 0 rgba(0,0,0,0.05)' }}>
-                             <div className="absolute top-2 left-2 flex gap-1.5">
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></div>
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
-                             </div>
-                          </div>
-                          <span className="text-sm font-semibold">macOS</span>
-                        </button>
-                      </div>
-                    </div>
-                  
                   {/* Accent Color */}
                   <div className="space-y-3 pt-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Color de Acento</label>

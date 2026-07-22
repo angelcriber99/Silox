@@ -79,7 +79,7 @@ export const usePreferences = create<PreferencesState>()(
     (set) => ({
       language: 'es',
       displayCurrency: 'EUR',
-      themePreset: 'silox',
+      themePreset: 'crystal',
       hideBalances: false,
       compactView: false,
       accentColor: 'blue',
