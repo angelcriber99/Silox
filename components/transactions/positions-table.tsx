@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell, Wallet, PiggyBank } from "lucide-react"
+import { PlusCircle, TrendingUp, TrendingDown, Minus, ArrowUpDown, Layers, Edit3, Search, Plus, BookOpen, Bell, Wallet, PiggyBank, BarChart2 } from "lucide-react"
 import type { EnrichedPosition } from '@/lib/types'
 import { formatCurrency, formatPercent, formatUnits, formatPnl } from "@/lib/utils/formatters"
 import { Sparkline } from "@/components/asset/sparkline"
@@ -27,6 +27,7 @@ import { WaveTrackerModal, parseAssetNotes } from "@/components/asset/wave-track
 import { Waves } from "lucide-react"
 import { AssetLogo } from "@/components/ui/asset-logo"
 import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
+import { useNotes } from "@/lib/stores/use-notes"
 
 interface PositionsTableProps {
   positions: EnrichedPosition[]
@@ -691,11 +692,28 @@ export function PositionsTable({
         </div>
 
         <div className="flex items-center gap-2 self-end xl:self-auto shrink-0">
+          <button
+            type="button"
+            onClick={() => useNotes.getState().setIsOpen(true)}
+            className="hidden sm:flex h-7 items-center justify-center gap-1.5 px-3 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 transition-all text-xs font-semibold shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
+            <span>Plan Estratégico</span>
+          </button>
+          
+          <Link
+            href="/analisis"
+            className="hidden sm:flex h-7 items-center justify-center gap-1.5 px-3 rounded-md bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all text-xs font-semibold shadow-sm"
+          >
+            <BarChart2 className="w-3.5 h-3.5" />
+            Análisis
+          </Link>
+
           <Button
             size="sm"
             variant="outline"
             onClick={() => setHelpOpen(true)}
-            className="h-7 px-2 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
+            className="h-7 px-2 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200 ml-1"
             title="Guía de uso"
           >
             <BookOpen className="h-3.5 w-3.5" />
