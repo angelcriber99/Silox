@@ -647,96 +647,85 @@ export function PositionsTable({
 
   return (
     <Card className="animate-fade-in stagger-3 glass-card overflow-hidden w-full h-full flex flex-col relative z-10">
-      <CardHeader className="p-4 md:p-5 pb-4 flex flex-col w-full gap-4 border-b border-border/20 shrink-0">
-        {/* TOP ROW: Title, Badges, Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
-            <CardTitle className="text-base md:text-lg font-medium text-foreground flex items-center gap-2 shrink-0">
-              <Layers className="h-4 w-4 text-muted-foreground" />
-              <span className="tracking-tight">{t('positions')}</span>
-            </CardTitle>
+      <CardHeader className="p-3 md:px-4 md:py-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border/20 shrink-0">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 xl:gap-4">
+          <CardTitle className="text-base font-medium text-foreground flex items-center gap-2 shrink-0">
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            <span className="tracking-tight">{t('positions')}</span>
+          </CardTitle>
 
-            <div className="flex items-center gap-2">
-
-
+          <div className="flex items-center gap-3 flex-1 flex-wrap">
+            <div className="relative w-full sm:w-[200px] group shrink-0">
+              <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
+              <Input
+                placeholder={t('search_asset')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-7 text-xs bg-muted/20 border-border/40 w-full rounded-md text-foreground focus-visible:ring-primary/30 focus-visible:bg-background transition-all hover:bg-muted/30"
+              />
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 self-end md:self-auto">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setHelpOpen(true)}
-              className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
-              title="Guía de uso"
-            >
-              <BookOpen className="h-4 w-4" />
-            </Button>
 
-            
-            <RevolutSync>
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
-                title="Sincronizar extracto (CSV/Excel)"
-              >
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 shrink-0">
-                  <path d="M14.6541 21.0118H9.33644V14.1611H5L12 3L19 14.1611H14.6541V21.0118Z" fill="currentColor"/>
-                </svg>
-                Importar
-              </Button>
-            </RevolutSync>
-
-            <Button
-              size="sm"
-              onClick={() => setAddAssetOpen(true)}
-              className="transition-colors duration-200 text-white shadow-sm"
-              style={{
-                background: "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))",
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t('add_asset')}
-            </Button>
+            <div className="flex gap-1 flex-wrap">
+              {FILTER_OPTIONS.map((opt) => {
+                const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
+                const disabled = opt !== "Todos" && !typesWithData.has(opt);
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => !disabled && setFilter(optText)}
+                    disabled={disabled}
+                    className={`px-2.5 py-1 text-xs rounded-full font-medium transition-all duration-200 border ${
+                      filter === opt
+                        ? "bg-primary text-primary-foreground shadow-sm border-primary"
+                        : disabled
+                          ? "text-muted-foreground/30 border-transparent cursor-not-allowed hidden sm:block"
+                          : "bg-transparent text-muted-foreground/80 border-border/50 hover:text-foreground hover:bg-muted/50 hover:border-border"
+                    }`}
+                  >
+                    {optText}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
 
-        {/* BOTTOM ROW: Filters & Search */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
-          <div className="relative w-full sm:w-auto group shrink-0">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
-            <Input
-              placeholder={t('search_asset')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 text-[13px] bg-muted/20 border-border/40 w-full sm:w-[240px] rounded-md text-foreground focus-visible:ring-primary/30 focus-visible:bg-background transition-all hover:bg-muted/30"
-            />
-          </div>
+        <div className="flex items-center gap-2 self-end xl:self-auto shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setHelpOpen(true)}
+            className="h-7 px-2 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
+            title="Guía de uso"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+          </Button>
 
-          <div className="flex gap-1.5 flex-wrap">
-            {FILTER_OPTIONS.map((opt) => {
-              const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
-              const disabled =
-                opt !== "Todos" && !typesWithData.has(opt)
-              return (
-                <button
-                  key={opt}
-                  onClick={() => !disabled && setFilter(optText)}
-                  disabled={disabled}
-                  className={`px-3.5 py-1.5 text-[13px] rounded-full font-medium transition-all duration-200 border ${
-                    filter === opt
-                      ? "bg-primary text-primary-foreground shadow-sm border-primary"
-                      : disabled
-                        ? "text-muted-foreground/30 border-transparent cursor-not-allowed"
-                        : "bg-transparent text-muted-foreground/80 border-border/50 hover:text-foreground hover:bg-muted/50 hover:border-border"
-                  }`}
-                >
-                  {optText}
-                </button>
-              )
-            })}
-          </div>
+          <RevolutSync>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2.5 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
+              title="Sincronizar extracto (CSV/Excel)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 shrink-0">
+                <path d="M14.6541 21.0118H9.33644V14.1611H5L12 3L19 14.1611H14.6541V21.0118Z" fill="currentColor"/>
+              </svg>
+              <span className="text-xs">Importar</span>
+            </Button>
+          </RevolutSync>
+
+          <Button
+            size="sm"
+            onClick={() => setAddAssetOpen(true)}
+            className="h-7 px-3 transition-colors duration-200 text-white shadow-sm"
+            style={{
+              background: "linear-gradient(135deg, oklch(0.68 0.17 192), oklch(0.65 0.19 155))",
+            }}
+          >
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            <span className="text-xs">{t('add_asset')}</span>
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-auto hide-scrollbar min-h-0 relative">
