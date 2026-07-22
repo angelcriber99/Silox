@@ -266,6 +266,10 @@ export async function portfolio(context: Context) {
   const netContributions = calculateFixedNetInvestmentEur(funding, historicalRates)
   const totals = computePortfolioTotals(enriched, netContributions)
 
+  const primaryCost = totals.netContributionsMoney?.amount ?? totals.costMoney.amount
+  const displayPnl = totals.valueMoney.amount - primaryCost
+  const displayPnlPercent = primaryCost > 0 ? (displayPnl / Math.abs(primaryCost)) * 100 : 0
+
   return {
     asOf: new Date().toISOString(),
     displayCurrency: 'EUR',
@@ -276,9 +280,9 @@ export async function portfolio(context: Context) {
     },
     totals: {
       value: decimal(totals.valueMoney.amount),
-      cost: decimal(totals.costMoney.amount),
-      profitLoss: decimal(totals.pnlMoney.amount),
-      profitLossPercent: totals.totalPnlPercent,
+      cost: decimal(primaryCost),
+      profitLoss: decimal(displayPnl),
+      profitLossPercent: displayPnlPercent,
       dailyProfitLoss: decimal(totals.pnl24hMoney.amount),
       dailyProfitLossPercent: totals.totalDailyPnlPercent,
       sessionProfitLoss: decimal(totals.sessionPnlMoney.amount),
