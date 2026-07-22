@@ -258,12 +258,12 @@ const PositionRow = memo(function PositionRow({
           </div>
         </Link>
       </TableCell>
-      <TableCell className={`text-muted-foreground/80 text-sm max-w-[160px] truncate hidden md:table-cell ${cellPadding}`}>
+      <TableCell className={`text-muted-foreground/80 text-sm max-w-[160px] truncate hidden xl:table-cell ${cellPadding}`}>
         <Link href={`/activo/${p.activo_id}`} className="hover:text-foreground/80 transition-colors">
           {p.nombre || "—"}
         </Link>
       </TableCell>
-      <TableCell className={cellPadding}>
+      <TableCell className={`hidden xl:table-cell ${cellPadding}`}>
         <Badge
           variant="outline"
           className="border-none"
@@ -272,10 +272,10 @@ const PositionRow = memo(function PositionRow({
           {translateType(p.tipo, t)}
         </Badge>
       </TableCell>
-      <TableCell className={`text-right tabular-nums text-foreground/80 ${cellPadding}`}>
+      <TableCell className={`text-right tabular-nums text-foreground/80 hidden lg:table-cell ${cellPadding}`}>
         {p.unidades > 0 ? formatUnits(p.unidades) : "—"}
       </TableCell>
-      <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden lg:table-cell ${cellPadding}`}>
+      <TableCell className={`text-right tabular-nums text-muted-foreground/80 hidden xl:table-cell ${cellPadding}`}>
         {p.precio_medio > 0
           ? (hideBalances ? "****" : formatCurrency(p.precio_medio, p.moneda, p.tipo === "Fondo Indexado" ? 4 : 2))
           : "—"}
@@ -296,7 +296,7 @@ const PositionRow = memo(function PositionRow({
           )}
         </div>
       </TableCell>
-      <TableCell className={`text-right tabular-nums text-foreground font-medium ${cellPadding}`}>
+      <TableCell className={`text-right tabular-nums text-foreground font-medium hidden lg:table-cell ${cellPadding}`}>
         <div className="flex flex-col items-end gap-1">
           <span>
             {hideBalances ? "****" : ((p.displayValue?.amount ?? null) !== null
@@ -310,7 +310,7 @@ const PositionRow = memo(function PositionRow({
           )}
         </div>
       </TableCell>
-      <TableCell className={`text-right hidden sm:table-cell ${cellPadding}`}>
+      <TableCell className={`text-right ${cellPadding}`}>
         <PnlDisplay 
           value={(p.displayDailyPnL?.amount ?? null)}
           type="currency" 
@@ -321,7 +321,7 @@ const PositionRow = memo(function PositionRow({
           <PnlDisplay value={(p.displayPnl?.amount ?? null)} type="currency" />
         </TableCell>
       )}
-      <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"} ${cellPadding}`}>
+      <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden lg:table-cell"} ${cellPadding}`}>
         <PnlDisplay value={p.pnl_percent} type="percent" />
       </TableCell>
       <TableCell className={`text-right min-w-[100px] w-[100px] ${cellPadding}`}>
@@ -647,55 +647,20 @@ export function PositionsTable({
 
   return (
     <Card className="animate-fade-in stagger-3 glass-card overflow-hidden w-full h-full flex flex-col relative z-10">
-      <CardHeader className="p-2 md:p-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border/20 shrink-0">
-        <div className="flex flex-col xl:flex-row xl:items-center gap-3 xl:gap-4 flex-1 min-w-0">
-          <CardTitle className="text-base font-medium text-foreground flex items-center gap-2 shrink-0">
-            <Layers className="h-4 w-4 text-muted-foreground" />
-            <span className="tracking-tight">{t('positions')}</span>
-          </CardTitle>
+      <CardHeader className="p-2 md:p-3 flex flex-row flex-wrap items-center justify-between 2xl:justify-start gap-y-3 gap-x-2 border-b border-border/20 shrink-0">
+        {/* 1. Title */}
+        <CardTitle className="text-base font-medium text-foreground flex items-center gap-2 shrink-0">
+          <Layers className="h-4 w-4 text-muted-foreground" />
+          <span className="tracking-tight">{t('positions')}</span>
+        </CardTitle>
 
-          <div className="flex items-center gap-2 flex-1 w-full xl:w-auto min-w-0">
-            <div className="relative w-full sm:w-[150px] lg:w-[180px] shrink-0">
-              <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
-              <Input
-                placeholder={t('search_asset')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-7 text-xs bg-muted/20 border-border/40 w-full rounded-md text-foreground focus-visible:ring-primary/30 focus-visible:bg-background transition-all hover:bg-muted/30"
-              />
-            </div>
-
-            <div className="flex gap-1 overflow-x-auto hide-scrollbar flex-1 pb-0.5 items-center mask-fade-right">
-              {FILTER_OPTIONS.map((opt) => {
-                const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
-                const disabled = opt !== "Todos" && !typesWithData.has(opt);
-                return (
-                  <button
-                    key={opt}
-                    onClick={() => !disabled && setFilter(optText)}
-                    disabled={disabled}
-                    className={`px-2.5 py-1 text-xs rounded-full font-medium transition-all duration-200 border ${
-                      filter === opt
-                        ? "bg-primary text-primary-foreground shadow-sm border-primary"
-                        : disabled
-                          ? "text-muted-foreground/30 border-transparent cursor-not-allowed hidden sm:block"
-                          : "bg-transparent text-muted-foreground/80 border-border/50 hover:text-foreground hover:bg-muted/50 hover:border-border"
-                    }`}
-                  >
-                    {optText}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 self-end xl:self-auto shrink-0 mt-2 xl:mt-0">
+        {/* 2. Buttons (Right aligned on narrow, far right on wide) */}
+        <div className="flex items-center gap-1.5 shrink-0 2xl:order-4 2xl:ml-auto">
           <Button
             size="sm"
             variant="outline"
             onClick={() => setHelpOpen(true)}
-            className="h-7 px-2 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200 ml-1"
+            className="h-7 px-2 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
             title="Guía de uso"
           >
             <BookOpen className="h-3.5 w-3.5" />
@@ -727,23 +692,62 @@ export function PositionsTable({
             <span className="text-[11px] hidden sm:inline">{t('add_asset')}</span>
           </Button>
         </div>
+
+        {/* 3. Force line break on narrow screens */}
+        <div className="w-full h-0 2xl:hidden order-3" />
+
+        {/* 4. Search and Filters */}
+        <div className="flex items-center gap-2 w-full 2xl:w-auto 2xl:flex-1 min-w-0 order-4 2xl:order-2">
+          <div className="relative w-full sm:w-[150px] lg:w-[180px] shrink-0">
+            <Search className="absolute left-2.5 top-1.5 h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-focus-within:text-primary/70" />
+            <Input
+              placeholder={t('search_asset')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-7 text-xs bg-muted/20 border-border/40 w-full rounded-md text-foreground focus-visible:ring-primary/30 focus-visible:bg-background transition-all hover:bg-muted/30"
+            />
+          </div>
+
+          <div className="flex gap-1 overflow-x-auto hide-scrollbar flex-1 items-center pb-0.5">
+            {FILTER_OPTIONS.map((opt) => {
+              const optText = opt === "Todos" ? t('filter_all') : translateType(opt, t);
+              const disabled = opt !== "Todos" && !typesWithData.has(opt);
+              return (
+                <button
+                  key={opt}
+                  onClick={() => !disabled && setFilter(optText)}
+                  disabled={disabled}
+                  className={`px-2.5 py-1 text-xs rounded-full font-medium transition-all duration-200 border whitespace-nowrap ${
+                    filter === opt
+                      ? "bg-primary text-primary-foreground shadow-sm border-primary"
+                      : disabled
+                        ? "text-muted-foreground/30 border-transparent cursor-not-allowed hidden sm:block"
+                        : "bg-transparent text-muted-foreground/80 border-border/50 hover:text-foreground hover:bg-muted/50 hover:border-border"
+                  }`}
+                >
+                  {optText}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="p-0 flex-1 overflow-auto hide-scrollbar min-h-0 relative">
+      <CardContent className="p-0 flex-1 overflow-auto min-h-0 relative">
         {/* Desktop View (Table) */}
         <div className="hidden md:block w-full h-full">
           <Table className="w-full relative">
             <TableHeader className="bg-muted/40 sticky top-0 z-10 shadow-sm">
               <TableRow className="border-border/50 hover:bg-transparent">
                 {sortableHeader({ label: t('symbol'), sortKeyName: "ticker", className: "pl-4 sm:pl-6" })}
-                <TableHead className="text-muted-foreground/80 hidden md:table-cell">{t('name')}</TableHead>
-                {sortableHeader({ label: t('dist_type'), sortKeyName: "tipo" })}
-                {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right" })}
-                <TableHead className="text-muted-foreground/80 text-right hidden lg:table-cell">{t('purchase_price')}</TableHead>
+                <TableHead className="text-muted-foreground/80 hidden xl:table-cell">{t('name')}</TableHead>
+                {sortableHeader({ label: t('dist_type'), sortKeyName: "tipo", className: "hidden xl:table-cell" })}
+                {sortableHeader({ label: t('units'), sortKeyName: "unidades", className: "text-right hidden lg:table-cell" })}
+                <TableHead className="text-muted-foreground/80 text-right hidden xl:table-cell">{t('purchase_price')}</TableHead>
                 <TableHead className="text-muted-foreground/80 text-right">{t('current_price')}</TableHead>
-                {sortableHeader({ label: t('value'), sortKeyName: "displayValue", className: "text-right whitespace-nowrap min-w-[120px]" })}
-                {sortableHeader({ label: t('today'), sortKeyName: "displayDailyPnL", className: "text-right hidden sm:table-cell" })}
+                {sortableHeader({ label: t('value'), sortKeyName: "displayValue", className: "text-right whitespace-nowrap hidden lg:table-cell" })}
+                {sortableHeader({ label: t('today'), sortKeyName: "displayDailyPnL", className: "text-right" })}
                 {!showPnlPercentOnly && sortableHeader({ label: "P&L", sortKeyName: "displayPnl", className: "text-right" })}
-                {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden sm:table-cell"}` })}
+                {sortableHeader({ label: "P&L %", sortKeyName: "pnl_percent", className: `text-right ${showPnlPercentOnly ? "" : "hidden lg:table-cell"}` })}
                 <TableHead className="text-right text-muted-foreground/80 min-w-[100px] w-[100px] pr-8" />
               </TableRow>
             </TableHeader>

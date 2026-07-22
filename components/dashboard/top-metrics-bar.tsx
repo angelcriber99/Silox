@@ -78,7 +78,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             style={{ color: isPositive ? "#30D158" : "#FF453A" }}
           >
             {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span className="text-sm 2xl:text-base font-bold tabular-nums tracking-tight truncate">
+            <span className="text-xs lg:text-sm 2xl:text-base font-bold tabular-nums tracking-tight">
               {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
             </span>
           </div>
@@ -95,7 +95,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}
           >
             {daily24Positive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span className="text-sm 2xl:text-base font-bold tabular-nums tracking-tight truncate">
+            <span className="text-xs lg:text-sm 2xl:text-base font-bold tabular-nums tracking-tight">
               {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
             </span>
           </div>
@@ -107,19 +107,19 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
 
       {/* Contributions Pill & Actions */}
       <div className="flex flex-col gap-2 mt-1">
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-card border shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">FIFO</span>
-            <span className="text-sm font-bold tabular-nums text-foreground/80">
+        <div className="flex flex-wrap items-center justify-between px-3 py-2.5 rounded-lg bg-card border shadow-sm gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">FIFO</span>
+            <span className="text-xs sm:text-sm font-bold tabular-nums text-foreground/80 break-all">
               {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
             </span>
           </div>
           
-          <div className="w-px h-4 bg-border" />
+          <div className="hidden sm:block w-px h-4 bg-border" />
 
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Aportado</span>
-            <span className="text-sm font-bold tabular-nums text-foreground">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Aportado</span>
+            <span className="text-xs sm:text-sm font-bold tabular-nums text-foreground break-all">
               {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
             </span>
           </div>
