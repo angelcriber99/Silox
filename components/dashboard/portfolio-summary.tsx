@@ -216,69 +216,72 @@ export function PortfolioSummary({
               <AnimatedNumber value={convert(totals.valueMoney.amount)} format="currency" currency={displayCurrency} hide={hideBalances} />
             </div>
             
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-3 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 w-fit">
-              {/* Total PnL */}
-              <div
-                className="flex items-center justify-center gap-1.5"
-                style={{ color: isPositive ? "#30D158" : "#FF453A" }}
-              >
-                {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                <span className="text-[16px] font-bold tabular-nums">
-                  {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
-                </span>
-                <span className="text-[14px] font-semibold opacity-80">
-                  ({hideBalances ? "•••" : formatPercent(displayPnlPercent)})
-                </span>
+            <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card/30 backdrop-blur-md border border-border/40 w-full max-w-sm mt-2 shadow-sm">
+              {/* Top Row: Daily and Historical PnL */}
+              <div className="flex w-full justify-between items-center px-1">
+                <div className="flex flex-col items-start gap-1">
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Total Histórico</span>
+                  <div
+                    className="flex items-center gap-1.5"
+                    style={{ color: isPositive ? "#30D158" : "#FF453A" }}
+                  >
+                    {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                    <span className="text-[15px] font-bold tabular-nums">
+                      {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
+                    </span>
+                    <span className="text-[12px] font-bold opacity-80">
+                      ({hideBalances ? "•••" : formatPercent(displayPnlPercent).replace('+', '')})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-px h-8 bg-border/60 mx-4" />
+
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Hoy</span>
+                  <div
+                    className="flex items-center gap-1.5"
+                    style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}
+                  >
+                    <span className="text-[15px] font-bold tabular-nums">
+                      {hideBalances ? "••••" : `${daily24Positive ? "+" : ""}${formatDisplay(totals.pnl24hMoney.amount)}`}
+                    </span>
+                    <span className="text-[12px] font-bold opacity-80">
+                      ({hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent).replace('+', '')})
+                    </span>
+                    {daily24Positive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                  </div>
+                </div>
               </div>
 
-              <span className="w-px h-4 bg-border/60" />
+              <div className="w-full h-px bg-border/40 my-0.5" />
 
-              {/* 24h */}
-              <div
-                className="flex items-center gap-1 text-[13px] font-medium"
-                style={{ color: daily24Positive ? "rgba(48,209,88,0.9)" : "rgba(255,69,58,0.9)" }}
-              >
-                <span className="text-muted-foreground font-normal">Hoy</span>
-                <span className="font-semibold tabular-nums">
-                  {hideBalances ? "•••" : formatPercent(totals.totalDailyPnlPercent)}
-                </span>
-                {!hideBalances && (
-                  <span className="opacity-70">
-                    ({daily24Positive ? "+" : ""}{formatDisplay(totals.pnl24hMoney.amount)})
+              {/* Bottom Row: Aportado Neto and FIFO */}
+              <div className="flex w-full justify-between items-center px-1">
+                <div className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
+                  <span className="font-semibold uppercase tracking-widest text-[9px]" title="Capital neto aportado de tu bolsillo">Aportado neto</span>
+                  <span className="font-bold tabular-nums text-foreground/90">
+                    {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
                   </span>
-                )}
-              </div>
+                </div>
 
-              {/* Net Contributions (Primary) */}
-              <span className="w-px h-4 bg-border/60" />
-              <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-                <span className="font-normal uppercase tracking-widest text-[10px]" title="Capital neto aportado de tu bolsillo">Aportado neto</span>
-                <span className="font-semibold tabular-nums text-foreground/80">
-                  {hideBalances ? "•••••" : formatDisplay(totals.netContributionsMoney?.amount ?? totals.costMoney.amount)}
-                </span>
-              </div>
-
-              {/* Invested FIFO (Secondary) */}
-              {totals.netContributionsMoney !== undefined && (
-                <>
-                  <span className="w-px h-4 bg-border/60" />
-                  <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-                    <span className="font-normal uppercase tracking-widest text-[10px]" title="Coste Contable FIFO (valor a efectos fiscales)">FIFO</span>
+                {totals.netContributionsMoney !== undefined && (
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/60">
+                    <span className="font-semibold uppercase tracking-widest text-[8px]" title="Coste Contable FIFO (valor a efectos fiscales)">FIFO</span>
                     <span className="font-semibold tabular-nums text-foreground/60">
                       {hideBalances ? "•••••" : formatDisplay(totals.costMoney.amount)}
                     </span>
                   </div>
-                </>
-              )}
-
+                )}
+              </div>
+              
               {/* Prices sync badge */}
               {!totals.hasAllPrices && (
-                <>
-                  <span className="w-px h-4 bg-border/60" />
+                <div className="w-full text-center mt-1">
                   <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border text-amber-400/70 border-amber-500/20 bg-amber-500/5">
                     Precios pendientes
                   </span>
-                </>
+                </div>
               )}
             </div>
           </div>
