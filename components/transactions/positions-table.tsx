@@ -161,12 +161,12 @@ function LivePrice({
     ? { background: "rgba(48,209,88,0.2)", color: "#30D158" }
     : flash === 'down'
       ? { background: "rgba(255,69,58,0.2)", color: "#FF453A" }
-      : { background: "transparent", color: "rgba(255,255,255,0.8)" }
+      : { background: "transparent" }
 
   return (
     <div className="flex items-center justify-end gap-2">
       <span 
-        className={`${baseClasses} ${flash === 'down' ? 'animate-pulse' : ''}`}
+        className={`${baseClasses} ${flash === 'down' ? 'animate-pulse' : ''} ${!flash ? 'text-foreground/80' : ''}`}
         style={flashStyle}
       >
         {formatCurrency(value, currency || 'EUR', decimals)}
