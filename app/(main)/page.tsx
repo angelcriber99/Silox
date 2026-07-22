@@ -6,7 +6,6 @@ import { usePortfolioContext } from "@/lib/context/portfolio-context"
 import { useAllTransactions } from "@/lib/hooks/use-transactions"
 import type { EnrichedPosition, EventoRecurrente } from "@/lib/types"
 
-import { SiloxInsights } from "@/components/dashboard/silox-insights"
 import { AllocationChart } from "@/components/dashboard/allocation-chart"
 import { PositionsTable } from "@/components/transactions/positions-table"
 import { TopMovers } from "@/components/dashboard/top-movers"
@@ -71,10 +70,7 @@ export default function Home() {
             <div className="w-[280px] lg:w-[320px] xl:w-[380px] flex-shrink-0 flex flex-col border-r glass-sidebar relative transition-all duration-300">
               {/* Subtle gradient background for the premium feel */}
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-              <div className="px-3 pt-3">
-                <SiloxInsights positions={positions} totals={totals} />
-              </div>
-              
+
               <div className="grid flex-1 min-h-0 grid-rows-[auto_minmax(128px,0.8fr)_minmax(170px,1fr)] gap-3 overflow-hidden p-3">
                 <AllocationChart positions={positions} marketState={marketState} />
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
