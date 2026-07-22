@@ -24,7 +24,9 @@ export interface ChartMeta {
   regularMarketPrice?: number
   regularMarketTime?: Date | string | number
   preMarketPrice?: number
+  preMarketTime?: Date | string | number
   postMarketPrice?: number
+  postMarketTime?: Date | string | number
   chartPreviousClose?: number
   previousClose?: number
   currentTradingPeriod?: {
@@ -62,9 +64,18 @@ export interface MarketPerformance {
 const DEFAULT_MARKET_TIME_ZONE = 'America/New_York'
 const ACTIVE_QUOTE_STALE_AFTER_MS = 10 * 60 * 1000
 
-function toMilliseconds(value?: number | Date): number {
+function toMilliseconds(value?: number | Date | string): number {
   if (value instanceof Date) return value.getTime()
-  return typeof value === 'number' ? value * 1000 : 0
+  if (typeof value === 'number') return value * 1000
+  if (typeof value === 'string') {
+    const parsed = new Date(value).getTime()
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
+  return 0
+}
+
+function validPrice(value?: number | null): number | null {
+  return value != null && Number.isFinite(value) && value > 0 ? value : null
 }
 
 function percentChange(current?: number | null, baseline?: number | null): number | null {
@@ -114,22 +125,33 @@ export function extractMarketPerformance(
     (quote) => getMarketDateKey(quote.date, exchangeTimezone) === marketDate,
   )
   const latestQuote = currentDateQuotes.at(-1)
-  const latestTime = latestQuote ? new Date(latestQuote.date) : undefined
+  let latestTime = latestQuote ? new Date(latestQuote.date) : undefined
   
   const hasCurrentRegularMeta = meta.regularMarketTime
     ? getMarketDateKey(meta.regularMarketTime, exchangeTimezone) === marketDate
     : false
-  let currentPrice = latestQuote?.close ?? (hasCurrentRegularMeta ? meta.regularMarketPrice ?? null : null)
+  const regularPrice = validPrice(meta.regularMarketPrice)
+  const prePrice = validPrice(meta.preMarketPrice)
+  const postPrice = validPrice(meta.postMarketPrice)
+  let currentPrice = latestQuote?.close ?? (hasCurrentRegularMeta ? regularPrice : null)
   if (marketState === 'PRE') {
-    currentPrice = meta.preMarketPrice ?? latestQuote?.close ?? (hasCurrentRegularMeta ? meta.regularMarketPrice ?? null : null)
+    currentPrice = prePrice ?? latestQuote?.close ?? regularPrice ?? postPrice
+    if (!latestTime && meta.preMarketTime) latestTime = new Date(meta.preMarketTime)
   } else if (marketState === 'POST') {
-    currentPrice = meta.postMarketPrice ?? latestQuote?.close ?? (hasCurrentRegularMeta ? meta.regularMarketPrice ?? null : null)
+    currentPrice = postPrice ?? latestQuote?.close ?? regularPrice
+    if (!latestTime && meta.postMarketTime) latestTime = new Date(meta.postMarketTime)
   } else if (marketState === 'CLOSED') {
-    // The complete day includes the last post-market quote. Never fall back to
-    // a quote from a previous market date, which would leak yesterday into today.
-    currentPrice = latestQuote?.close ?? (hasCurrentRegularMeta ? meta.regularMarketPrice ?? null : null)
+    // A closed market still has a real valuation: retain the last traded quote.
+    // At the overnight date boundary this may belong to the prior market day,
+    // but only the price is carried forward; the new day's performance resets.
+    currentPrice = latestQuote?.close ?? postPrice ?? regularPrice ?? prePrice
+    if (!latestTime) {
+      const fallbackTime = meta.postMarketTime ?? meta.regularMarketTime ?? meta.preMarketTime
+      if (fallbackTime) latestTime = new Date(fallbackTime)
+    }
   } else if (marketState === 'REGULAR') {
-    currentPrice = latestQuote?.close ?? (hasCurrentRegularMeta ? meta.regularMarketPrice ?? null : null)
+    currentPrice = latestQuote?.close ?? regularPrice ?? prePrice
+    if (!latestTime && meta.regularMarketTime) latestTime = new Date(meta.regularMarketTime)
   }
 
   let dailyBaseline = meta.chartPreviousClose ?? meta.previousClose ?? null
@@ -145,6 +167,16 @@ export function extractMarketPerformance(
     if (previousDays.length > 0) {
       dailyBaseline = previousDays.at(-1)?.close ?? dailyBaseline;
     }
+  }
+
+  const priceBelongsToCurrentMarketDate = latestTime
+    ? getMarketDateKey(latestTime, exchangeTimezone) === marketDate
+    : false
+  if (!priceBelongsToCurrentMarketDate && (marketState === 'CLOSED' || marketState === 'PRE')) {
+    // Before the first trade of a new market day, yesterday's close is the
+    // valuation anchor. This keeps the asset visible while resetting its own
+    // daily movement to zero; FX can still move the portfolio currency value.
+    dailyBaseline = currentPrice
   }
 
   const dailyChangePercent = percentChange(currentPrice, dailyBaseline) ?? 0

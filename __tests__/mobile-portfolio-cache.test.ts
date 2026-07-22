@@ -20,7 +20,7 @@ function portfolioResult(asOf: string, marketState = 'REGULAR_OPEN') {
   }
 }
 
-describe('mobile portfolio private conditional cache', () => {
+describe('mobile portfolio native cache contract', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns a private ETag and refresh recommendation', async () => {
@@ -28,7 +28,7 @@ describe('mobile portfolio private conditional cache', () => {
     const response = await GET(new Request('http://localhost/api/mobile/v1/portfolio'))
 
     expect(response.status).toBe(200)
-    expect(response.headers.get('cache-control')).toBe('private, no-cache')
+    expect(response.headers.get('cache-control')).toBe('private, no-store')
     expect(response.headers.get('etag')).toMatch(/^W\/"[a-f0-9]{64}"$/)
     expect(response.headers.get('x-silox-refresh-after')).toBe('5')
     await expect(response.json()).resolves.toMatchObject({
@@ -36,7 +36,7 @@ describe('mobile portfolio private conditional cache', () => {
     })
   })
 
-  it('returns 304 when only asOf changed and keeps cache headers', async () => {
+  it('always returns a decodable body even when the client sends a matching ETag', async () => {
     mocks.portfolio
       .mockResolvedValueOnce(portfolioResult('2026-07-18T10:00:00.000Z'))
       .mockResolvedValueOnce(portfolioResult('2026-07-18T10:00:05.000Z'))
@@ -47,11 +47,13 @@ describe('mobile portfolio private conditional cache', () => {
       headers: { 'If-None-Match': etag },
     }))
 
-    expect(second.status).toBe(304)
+    expect(second.status).toBe(200)
     expect(second.headers.get('etag')).toBe(etag)
-    expect(second.headers.get('cache-control')).toBe('private, no-cache')
+    expect(second.headers.get('cache-control')).toBe('private, no-store')
     expect(second.headers.get('x-silox-refresh-after')).toBe('5')
-    expect(await second.text()).toBe('')
+    await expect(second.json()).resolves.toMatchObject({
+      data: { asOf: '2026-07-18T10:00:05.000Z', totals: { value: '100' } },
+    })
   })
 
   it('recommends a slower refresh while the market is closed', async () => {

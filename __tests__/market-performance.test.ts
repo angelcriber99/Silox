@@ -75,7 +75,24 @@ describe('market session performance', () => {
 
     expect(result.sessionChangePercent).toBe(0)
     expect(result.dailyChangePercent).toBe(0)
+    expect(result.currentPrice).toBe(108)
     expect(result.isStale).toBe(true)
+  })
+
+  it('keeps the last post-market valuation overnight while the new day stays at zero', () => {
+    const result = extractMarketPerformance({
+      ...meta,
+      regularMarketPrice: 63.34,
+      regularMarketTime: '2026-07-21T20:00:01.000Z',
+      postMarketPrice: 64.8,
+      postMarketTime: '2026-07-22T00:00:00.000Z',
+      chartPreviousClose: 57.42,
+    }, [], [], new Date('2026-07-22T06:40:00.000Z'))
+
+    expect(result.marketState).toBe('CLOSED')
+    expect(result.currentPrice).toBe(64.8)
+    expect(result.dailyChangePercent).toBe(0)
+    expect(result.sessionChangePercent).toBe(0)
   })
 
   it('keeps the cumulative day result after the active session closes', () => {
