@@ -64,14 +64,14 @@ export default function Home() {
         {zenMode ? (
           <ZenDashboard positions={positions} marketState={marketState} />
         ) : (
-          <div className="flex-1 flex flex-row overflow-hidden bg-transparent">
-            
-            {/* ── Left Sidebar (Dashboard Control Panel) ── */}
-            <div className="w-[280px] lg:w-[320px] xl:w-[380px] flex-shrink-0 flex flex-col border-r glass-sidebar relative transition-all duration-300">
-              {/* Subtle gradient background for the premium feel */}
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-
-              <div className="grid flex-1 min-h-0 grid-rows-[auto_minmax(128px,0.8fr)_minmax(170px,1fr)] gap-3 overflow-hidden p-3">
+          <div className="flex-1 flex flex-col overflow-y-auto bg-transparent p-4 lg:p-6 pb-20 custom-scrollbar">
+            <div className="w-full max-w-[1600px] mx-auto space-y-4 lg:space-y-6">
+              
+              {/* ── Top Metrics ── */}
+              <TopMetricsBar totals={totals} positions={positions} marketState={marketState} loading={isLoading} />
+              
+              {/* ── Visual Widgets Grid ── */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 min-h-[250px] lg:min-h-[300px]">
                 <AllocationChart positions={positions} marketState={marketState} />
                 <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 <UpcomingEvents
@@ -80,35 +80,31 @@ export default function Home() {
                   onEditEvent={(data) => { setEditEventData(data); setAddEventOpen(true) }}
                 />
               </div>
-              
+
               {/* Price updated footer */}
               {pricesUpdatedAt && (
-                <div className="mt-auto py-2 text-center text-[10px] text-muted-foreground/40">
+                <div className="text-right text-[10px] text-muted-foreground/40">
                   Precios: {new Date(pricesUpdatedAt).toLocaleString("es-ES")}
                 </div>
               )}
-            </div>
 
-            {/* ── Main Content (Positions Table) ── */}
-            <div className="flex-1 flex flex-col min-w-0 p-3 sm:p-4 lg:py-5 lg:px-6 overflow-hidden relative">
-              <div className="flex-shrink-0">
-                <TopMetricsBar totals={totals} positions={positions} marketState={marketState} loading={isLoading} />
-              </div>
-              <div className="flex-1 flex flex-col glass-card border overflow-hidden">
-                <div className="flex-shrink-0">
+              {/* ── Pending Orders ── */}
+              {pendingTxs.length > 0 && (
+                <div className="glass-card border rounded-2xl p-4">
                   <PendingOrders transactions={pendingTxs} />
                 </div>
-                <div className="flex-1 overflow-hidden min-h-0">
-                  <PositionsTable
-                    positions={positions}
-                    loading={isLoading}
-                    onAddTransaction={openTransactionModal}
-                    onEditAsset={openEditAssetModal}
-                  />
-                </div>
-              </div>
-            </div>
+              )}
 
+              {/* ── Positions Table ── */}
+              <div className="glass-card border rounded-2xl overflow-hidden min-h-[500px]">
+                <PositionsTable
+                  positions={positions}
+                  onAddTransaction={openTransactionModal}
+                  onEditAsset={openEditAssetModal}
+                />
+              </div>
+
+            </div>
           </div>
         )}
       </div>

@@ -8,7 +8,7 @@ import type { PortfolioTotals, EnrichedPosition } from "@/lib/types"
 import { useDisplayCurrency } from "@/lib/hooks/use-display-currency"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import { useNotes } from "@/lib/stores/use-notes"
-import { PerformanceModal } from "@/components/dashboard/performance-modal"
+import Link from "next/link"
 
 interface TopMetricsBarProps {
   totals: PortfolioTotals
@@ -20,7 +20,6 @@ interface TopMetricsBarProps {
 export function TopMetricsBar({ totals, positions, marketState, loading = false }: TopMetricsBarProps) {
   const { hideBalances } = usePreferences()
   const { displayCurrency, convert, format: formatDisplay } = useDisplayCurrency()
-  const [chartsOpen, setChartsOpen] = useState(false)
 
   if (loading) {
     return (
@@ -155,30 +154,15 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             <span className="hidden xl:inline">Plan Estratégico</span>
             <span className="inline xl:hidden">Plan</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setChartsOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-xs font-semibold shadow-sm"
+          <Link
+            href="/analisis"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg font-semibold text-[11px] sm:text-xs transition-all bg-primary/10 hover:bg-primary/15 text-primary border border-primary/20 hover:border-primary/30"
           >
-            <BarChart2 className="w-4 h-4" />
+            <BarChart2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Análisis
-          </button>
+          </Link>
         </div>
       </div>
-
-      <PerformanceModal
-        open={chartsOpen}
-        onOpenChange={setChartsOpen}
-        positions={positions}
-        currentDailyPnl={totals.pnl24hMoney.amount}
-        currentDailyPnlPercent={totals.totalDailyPnlPercent}
-        currentDailyCoverage={totals.dailyPerformancePositionCount}
-        currentPositionCount={totals.positionCount}
-        currentTotalValue={totals.valueMoney.amount}
-        currentTotalCost={totals.costMoney.amount}
-        currentTotalPnl={totals.pnlMoney.amount}
-        currentTotalPnlPercent={totals.totalPnlPercent}
-      />
     </div>
   )
 }
