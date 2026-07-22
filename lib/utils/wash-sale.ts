@@ -10,8 +10,14 @@ export interface WashSaleWarning {
 export function checkPendingWashSale(transactions: Transaccion[], newBuyDate: string): WashSaleWarning {
   if (!transactions || transactions.length === 0) return { hasWarning: false }
 
-  // 1. Calculamos las ventas históricas y sus ganancias/pérdidas
-  const events = calculateFIFO(transactions)
+  let events;
+  try {
+    // 1. Calculamos las ventas historicas y sus ganancias/perdidas
+    events = calculateFIFO(transactions)
+  } catch (e) {
+    console.warn("Could not calculate FIFO for wash sale check:", e)
+    return { hasWarning: false }
+  }
   
   const buyDateMs = new Date(newBuyDate).getTime()
   const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000

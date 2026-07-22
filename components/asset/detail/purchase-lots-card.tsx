@@ -71,11 +71,13 @@ export function PurchaseLotsCard({ position, transactions }: PurchaseLotsCardPro
             {visibleLots.map((lot) => {
               const currentValue = currentPrice === null ? null : lot.remainingQuantity * currentPrice
               const referenceValue = lot.remainingQuantity * lot.performanceUnitCost
+              const referenceValueEur = lot.remainingQuantity * lot.performanceUnitCostEur
               const pnl = currentValue === null ? null : currentValue - referenceValue
-              const pnlEur = pnl !== null ? pnl * conversionRate : null
+              
               const currentValueEur = currentValue !== null ? currentValue * conversionRate : null
-              const pnlPercent = pnl === null || referenceValue <= 0 ? null : (pnl / referenceValue) * 100
-              const isPositive = (pnl ?? 0) >= 0
+              const pnlEur = currentValueEur !== null ? currentValueEur - referenceValueEur : null
+              const pnlPercent = pnlEur === null || referenceValueEur <= 0 ? null : (pnlEur / referenceValueEur) * 100
+              const isPositive = (pnlEur ?? 0) >= 0
               const isPartial = lot.remainingQuantity < lot.originalQuantity - EPSILON
               const isReward = lot.investedUnitCost === 0
 

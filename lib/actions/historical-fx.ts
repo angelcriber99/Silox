@@ -60,11 +60,17 @@ export async function fetchHistoricalFxRates(
     const period2 = utcDate(orderedDates.at(-1)!)
     period2.setUTCDate(period2.getUTCDate() + 2)
 
-    const chart = await getYahooFinance().chart(FX_PAIRS[currency], {
-      period1,
-      period2,
-      interval: '1d',
-    })
+    let chart;
+    try {
+      chart = await getYahooFinance().chart(FX_PAIRS[currency], {
+        period1,
+        period2,
+        interval: '1d',
+      })
+    } catch (error) {
+      console.warn(`Failed to fetch historical FX rates for ${currency}:`, error);
+      return; // Skip this currency batch, leaving rates undefined
+    }
     const quotes = chart.quotes
       .filter((quote) => Number.isFinite(quote.close) && quote.close! > 0)
       .map((quote) => ({ date: quote.date.toISOString().slice(0, 10), rate: quote.close! }))

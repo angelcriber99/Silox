@@ -113,10 +113,6 @@ export function calculateNetInvestmentByCurrency(
       || transaction.tipo_operacion === 'Retirada'
     ) {
       flow = -(gross - commission)
-    } else if (transaction.tipo_operacion === 'Dividendo') {
-      const withholding = Math.max(0, Number(transaction.retencion_origen) || 0)
-        + Math.max(0, Number(transaction.retencion_destino) || 0)
-      flow = -(gross - commission - withholding)
     } else {
       continue
     }

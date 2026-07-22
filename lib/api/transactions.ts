@@ -14,7 +14,7 @@ export async function fetchTransacciones(limit = 20): Promise<Transaccion[]> {
 
   if (error) throw new Error(`Error cargando transacciones: ${error.message}`)
 
-  return data
+  return hydrateTransactionsFx(data)
 }
 
 export async function fetchAssetTransactions(assetId: string): Promise<Transaccion[]> {
@@ -27,7 +27,7 @@ export async function fetchAssetTransactions(assetId: string): Promise<Transacci
     .overrideTypes<Transaccion[], { merge: false }>()
 
   if (error) throw new Error(`Error cargando las operaciones del activo: ${error.message}`)
-  return data
+  return hydrateTransactionsFx(data)
 }
 
 export async function fetchPendingTransactions(): Promise<Transaccion[]> {
@@ -54,7 +54,66 @@ export async function fetchTransactions(limitCount = 100): Promise<Transaccion[]
 
   if (error) throw new Error(`Error cargando transacciones: ${error.message}`)
 
-  return data
+  return hydrateTransactionsFx(data)
+}
+
+async function hydrateTransactionsFx(data: Transaccion[]): Promise<Transaccion[]> {
+  const requests = data
+    .filter((transaction) => {
+      const currency = transaction.activo?.moneda?.toUpperCase()
+      return currency && currency !== 'EUR'
+        && (!Number.isFinite(Number(transaction.tipo_cambio_eur)) || Number(transaction.tipo_cambio_eur) <= 0)
+    })
+    .map((transaction) => ({
+      currency: transaction.activo!.moneda,
+      date: transaction.fecha.slice(0, 10),
+    }))
+
+  if (requests.length === 0) return data
+
+  const historicalRates = await fetchHistoricalFxRates(requests)
+  const updatesByRate = new Map<number, string[]>()
+
+  const hydrated = data.map((transaction) => {
+    const currency = transaction.activo?.moneda?.toUpperCase()
+    if (!currency) return transaction
+
+    const storedRate = Number(transaction.tipo_cambio_eur)
+    if (Number.isFinite(storedRate) && storedRate > 0) return transaction
+
+    let rate = currency === 'EUR' ? 1 : historicalRates[historicalFxKey(currency, transaction.fecha)]
+    
+    // If Yahoo Finance API failed or the date had no quote, fallback to 1.0 to avoid crash,
+    // but don't save the fallback to the DB so we can try again later.
+    if (!Number.isFinite(rate) || rate <= 0) {
+      return { ...transaction, tipo_cambio_eur: 1 }
+    }
+
+    if (transaction.tipo_cambio_eur === null || transaction.tipo_cambio_eur === undefined) {
+      const ids = updatesByRate.get(rate) ?? []
+      ids.push(transaction.id)
+      updatesByRate.set(rate, ids)
+    }
+
+    return { ...transaction, tipo_cambio_eur: rate }
+  })
+
+  if (updatesByRate.size > 0) {
+    const supabase = createClient()
+    const results = await Promise.all(Array.from(updatesByRate, ([rate, ids]) =>
+      supabase
+        .from('transacciones')
+        .update({ tipo_cambio_eur: rate })
+        .in('id', ids)
+        .is('tipo_cambio_eur', null)
+    ))
+    const persistenceError = results.find((result) => result.error)?.error
+    if (persistenceError) {
+      console.warn(`No se pudieron fijar los cambios históricos: ${persistenceError.message}`)
+    }
+  }
+
+  return hydrated
 }
 
 export async function fetchAllTransactionsForTax(): Promise<Transaccion[]> {
@@ -72,60 +131,7 @@ export async function fetchAllTransactionsForTax(): Promise<Transaccion[]> {
 
   if (error) throw new Error(`Error obteniendo transacciones fiscales: ${error.message}`)
 
-  const requests = data
-    .filter((transaction) => {
-      const currency = transaction.activo?.moneda?.toUpperCase()
-      return currency && currency !== 'EUR'
-        && (!Number.isFinite(Number(transaction.tipo_cambio_eur)) || Number(transaction.tipo_cambio_eur) <= 0)
-    })
-    .map((transaction) => ({
-      currency: transaction.activo!.moneda,
-      date: transaction.fecha.slice(0, 10),
-    }))
-  const historicalRates = await fetchHistoricalFxRates(requests)
-  const updatesByRate = new Map<number, string[]>()
-
-  const hydrated = data.map((transaction) => {
-    const currency = transaction.activo?.moneda?.toUpperCase()
-    if (!currency) {
-      throw new Error(`La operación ${transaction.id} no tiene una moneda asociada`)
-    }
-
-    const storedRate = Number(transaction.tipo_cambio_eur)
-    const rate = Number.isFinite(storedRate) && storedRate > 0
-      ? storedRate
-      : currency === 'EUR'
-        ? 1
-        : historicalRates[historicalFxKey(currency, transaction.fecha)]
-
-    if (!Number.isFinite(rate) || rate <= 0) {
-      throw new Error(`No se pudo obtener el cambio histórico ${currency}/EUR del ${transaction.fecha.slice(0, 10)}`)
-    }
-
-    if (transaction.tipo_cambio_eur === null || transaction.tipo_cambio_eur === undefined) {
-      const ids = updatesByRate.get(rate) ?? []
-      ids.push(transaction.id)
-      updatesByRate.set(rate, ids)
-    }
-
-    return { ...transaction, tipo_cambio_eur: rate }
-  })
-
-  if (updatesByRate.size > 0) {
-    const results = await Promise.all(Array.from(updatesByRate, ([rate, ids]) =>
-      supabase
-        .from('transacciones')
-        .update({ tipo_cambio_eur: rate })
-        .in('id', ids)
-        .is('tipo_cambio_eur', null)
-    ))
-    const persistenceError = results.find((result) => result.error)?.error
-    if (persistenceError) {
-      throw new Error(`No se pudieron fijar los cambios históricos: ${persistenceError.message}`)
-    }
-  }
-
-  return hydrated
+  return hydrateTransactionsFx(data)
 }
 
 export async function insertTransaccion(tx: {

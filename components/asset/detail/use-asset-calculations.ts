@@ -13,6 +13,7 @@ export interface RawTransaction {
   notas: string | null
   created_at: string
   estado?: string
+  tipo_cambio_eur?: number | null
 }
 
 function buildTransactionTable(transactions: RawTransaction[], currentNativePrice: number | null, conversionRate: number = 1) {
@@ -28,9 +29,12 @@ function buildTransactionTable(transactions: RawTransaction[], currentNativePric
 
     const pnlPerUnit = currentNativePrice !== null ? currentNativePrice - price : null
     const pnlTotal = pnlPerUnit !== null ? pnlPerUnit * qty : null
-    const pnlPct = price > 0 && pnlPerUnit !== null ? (pnlPerUnit / price) * 100 : null
-
-    const pnlTotalEur = pnlTotal !== null ? pnlTotal * conversionRate : null
+    
+    const rate = Number.isFinite(Number(tx.tipo_cambio_eur)) && Number(tx.tipo_cambio_eur) > 0 ? Number(tx.tipo_cambio_eur) : 1
+    const costEur = (qty * price) / rate
+    const currentValueEur = currentNativePrice !== null ? (qty * currentNativePrice) * conversionRate : null
+    const pnlTotalEur = currentValueEur !== null ? currentValueEur - costEur : null
+    const pnlPct = costEur > 0 && pnlTotalEur !== null ? (pnlTotalEur / costEur) * 100 : null
 
     return {
       ...tx,
