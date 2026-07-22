@@ -1,4 +1,5 @@
 use tauri::Manager;
+use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,6 +15,11 @@ pub fn run() {
             .level(log::LevelFilter::Info)
             .build(),
         )?;
+      }
+
+      #[cfg(target_os = "macos")]
+      if let Some(window) = app.get_webview_window("main") {
+          let _ = apply_vibrancy(&window, NSVisualEffectMaterial::Sidebar, None, None);
       }
 
       Ok(())
