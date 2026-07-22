@@ -8,6 +8,7 @@ import { AppDataPreloader } from "@/components/providers/app-data-preloader"
 import { PortfolioRealtimeSync } from "@/components/providers/portfolio-realtime-sync"
 import { SilentDividendSync } from "@/components/providers/silent-dividend-sync"
 import { PortfolioProvider } from "@/lib/context/portfolio-context"
+import { GlobalSwipeBack } from "@/components/layout/global-swipe-back"
 
 export default function MainLayout({
   children,
@@ -21,6 +22,7 @@ export default function MainLayout({
         <AppDataPreloader />
         <PortfolioRealtimeSync />
         <SilentDividendSync />
+        <GlobalSwipeBack />
         <MobileShell />
 
         {/* Desktop Dock (hidden on mobile) */}

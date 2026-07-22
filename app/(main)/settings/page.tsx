@@ -410,7 +410,7 @@ export default function SettingsPage() {
       {/* ── Desktop View ────────────────────────────────────────────── */}
       <div
         className="hidden md:flex max-w-6xl w-full mx-auto flex-col md:flex-row gap-6 md:gap-8 min-h-[calc(100vh-8rem)] pb-6 md:py-8 px-4 md:px-6 mb-20 md:mb-0 animate-fade-in"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)' }}
       >
       
       {/* ── Sidebar ───────────────────────────────────────── */}

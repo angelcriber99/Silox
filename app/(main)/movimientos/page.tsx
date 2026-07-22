@@ -267,7 +267,7 @@ export default function MovimientosPage() {
       </div>
 
       {/* ── Desktop View ────────────────────────────────────────────── */}
-      <div className="hidden md:flex flex-1 max-w-7xl mx-auto w-full flex-col px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 24px)' }}>
+      <div className="hidden md:flex flex-1 max-w-7xl mx-auto w-full flex-col px-6 pb-10 space-y-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)' }}>
         
         {/* ── Page Header ────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
