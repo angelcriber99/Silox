@@ -31,37 +31,45 @@ export async function getAssetDetails(ticker: string): Promise<AssetDetails | nu
   
   try {
     const yahoo = getYahooFinance()
-    const quote = await yahoo.quoteSummary(ticker, { 
-      modules: ['price', 'summaryDetail', 'summaryProfile', 'defaultKeyStatistics'] 
-    })
     
-    if (!quote) return null
+    // First try to get the basic quote. If this fails, the asset really doesn't exist.
+    const quote = await yahoo.quote(ticker)
+    
+    // Then try to get additional details, which might fail for certain assets (like crypto or some ETFs)
+    let summary: any = {}
+    try {
+      summary = await yahoo.quoteSummary(ticker, { 
+        modules: ['summaryDetail', 'summaryProfile', 'defaultKeyStatistics'] 
+      })
+    } catch (e) {
+      console.warn(`Could not fetch full summary for ${ticker}, using basic quote data instead.`)
+    }
     
     return {
-      symbol: quote.price?.symbol ?? ticker,
-      shortName: quote.price?.shortName ?? null,
-      longName: quote.price?.longName ?? null,
-      currency: quote.price?.currency ?? null,
-      exchange: quote.price?.exchangeName ?? null,
-      quoteType: quote.price?.quoteType ?? null,
+      symbol: quote.symbol ?? ticker,
+      shortName: quote.shortName ?? null,
+      longName: quote.longName ?? null,
+      currency: quote.currency ?? null,
+      exchange: quote.exchange ?? null,
+      quoteType: quote.quoteType ?? null,
       
-      regularMarketPrice: quote.price?.regularMarketPrice ?? null,
-      regularMarketChange: quote.price?.regularMarketChange ?? null,
-      regularMarketChangePercent: quote.price?.regularMarketChangePercent ?? null,
-      regularMarketPreviousClose: quote.summaryDetail?.previousClose ?? null,
+      regularMarketPrice: quote.regularMarketPrice ?? null,
+      regularMarketChange: quote.regularMarketChange ?? null,
+      regularMarketChangePercent: quote.regularMarketChangePercent ?? null,
+      regularMarketPreviousClose: quote.regularMarketPreviousClose ?? summary.summaryDetail?.previousClose ?? null,
       
-      fiftyTwoWeekHigh: quote.summaryDetail?.fiftyTwoWeekHigh ?? null,
-      fiftyTwoWeekLow: quote.summaryDetail?.fiftyTwoWeekLow ?? null,
-      marketCap: quote.price?.marketCap ?? null,
-      trailingPE: quote.summaryDetail?.trailingPE ?? null,
-      dividendYield: quote.summaryDetail?.dividendYield ?? null,
-      beta: quote.summaryDetail?.beta ?? quote.defaultKeyStatistics?.beta ?? null,
+      fiftyTwoWeekHigh: quote.fiftyTwoWeekHigh ?? summary.summaryDetail?.fiftyTwoWeekHigh ?? null,
+      fiftyTwoWeekLow: quote.fiftyTwoWeekLow ?? summary.summaryDetail?.fiftyTwoWeekLow ?? null,
+      marketCap: quote.marketCap ?? null,
+      trailingPE: quote.trailingPE ?? summary.summaryDetail?.trailingPE ?? null,
+      dividendYield: summary.summaryDetail?.dividendYield ?? null,
+      beta: summary.summaryDetail?.beta ?? summary.defaultKeyStatistics?.beta ?? null,
       
-      longBusinessSummary: quote.summaryProfile?.longBusinessSummary ?? null,
-      sector: quote.summaryProfile?.sector ?? null,
-      industry: quote.summaryProfile?.industry ?? null,
-      website: quote.summaryProfile?.website ?? null,
-      country: quote.summaryProfile?.country ?? null,
+      longBusinessSummary: summary.summaryProfile?.longBusinessSummary ?? null,
+      sector: summary.summaryProfile?.sector ?? null,
+      industry: summary.summaryProfile?.industry ?? null,
+      website: summary.summaryProfile?.website ?? null,
+      country: summary.summaryProfile?.country ?? null,
     }
   } catch (error) {
     console.error(`Error fetching asset details for ${ticker}:`, error)
