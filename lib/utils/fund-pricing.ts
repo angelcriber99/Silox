@@ -54,7 +54,7 @@ export function deriveFundPricing({
   const today = getMarketDateKey(now, exchangeTimezone)
   const effectiveDate = validAsOf ? getMarketDateKey(validAsOf, exchangeTimezone) : undefined
   const isPublishedToday = effectiveDate === today
-  const change = isPublishedToday && price != null && previousClose != null && previousClose > 0
+  const change = price != null && previousClose != null && previousClose > 0
     ? ((price / previousClose) - 1) * 100
     : 0
   const businessDayAge = effectiveDate ? businessDaysBetween(effectiveDate, today) : Number.POSITIVE_INFINITY

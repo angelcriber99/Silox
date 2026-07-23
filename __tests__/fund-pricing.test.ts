@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { deriveFundPricing } from '@/lib/utils/fund-pricing'
 
 describe('fund NAV pricing', () => {
-  it('keeps the latest published NAV without attributing an old NAV to today', () => {
+  it('reports the latest NAV movement even when it belongs to a prior business day', () => {
     const result = deriveFundPricing({
       currentPrice: 11.7145,
       previousClose: 11.7435,
@@ -14,7 +14,7 @@ describe('fund NAV pricing', () => {
 
     expect(result.currentPrice).toBe(11.7145)
     expect(result.effectiveDate).toBe('2026-07-20')
-    expect(result.dailyChangePercent).toBe(0)
+    expect(result.dailyChangePercent).toBeCloseTo((11.7145 / 11.7435 - 1) * 100)
     expect(result.isStale).toBe(false)
   })
 
