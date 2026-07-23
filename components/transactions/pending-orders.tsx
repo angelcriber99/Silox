@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Trash2, Loader2, MoreHorizontal, CheckCircle2 } from "lucide-react"
+import { Clock, Trash2, Loader2, MoreHorizontal, CheckCircle2, Edit2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Transaccion } from "@/lib/types"
 import { formatCurrency, formatUnits } from "@/lib/utils/formatters"
