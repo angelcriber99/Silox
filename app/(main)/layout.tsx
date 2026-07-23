@@ -10,6 +10,7 @@ import { SilentDividendSync } from "@/components/providers/silent-dividend-sync"
 import { PortfolioProvider } from "@/lib/context/portfolio-context"
 import { GlobalSwipeBack } from "@/components/layout/global-swipe-back"
 import { GlobalSearch } from "@/components/ui/global-search"
+import { GlobalBackButton } from "@/components/layout/global-back-button"
 
 export default function MainLayout({
   children,
@@ -24,6 +25,7 @@ export default function MainLayout({
         <PortfolioRealtimeSync />
         <SilentDividendSync />
         <GlobalSwipeBack />
+        <GlobalBackButton />
         <GlobalSearch />
         <MobileShell />
 

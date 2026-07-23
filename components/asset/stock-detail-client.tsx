@@ -58,11 +58,7 @@ export function StockDetailClient({ position, transactions, realtimeStatus = "co
     <div className="min-h-screen bg-background selection:bg-amber-500/30">
       {/* ═══════════ HEADER ═══════════ */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 pt-10 pb-4 lg:pt-12 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm font-medium">Volver</span>
-          </Link>
+        <div className="max-w-7xl mx-auto px-6 pt-10 pb-4 lg:pt-12 flex items-center justify-end">
           <div className="flex items-center gap-2.5">
              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                <span className={`h-2 w-2 rounded-full ${realtimeStatus === "connected" && !position.price_is_stale ? "bg-emerald-400" : realtimeStatus === "disconnected" ? "bg-rose-400" : "bg-amber-400"}`} />
