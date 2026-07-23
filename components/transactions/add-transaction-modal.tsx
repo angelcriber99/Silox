@@ -159,6 +159,7 @@ export function AddTransactionModal({
   const isCompra = tipoOperacion === "Compra"
   const isVenta = tipoOperacion === "Venta"
   const isDividendo = tipoOperacion === "Dividendo"
+  const isTraspasable = ["Fondo Indexado", "Fondo Monetario", "ETF"].includes(position?.tipo || "")
 
   const washSaleWarning = isCompra && assetTransactions 
     ? checkPendingWashSale(assetTransactions, fecha) 
@@ -261,8 +262,8 @@ export function AddTransactionModal({
             </div>
           </div>
 
-          {/* Es Traspaso Checkbox (only for Buy/Sell) */}
-          {(isCompra || isVenta) && (
+          {/* Es Traspaso Checkbox (only for Buy/Sell and Traspasable assets) */}
+          {(isCompra || isVenta) && isTraspasable && (
             <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/20">
               <input
                 type="checkbox"

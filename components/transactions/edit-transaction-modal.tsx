@@ -129,6 +129,7 @@ export function EditTransactionModal({
   const isCompra = tipoOperacion === "Compra"
   const isVenta = tipoOperacion === "Venta"
   const isDividendo = tipoOperacion === "Dividendo"
+  const isTraspasable = ["Fondo Indexado", "Fondo Monetario", "ETF"].includes(transaction?.activo?.tipo || "")
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -222,7 +223,7 @@ export function EditTransactionModal({
           </div>
 
           {/* Es Traspaso Checkbox */}
-          {(isCompra || isVenta) && (
+          {(isCompra || isVenta) && isTraspasable && (
             <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/20">
               <input
                 type="checkbox"
