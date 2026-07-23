@@ -567,9 +567,8 @@ private struct PositionDetailView: View {
         .navigationTitle(position.asset.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .refreshable {
-            async let fetch: () = refresh()
-            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
-            _ = await (fetch, delay)
+            await refresh()
+            try? await Task.sleep(nanoseconds: 300_000_000)
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }

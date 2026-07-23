@@ -85,9 +85,8 @@ struct RadarView: View {
             .padding(.vertical, 10)
         }
         .refreshable {
-            async let fetch: () = model.refresh()
-            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
-            _ = await (fetch, delay)
+            await model.refresh()
+            try? await Task.sleep(nanoseconds: 300_000_000)
         }
         .onAppear {
             if let first = radar.events.first, events(on: selectedDate, from: radar.events).isEmpty {

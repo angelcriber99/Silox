@@ -215,9 +215,8 @@ struct TransactionsView: View {
         }
         .siloxContentBackground()
         .refreshable {
-            async let fetch: () = model.refresh()
-            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
-            _ = await (fetch, delay)
+            await model.refresh()
+            try? await Task.sleep(nanoseconds: 300_000_000)
         }
     }
 
