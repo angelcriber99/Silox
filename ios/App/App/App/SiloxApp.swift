@@ -14,14 +14,6 @@ struct SiloxApp: App {
                 .task { await environment.session.restore() }
                 .onAppear { performanceMonitor.start() }
         }
-        
-#if os(macOS)
-        MenuBarExtra("Silox", systemImage: "chart.line.uptrend.xyaxis") {
-            MenuBarSummaryView()
-                .environmentObject(environment)
-        }
-        .menuBarExtraStyle(.window)
-#endif
     }
 }
 
