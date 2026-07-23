@@ -464,7 +464,7 @@ export function ComprehensiveAnalysis() {
                   onClick={() => setTimeRange(range)}
                   className={`min-w-10 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold transition-all duration-200 ${
                     timeRange === range
-                      ? "bg-foreground text-background shadow-md scale-105"
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md scale-105"
                       : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                   }`}
                 >

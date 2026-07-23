@@ -660,7 +660,7 @@ export function PositionsTable({
   )
 
   return (
-    <Card className="animate-fade-in stagger-3 glass-card overflow-hidden w-full h-full flex flex-col relative z-10 min-w-0">
+    <Card className="animate-fade-in stagger-3 bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border-transparent rounded-[32px] overflow-hidden w-full h-full flex flex-col relative z-10 min-w-0">
       <CardHeader className="p-2 md:p-3 flex flex-row flex-wrap items-center justify-between 2xl:justify-start gap-y-3 gap-x-2 border-b border-border/20 shrink-0 min-w-0">
         {/* 1. Title */}
         <CardTitle className="text-base font-medium text-foreground flex items-center gap-2 shrink-0">

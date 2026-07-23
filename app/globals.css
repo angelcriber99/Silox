@@ -55,7 +55,7 @@
 :root {
   /* Layout & Glass Fallbacks */
   --app-bg-image: none;
-  --card-radius: 1rem;
+  --card-radius: 1.5rem;
   --glass-bg: hsl(0, 0%, 100%);
   --glass-blur: 0px;
   --glass-border: rgba(0,0,0,0.05);
@@ -64,7 +64,7 @@
   --sidebar-blur: 0px;
 
   /* Premium Light Theme — Wealth Teal */
-  --background: hsl(200, 2%, 99%);
+  --background: hsl(240, 5%, 96%); /* #F5F5F7 */
   --foreground: hsl(220, 6%, 9%);
   --card: hsl(0, 0%, 100%);
   --card-foreground: hsl(220, 6%, 9%);

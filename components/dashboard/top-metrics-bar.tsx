@@ -47,55 +47,55 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
 
   return (
     <>
-      <div className="w-full flex flex-col gap-6 px-2 py-2">
-        {/* Hero Value Section (No card, elegant list style) */}
-        <div className="flex flex-col items-start gap-2 border-l-4 border-primary pl-4 relative">
+      <div className="w-full flex flex-col gap-6 p-6 bg-card rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+        {/* Hero Value Section */}
+        <div className="flex flex-col items-start gap-1 relative">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-primary">
-              Valor del Portfolio
+            <span className="text-sm font-semibold tracking-wide text-muted-foreground">
+              Total Balance
             </span>
             {marketState !== 'REGULAR' && (
-              <div className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+              <div className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary">
                 {marketState === 'CLOSED' ? 'Cerrado' : marketState === 'PRE' ? 'Pre-Market' : 'Post-Market'}
               </div>
             )}
           </div>
           
-          <div className="text-2xl sm:text-3xl lg:text-4xl 2xl:text-5xl font-black tracking-tighter leading-none text-foreground flex items-end gap-2 truncate w-full">
+          <div className="text-4xl sm:text-5xl lg:text-5xl 2xl:text-6xl font-extrabold tracking-tight leading-none text-foreground flex items-end gap-2 truncate w-full mt-1">
             <span className="truncate">{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
           </div>
           {!totals.hasAllPrices && (
-            <span className="text-[10px] font-semibold text-amber-500 flex items-center gap-1 mt-1">
-              <TriangleAlert className="w-3 h-3" /> Precios pendientes
+            <span className="text-[11px] font-medium text-amber-500 flex items-center gap-1 mt-2">
+              <TriangleAlert className="w-3.5 h-3.5" /> Precios pendientes
             </span>
           )}
         </div>
 
         {/* Modern PnL Grid */}
-        <div className="grid grid-cols-2 gap-3 mt-2">
+        <div className="grid grid-cols-2 gap-4 mt-2">
           {/* Total Historical */}
-          <div className="flex flex-col gap-1 p-3 rounded-xl bg-muted/30 border border-border/50">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Histórico Total</span>
+          <div className="flex flex-col gap-1 p-4 rounded-[20px] bg-slate-50 dark:bg-white/5 border border-transparent">
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Histórico</span>
             <div
               className="flex items-center gap-1.5 mt-1"
-              style={{ color: isPositive ? "#30D158" : "#FF453A" }}
+              style={{ color: isPositive ? "var(--positive)" : "var(--negative)" }}
             >
               {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              <span className="text-xs lg:text-sm 2xl:text-base font-bold tabular-nums tracking-tight">
+              <span className="text-sm lg:text-base 2xl:text-lg font-bold tabular-nums tracking-tight">
                 {hideBalances ? "••••" : `${isPositive ? "+" : ""}${formatDisplay(displayPnl)}`}
               </span>
             </div>
-            <span className="text-xs font-semibold opacity-80" style={{ color: isPositive ? "#30D158" : "#FF453A" }}>
+            <span className="text-xs font-semibold opacity-90" style={{ color: isPositive ? "var(--positive)" : "var(--negative)" }}>
               {hideBalances ? "•••" : formatPercent(displayPnlPercent)}
             </span>
           </div>
 
           {/* Daily (Hoy) */}
-          <div className="flex flex-col gap-1 p-3 rounded-xl bg-muted/30 border border-border/50">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Hoy</span>
+          <div className="flex flex-col gap-1 p-4 rounded-[20px] bg-slate-50 dark:bg-white/5 border border-transparent">
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Hoy</span>
             <div
               className="flex items-center gap-1.5 mt-1"
-              style={{ color: daily24Positive ? "rgba(48,209,88,0.95)" : "rgba(255,69,58,0.95)" }}
+              style={{ color: daily24Positive ? "var(--positive)" : "var(--negative)" }}
             >
               {daily24Positive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               <span className="text-xs lg:text-sm 2xl:text-base font-bold tabular-nums tracking-tight">

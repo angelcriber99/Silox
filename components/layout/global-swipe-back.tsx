@@ -28,8 +28,19 @@ export function GlobalSwipeBack() {
       if (touchEndX > touchStartX && touchEndX - touchStartX > 80) {
         if (touchStartX < 50) {
           isNavigating = true
-          router.back()
-          setTimeout(() => { isNavigating = false }, 1000)
+          document.body.style.transition = "transform 0.25s ease-out, opacity 0.25s ease-out"
+          document.body.style.transform = "translateX(30%)"
+          document.body.style.opacity = "0"
+          
+          setTimeout(() => {
+            router.back()
+            setTimeout(() => {
+              document.body.style.transition = "none"
+              document.body.style.transform = "translateX(0)"
+              document.body.style.opacity = "1"
+              isNavigating = false
+            }, 100)
+          }, 150)
         }
       }
     }
@@ -52,8 +63,19 @@ export function GlobalSwipeBack() {
 
         if (!canScrollLeft) {
           isNavigating = true
-          router.back()
-          setTimeout(() => { isNavigating = false }, 1000)
+          document.body.style.transition = "transform 0.25s ease-out, opacity 0.25s ease-out"
+          document.body.style.transform = "translateX(30%)"
+          document.body.style.opacity = "0"
+          
+          setTimeout(() => {
+            router.back()
+            setTimeout(() => {
+              document.body.style.transition = "none"
+              document.body.style.transform = "translateX(0)"
+              document.body.style.opacity = "1"
+              isNavigating = false
+            }, 100)
+          }, 150)
         }
       }
     }
