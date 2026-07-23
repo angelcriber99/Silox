@@ -141,6 +141,11 @@ export function GlobalSearch() {
             placeholder="Busca por empresa, ticker o ETF (ej. Apple, SPY, Bitcoin...)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && results.length > 0) {
+                handleSelect(results[0])
+              }
+            }}
             autoFocus
           />
           {isLoading ? (
