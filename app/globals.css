@@ -173,6 +173,20 @@
     --sidebar-blur: 0px;
   }
 
+  /* Solid Dark Mode (non-crystal) */
+  html.dark:not(.crystal-mode) {
+    --background: hsl(0, 0%, 5%);
+    --surface-1: hsl(0, 0%, 5%);
+    --surface-2: hsl(0, 0%, 7%);
+    --surface-3: hsl(0, 0%, 9%);
+    --card: hsl(0, 0%, 8%);
+    --popover: hsl(0, 0%, 8%);
+    --glass-bg: hsl(0, 0%, 8%);
+    --glass-blur: 0px;
+    --glass-border: rgba(255,255,255,0.08);
+    --sidebar-bg: hsl(0, 0%, 5%);
+  }
+
   /* 3. Midnight Oasis (Deep Glassmorphism) */
   .dark[data-preset="midnight"] {
     --background: hsl(260, 12%, 13%);
