@@ -61,8 +61,8 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             )}
           </div>
           
-          <div className="text-5xl sm:text-6xl lg:text-6xl font-extrabold tracking-tighter leading-none text-foreground flex items-center justify-center gap-2 w-full mt-3 mb-2">
-            <span className="whitespace-nowrap truncate">{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
+          <div className="text-4xl min-[390px]:text-5xl sm:text-6xl font-extrabold tracking-tighter leading-none text-foreground flex items-center justify-center gap-2 w-full mt-3 mb-2">
+            <span>{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
           </div>
           {!totals.hasAllPrices && (
             <span className="text-[11px] font-medium text-amber-500 flex items-center justify-center gap-1 mt-1">
