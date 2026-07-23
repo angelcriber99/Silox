@@ -18,9 +18,9 @@ interface SharePortfolioModalProps {
 }
 
 export function SharePortfolioModal({ open, onOpenChange, positions, totals }: SharePortfolioModalProps) {
-  const [hideBalances, setHideBalances] = useState(false)
+  const [showTotalValue, setShowTotalValue] = useState(true)
   const [showPositions, setShowPositions] = useState(true)
-  const [showPositionPnl, setShowPositionPnl] = useState(false)
+  const [showAssetValues, setShowAssetValues] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   
   const cardRef = useRef<HTMLDivElement>(null)
@@ -85,16 +85,16 @@ export function SharePortfolioModal({ open, onOpenChange, positions, totals }: S
 
         <div className="mb-6 space-y-3">
           <button
-            onClick={() => setHideBalances(!hideBalances)}
+            onClick={() => setShowTotalValue(!showTotalValue)}
             className="flex w-full items-center justify-between rounded-2xl bg-white dark:bg-zinc-900 p-4 shadow-sm"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                {hideBalances ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showTotalValue ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
               </div>
-              <span className="font-medium text-sm">Ocultar saldos totales</span>
+              <span className="font-medium text-sm">Mostrar Patrimonio (Dinero)</span>
             </div>
-            {hideBalances && <Check className="h-5 w-5 text-primary" />}
+            {showTotalValue && <Check className="h-5 w-5 text-primary" />}
           </button>
 
           <button
@@ -105,23 +105,23 @@ export function SharePortfolioModal({ open, onOpenChange, positions, totals }: S
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
                 <Layers className="h-5 w-5" />
               </div>
-              <span className="font-medium text-sm">Mostrar Top 5 Posiciones</span>
+              <span className="font-medium text-sm">Incluir lista de activos</span>
             </div>
             {showPositions && <Check className="h-5 w-5 text-primary" />}
           </button>
 
           {showPositions && (
             <button
-              onClick={() => setShowPositionPnl(!showPositionPnl)}
+              onClick={() => setShowAssetValues(!showAssetValues)}
               className="flex w-full items-center justify-between rounded-2xl bg-white dark:bg-zinc-900 p-4 shadow-sm"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
                   <TrendingUp className="h-5 w-5" />
                 </div>
-                <span className="font-medium text-sm">Mostrar beneficio por posición</span>
+                <span className="font-medium text-sm">Mostrar solo rentabilidades (%)</span>
               </div>
-              {showPositionPnl && <Check className="h-5 w-5 text-primary" />}
+              {!showAssetValues && <Check className="h-5 w-5 text-primary" />}
             </button>
           )}
         </div>
@@ -146,16 +146,22 @@ export function SharePortfolioModal({ open, onOpenChange, positions, totals }: S
               </div>
 
               <div className="mb-8">
-                <p className="text-sm font-medium text-white/60 mb-1">Patrimonio Total</p>
-                <p className="text-[40px] font-bold leading-none tracking-tight mb-3">
-                  {hideBalances ? "••••••" : formatDisplay(totals.valueMoney.amount)}
+                <p className="text-sm font-medium text-white/60 mb-1">
+                  {showTotalValue ? "Patrimonio Total" : "Rentabilidad Global"}
                 </p>
+                {showTotalValue && (
+                  <p className="text-[40px] font-bold leading-none tracking-tight mb-3">
+                    {formatDisplay(totals.valueMoney.amount)}
+                  </p>
+                )}
                 
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-bold ${displayPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {displayPnl >= 0 ? "+" : ""}{hideBalances ? "••••" : formatDisplay(displayPnl)}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${displayPnl >= 0 ? "bg-emerald-400/20 text-emerald-400" : "bg-rose-400/20 text-rose-400"}`}>
+                <div className="flex items-center gap-2 mt-2">
+                  {showTotalValue && (
+                    <span className={`text-sm font-bold ${displayPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {displayPnl >= 0 ? "+" : ""}{formatDisplay(displayPnl)}
+                    </span>
+                  )}
+                  <span className={`px-2 py-0.5 rounded-md ${showTotalValue ? "text-xs font-bold" : "text-3xl font-bold px-0 py-0"} ${displayPnl >= 0 ? (showTotalValue ? "bg-emerald-400/20 text-emerald-400" : "text-emerald-400") : (showTotalValue ? "bg-rose-400/20 text-rose-400" : "text-rose-400")}`}>
                     {displayPnl >= 0 ? "+" : ""}{formatPercent(pnlPercent)}
                   </span>
                 </div>
@@ -183,14 +189,14 @@ export function SharePortfolioModal({ open, onOpenChange, positions, totals }: S
                           </div>
                           
                           <div className="text-right">
-                            <p className="font-semibold text-sm">
-                              {hideBalances ? "••••" : formatDisplay(posValue)}
-                            </p>
-                            {showPositionPnl && (
-                              <p className={`text-xs font-medium ${posPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                                {posPnl >= 0 ? "+" : ""}{formatPercent(posPnlPercent)}
+                            {showAssetValues && (
+                              <p className="font-semibold text-sm">
+                                {formatDisplay(posValue)}
                               </p>
                             )}
+                            <p className={`${showAssetValues ? "text-xs font-medium mt-0.5" : "text-sm font-bold"} ${posPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                              {posPnl >= 0 ? "+" : ""}{formatPercent(posPnlPercent)}
+                            </p>
                           </div>
                         </div>
                       )
