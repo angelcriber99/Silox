@@ -23,7 +23,9 @@ export async function searchAssets(query: string): Promise<SearchResultItem[]> {
       enableFuzzyQuery: true,
     })
     
-    return result.quotes.map((q: any) => ({
+    return result.quotes
+      .filter((q: any) => q.isYahooFinance && q.symbol)
+      .map((q: any) => ({
       symbol: q.symbol,
       shortname: q.shortname ?? null,
       longname: q.longname ?? null,
