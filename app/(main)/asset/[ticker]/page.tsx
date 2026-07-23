@@ -3,7 +3,8 @@ import { AssetClient } from './asset-client'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
-export async function generateMetadata({ params }: { params: { ticker: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ ticker: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const ticker = decodeURIComponent(params.ticker)
   const details = await getAssetDetails(ticker)
   
@@ -17,7 +18,8 @@ export async function generateMetadata({ params }: { params: { ticker: string } 
   }
 }
 
-export default async function AssetPage({ params }: { params: { ticker: string } }) {
+export default async function AssetPage(props: { params: Promise<{ ticker: string }> }) {
+  const params = await props.params;
   const ticker = decodeURIComponent(params.ticker)
   const details = await getAssetDetails(ticker)
   
