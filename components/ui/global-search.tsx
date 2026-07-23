@@ -147,6 +147,5 @@ export function GlobalSearch() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
   )
 }
