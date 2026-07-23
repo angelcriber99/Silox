@@ -203,8 +203,7 @@ struct PortfolioActivitySheet: UIViewControllerRepresentable {
 }
 
 private struct PortfolioShareCard: View {
-    let portfolio: PortfolioResponse
-    let initialBalancesHidden: Bool
+    let snapshot: PortfolioShareSnapshot
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     private var dailyColor: Color {
@@ -298,6 +297,15 @@ private struct PortfolioShareCard: View {
             .foregroundStyle(dailyColor)
         }
     }
+            .font(.title3.weight(.bold))
+            .monospacedDigit()
+            .foregroundStyle(dailyColor)
+            if snapshot.balancesHidden {
+                Label("Importes ocultos", systemImage: "eye.slash")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(SiloxColors.textSecondary)
+            }
+        }
     }
 
     @ViewBuilder
