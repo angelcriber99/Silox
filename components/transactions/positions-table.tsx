@@ -76,7 +76,15 @@ function formatNavDate(value?: string): string | null {
 type SortKey = "ticker" | "tipo" | "unidades" | "displayValue" | "displayPnl" | "pnl_percent" | "displayDailyPnL"
 type SortDir = "asc" | "desc"
 
-function PnlDisplay({ value, type }: { value: number | null; type: "currency" | "percent" }) {
+function PnlDisplay({ 
+  value, 
+  type = "currency",
+  fromCurrency = "EUR"
+}: { 
+  value: number | null; 
+  type?: "currency" | "percent";
+  fromCurrency?: string;
+}) {
   const { hideBalances } = usePreferences()
   const { displayCurrency, convert } = useDisplayCurrency()
   const [flash, setFlash] = useState<'up'|'down'|null>(null);
@@ -102,7 +110,7 @@ function PnlDisplay({ value, type }: { value: number | null; type: "currency" | 
   if (value === null) return <span className="text-muted-foreground/60">—</span>
 
   const textColor = value > 0 ? "#30D158" : value < 0 ? "#FF453A" : "var(--muted-foreground)"
-  const formatted = type === "currency" ? formatPnl(convert(value), displayCurrency) : formatPercent(value)
+  const formatted = type === "currency" ? formatPnl(convert(value, fromCurrency), displayCurrency) : formatPercent(value)
 
   const flashStyle = flash === 'up'
     ? { background: "rgba(48,209,88,0.2)" }
@@ -206,7 +214,7 @@ const PositionRow = memo(function PositionRow({
   setWaveAsset,
   setWaveModalOpen
 }: any) {
-  const { format: formatDisplay } = useDisplayCurrency()
+  const { format: formatDisplay, displayCurrency } = useDisplayCurrency()
   const hasHistory = p.sparkline && p.sparkline.length > 1;
   const sparklineColor = hasHistory
     ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
@@ -312,13 +320,18 @@ const PositionRow = memo(function PositionRow({
       </TableCell>
       <TableCell className={`text-right ${cellPadding}`}>
         <PnlDisplay 
-          value={(p.displayDailyPnL?.amount ?? null)}
+          value={displayCurrency === p.moneda ? (p.nativeDailyPnL?.amount ?? null) : (p.displayDailyPnL?.amount ?? null)}
+          fromCurrency={displayCurrency === p.moneda ? p.moneda : "EUR"}
           type="currency" 
         />
       </TableCell>
       {!showPnlPercentOnly && (
         <TableCell className={`text-right ${cellPadding}`}>
-          <PnlDisplay value={(p.displayPnl?.amount ?? null)} type="currency" />
+          <PnlDisplay 
+            value={displayCurrency === p.moneda ? (p.nativePnl?.amount ?? null) : (p.displayPnl?.amount ?? null)}
+            fromCurrency={displayCurrency === p.moneda ? p.moneda : "EUR"}
+            type="currency" 
+          />
         </TableCell>
       )}
       <TableCell className={`text-right ${showPnlPercentOnly ? "" : "hidden xl:table-cell"} ${cellPadding}`}>
@@ -394,7 +407,7 @@ const PositionCard = memo(function PositionCard({
   setWaveAsset,
   setWaveModalOpen
 }: any) {
-  const { format: formatDisplay } = useDisplayCurrency()
+  const { format: formatDisplay, displayCurrency } = useDisplayCurrency()
   const hasHistory = p.sparkline && p.sparkline.length > 1;
   const sparklineColor = hasHistory
     ? (p.sparkline[p.sparkline.length - 1] >= p.sparkline[0] ? "#34d399" : "#fb7185")
@@ -461,7 +474,11 @@ const PositionCard = memo(function PositionCard({
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground/80 mb-0.5">Rentabilidad Total</span>
           <div className="flex items-center gap-2">
-            <PnlDisplay value={(p.displayPnl?.amount ?? null)} type="currency" />
+            <PnlDisplay 
+              value={displayCurrency === p.moneda ? (p.nativePnl?.amount ?? null) : (p.displayPnl?.amount ?? null)}
+              fromCurrency={displayCurrency === p.moneda ? p.moneda : "EUR"}
+              type="currency" 
+            />
             <span className="text-zinc-700 text-xs">|</span>
             <PnlDisplay value={p.pnl_percent} type="percent" />
           </div>
@@ -469,7 +486,8 @@ const PositionCard = memo(function PositionCard({
         <div className="flex flex-col items-end mr-4">
           <span className="text-xs text-muted-foreground/80 mb-0.5">Hoy</span>
           <PnlDisplay 
-            value={(p.displayDailyPnL?.amount ?? null)}
+            value={displayCurrency === p.moneda ? (p.nativeDailyPnL?.amount ?? null) : (p.displayDailyPnL?.amount ?? null)}
+            fromCurrency={displayCurrency === p.moneda ? p.moneda : "EUR"}
             type="currency" 
           />
         </div>

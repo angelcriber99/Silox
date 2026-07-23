@@ -149,19 +149,7 @@ function AutostartToggle() {
   )
 }
 
-function CrystalModeToggle() {
-  const { crystalMode, setCrystalMode } = usePreferences()
-  
-  return (
-    <SettingRow 
-      icon={Monitor} 
-      title="Modo Cristal (macOS)" 
-      desc="Activa el efecto de transparencia nativa translúcida en la ventana de la aplicación."
-      iconColor="text-blue-500"
-      action={<CustomSwitch checked={crystalMode} onChange={() => setCrystalMode(!crystalMode)} />} 
-    />
-  )
-}
+
 
 export default function SettingsPage() {
   const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false)
@@ -183,7 +171,8 @@ export default function SettingsPage() {
     pushNotifs, setPushNotifs,
     emailNotifs, setEmailNotifs,
     weeklyReport, setWeeklyReport,
-    dividendAlerts, setDividendAlerts
+    dividendAlerts, setDividendAlerts,
+    crystalMode, setCrystalMode
   } = usePreferences()
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -204,6 +193,21 @@ export default function SettingsPage() {
     toast.success("Idioma actualizado")
     router.refresh()
   }
+
+  const handleSetTheme = (newTheme: 'crystal' | 'dark' | 'light') => {
+    if (newTheme === 'crystal') {
+      setTheme('dark')
+      setCrystalMode(true)
+    } else if (newTheme === 'dark') {
+      setTheme('dark')
+      setCrystalMode(false)
+    } else {
+      setTheme('light')
+      setCrystalMode(false)
+    }
+  }
+
+  const currentThemeMode = theme === 'light' ? 'light' : (crystalMode ? 'crystal' : 'dark')
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== "BORRAR") {
@@ -332,6 +336,25 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
+                <div className="p-4 flex flex-col gap-3 bg-card border-b border-border/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-lg"><Moon className="w-5 h-5" /></div>
+                    <div>
+                      <span className="font-semibold text-[15px]">Tema de la aplicación</span>
+                    </div>
+                  </div>
+                  <div className="flex bg-muted/50 p-1 rounded-xl w-full" role="group">
+                    <button onClick={() => handleSetTheme('crystal')} className={`flex-1 px-2 py-1.5 flex items-center justify-center gap-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'crystal' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>
+                      <Monitor className="w-4 h-4" /> Crystal
+                    </button>
+                    <button onClick={() => handleSetTheme('dark')} className={`flex-1 px-2 py-1.5 flex items-center justify-center gap-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>
+                      <Moon className="w-4 h-4" /> Oscuro
+                    </button>
+                    <button onClick={() => handleSetTheme('light')} className={`flex-1 px-2 py-1.5 flex items-center justify-center gap-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>
+                      <Sun className="w-4 h-4" /> Claro
+                    </button>
+                  </div>
+                </div>
                 <div className="p-4 flex items-center justify-between bg-card">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><EyeOff className="w-5 h-5" /></div>
@@ -553,6 +576,30 @@ export default function SettingsPage() {
                   <div className="space-y-3 pt-4">
                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-2">Visualización</label>
                     
+                    {/* Theme Selector */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors rounded-2xl mb-3">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl bg-indigo-500/10 text-indigo-500`}>
+                          <Moon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm">Tema de la aplicación</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Elige entre modo claro, oscuro o el tema crystal (transparente).</p>
+                        </div>
+                      </div>
+                      <div className="flex bg-muted/50 p-1 rounded-xl shrink-0">
+                        <button onClick={() => handleSetTheme('crystal')} className={`flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'crystal' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                          <Monitor className="w-4 h-4" /> Crystal
+                        </button>
+                        <button onClick={() => handleSetTheme('dark')} className={`flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                          <Moon className="w-4 h-4" /> Oscuro
+                        </button>
+                        <button onClick={() => handleSetTheme('light')} className={`flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                          <Sun className="w-4 h-4" /> Claro
+                        </button>
+                      </div>
+                    </div>
+                    
                     {/* Language Selector */}
                     <div className="flex items-center justify-between p-4 bg-card/40 hover:bg-card/60 backdrop-blur-md border border-border/40 transition-colors rounded-2xl mb-3">
                       <div className="flex items-center gap-4">
@@ -607,7 +654,6 @@ export default function SettingsPage() {
 
                 <div className="space-y-2">
                   <AutostartToggle />
-                  <CrystalModeToggle />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

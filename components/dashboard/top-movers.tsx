@@ -42,7 +42,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
 
   return (
     <div
-      className="rounded-2xl flex flex-col overflow-hidden"
+      className="rounded-2xl flex flex-col overflow-hidden h-full"
       style={{
         background: "var(--card)",
         border: "1px solid var(--border)",
@@ -138,7 +138,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(convert((p.displayDailyPnL?.amount ?? null)!), displayCurrency)}
+                    : hideBalances ? "***" : formatPnl(convert((displayCurrency === p.moneda ? p.nativeDailyPnL?.amount : p.displayDailyPnL?.amount) ?? 0, displayCurrency === p.moneda ? p.moneda : "EUR"), displayCurrency)}
                 </span>
               </motion.div>
             ))
@@ -186,7 +186,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(convert((p.displayDailyPnL?.amount ?? null)!), displayCurrency)}
+                    : hideBalances ? "***" : formatPnl(convert((displayCurrency === p.moneda ? p.nativeDailyPnL?.amount : p.displayDailyPnL?.amount) ?? 0, displayCurrency === p.moneda ? p.moneda : "EUR"), displayCurrency)}
                 </span>
               </motion.div>
             ))

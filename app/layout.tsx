@@ -78,7 +78,6 @@ export default async function RootLayout({
             <ThemeProvider
               attribute="class"
               defaultTheme="dark"
-              forcedTheme="dark"
               disableTransitionOnChange
             >
               <QueryProvider>
@@ -94,7 +93,6 @@ export default async function RootLayout({
               </QueryProvider>
             </ThemeProvider>
             <Toaster
-              theme="dark"
               position="bottom-right"
               toastOptions={{
                 classNames: {
