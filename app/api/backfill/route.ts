@@ -162,7 +162,7 @@ export async function POST() {
         
         if (pos.ticker === 'CASH' || pos.ticker === 'REVOLUT') {
           valueInEur = pos.unidades * (pos.moneda === 'USD' ? usdToEurRate : 1)
-        } else if (pricePoint && pricePoint.close > 0) {
+        } else if (pricePoint && pricePoint.close != null && pricePoint.close > 0) {
           valueInEur = pos.unidades * pricePoint.close * (pos.moneda === 'USD' ? usdToEurRate : 1)
         } else {
           // Si no hay datos históricos para este día, usamos el coste acumulado para evitar que caiga a 0 (picos rojos)
