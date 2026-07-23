@@ -196,7 +196,7 @@ struct PortfolioView: View {
             // Un pequeño retraso para evitar el bug nativo de SwiftUI donde el UIRefreshControl
             // se queda pillado si la petición de red responde demasiado rápido (< 300ms).
             async let fetch: () = model.refresh()
-            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
             _ = await (fetch, delay)
         }
     }
@@ -568,7 +568,7 @@ private struct PositionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .refreshable {
             async let fetch: () = refresh()
-            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
             _ = await (fetch, delay)
         }
         .task(id: scenePhase) {

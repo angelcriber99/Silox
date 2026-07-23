@@ -125,7 +125,7 @@ struct AnalysisView: View {
         }
         .refreshable {
             async let fetch: () = model.refresh()
-            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
             _ = await (fetch, delay)
         }
     }
@@ -648,7 +648,7 @@ struct PortfolioHistoryView: View {
                 .siloxContentBackground()
                 .refreshable {
             async let fetch: () = model.load()
-            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
             _ = await (fetch, delay)
         }
             }
@@ -889,7 +889,7 @@ struct AlertsView: View {
                 .siloxContentBackground()
                 .refreshable {
             async let fetch: () = model.load()
-            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            async let delay = try? await Task.sleep(nanoseconds: 600_000_000)
             _ = await (fetch, delay)
         }
             }
