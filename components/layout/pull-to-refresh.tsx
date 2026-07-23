@@ -136,12 +136,12 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       } finally {
         isRefreshingRef.current = false
         setIsRefreshing(false)
-        await animate(y, 0, { type: "spring", stiffness: 300, damping: 30 })
-        resetPullIndicator()
+        animate(y, 0, { type: "spring", stiffness: 300, damping: 30 })
+        setTimeout(() => resetPullIndicator(), 300)
       }
     } else {
-      await animate(y, 0, { type: "spring", stiffness: 300, damping: 30 })
-      resetPullIndicator()
+      animate(y, 0, { type: "spring", stiffness: 300, damping: 30 })
+      setTimeout(() => resetPullIndicator(), 300)
     }
   }, [onRefresh, resetPullIndicator, y])
 

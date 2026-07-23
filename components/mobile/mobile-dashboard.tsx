@@ -9,9 +9,11 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Share2,
 } from "lucide-react"
 
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
+import { SharePortfolioModal } from "@/components/dashboard/share-portfolio-modal"
 import { RevolutSync } from "@/components/transactions/revolut-sync"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { useQuickAdd } from "@/lib/stores/use-quick-add"
@@ -69,6 +71,7 @@ export function MobileDashboard({
   const [search, setSearch] = useState("")
   const [sortMode, setSortMode] = useState<SortMode>("value")
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>("session")
+  const [shareOpen, setShareOpen] = useState(false)
 
   const activePositions = useMemo(
     () => positions.filter((position) => position.unidades > 0),
@@ -122,6 +125,12 @@ export function MobileDashboard({
 
   return (
     <div className="min-h-full bg-background pb-4 text-foreground">
+      <SharePortfolioModal 
+        open={shareOpen} 
+        onOpenChange={setShareOpen} 
+        positions={positions} 
+        totals={totals} 
+      />
       <header className="px-4 pb-4 pt-[max(14px,env(safe-area-inset-top))]">
         <div className="flex h-11 items-center justify-between">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -138,7 +147,15 @@ export function MobileDashboard({
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              className="touch-target rounded-full text-muted-foreground transition-colors active:bg-muted active:text-foreground"
+              aria-label="Compartir"
+            >
+              <Share2 className="h-[18px] w-[18px]" />
+            </button>
             <button
               type="button"
               onClick={() => setHideBalances(!hideBalances)}
