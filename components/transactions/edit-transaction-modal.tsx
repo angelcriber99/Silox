@@ -39,9 +39,14 @@ export function EditTransactionModal({
   open,
   onOpenChange,
 }: EditTransactionModalProps) {
+  const isTraspasoInit = transaction?.tipo_operacion === "Traspaso Entrada" || transaction?.tipo_operacion === "Traspaso Salida"
+  const initialTipo = transaction?.tipo_operacion === "Traspaso Entrada" ? "Compra" 
+                    : transaction?.tipo_operacion === "Traspaso Salida" ? "Venta" 
+                    : (transaction?.tipo_operacion ?? "Compra")
   const [tipoOperacion, setTipoOperacion] = useState<
     "Compra" | "Venta" | "Dividendo" | "Traspaso Salida" | "Traspaso Entrada" | "Retirada"
-  >(transaction?.tipo_operacion ?? "Compra")
+  >(initialTipo as any)
+  const [esTraspaso, setEsTraspaso] = useState(isTraspasoInit)
   const [estado, setEstado] = useState<"Completada" | "Pendiente">(transaction?.estado ?? "Completada")
   const [cantidad, setCantidad] = useState(transaction?.cantidad.toString() ?? "")
   const [precioUnitario, setPrecioUnitario] = useState(transaction?.precio_unitario.toString() ?? "")
@@ -78,11 +83,17 @@ export function EditTransactionModal({
       return
     }
 
+    let finalTipoOperacion = tipoOperacion
+    if (esTraspaso) {
+      if (tipoOperacion === "Compra") finalTipoOperacion = "Traspaso Entrada"
+      if (tipoOperacion === "Venta") finalTipoOperacion = "Traspaso Salida"
+    }
+
     try {
       await updateTransaction.mutateAsync({
         id: transaction.id,
         updates: {
-          tipo_operacion: tipoOperacion,
+          tipo_operacion: finalTipoOperacion,
           estado: estado,
           cantidad: tipoOperacion === "Dividendo" ? 1 : cantidadNum,
           precio_unitario: precioNum,
@@ -116,6 +127,7 @@ export function EditTransactionModal({
   const totalEstimado = cantidadNum * precioNum
 
   const isCompra = tipoOperacion === "Compra"
+  const isVenta = tipoOperacion === "Venta"
   const isDividendo = tipoOperacion === "Dividendo"
 
   return (
@@ -208,6 +220,26 @@ export function EditTransactionModal({
               </button>
             </div>
           </div>
+
+          {/* Es Traspaso Checkbox */}
+          {(isCompra || isVenta) && (
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/20">
+              <input
+                type="checkbox"
+                id="esTraspasoEdit"
+                checked={esTraspaso}
+                onChange={(e) => setEsTraspaso(e.target.checked)}
+                className="w-4 h-4 rounded border-border bg-background text-blue-500 focus:ring-blue-500/50"
+                disabled={updateTransaction.isPending}
+              />
+              <Label htmlFor="esTraspasoEdit" className="text-sm font-medium cursor-pointer text-foreground/90">
+                Es un Traspaso
+                <span className="block text-xs text-muted-foreground font-normal mt-0.5">
+                  No contará como venta/compra real para Hacienda.
+                </span>
+              </Label>
+            </div>
+          )}
 
           {/* Quantity + Price */}
           <div className={`grid gap-4 ${isDividendo ? 'grid-cols-1' : 'grid-cols-2'}`}>

@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { EditTransactionModal } from "./edit-transaction-modal"
 
 interface PendingOrdersProps {
   transactions: Transaccion[]
@@ -34,6 +35,7 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
   const deleteTransaction = useDeleteTransaction()
   const updateTransaction = useUpdateTransaction()
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingTx, setEditingTx] = useState<Transaccion | null>(null)
 
   if (!transactions || transactions.length === 0) {
     return null
@@ -125,6 +127,10 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[160px]">
+                          <DropdownMenuItem onClick={() => setEditingTx(tx)} className="cursor-pointer">
+                            <Edit2 className="mr-2 h-4 w-4 text-blue-500" />
+                            <span>Editar</span>
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleComplete(tx.id)} className="cursor-pointer">
                             <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" />
                             <span>Completar</span>
@@ -143,6 +149,14 @@ export function PendingOrders({ transactions }: PendingOrdersProps) {
           </Table>
         </div>
       </CardContent>
+      
+      {editingTx && (
+        <EditTransactionModal 
+          transaction={editingTx} 
+          open={!!editingTx} 
+          onOpenChange={(o) => !o && setEditingTx(null)} 
+        />
+      )}
     </Card>
   )
 }

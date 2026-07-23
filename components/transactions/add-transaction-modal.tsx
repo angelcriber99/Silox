@@ -55,6 +55,7 @@ export function AddTransactionModal({
     () => new Date().toISOString().split("T")[0]
   )
   const [notas, setNotas] = useState("")
+  const [esTraspaso, setEsTraspaso] = useState(false)
 
   const addTransaction = useAddTransaction()
   const { data: assetTransactions } = useAssetTransactions(position?.activo_id)
@@ -71,6 +72,7 @@ export function AddTransactionModal({
     setComisionMoneda(position?.moneda || "EUR")
     setFecha(new Date().toISOString().split("T")[0])
     setNotas("")
+    setEsTraspaso(false)
   }
 
   const handleClose = (v: boolean) => {
@@ -105,10 +107,16 @@ export function AddTransactionModal({
       return
     }
 
+    let finalTipoOperacion = tipoOperacion
+    if (esTraspaso) {
+      if (tipoOperacion === "Compra") finalTipoOperacion = "Traspaso Entrada"
+      if (tipoOperacion === "Venta") finalTipoOperacion = "Traspaso Salida"
+    }
+
     try {
       const res = await addTransaction.mutateAsync({
         activo_id: position.activo_id,
-        tipo_operacion: tipoOperacion,
+        tipo_operacion: finalTipoOperacion,
         estado: estado,
         cantidad: cantidadNum,
         precio_unitario: precioNum,
@@ -128,7 +136,7 @@ export function AddTransactionModal({
       const total = cantidadNum * precioNum
 
       toast.success(
-        `${tipoOperacion} registrada — ${position.ticker}`,
+        `${finalTipoOperacion} registrada — ${position.ticker}`,
         {
           description: isDividendo
             ? `Rendimiento Bruto: ${formatCurrency(precioNum, precioMoneda || 'EUR')}`
@@ -252,6 +260,26 @@ export function AddTransactionModal({
               </button>
             </div>
           </div>
+
+          {/* Es Traspaso Checkbox (only for Buy/Sell) */}
+          {(isCompra || isVenta) && (
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/20">
+              <input
+                type="checkbox"
+                id="esTraspaso"
+                checked={esTraspaso}
+                onChange={(e) => setEsTraspaso(e.target.checked)}
+                className="w-4 h-4 rounded border-border bg-background text-blue-500 focus:ring-blue-500/50"
+                disabled={addTransaction.isPending}
+              />
+              <Label htmlFor="esTraspaso" className="text-sm font-medium cursor-pointer text-foreground/90">
+                Es un Traspaso
+                <span className="block text-xs text-muted-foreground font-normal mt-0.5">
+                  No contará como venta/compra real para Hacienda.
+                </span>
+              </Label>
+            </div>
+          )}
 
           {/* Quantity + Price */}
           <div className={`grid gap-4 ${isDividendo ? 'grid-cols-1' : 'grid-cols-2'}`}>
@@ -482,7 +510,7 @@ export function AddTransactionModal({
                   Guardando…
                 </>
               ) : (
-                `Registrar ${tipoOperacion}`
+                `Registrar ${esTraspaso ? "Traspaso" : tipoOperacion}`
               )}
             </Button>
           </DialogFooter>
