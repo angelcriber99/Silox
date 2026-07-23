@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2, ArrowUpRight, ArrowDownRight, AlertTriangle } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, Loader2, Info, Check } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -262,24 +262,38 @@ export function AddTransactionModal({
             </div>
           </div>
 
-          {/* Es Traspaso Checkbox (only for Buy/Sell and Traspasable assets) */}
+          {/* Es Traspaso Toggle (only for Buy/Sell and Traspasable assets) */}
           {(isCompra || isVenta) && isTraspasable && (
-            <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/20">
-              <input
-                type="checkbox"
-                id="esTraspaso"
-                checked={esTraspaso}
-                onChange={(e) => setEsTraspaso(e.target.checked)}
-                className="w-4 h-4 rounded border-border bg-background text-blue-500 focus:ring-blue-500/50"
-                disabled={addTransaction.isPending}
-              />
-              <Label htmlFor="esTraspaso" className="text-sm font-medium cursor-pointer text-foreground/90">
-                Es un Traspaso
-                <span className="block text-xs text-muted-foreground font-normal mt-0.5">
-                  No contará como venta/compra real para Hacienda.
-                </span>
-              </Label>
-            </div>
+            <button
+              type="button"
+              onClick={() => setEsTraspaso(!esTraspaso)}
+              disabled={addTransaction.isPending}
+              className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                esTraspaso
+                  ? "border-blue-500/50 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                  : "border-border bg-muted/30 hover:border-zinc-600 hover:bg-muted/50"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div 
+                  className={`mt-0.5 flex items-center justify-center w-5 h-5 rounded border transition-colors ${
+                    esTraspaso 
+                      ? "bg-blue-500 border-blue-500 text-white" 
+                      : "border-zinc-600 bg-background"
+                  }`}
+                >
+                  {esTraspaso && <Check className="w-3.5 h-3.5" />}
+                </div>
+                <div className="text-left">
+                  <span className="block text-sm font-medium text-foreground/90">
+                    Operación de Traspaso
+                  </span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">
+                    Evita el peaje fiscal de Hacienda (regla FIFO).
+                  </span>
+                </div>
+              </div>
+            </button>
           )}
 
           {/* Quantity + Price */}
