@@ -7,9 +7,11 @@ import {
   EyeOff,
   Headphones,
   Search,
+  Share2,
 } from "lucide-react"
 
 import { MobileAssetCard } from "@/components/mobile/mobile-asset-card"
+import { SharePortfolioModal } from "@/components/dashboard/share-portfolio-modal"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import type { EnrichedPosition, PortfolioTotals } from "@/lib/types"
 import { formatPercent } from "@/lib/utils/formatters"
@@ -73,8 +75,19 @@ export function MobileDashboard({
   const primaryCost = totals.netContributionsMoney?.amount ?? totals.costMoney.amount
   const displayPnl = totals.valueMoney.amount - primaryCost
 
+  const [shareOpen, setShareOpen] = useState(false)
+
   return (
-    <div className="min-h-full bg-[#F5F5F7] dark:bg-zinc-950 pb-24 text-foreground selection:bg-primary/20">
+    <div className="min-h-[100dvh] bg-[#F5F5F7] dark:bg-zinc-950 pb-[100px] text-foreground">
+      <SharePortfolioModal 
+        open={shareOpen} 
+        onOpenChange={setShareOpen} 
+        positions={positions} 
+        totals={totals} 
+      />
+
+      <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+
       {/* HEADER */}
       <header className="px-6 pb-4 pt-[max(24px,env(safe-area-inset-top))] flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -86,6 +99,9 @@ export function MobileDashboard({
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <button onClick={() => setShareOpen(true)} className="text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform">
+            <Share2 className="h-6 w-6" strokeWidth={1.8} />
+          </button>
           <button className="text-zinc-600 dark:text-zinc-400">
             <Headphones className="h-6 w-6" strokeWidth={1.8} />
           </button>

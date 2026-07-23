@@ -57,6 +57,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     pullProgressRef.current = 0
     setPullProgress(0)
     setIndicatorVisible(false)
+    y.stop()
     y.set(0)
   }, [y])
 

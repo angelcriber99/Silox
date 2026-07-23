@@ -52,7 +52,7 @@ export default function Home() {
       {positions.length > 0 && <MacBadgeUpdater dailyPnl={totals.pnl24hMoney.amount} />}
       {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden flex-1 w-full">
-        <PullToRefresh onRefresh={async () => void refetch()}>
+        <PullToRefresh onRefresh={async () => { await refetch() }}>
           <MobileDashboard
             positions={positions}
             totals={totals}
