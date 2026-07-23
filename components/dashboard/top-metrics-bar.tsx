@@ -61,7 +61,7 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             )}
           </div>
           
-          <div className="text-4xl min-[390px]:text-5xl sm:text-6xl font-extrabold tracking-tighter leading-none text-foreground flex items-center justify-center gap-2 w-full mt-3 mb-2">
+          <div className="text-4xl sm:text-5xl font-extrabold tracking-tighter leading-none text-foreground flex items-center justify-center gap-2 w-full mt-3 mb-2">
             <span>{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
           </div>
           {!totals.hasAllPrices && (
