@@ -21,15 +21,20 @@ struct PortfolioShareSnapshot: Equatable {
     let dailyGainPercent: Double?
     let movements: [Movement]
     let updatedAt: Date
-    let balancesHidden: Bool
+    let showTotalValue: Bool
+    let showPositions: Bool
+    let showAssetValues: Bool
 
-    init(portfolio: PortfolioResponse, balancesHidden: Bool) {
+    init(portfolio: PortfolioResponse, showTotalValue: Bool, showPositions: Bool, showAssetValues: Bool) {
         totalValue = portfolio.totals.totalValue
         dailyGain = portfolio.totals.dailyGain
         dailyGainPercent = portfolio.totals.dailyGainPercent
         updatedAt = portfolio.updatedAt
-        self.balancesHidden = balancesHidden
-        movements = portfolio.positions
+        self.showTotalValue = showTotalValue
+        self.showPositions = showPositions
+        self.showAssetValues = showAssetValues
+        if showPositions {
+            movements = portfolio.positions
             .filter { $0.asset.kind != .cash && $0.quantity.decimalValue > 0 }
             .map {
                 Movement(
@@ -46,20 +51,24 @@ struct PortfolioShareSnapshot: Equatable {
             }
             .prefix(3)
             .map { $0 }
+        } else {
+            movements = []
+        }
     }
 
     var totalValueLabel: String {
-        balancesHidden ? "••••••" : SiloxFormatters.money(totalValue.amount, currency: totalValue.currency)
+        showTotalValue ? SiloxFormatters.money(totalValue.amount, currency: totalValue.currency) : "••••••"
     }
 
     var dailyGainLabel: String {
-        balancesHidden ? "••••" : dailyGain.map { SiloxFormatters.signedMoney($0.amount, currency: $0.currency) } ?? "—"
+        showTotalValue ? (dailyGain.map { SiloxFormatters.signedMoney($0.amount, currency: $0.currency) } ?? "—") : "••••"
     }
 }
 
 struct PortfolioSharePresentation: Identifiable {
     let id = UUID()
-    let snapshot: PortfolioShareSnapshot
+    let portfolio: PortfolioResponse
+    let initialBalancesHidden: Bool
     let originatedFromScreenshot: Bool
 }
 
@@ -85,26 +94,60 @@ struct PortfolioSharePreviewSheet: View {
     @State private var renderedImage: UIImage?
     @State private var showingActivity = false
 
+    @State private var showTotalValue: Bool
+    @State private var showPositions: Bool
+    @State private var showAssetValues: Bool
+
+    init(presentation: PortfolioSharePresentation) {
+        self.presentation = presentation
+        _showTotalValue = State(initialValue: !presentation.initialBalancesHidden)
+        _showPositions = State(initialValue: true)
+        _showAssetValues = State(initialValue: !presentation.initialBalancesHidden)
+    }
+
+    private var currentSnapshot: PortfolioShareSnapshot {
+        PortfolioShareSnapshot(
+            portfolio: presentation.portfolio,
+            showTotalValue: showTotalValue,
+            showPositions: showPositions,
+            showAssetValues: showAssetValues
+        )
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    PortfolioShareCard(snapshot: presentation.snapshot)
+                    PortfolioShareCard(snapshot: currentSnapshot)
                         .frame(maxWidth: 540)
                         .scaleEffect(reduceMotion ? 1 : 0.985)
                         .animation(reduceMotion ? nil : .snappy(duration: 0.32, extraBounce: 0.08), value: renderedImage != nil)
                         .accessibilityLabel("Tarjeta para compartir del patrimonio")
+                        .onChange(of: showTotalValue) { _ in renderImage() }
+                        .onChange(of: showPositions) { _ in renderImage() }
+                        .onChange(of: showAssetValues) { _ in renderImage() }
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(presentation.originatedFromScreenshot ? "Tu captura está lista para compartir" : "Comparte una tarjeta, no una captura")
                             .font(.headline)
-                        Text(presentation.snapshot.balancesHidden
-                             ? "Los importes se han ocultado porque tienes activada la privacidad de saldos."
-                             : "Incluye el patrimonio y los movimientos más destacados de hoy.")
+                        Text("Personaliza los datos que quieres incluir en la imagen.")
                             .font(.subheadline)
                             .foregroundStyle(SiloxColors.textSecondary)
                     }
                     .frame(maxWidth: 540, alignment: .leading)
+
+                    VStack(spacing: 12) {
+                        Toggle("Mostrar Patrimonio (Dinero)", isOn: $showTotalValue)
+                            .tint(SiloxColors.accent)
+                        Toggle("Incluir lista de activos", isOn: $showPositions)
+                            .tint(SiloxColors.accent)
+                        if showPositions {
+                            Toggle("Mostrar importe individual de activos", isOn: $showAssetValues)
+                                .tint(SiloxColors.accent)
+                        }
+                    }
+                    .frame(maxWidth: 540)
+                    .padding(.vertical, 10)
 
                     Button {
                         showingActivity = true
@@ -128,7 +171,7 @@ struct PortfolioSharePreviewSheet: View {
                 }
             }
             .task(id: presentation.id) {
-                renderedImage = PortfolioShareImageRenderer.image(for: presentation.snapshot, colorScheme: colorScheme)
+                renderImage()
             }
             .sheet(isPresented: $showingActivity) {
                 if let renderedImage {
@@ -139,6 +182,10 @@ struct PortfolioSharePreviewSheet: View {
                 }
             }
         }
+    }
+
+    private func renderImage() {
+        renderedImage = PortfolioShareImageRenderer.image(for: currentSnapshot, colorScheme: colorScheme)
     }
 }
 
@@ -156,7 +203,8 @@ struct PortfolioActivitySheet: UIViewControllerRepresentable {
 }
 
 private struct PortfolioShareCard: View {
-    let snapshot: PortfolioShareSnapshot
+    let portfolio: PortfolioResponse
+    let initialBalancesHidden: Bool
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     private var dailyColor: Color {
@@ -225,43 +273,71 @@ private struct PortfolioShareCard: View {
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 13) {
-            Text("PATRIMONIO")
+            Text(snapshot.showTotalValue ? "PATRIMONIO" : "RENTABILIDAD")
                 .font(.caption.weight(.bold))
                 .tracking(1.35)
                 .foregroundStyle(SiloxColors.textSecondary)
-            Text(snapshot.totalValueLabel)
-                .font(.system(size: 61, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .minimumScaleFactor(0.58)
-                .lineLimit(1)
-                .foregroundStyle(SiloxColors.textPrimary)
+            
+            if snapshot.showTotalValue {
+                Text(snapshot.totalValueLabel)
+                    .font(.system(size: 61, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.58)
+                    .lineLimit(1)
+                    .foregroundStyle(SiloxColors.textPrimary)
+            }
+            
             HStack(spacing: 10) {
-                Text(snapshot.dailyGainLabel)
+                if snapshot.showTotalValue {
+                    Text(snapshot.dailyGainLabel)
+                }
                 Text(snapshot.dailyGainPercent.map(SiloxFormatters.percentage) ?? "—")
             }
-            .font(.title3.weight(.bold))
+            .font(snapshot.showTotalValue ? .title3.weight(.bold) : .system(size: 44, weight: .bold, design: .rounded))
             .monospacedDigit()
             .foregroundStyle(dailyColor)
-            if snapshot.balancesHidden {
-                Label("Importes ocultos", systemImage: "eye.slash")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(SiloxColors.textSecondary)
+        }
+    }
+    }
+
+    @ViewBuilder
+    private var movementSection: some View {
+        if snapshot.showPositions {
+            VStack(alignment: .leading, spacing: 15) {
+                HStack {
+                    Text("MOVIMIENTOS DESTACADOS")
+                        .font(.caption.weight(.bold))
+                        .tracking(1.1)
+                        .foregroundStyle(SiloxColors.textSecondary)
+                    Spacer()
+                    Text("Sesión de hoy")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(SiloxColors.textTertiary)
+                }
+
+                if snapshot.movements.isEmpty {
+                    Text("Aún no hay movimientos destacados para mostrar.")
+                        .font(.subheadline)
+                        .foregroundStyle(SiloxColors.textSecondary)
+                        .padding(.vertical, 12)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(snapshot.movements.enumerated()), id: \.element.id) { index, movement in
+                            ShareMovementRow(
+                                rank: index + 1,
+                                movement: movement,
+                                showAssetValues: snapshot.showAssetValues
+                            )
+                            if index < snapshot.movements.count - 1 {
+                                Divider().overlay(SiloxColors.borderSubtle)
+                            }
+                        }
+                    }
+                    .background(SiloxColors.surfaceMuted.opacity(0.58), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                }
             }
         }
     }
-
-    private var movementSection: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            HStack {
-                Text("MOVIMIENTOS DESTACADOS")
-                    .font(.caption.weight(.bold))
-                    .tracking(1.1)
-                    .foregroundStyle(SiloxColors.textSecondary)
-                Spacer()
-                Text("Sesión de hoy")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(SiloxColors.textTertiary)
-            }
 
             if snapshot.movements.isEmpty {
                 Text("Aún no hay movimientos destacados para mostrar.")
@@ -301,7 +377,9 @@ private struct PortfolioShareCard: View {
 private struct ShareMovementRow: View {
     let rank: Int
     let movement: PortfolioShareSnapshot.Movement
-    let balancesHidden: Bool
+    let showTotalValue: Bool
+    let showPositions: Bool
+    let showAssetValues: Bool
 
     private var color: Color {
         let value = movement.dailyAmount?.amount.decimalValue ?? Decimal(movement.dailyPercent ?? 0)
@@ -328,8 +406,8 @@ private struct ShareMovementRow: View {
             }
             Spacer(minLength: 12)
             VStack(alignment: .trailing, spacing: 3) {
-                if let amount = movement.dailyAmount {
-                    Text(balancesHidden ? "••••" : SiloxFormatters.signedMoney(amount.amount, currency: amount.currency))
+                if let amount = movement.dailyAmount, showAssetValues {
+                    Text(SiloxFormatters.signedMoney(amount.amount, currency: amount.currency))
                 }
                 Text(movement.dailyPercent.map(SiloxFormatters.percentage) ?? "—")
             }

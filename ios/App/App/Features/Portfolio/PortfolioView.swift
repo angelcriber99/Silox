@@ -366,7 +366,8 @@ struct PortfolioView: View {
     private func presentShareCard(originatedFromScreenshot: Bool) {
         guard let portfolio = currentPortfolio else { return }
         sharePresentation = PortfolioSharePresentation(
-            snapshot: PortfolioShareSnapshot(portfolio: portfolio, balancesHidden: hideBalances),
+            portfolio: portfolio,
+            initialBalancesHidden: hideBalances,
             originatedFromScreenshot: originatedFromScreenshot
         )
     }
