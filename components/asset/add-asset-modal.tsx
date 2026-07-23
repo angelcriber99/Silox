@@ -32,6 +32,8 @@ type AutocompleteResult = z.infer<typeof autocompleteResponseSchema>['results'][
 interface AddAssetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialTicker?: string
+  initialName?: string
 }
 
 const TIPOS = [
@@ -54,11 +56,11 @@ const inputClass =
 const selectClass =
   "w-full h-10 px-3 rounded-md bg-background border border-border text-foreground text-sm transition-colors duration-200 hover:border-zinc-600 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
 
-export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
+export function AddAssetModal({ open, onOpenChange, initialTicker, initialName }: AddAssetModalProps) {
   // Instrument
-  const [ticker, setTicker] = useState("")
+  const [ticker, setTicker] = useState(initialTicker || "")
   const [isin, setIsin] = useState("")
-  const [nombre, setNombre] = useState("")
+  const [nombre, setNombre] = useState(initialName || "")
   const [tipo, setTipo] = useState<string>("ETF")
   const [estrategia, setEstrategia] = useState<string>("Satellite")
   const [moneda, setMoneda] = useState<string>("EUR")
