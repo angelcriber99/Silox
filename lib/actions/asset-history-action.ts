@@ -19,7 +19,6 @@ export async function getAssetHistory(ticker: string, range: '1d' | '5d' | '1mo'
         interval = '5m'
         break
       case '5d':
-      case '1wk':
         period1 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         interval = '15m'
         break
