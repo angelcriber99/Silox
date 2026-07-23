@@ -4,34 +4,26 @@ import { getYahooFinance } from '@/lib/server/yahoo-finance'
 
 export interface AssetDetails {
   symbol: string
-  shortName?: string
-  longName?: string
-  currency?: string
-  exchange?: string
-  quoteType?: string
-  marketState?: string
-  
-  // Price Data
-  regularMarketPrice?: number
-  regularMarketChange?: number
-  regularMarketChangePercent?: number
-  regularMarketPreviousClose?: number
-  fiftyTwoWeekHigh?: number
-  fiftyTwoWeekLow?: number
-  
-  // Summary Data
-  marketCap?: number
-  trailingPE?: number
-  forwardPE?: number
-  dividendYield?: number
-  beta?: number
-  
-  // Profile
-  sector?: string
-  industry?: string
-  longBusinessSummary?: string
-  website?: string
-  country?: string
+  shortName?: string | null
+  longName?: string | null
+  currency?: string | null
+  exchange?: string | null
+  quoteType?: string | null
+  regularMarketPrice?: number | null
+  regularMarketChange?: number | null
+  regularMarketChangePercent?: number | null
+  regularMarketPreviousClose?: number | null
+  fiftyTwoWeekHigh?: number | null
+  fiftyTwoWeekLow?: number | null
+  marketCap?: number | null
+  trailingPE?: number | null
+  dividendYield?: number | null
+  beta?: number | null
+  longBusinessSummary?: string | null
+  sector?: string | null
+  industry?: string | null
+  website?: string | null
+  country?: string | null
 }
 
 export async function getAssetDetails(ticker: string): Promise<AssetDetails | null> {
@@ -40,38 +32,36 @@ export async function getAssetDetails(ticker: string): Promise<AssetDetails | nu
   try {
     const yahoo = getYahooFinance()
     const quote = await yahoo.quoteSummary(ticker, { 
-      modules: ['price', 'summaryDetail', 'assetProfile'] 
+      modules: ['price', 'summaryDetail', 'summaryProfile', 'defaultKeyStatistics'] 
     })
     
     if (!quote) return null
     
     return {
       symbol: quote.price?.symbol ?? ticker,
-      shortName: quote.price?.shortName,
-      longName: quote.price?.longName,
-      currency: quote.price?.currency,
-      exchange: quote.price?.exchangeName,
-      quoteType: quote.price?.quoteType,
-      marketState: quote.price?.marketState,
+      shortName: quote.price?.shortName ?? null,
+      longName: quote.price?.longName ?? null,
+      currency: quote.price?.currency ?? null,
+      exchange: quote.price?.exchangeName ?? null,
+      quoteType: quote.price?.quoteType ?? null,
       
-      regularMarketPrice: quote.price?.regularMarketPrice,
-      regularMarketChange: quote.price?.regularMarketChange,
-      regularMarketChangePercent: quote.price?.regularMarketChangePercent,
-      regularMarketPreviousClose: quote.price?.regularMarketPreviousClose,
+      regularMarketPrice: quote.price?.regularMarketPrice ?? null,
+      regularMarketChange: quote.price?.regularMarketChange ?? null,
+      regularMarketChangePercent: quote.price?.regularMarketChangePercent ?? null,
+      regularMarketPreviousClose: quote.summaryDetail?.previousClose ?? null,
       
-      fiftyTwoWeekHigh: quote.summaryDetail?.fiftyTwoWeekHigh,
-      fiftyTwoWeekLow: quote.summaryDetail?.fiftyTwoWeekLow,
-      marketCap: quote.summaryDetail?.marketCap,
-      trailingPE: quote.summaryDetail?.trailingPE,
-      forwardPE: quote.summaryDetail?.forwardPE,
-      dividendYield: quote.summaryDetail?.dividendYield,
-      beta: quote.summaryDetail?.beta,
+      fiftyTwoWeekHigh: quote.summaryDetail?.fiftyTwoWeekHigh ?? null,
+      fiftyTwoWeekLow: quote.summaryDetail?.fiftyTwoWeekLow ?? null,
+      marketCap: quote.price?.marketCap ?? null,
+      trailingPE: quote.summaryDetail?.trailingPE ?? null,
+      dividendYield: quote.summaryDetail?.dividendYield ?? null,
+      beta: quote.summaryDetail?.beta ?? quote.defaultKeyStatistics?.beta ?? null,
       
-      sector: quote.assetProfile?.sector,
-      industry: quote.assetProfile?.industry,
-      longBusinessSummary: quote.assetProfile?.longBusinessSummary,
-      website: quote.assetProfile?.website,
-      country: quote.assetProfile?.country,
+      longBusinessSummary: quote.summaryProfile?.longBusinessSummary ?? null,
+      sector: quote.summaryProfile?.sector ?? null,
+      industry: quote.summaryProfile?.industry ?? null,
+      website: quote.summaryProfile?.website ?? null,
+      country: quote.summaryProfile?.country ?? null,
     }
   } catch (error) {
     console.error(`Error fetching asset details for ${ticker}:`, error)
