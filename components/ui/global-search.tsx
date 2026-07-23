@@ -9,12 +9,16 @@ import { searchAssets, type SearchResultItem } from "@/lib/actions/search"
 import { useDebounce } from "@/lib/hooks/use-debounce"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
+import { usePositions } from "@/lib/hooks/use-portfolio"
+
 export function GlobalSearch() {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [results, setResults] = React.useState<SearchResultItem[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
   const router = useRouter()
+  
+  const { data: positions } = usePositions()
 
   const debouncedQuery = useDebounce(query, 300)
 
@@ -62,7 +66,13 @@ export function GlobalSearch() {
   const handleSelect = (symbol: string) => {
     setOpen(false)
     setQuery("")
-    router.push(`/asset/${symbol}`)
+    
+    const ownedAsset = positions?.find(p => p.ticker === symbol)
+    if (ownedAsset) {
+      router.push(`/activo/${ownedAsset.activo_id}`)
+    } else {
+      router.push(`/asset/${symbol}`)
+    }
   }
 
   const getIcon = (quoteType: string | null) => {
