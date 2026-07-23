@@ -34,11 +34,10 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
 
   return (
     <nav
-      className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 md:hidden"
-      style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-2xl md:hidden"
       aria-label="Navegación principal"
     >
-      <div className="flex items-center gap-1.5 rounded-[32px] bg-[#1a1a1a]/85 px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.25)] backdrop-blur-3xl border border-white/10 dark:bg-zinc-950/90 dark:border-white/5">
+      <div className="grid grid-cols-5 px-1" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         {tabs.map((tab) => {
           const isActive = tab.isMore
             ? SECONDARY_ROUTES.some((route) => pathname.startsWith(route))
@@ -57,20 +56,20 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
                   hapticFeedback.medium()
                   handlePress()
                 }}
-                className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full transition-all duration-300 ease-out ${
-                  isActive ? "bg-white/15 px-4 py-2.5 text-white shadow-inner" : "px-3 py-2.5 text-zinc-400 hover:text-zinc-200"
-                }`}
+                className={`relative flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
                 aria-label={tab.name}
                 aria-current={isActive ? "page" : undefined}
               >
                 {tab.isAction ? (
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-black shadow-md transition-transform active:scale-90">
-                    <Plus className="h-5 w-5" strokeWidth={2.5} />
+                  <span className="grid h-10 w-10 -translate-y-1 place-items-center rounded-[14px] bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+                    <Plus className="h-5 w-5" strokeWidth={2.4} />
                   </span>
                 ) : (
-                  <tab.Icon className="h-5 w-5 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
+                  <span className={`grid h-7 min-w-10 place-items-center rounded-full px-2 ${isActive ? "bg-primary/10" : ""}`}>
+                    <tab.Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.8} />
+                  </span>
                 )}
-                {isActive && !tab.isAction && <span className="ml-2.5 text-[13px] font-bold tracking-wide">{tab.name}</span>}
+                <span className={tab.isAction ? "-mt-1" : ""}>{tab.name}</span>
               </button>
             )
           }
@@ -80,13 +79,13 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
               key={tab.name}
               href={tab.href}
               onClick={() => hapticFeedback.light()}
-              className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full transition-all duration-300 ease-out ${
-                isActive ? "bg-white/15 px-4 py-2.5 text-white shadow-inner" : "px-3 py-2.5 text-zinc-400 hover:text-zinc-200"
-              }`}
+              className={`relative flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
               aria-current={isActive ? "page" : undefined}
             >
-              <tab.Icon className="h-5 w-5 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
-              {isActive && <span className="ml-2.5 text-[13px] font-bold tracking-wide">{tab.name}</span>}
+              <span className={`grid h-7 min-w-10 place-items-center rounded-full px-2 ${isActive ? "bg-primary/10" : ""}`}>
+                <tab.Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.8} />
+              </span>
+              <span>{tab.name}</span>
             </Link>
           )
         })}

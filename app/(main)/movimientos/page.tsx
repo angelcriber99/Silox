@@ -116,19 +116,21 @@ export default function MovimientosPage() {
   return (
     <main className="min-h-full bg-background text-foreground flex flex-col">
       {/* ── Mobile View ────────────────────────────────────────────── */}
-      <div className="md:hidden flex flex-col pb-24 bg-[#F5F5F7] dark:bg-zinc-950 min-h-screen">
+      <div className="md:hidden flex flex-col pb-24 bg-background">
         <IOSHeader title="Movimientos">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             {/* Native Search Bar */}
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.35)" }} />
               <Input
                 placeholder="Buscar activo o ticker..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 rounded-[10px] border-none bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-900 dark:text-white placeholder:text-zinc-500"
+                className="pl-9 h-10 rounded-xl border-none text-white"
                 style={{
-                  fontSize: 17,
+                  background: "rgba(255,255,255,0.08)",
+                  fontSize: 15,
+                  fontWeight: 400,
                 }}
               />
             </div>
@@ -139,11 +141,11 @@ export default function MovimientosPage() {
                 <button
                   key={opt}
                   onClick={() => setTypeFilter(opt)}
-                  className={`flex-shrink-0 snap-start px-4 py-1.5 rounded-full text-[14px] font-semibold transition-all ${
-                    typeFilter === opt 
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-black" 
-                      : "bg-zinc-200/60 text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400"
-                  }`}
+                  className="flex-shrink-0 snap-start px-3.5 py-1 rounded-full text-[13px] font-semibold transition-all"
+                  style={{
+                    background: typeFilter === opt ? "#30D158" : "rgba(255,255,255,0.08)",
+                    color: typeFilter === opt ? "#000000" : "rgba(255,255,255,0.55)",
+                  }}
                 >
                   {opt === "Todos" ? "Todos" : opt === "Compra" ? "Compras" : opt === "Venta" ? "Ventas" : "Dividendos"}
                 </button>
@@ -153,31 +155,58 @@ export default function MovimientosPage() {
         </IOSHeader>
 
         {/* Transaction list grouped by month */}
-        <div className="px-5 mt-4">
+        <div className="pb-2">
           {isLoading ? (
-            <div className="space-y-4">
-              {[0, 1, 2, 3].map((item) => <div key={item} className="h-16 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />)}
+            <div className="px-4 pt-4 flex flex-col gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i}>
+                  <div className="h-4 w-28 bg-white/10 animate-pulse rounded mb-3 ml-1" />
+                  <div className="rounded-2xl overflow-hidden" style={{ background: "#111111" }}>
+                    {Array.from({ length: 3 }).map((_, j) => (
+                      <div key={j} className="p-4 flex justify-between" style={{ borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+                        <div className="flex gap-3 items-center">
+                          <div className="h-9 w-9 rounded-full bg-white/10 animate-pulse flex-shrink-0" />
+                          <div>
+                            <div className="h-3.5 w-24 bg-white/10 animate-pulse rounded mb-2" />
+                            <div className="h-3 w-16 bg-white/10 animate-pulse rounded" />
+                          </div>
+                        </div>
+                        <div className="h-4 w-16 bg-white/10 animate-pulse rounded" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : groupedByMonth.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-8">
-              <div className="h-16 w-16 rounded-3xl flex items-center justify-center mb-4 bg-zinc-200 dark:bg-zinc-800">
-                <History className="h-8 w-8 text-zinc-400" />
+              <div
+                className="h-16 w-16 rounded-3xl flex items-center justify-center mb-4"
+                style={{ background: "rgba(48,209,88,0.08)", border: "1px solid rgba(48,209,88,0.15)" }}
+              >
+                <History className="h-8 w-8" style={{ color: "#30D158", opacity: 0.6 }} />
               </div>
-              <p className="text-[16px] font-semibold text-center text-zinc-900 dark:text-white">Sin movimientos</p>
-              <p className="text-[14px] text-center mt-1 text-zinc-500">Añade tu primera transacción pulsando el botón +</p>
+              <p className="text-[15px] font-semibold text-center" style={{ color: "rgba(255,255,255,0.70)" }}>Sin movimientos</p>
+              <p className="text-[13px] text-center mt-1" style={{ color: "rgba(255,255,255,0.30)" }}>Añade tu primera transacción pulsando el botón +</p>
             </div>
           ) : (
-            <div className="space-y-8 pb-10">
+            <div className="px-4 pt-4 flex flex-col gap-6">
               {groupedByMonth.map(({ label, items }) => (
                 <div key={label}>
                   {/* Month sticky header */}
-                  <h2 className="text-[20px] font-bold text-zinc-900 dark:text-white mb-2">
+                  <h2
+                    className="text-[12px] font-bold uppercase tracking-widest mb-2 ml-1 capitalize"
+                    style={{ color: "rgba(255,255,255,0.35)" }}
+                  >
                     {label}
                   </h2>
 
-                  {/* Grouped items (No visible outer card, just transparent list) */}
-                  <div className="space-y-0">
-                    {items.map((tx) => {
+                  {/* Grouped card */}
+                  <div
+                    className="rounded-2xl overflow-hidden"
+                    style={{ background: "#111111", border: "0.5px solid rgba(255,255,255,0.08)" }}
+                  >
+                    {items.map((tx, idx) => {
                       const isCompra = tx.tipo_operacion === "Compra"
                       const isDividendo = tx.tipo_operacion === "Dividendo"
                       const total = isCompra
@@ -188,45 +217,41 @@ export default function MovimientosPage() {
                       const ticker = tx.activo
                         ? (isFondo ? tx.activo.nombre?.split(' ')[0].toUpperCase() : tx.activo.ticker.split('.')[0])
                         : "—"
-                      
-                      const iconBg = isDividendo ? "bg-amber-100 dark:bg-amber-400/20" : isCompra ? "bg-emerald-100 dark:bg-emerald-500/20" : "bg-rose-100 dark:bg-rose-500/20"
-                      const iconColor = isDividendo ? "text-amber-500" : isCompra ? "text-emerald-500" : "text-rose-500"
-                      const accentColor = isDividendo ? "text-amber-500" : isCompra ? "text-zinc-900 dark:text-white" : "text-emerald-500"
+                      const accentColor = isDividendo ? "#FFD60A" : isCompra ? "rgba(255,255,255,0.85)" : "#30D158"
+                      const iconBg = isDividendo ? "rgba(255,214,10,0.12)" : isCompra ? "rgba(255,255,255,0.08)" : "rgba(48,209,88,0.12)"
+                      const iconColor = isDividendo ? "#FFD60A" : isCompra ? "rgba(255,255,255,0.60)" : "#30D158"
 
                       return (
                         <div
                           key={tx.id}
                           onClick={() => handleEdit(tx)}
-                          className="flex items-center gap-4 py-3.5 cursor-pointer transition-colors active:bg-zinc-200 dark:active:bg-zinc-800/50 rounded-2xl px-2 -mx-2"
+                          className="flex items-center justify-between px-4 py-3 cursor-pointer active:opacity-70 transition-opacity"
+                          style={{ borderBottom: idx < items.length - 1 ? "0.5px solid rgba(255,255,255,0.06)" : "none" }}
                         >
-                          {/* LOGO */}
-                          <div className="relative shrink-0">
-                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${iconBg}`}>
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div
+                              className="flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center"
+                              style={{ background: iconBg }}
+                            >
                               {isDividendo
-                                ? <Star className={`h-5 w-5 ${iconColor}`} />
+                                ? <Star className="h-4 w-4" style={{ color: iconColor }} />
                                 : isCompra
-                                ? <ArrowUpRight className={`h-5 w-5 ${iconColor}`} />
-                                : <ArrowDownRight className={`h-5 w-5 ${iconColor}`} />
+                                ? <ArrowUpRight className="h-4 w-4" style={{ color: iconColor }} />
+                                : <ArrowDownRight className="h-4 w-4" style={{ color: iconColor }} />
                               }
                             </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-semibold text-[15px] truncate" style={{ color: "#FFFFFF" }}>{ticker}</span>
+                              <span className="text-[12px] font-medium truncate" style={{ color: "rgba(255,255,255,0.40)" }}>
+                                {tx.tipo_operacion} · {day}
+                              </span>
+                            </div>
                           </div>
-                          
-                          {/* MIDDLE */}
-                          <div className="flex flex-col min-w-0 flex-1">
-                            <span className="text-[16px] font-bold leading-tight text-zinc-900 dark:text-white truncate">
-                              {ticker}
-                            </span>
-                            <span className="mt-1.5 text-[13px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
-                              {tx.tipo_operacion} · {day}
-                            </span>
-                          </div>
-                          
-                          {/* RIGHT */}
-                          <div className="flex flex-col items-end min-w-0 shrink-0">
-                            <span className={`text-[16px] font-bold tabular-nums ${accentColor}`}>
+                          <div className="flex flex-col items-end min-w-0 ml-2">
+                            <span className="text-[15px] font-bold tabular-nums" style={{ color: accentColor, letterSpacing: "-0.02em" }}>
                               {hideBalances ? "••••" : `${isCompra ? "−" : "+"}${formatCurrency(total, tx.activo?.moneda || "EUR")}`}
                             </span>
-                            <span className="mt-1.5 text-[13px] font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
+                            <span className="text-[11px] font-medium tabular-nums mt-0.5" style={{ color: "rgba(255,255,255,0.30)" }}>
                               {hideBalances ? "••••" : `${formatUnits(tx.cantidad)} × ${tx.precio_unitario.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`}
                             </span>
                           </div>

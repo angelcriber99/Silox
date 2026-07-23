@@ -21,10 +21,16 @@ export function IOSHeader({
 }: IOSHeaderProps) {
   return (
     <header
-      className="sticky top-0 z-30 bg-[#F5F5F7]/85 dark:bg-zinc-950/85 backdrop-blur-2xl border-b border-zinc-200 dark:border-white/10"
+      className="sticky top-0 z-30"
+      style={{
+        background: "rgba(0,0,0,0.85)",
+        backdropFilter: "blur(32px) saturate(180%)",
+        WebkitBackdropFilter: "blur(32px) saturate(180%)",
+        borderBottom: "0.5px solid rgba(255,255,255,0.10)",
+      }}
     >
       <div
-        className="flex flex-col px-6"
+        className="flex flex-col px-4"
         style={{
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
           paddingBottom: children ? "12px" : "14px",
@@ -39,11 +45,11 @@ export function IOSHeader({
             className="flex flex-col"
           >
             <h1
-              className="text-zinc-900 dark:text-white"
               style={{
                 fontSize: largeTile ? 34 : 22,
                 fontWeight: 700,
                 letterSpacing: -0.5,
+                color: "#FFFFFF",
                 lineHeight: 1.1,
               }}
             >
@@ -51,9 +57,10 @@ export function IOSHeader({
             </h1>
             {subtitle && (
               <p
-                className="text-zinc-500 dark:text-zinc-400 mt-0.5"
                 style={{
                   fontSize: 13,
+                  color: "rgba(255,255,255,0.45)",
+                  marginTop: 2,
                   fontWeight: 400,
                 }}
               >
