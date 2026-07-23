@@ -17,22 +17,29 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
 
   const isMarketOpen = marketState === "REGULAR" || marketState === "PRE" || marketState === "POST"
 
+  const getSortAmount = (p: EnrichedPosition) => {
+    const rawAmount = displayCurrency === p.moneda ? p.nativeDailyPnL?.amount : p.displayDailyPnL?.amount;
+    const fromCurrency = displayCurrency === p.moneda ? p.moneda : "EUR";
+    return convert(rawAmount ?? 0, fromCurrency);
+  }
+
   const validPositions = positions.filter(p => {
     if (p.tipo === 'Liquidez' || p.ticker === 'CASH') return false
     if (sortBy === "percent") {
-      return typeof p.change_percent_24h === 'number' && p.change_percent_24h !== 0 && p.unidades > 0
+      return typeof p.change_percent_24h === 'number' && Math.abs(p.change_percent_24h) >= 0.005 && p.unidades > 0
     } else {
-      return typeof (p.displayDailyPnL?.amount ?? null) === 'number' && (p.displayDailyPnL?.amount ?? null) !== 0 && p.unidades > 0
+      const amount = getSortAmount(p);
+      return Math.abs(amount) >= 0.005 && p.unidades > 0
     }
   })
 
   const sorted = [...validPositions].sort((a, b) => {
     if (sortBy === "percent") return (b.change_percent_24h || 0) - (a.change_percent_24h || 0)
-    return ((b.displayDailyPnL?.amount ?? null) || 0) - ((a.displayDailyPnL?.amount ?? null) || 0)
+    return getSortAmount(b) - getSortAmount(a)
   })
 
-  const best = sorted.filter(p => sortBy === "percent" ? p.change_percent_24h! > 0 : (p.displayDailyPnL?.amount ?? null)! > 0)
-  const worst = sorted.slice().reverse().filter(p => sortBy === "percent" ? p.change_percent_24h! < 0 : (p.displayDailyPnL?.amount ?? null)! < 0)
+  const best = sorted.filter(p => sortBy === "percent" ? p.change_percent_24h! > 0 : getSortAmount(p) > 0)
+  const worst = sorted.slice().reverse().filter(p => sortBy === "percent" ? p.change_percent_24h! < 0 : getSortAmount(p) < 0)
 
   const getDisplayName = (p: EnrichedPosition) => {
     if (p.nombre?.toUpperCase().includes("MSCI")) return "MSCI"
@@ -138,7 +145,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(convert((displayCurrency === p.moneda ? p.nativeDailyPnL?.amount : p.displayDailyPnL?.amount) ?? 0, displayCurrency === p.moneda ? p.moneda : "EUR"), displayCurrency)}
+                    : hideBalances ? "***" : formatPnl(getSortAmount(p), displayCurrency)}
                 </span>
               </motion.div>
             ))
@@ -186,7 +193,7 @@ export function TopMovers({ positions, marketState = 'CLOSED' }: { positions: En
                 >
                   {sortBy === "percent"
                     ? formatPercent(p.change_percent_24h || 0)
-                    : hideBalances ? "***" : formatPnl(convert((displayCurrency === p.moneda ? p.nativeDailyPnL?.amount : p.displayDailyPnL?.amount) ?? 0, displayCurrency === p.moneda ? p.moneda : "EUR"), displayCurrency)}
+                    : hideBalances ? "***" : formatPnl(getSortAmount(p), displayCurrency)}
                 </span>
               </motion.div>
             ))

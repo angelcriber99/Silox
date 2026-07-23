@@ -73,17 +73,17 @@ export default function Home() {
               {/* Subtle gradient background for the premium feel */}
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-              <div className="flex-1 min-h-0 flex flex-col gap-3 overflow-hidden p-3">
+              <div className="flex-1 min-h-0 flex flex-col gap-3 overflow-y-auto hide-scrollbar p-3">
                 <div className="flex-shrink-0">
                   <TopMetricsBar totals={totals} positions={positions} marketState={marketState} loading={isLoading} />
                 </div>
                 <div className="flex-col glass-card border rounded-xl overflow-hidden relative p-4 flex-shrink-0">
                   <AllocationChart positions={positions} marketState={marketState} />
                 </div>
-                <div className="flex-1 min-h-0 flex flex-col min-h-[120px]">
+                <div className="flex-1 flex flex-col min-h-[200px] shrink-0">
                   <TopMovers positions={positions.filter(p => p.tipo !== 'Liquidez')} marketState={marketState} />
                 </div>
-                <div className="flex-1 min-h-0 flex flex-col min-h-[120px]">
+                <div className="flex-1 flex flex-col min-h-[200px] shrink-0">
                   <UpcomingEvents
                     positions={positions.filter(p => p.tipo !== 'Liquidez')}
                     onAddEvent={() => { setEditEventData(null); setAddEventOpen(true) }}
