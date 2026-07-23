@@ -11,16 +11,31 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 import { usePositions } from "@/lib/hooks/use-portfolio"
 
+import { History, X } from "lucide-react"
+
 export function GlobalSearch() {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [results, setResults] = React.useState<SearchResultItem[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
+  const [history, setHistory] = React.useState<SearchResultItem[]>([])
   const router = useRouter()
   
   const { data: positions } = usePositions()
 
   const debouncedQuery = useDebounce(query, 300)
+
+  // Load history from localStorage
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('silox_search_history')
+      if (stored) {
+        setHistory(JSON.parse(stored))
+      }
+    } catch (e) {
+      console.error('Error loading search history', e)
+    }
+  }, [])
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -63,16 +78,41 @@ export function GlobalSearch() {
     performSearch()
   }, [debouncedQuery])
 
-  const handleSelect = (symbol: string) => {
+  const saveToHistory = (item: SearchResultItem) => {
+    setHistory(prev => {
+      const filtered = prev.filter(p => p.symbol !== item.symbol)
+      const newHistory = [item, ...filtered].slice(0, 5)
+      try {
+        localStorage.setItem('silox_search_history', JSON.stringify(newHistory))
+      } catch (e) {
+        // ignore
+      }
+      return newHistory
+    })
+  }
+
+  const handleSelect = (item: SearchResultItem) => {
+    saveToHistory(item)
     setOpen(false)
     setQuery("")
     
-    const ownedAsset = positions?.find(p => p.ticker === symbol)
+    const ownedAsset = positions?.find(p => p.ticker === item.symbol)
     if (ownedAsset) {
       router.push(`/activo/${ownedAsset.activo_id}`)
     } else {
-      router.push(`/asset/${symbol}`)
+      router.push(`/asset/${item.symbol}`)
     }
+  }
+
+  const removeHistoryItem = (e: React.MouseEvent, symbol: string) => {
+    e.stopPropagation()
+    setHistory(prev => {
+      const newHistory = prev.filter(p => p.symbol !== symbol)
+      try {
+        localStorage.setItem('silox_search_history', JSON.stringify(newHistory))
+      } catch (err) {}
+      return newHistory
+    })
   }
 
   const getIcon = (quoteType: string | null) => {
@@ -90,14 +130,14 @@ export function GlobalSearch() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[650px] p-0 gap-0 overflow-hidden bg-background/70 backdrop-blur-2xl shadow-[0_0_60px_-15px_rgba(0,0,0,0.5)] border border-white/10 rounded-2xl">
+      <DialogContent className="sm:max-w-[650px] p-0 gap-0 overflow-hidden bg-background/80 backdrop-blur-2xl shadow-[0_0_80px_-15px_rgba(0,0,0,0.7)] border border-white/10 rounded-2xl">
         <VisuallyHidden>
           <DialogTitle>Buscador de Activos</DialogTitle>
         </VisuallyHidden>
         <div className="flex items-center px-4 py-4 border-b border-white/5 relative">
           <Search className="mr-3 h-5 w-5 shrink-0 text-muted-foreground" />
           <input
-            className="flex flex-1 bg-transparent text-lg outline-none placeholder:text-muted-foreground/60 text-foreground"
+            className="flex flex-1 bg-transparent text-lg outline-none placeholder:text-muted-foreground/50 text-foreground border-none focus:ring-0 focus-visible:ring-0"
             placeholder="Busca por empresa, ticker o ETF (ej. Apple, SPY, Bitcoin...)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -123,13 +163,13 @@ export function GlobalSearch() {
             </div>
           )}
           
-          {results.length > 0 && (
+          {query.length > 0 && results.length > 0 && (
             <div className="flex flex-col gap-1 p-1">
-              <span className="text-xs font-semibold text-muted-foreground/50 px-2 py-1.5 uppercase tracking-wider">Activos del mercado</span>
+              <span className="text-xs font-semibold text-muted-foreground/50 px-2 py-1.5 uppercase tracking-wider">Resultados</span>
               {results.map((result) => (
                 <button
                   key={result.symbol}
-                  onClick={() => handleSelect(result.symbol)}
+                  onClick={() => handleSelect(result)}
                   className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-all duration-200 focus:bg-white/10 focus:outline-none"
                 >
                   <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white/5 border border-white/5 shadow-inner group-hover:scale-105 transition-transform duration-200">
@@ -151,7 +191,7 @@ export function GlobalSearch() {
                     </div>
                   </div>
                   {result.quoteType && (
-                    <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/60 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                    <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/60 bg-white/5 px-2.5 py-1 rounded-full border border-white/5 hidden sm:block">
                       {result.quoteType}
                     </span>
                   )}
@@ -159,8 +199,45 @@ export function GlobalSearch() {
               ))}
             </div>
           )}
+
+          {query.length === 0 && history.length > 0 && (
+            <div className="flex flex-col gap-1 p-1">
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <span className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider flex items-center gap-1.5">
+                  <History className="h-3.5 w-3.5" /> Búsquedas recientes
+                </span>
+              </div>
+              {history.map((result) => (
+                <button
+                  key={`history-${result.symbol}`}
+                  onClick={() => handleSelect(result)}
+                  className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 transition-all duration-200 focus:bg-white/10 focus:outline-none"
+                >
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white/5 border border-white/5 shadow-inner group-hover:scale-105 transition-transform duration-200">
+                    {getIcon(result.quoteType)}
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0 justify-center">
+                    <span className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                      {result.shortname || result.longname || result.symbol}
+                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground font-mono bg-white/5 px-1.5 py-0.5 rounded-md">
+                        {result.symbol}
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    onClick={(e) => removeHistoryItem(e, result.symbol)}
+                    className="p-1.5 rounded-full hover:bg-white/10 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
           
-          {query.length === 0 && (
+          {query.length === 0 && history.length === 0 && (
             <div className="p-8 text-center flex flex-col items-center">
               <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 border border-white/5 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(0,0,0,0.2)]">
                 <Globe className="h-6 w-6 text-primary/70" />
