@@ -18,6 +18,7 @@ import { AddEventModal } from "@/components/market/add-event-modal"
 import { MobileDashboard } from "@/components/mobile/mobile-dashboard"
 import { usePreferences } from "@/lib/stores/use-preferences"
 import { PendingOrders } from "@/components/transactions/pending-orders"
+import { PullToRefresh } from "@/components/layout/pull-to-refresh"
 import { DashboardErrorState } from "@/components/dashboard/dashboard-error-state"
 import { MacBadgeUpdater } from "@/components/dashboard/mac-badge-updater"
 
@@ -51,14 +52,16 @@ export default function Home() {
       {positions.length > 0 && <MacBadgeUpdater dailyPnl={totals.pnl24hMoney.amount} />}
       {/* ── Mobile ─────────────────────────────────────────────────── */}
       <div className="md:hidden flex-1 w-full">
-        <MobileDashboard
-          positions={positions}
-          totals={totals}
-          isLoading={isLoading}
-          marketState={marketState}
-          pricesUpdatedAt={pricesUpdatedAt}
-          pendingCount={pendingTxs.length}
-        />
+        <PullToRefresh onRefresh={async () => void refetch()}>
+          <MobileDashboard
+            positions={positions}
+            totals={totals}
+            isLoading={isLoading}
+            marketState={marketState}
+            pricesUpdatedAt={pricesUpdatedAt}
+            pendingCount={pendingTxs.length}
+          />
+        </PullToRefresh>
       </div>
 
       {/* ── Desktop ─────────────────────────────────────────────────── */}

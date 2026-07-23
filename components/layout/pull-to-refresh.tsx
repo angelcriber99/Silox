@@ -123,7 +123,9 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       isRefreshingRef.current = true
       setIndicatorVisible(true)
       setIsRefreshing(true)
-      y.set(0)
+      
+      // Animate to spinner height and hold it there while refreshing
+      await animate(y, 60, { type: "spring", stiffness: 300, damping: 30 })
       
       try {
         await onRefresh()
@@ -133,6 +135,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       } finally {
         isRefreshingRef.current = false
         setIsRefreshing(false)
+        await animate(y, 0, { type: "spring", stiffness: 300, damping: 30 })
         resetPullIndicator()
       }
     } else {
