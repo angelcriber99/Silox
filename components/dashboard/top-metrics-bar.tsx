@@ -49,8 +49,8 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
     <>
       <div className="w-full flex flex-col gap-6 p-6 bg-card rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
         {/* Hero Value Section */}
-        <div className="flex flex-col items-start gap-1 relative">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-1 relative text-center">
+          <div className="flex items-center justify-center gap-2">
             <span className="text-sm font-semibold tracking-wide text-muted-foreground">
               Total Balance
             </span>
@@ -61,11 +61,11 @@ export function TopMetricsBar({ totals, positions, marketState, loading = false 
             )}
           </div>
           
-          <div className="text-3xl sm:text-4xl lg:text-4xl xl:text-3xl 2xl:text-4xl font-extrabold tracking-tighter leading-none text-foreground flex items-end gap-2 w-full mt-1">
+          <div className="text-5xl sm:text-6xl lg:text-6xl font-extrabold tracking-tighter leading-none text-foreground flex items-center justify-center gap-2 w-full mt-3 mb-2">
             <span className="whitespace-nowrap truncate">{hideBalances ? "****" : formatCurrency(convert(totals.valueMoney.amount), displayCurrency)}</span>
           </div>
           {!totals.hasAllPrices && (
-            <span className="text-[11px] font-medium text-amber-500 flex items-center gap-1 mt-2">
+            <span className="text-[11px] font-medium text-amber-500 flex items-center justify-center gap-1 mt-1">
               <TriangleAlert className="w-3.5 h-3.5" /> Precios pendientes
             </span>
           )}
