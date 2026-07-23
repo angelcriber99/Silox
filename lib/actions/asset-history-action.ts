@@ -47,7 +47,7 @@ export async function getAssetHistory(ticker: string, range: '1d' | '5d' | '1mo'
     const result = await yahoo.historical(ticker, {
       period1,
       period2: now,
-      interval,
+      interval: interval as any,
     })
     
     return result.map(p => ({
