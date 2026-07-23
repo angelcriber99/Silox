@@ -38,7 +38,7 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
       style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Navegación principal"
     >
-      <div className="flex items-center gap-1 rounded-[32px] bg-zinc-900/95 px-2 py-2 shadow-2xl backdrop-blur-xl border border-white/10 dark:bg-zinc-950/95 dark:border-white/5">
+      <div className="flex items-center gap-1.5 rounded-[32px] bg-[#1a1a1a]/85 px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.25)] backdrop-blur-3xl border border-white/10 dark:bg-zinc-950/90 dark:border-white/5">
         {tabs.map((tab) => {
           const isActive = tab.isMore
             ? SECONDARY_ROUTES.some((route) => pathname.startsWith(route))
@@ -57,20 +57,20 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
                   hapticFeedback.medium()
                   handlePress()
                 }}
-                className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full transition-all duration-300 ${
-                  isActive ? "bg-zinc-800 px-4 py-2.5 text-white" : "px-3 py-2.5 text-zinc-400 hover:text-zinc-300"
+                className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full transition-all duration-300 ease-out ${
+                  isActive ? "bg-white/15 px-4 py-2.5 text-white shadow-inner" : "px-3 py-2.5 text-zinc-400 hover:text-zinc-200"
                 }`}
                 aria-label={tab.name}
                 aria-current={isActive ? "page" : undefined}
               >
                 {tab.isAction ? (
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-zinc-900 shadow-md">
-                    <Plus className="h-4 w-4" strokeWidth={3} />
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-black shadow-md transition-transform active:scale-90">
+                    <Plus className="h-5 w-5" strokeWidth={2.5} />
                   </span>
                 ) : (
                   <tab.Icon className="h-5 w-5 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
                 )}
-                {isActive && !tab.isAction && <span className="ml-2 text-[13px] font-semibold tracking-wide">{tab.name}</span>}
+                {isActive && !tab.isAction && <span className="ml-2.5 text-[13px] font-bold tracking-wide">{tab.name}</span>}
               </button>
             )
           }
@@ -80,13 +80,13 @@ export function MobileBottomNav({ onAddPress, onMorePress }: MobileBottomNavProp
               key={tab.name}
               href={tab.href}
               onClick={() => hapticFeedback.light()}
-              className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full transition-all duration-300 ${
-                isActive ? "bg-zinc-800 px-4 py-2.5 text-white" : "px-3 py-2.5 text-zinc-400 hover:text-zinc-300"
+              className={`relative flex items-center justify-center overflow-hidden whitespace-nowrap rounded-full transition-all duration-300 ease-out ${
+                isActive ? "bg-white/15 px-4 py-2.5 text-white shadow-inner" : "px-3 py-2.5 text-zinc-400 hover:text-zinc-200"
               }`}
               aria-current={isActive ? "page" : undefined}
             >
               <tab.Icon className="h-5 w-5 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
-              {isActive && <span className="ml-2 text-[13px] font-semibold tracking-wide">{tab.name}</span>}
+              {isActive && <span className="ml-2.5 text-[13px] font-bold tracking-wide">{tab.name}</span>}
             </Link>
           )
         })}

@@ -299,132 +299,156 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-full w-full">
       {/* ── Mobile View (iOS Grouped List) ──────────────────────────────── */}
-      <div className="md:hidden flex flex-col flex-1 pb-24 bg-background">
-        <div className="px-5 pb-2 pt-6 sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-border/40">
+      {/* ── Mobile View ──────────────────────────────── */}
+      <div className="md:hidden flex flex-col flex-1 pb-28 bg-[#F5F5F7] dark:bg-zinc-950 selection:bg-primary/20">
+        <div className="px-6 pb-6 pt-[max(24px,env(safe-area-inset-top))]">
           <div className="flex items-center gap-3">
-<BackButton />
-<h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
-            {t('title')}
-          </h1>
-</div>
+            <BackButton />
+            <h1 className="text-[34px] font-bold tracking-tight leading-tight text-zinc-900 dark:text-white">
+              Ajustes
+            </h1>
+          </div>
         </div>
         
-        <div className="flex flex-col gap-6 px-4 pt-6">
+        <div className="flex flex-col gap-8 px-5 pt-2">
           {/* Apariencia */}
           <section>
-            <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">Apariencia</h2>
-            <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
-
-              <div className="p-4 flex items-center justify-between bg-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><CircleDollarSign className="w-5 h-5" /></div>
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 ml-4 mb-3">Apariencia</h2>
+            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-2 shadow-sm flex flex-col">
+              {/* Moneda */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-[14px]">
+                    <CircleDollarSign className="w-[22px] h-[22px]" strokeWidth={2} />
+                  </div>
                   <div>
-                    <span className="font-semibold text-[15px]">Moneda de visualización</span>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">Cartera, ganancias y rendimiento</p>
+                    <span className="font-bold text-[16px] text-zinc-900 dark:text-white">Moneda</span>
+                    <p className="mt-0.5 text-[12px] font-medium text-zinc-500">Cartera y rendimientos</p>
                   </div>
                 </div>
-                <div className="flex bg-muted/50 p-1 rounded-xl" role="group" aria-label="Moneda de visualización">
+                <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-2xl" role="group">
                   {(['EUR', 'USD'] as const).map((currency) => (
                     <button
                       key={currency}
                       type="button"
                       onClick={() => setDisplayCurrency(currency)}
-                      className={`px-3 py-1 text-sm font-semibold rounded-lg ${displayCurrency === currency ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                      className={`px-3.5 py-1.5 text-[13px] font-bold rounded-xl transition-all ${
+                        displayCurrency === currency 
+                          ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-white' 
+                          : 'text-zinc-500 dark:text-zinc-400'
+                      }`}
                     >
-                      {currency === 'EUR' ? '€ EUR' : '$ USD'}
+                      {currency === 'EUR' ? '€' : '$'}
                     </button>
                   ))}
                 </div>
               </div>
-                <div className="p-4 flex flex-col gap-3 bg-card border-b border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-lg"><Moon className="w-5 h-5" /></div>
-                    <div>
-                      <span className="font-semibold text-[15px]">Tema de la aplicación</span>
-                    </div>
+
+              <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800/60 mx-4" />
+
+              {/* Tema */}
+              <div className="p-4 flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-[14px]">
+                    <Moon className="w-[22px] h-[22px]" strokeWidth={2} />
                   </div>
-                  <div className="flex bg-muted/50 p-1 rounded-xl w-full" role="group">
-                    <button onClick={() => handleSetTheme('crystal')} className={`flex-1 px-2 py-1.5 flex items-center justify-center gap-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'crystal' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>
-                      <Monitor className="w-4 h-4" /> Crystal
-                    </button>
-                    <button onClick={() => handleSetTheme('dark')} className={`flex-1 px-2 py-1.5 flex items-center justify-center gap-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'dark' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>
-                      <Moon className="w-4 h-4" /> Oscuro
-                    </button>
-                    <button onClick={() => handleSetTheme('light')} className={`flex-1 px-2 py-1.5 flex items-center justify-center gap-1.5 text-sm font-semibold rounded-lg transition-all ${currentThemeMode === 'light' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}>
-                      <Sun className="w-4 h-4" /> Claro
-                    </button>
-                  </div>
+                  <span className="font-bold text-[16px] text-zinc-900 dark:text-white">Tema Visual</span>
                 </div>
-                <div className="p-4 flex items-center justify-between bg-card">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><EyeOff className="w-5 h-5" /></div>
-                    <span className="font-semibold text-[15px]">Ocultar Saldos</span>
-                  </div>
-                  <CustomSwitch checked={hideBalances} onChange={() => setHideBalances(!hideBalances)} />
-                </div>
-                <div className="p-4 flex flex-col gap-3 bg-card border-t border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-rose-500/10 text-rose-500 rounded-lg"><Palette className="w-5 h-5" /></div>
-                    <span className="font-semibold text-[15px]">Color de Acento</span>
-                  </div>
-                  <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
-                    {(['blue', 'emerald', 'violet', 'rose', 'amber', 'indigo', 'teal', 'pink'] as const).map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setAccentColor(color)}
-                        className={`flex-shrink-0 w-10 h-10 rounded-full border-[3px] transition-all flex items-center justify-center ${
-                          accentColor === color ? 'border-foreground scale-110 shadow-sm' : 'border-transparent hover:scale-105 opacity-80'
-                        } ${
-                          color === 'blue' ? 'bg-[#3b82f6]' :
-                          color === 'emerald' ? 'bg-[#10b981]' :
-                          color === 'violet' ? 'bg-[#8b5cf6]' :
-                          color === 'rose' ? 'bg-[#f43f5e]' :
-                          color === 'amber' ? 'bg-[#f59e0b]' :
-                          color === 'indigo' ? 'bg-[#6366f1]' :
-                          color === 'teal' ? 'bg-[#14b8a6]' :
-                          'bg-[#ec4899]'
-                        }`}
-                      >
-                        {accentColor === color && <Check className="w-4 h-4 text-white shadow-sm" />}
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded-2xl w-full" role="group">
+                  <button onClick={() => handleSetTheme('crystal')} className={`flex-1 px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 rounded-[14px] transition-all ${currentThemeMode === 'crystal' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50'}`}>
+                    <Monitor className="w-5 h-5" strokeWidth={2} />
+                    <span className="text-[11px] font-bold">Auto</span>
+                  </button>
+                  <button onClick={() => handleSetTheme('light')} className={`flex-1 px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 rounded-[14px] transition-all ${currentThemeMode === 'light' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50'}`}>
+                    <Sun className="w-5 h-5" strokeWidth={2} />
+                    <span className="text-[11px] font-bold">Claro</span>
+                  </button>
+                  <button onClick={() => handleSetTheme('dark')} className={`flex-1 px-2 py-2.5 flex flex-col items-center justify-center gap-1.5 rounded-[14px] transition-all ${currentThemeMode === 'dark' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50'}`}>
+                    <Moon className="w-5 h-5" strokeWidth={2} />
+                    <span className="text-[11px] font-bold">Oscuro</span>
+                  </button>
                 </div>
               </div>
-            </section>
 
-          {/* App Desktop */}
+              <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800/60 mx-4" />
+
+              {/* Ocultar Saldos */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 rounded-[14px]">
+                    <EyeOff className="w-[22px] h-[22px]" strokeWidth={2} />
+                  </div>
+                  <span className="font-bold text-[16px] text-zinc-900 dark:text-white">Ocultar Saldos</span>
+                </div>
+                <CustomSwitch checked={hideBalances} onChange={() => setHideBalances(!hideBalances)} />
+              </div>
+
+              <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800/60 mx-4" />
+
+              {/* Color Acento */}
+              <div className="p-4 flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-[14px]">
+                    <Palette className="w-[22px] h-[22px]" strokeWidth={2} />
+                  </div>
+                  <span className="font-bold text-[16px] text-zinc-900 dark:text-white">Color de Acento</span>
+                </div>
+                <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2 px-1">
+                  {(['blue', 'emerald', 'violet', 'rose', 'amber', 'indigo', 'teal', 'pink'] as const).map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setAccentColor(color)}
+                      className={`flex-shrink-0 w-11 h-11 rounded-full border-[3px] transition-all flex items-center justify-center ${
+                        accentColor === color ? 'border-zinc-900 dark:border-white scale-110 shadow-sm' : 'border-transparent opacity-80'
+                      } ${
+                        color === 'blue' ? 'bg-[#3b82f6]' :
+                        color === 'emerald' ? 'bg-[#10b981]' :
+                        color === 'violet' ? 'bg-[#8b5cf6]' :
+                        color === 'rose' ? 'bg-[#f43f5e]' :
+                        color === 'amber' ? 'bg-[#f59e0b]' :
+                        color === 'indigo' ? 'bg-[#6366f1]' :
+                        color === 'teal' ? 'bg-[#14b8a6]' :
+                        'bg-[#ec4899]'
+                      }`}
+                    >
+                      {accentColor === color && <Check className="w-5 h-5 text-white shadow-sm" strokeWidth={3} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* App Nativa */}
           <section>
-            <h2 className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2">App Nativa</h2>
-            <div className="bg-card border border-border/50 rounded-2xl overflow-hidden divide-y divide-border/50">
-              <a href="/api/download?os=windows" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg"><Download className="w-5 h-5" /></div>
-                  <span className="font-semibold text-[15px] text-left">Descargar para Windows</span>
+            <h2 className="text-[13px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 ml-4 mb-3">App Nativa</h2>
+            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-2 shadow-sm flex flex-col">
+              <a href="/api/download?os=windows" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center gap-4 active:opacity-60 transition-opacity">
+                <div className="p-2.5 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-[14px]">
+                  <Download className="w-[22px] h-[22px]" strokeWidth={2} />
                 </div>
+                <span className="font-bold text-[16px] text-zinc-900 dark:text-white">Descargar para Windows</span>
               </a>
-              <a href="/api/download?os=mac" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center justify-between bg-card active:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-zinc-500/10 text-zinc-500 rounded-lg"><Monitor className="w-5 h-5" /></div>
-                  <span className="font-semibold text-[15px] text-left">Descargar para Mac</span>
+              
+              <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800/60 mx-4" />
+              
+              <a href="/api/download?os=mac" target="_blank" rel="noreferrer" className="w-full p-4 flex items-center gap-4 active:opacity-60 transition-opacity">
+                <div className="p-2.5 bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 rounded-[14px]">
+                  <Monitor className="w-[22px] h-[22px]" strokeWidth={2} />
                 </div>
+                <span className="font-bold text-[16px] text-zinc-900 dark:text-white">Descargar para Mac</span>
               </a>
             </div>
           </section>
 
-          {/* Peligro */}
-          <section>
-            <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl overflow-hidden">
-              <button onClick={() => setDeleteDialogOpen(true)} className="w-full p-4 flex items-center justify-center gap-2 text-rose-500 font-bold active:bg-rose-500/20 transition-colors">
-                <Trash2 className="w-5 h-5" /> Borrar Cuenta
-              </button>
-            </div>
-          </section>
-
-          {/* Logout */}
-          <section className="mt-4">
-            <button onClick={handleLogout} className="w-full p-4 rounded-2xl bg-muted border border-border/50 font-bold text-foreground active:bg-muted/80 transition-colors">
+          {/* Sesión y Peligro */}
+          <section className="flex flex-col gap-3">
+            <button onClick={handleLogout} className="w-full p-5 rounded-[32px] bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center gap-2 font-bold text-[16px] text-zinc-900 dark:text-white active:scale-[0.98] transition-transform">
               Cerrar Sesión
+            </button>
+            
+            <button onClick={() => setDeleteDialogOpen(true)} className="w-full p-5 rounded-[32px] bg-rose-50 dark:bg-rose-950/30 shadow-sm flex items-center justify-center gap-2 font-bold text-[16px] text-rose-600 dark:text-rose-400 active:scale-[0.98] transition-transform">
+              <Trash2 className="w-[22px] h-[22px]" /> Borrar Cuenta
             </button>
           </section>
         </div>
