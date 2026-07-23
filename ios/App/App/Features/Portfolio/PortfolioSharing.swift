@@ -35,22 +35,22 @@ struct PortfolioShareSnapshot: Equatable {
         self.showAssetValues = showAssetValues
         if showPositions {
             movements = portfolio.positions
-            .filter { $0.asset.kind != .cash && $0.quantity.decimalValue > 0 }
-            .map {
-                Movement(
-                    id: $0.id,
-                    assetName: $0.asset.displayName,
-                    ticker: $0.asset.ticker ?? $0.asset.shortLabel,
-                    dailyAmount: $0.dailyChange,
-                    dailyPercent: $0.dailyChangePercent
-                )
-            }
-            .sorted { left, right in
-                if left.magnitude != right.magnitude { return left.magnitude > right.magnitude }
-                return left.id.localizedStandardCompare(right.id) == .orderedAscending
-            }
-            .prefix(3)
-            .map { $0 }
+                .filter { $0.asset.kind != .cash && $0.quantity.decimalValue > 0 }
+                .map {
+                    Movement(
+                        id: $0.id,
+                        assetName: $0.asset.displayName,
+                        ticker: $0.asset.ticker ?? $0.asset.shortLabel,
+                        dailyAmount: $0.dailyChange,
+                        dailyPercent: $0.dailyChangePercent
+                    )
+                }
+                .sorted { left, right in
+                    if left.magnitude != right.magnitude { return left.magnitude > right.magnitude }
+                    return left.id.localizedStandardCompare(right.id) == .orderedAscending
+                }
+                .prefix(3)
+                .map { $0 }
         } else {
             movements = []
         }
@@ -297,16 +297,6 @@ private struct PortfolioShareCard: View {
             .foregroundStyle(dailyColor)
         }
     }
-            .font(.title3.weight(.bold))
-            .monospacedDigit()
-            .foregroundStyle(dailyColor)
-            if snapshot.balancesHidden {
-                Label("Importes ocultos", systemImage: "eye.slash")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(SiloxColors.textSecondary)
-            }
-        }
-    }
 
     @ViewBuilder
     private var movementSection: some View {
@@ -347,29 +337,6 @@ private struct PortfolioShareCard: View {
         }
     }
 
-            if snapshot.movements.isEmpty {
-                Text("Aún no hay movimientos destacados para mostrar.")
-                    .font(.subheadline)
-                    .foregroundStyle(SiloxColors.textSecondary)
-                    .padding(.vertical, 12)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(snapshot.movements.enumerated()), id: \.element.id) { index, movement in
-                        ShareMovementRow(
-                            rank: index + 1,
-                            movement: movement,
-                            balancesHidden: snapshot.balancesHidden
-                        )
-                        if index < snapshot.movements.count - 1 {
-                            Divider().overlay(SiloxColors.borderSubtle)
-                        }
-                    }
-                }
-                .background(SiloxColors.surfaceMuted.opacity(0.58), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            }
-        }
-    }
-
     private var footer: some View {
         HStack {
             Text("Actualizado \(snapshot.updatedAt.formatted(date: .abbreviated, time: .shortened))")
@@ -385,8 +352,6 @@ private struct PortfolioShareCard: View {
 private struct ShareMovementRow: View {
     let rank: Int
     let movement: PortfolioShareSnapshot.Movement
-    let showTotalValue: Bool
-    let showPositions: Bool
     let showAssetValues: Bool
 
     private var color: Color {
