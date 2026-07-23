@@ -214,7 +214,11 @@ struct TransactionsView: View {
             }
         }
         .siloxContentBackground()
-        .refreshable { await model.refresh() }
+        .refreshable {
+            async let fetch: () = model.refresh()
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
     }
 
     @ViewBuilder private var filterControls: some View {

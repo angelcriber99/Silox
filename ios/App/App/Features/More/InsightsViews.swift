@@ -123,7 +123,11 @@ struct AnalysisView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
-        .refreshable { await model.refresh() }
+        .refreshable {
+            async let fetch: () = model.refresh()
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
     }
 
     private func performanceCard(_ portfolio: PortfolioResponse) -> some View {
@@ -642,7 +646,11 @@ struct PortfolioHistoryView: View {
                     }
                 }
                 .siloxContentBackground()
-                .refreshable { await model.load() }
+                .refreshable {
+            async let fetch: () = model.load()
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
             }
         }
         .navigationTitle("Historial")
@@ -879,7 +887,11 @@ struct AlertsView: View {
                     }
                 }
                 .siloxContentBackground()
-                .refreshable { await model.load() }
+                .refreshable {
+            async let fetch: () = model.load()
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
             }
         }
         .navigationTitle("Alertas")

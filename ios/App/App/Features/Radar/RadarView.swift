@@ -84,7 +84,11 @@ struct RadarView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
-        .refreshable { await model.refresh() }
+        .refreshable {
+            async let fetch: () = model.refresh()
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
         .onAppear {
             if let first = radar.events.first, events(on: selectedDate, from: radar.events).isEmpty {
                 selectedDate = Calendar.current.startOfDay(for: first.startsAt)

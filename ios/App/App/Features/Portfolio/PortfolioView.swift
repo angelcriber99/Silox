@@ -192,7 +192,13 @@ struct PortfolioView: View {
             .padding(.top, 10)
             .padding(.bottom, 14)
         }
-        .refreshable { await model.refresh() }
+        .refreshable {
+            // Un pequeño retraso para evitar el bug nativo de SwiftUI donde el UIRefreshControl
+            // se queda pillado si la petición de red responde demasiado rápido (< 300ms).
+            async let fetch: () = model.refresh()
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
     }
 
     private func portfolioSummary(_ portfolio: PortfolioResponse) -> some View {
@@ -560,7 +566,11 @@ private struct PositionDetailView: View {
         .background(SiloxColors.backgroundPrimary.ignoresSafeArea())
         .navigationTitle(position.asset.displayName)
         .navigationBarTitleDisplayMode(.inline)
-        .refreshable { await refresh() }
+        .refreshable {
+            async let fetch: () = refresh()
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             await refresh()

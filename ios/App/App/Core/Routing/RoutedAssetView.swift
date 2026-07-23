@@ -63,7 +63,11 @@ struct RoutedAssetView: View {
             }
         }
         .siloxContentBackground()
-        .refreshable { await load(forceRefresh: true) }
+        .refreshable {
+            async let fetch: () = load(forceRefresh: true)
+            async let delay: () = try? await Task.sleep(nanoseconds: 600_000_000)
+            _ = await (fetch, delay)
+        }
     }
 
     private func load(forceRefresh: Bool = false) async {
