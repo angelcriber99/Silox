@@ -157,16 +157,16 @@ export async function POST() {
         const history = historicalData[pos.ticker] || []
         // Buscar el precio de cierre más cercano <= targetDate
         const pricePoint = history.slice().reverse().find(p => new Date(p.date) <= targetDate)
-        let price = pos.ticker === 'CASH' ? 1 : (pricePoint?.close ?? 0)
         
-        // Mock para REVOLUT
-        if (pos.ticker === 'REVOLUT') {
-          price = 1
-        }
-
-        let valueInEur = pos.unidades * price
-        if (pos.moneda === 'USD') {
-          valueInEur = valueInEur * usdToEurRate
+        let valueInEur = 0;
+        
+        if (pos.ticker === 'CASH' || pos.ticker === 'REVOLUT') {
+          valueInEur = pos.unidades * (pos.moneda === 'USD' ? usdToEurRate : 1)
+        } else if (pricePoint && pricePoint.close > 0) {
+          valueInEur = pos.unidades * pricePoint.close * (pos.moneda === 'USD' ? usdToEurRate : 1)
+        } else {
+          // Si no hay datos históricos para este día, usamos el coste acumulado para evitar que caiga a 0 (picos rojos)
+          valueInEur = pos.coste_eur
         }
 
         total_value += valueInEur
