@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowUpRight, ArrowDownRight, Loader2, Info, Check } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, Loader2, Info, Check, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
