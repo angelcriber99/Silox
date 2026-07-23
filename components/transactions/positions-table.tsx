@@ -705,6 +705,16 @@ export function PositionsTable({
             <Plus className="sm:mr-1.5 h-3.5 w-3.5" />
             <span className="text-[11px] hidden sm:inline">{t('add_asset')}</span>
           </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-global-search'))}
+            className="h-7 w-7 p-0 bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
+            title="Buscar activo en el mercado (Cmd+K)"
+          >
+            <Search className="h-3.5 w-3.5" />
+          </Button>
         </div>
 
         {/* 3. Force line break on narrow screens */}

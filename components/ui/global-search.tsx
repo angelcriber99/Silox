@@ -26,8 +26,15 @@ export function GlobalSearch() {
       }
     }
 
+    const openSearch = () => setOpen(true)
+
     document.addEventListener("keydown", down)
-    return () => document.removeEventListener("keydown", down)
+    window.addEventListener("open-global-search", openSearch)
+    
+    return () => {
+      document.removeEventListener("keydown", down)
+      window.removeEventListener("open-global-search", openSearch)
+    }
   }, [])
 
   React.useEffect(() => {
@@ -72,19 +79,7 @@ export function GlobalSearch() {
   }
 
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 sm:py-1.5 text-sm text-muted-foreground bg-background/60 backdrop-blur-md hover:bg-muted/80 rounded-full border border-border/50 shadow-sm transition-all hover:shadow-md"
-      >
-        <Search className="h-4 w-4" />
-        <span className="hidden sm:inline-block font-medium">Buscar activo...</span>
-        <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-background/50 px-1.5 font-mono text-[10px] font-medium opacity-100">
-          <span className="text-xs">⌘</span>K
-        </kbd>
-      </button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[550px] p-0 gap-0 overflow-hidden bg-background border-border/50 shadow-2xl">
           <VisuallyHidden>
             <DialogTitle>Buscador de Activos</DialogTitle>
