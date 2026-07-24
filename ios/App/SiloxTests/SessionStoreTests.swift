@@ -94,11 +94,11 @@ final class SessionStoreTests: XCTestCase {
     func testSignOutRunsPrivacyCleanup() async throws {
         let secure = MemorySecureStore()
         let didCleanUp = LockedFlag()
-        let store = SessionStore(secureStore: secure, onSignOut: { didCleanUp.set() })
+        let store = SessionStore(secureStore: secure, onSessionChange: { userID in if userID == nil { didCleanUp.set() } })
         let user = UserProfile(id: "user-1", email: "test@example.com", displayName: nil)
-        try store.accept(AuthSession(accessToken: "access", refreshToken: nil, expiresAt: nil, user: user))
+        try await store.accept(AuthSession(accessToken: "access", refreshToken: nil, expiresAt: nil, user: user))
 
-        store.signOut()
+        await store.signOut()
 
         XCTAssertTrue(didCleanUp.get())
         XCTAssertEqual(store.state, .signedOut)
@@ -154,7 +154,7 @@ final class SessionStoreTests: XCTestCase {
             authConfigurationProvider: { (URL(string: "https://auth.silox.test")!, "anon-key") }
         )
         let user = UserProfile(id: "user-1", email: "test@example.com", displayName: "Test")
-        try store.accept(AuthSession(
+        try await store.accept(AuthSession(
             accessToken: "expired",
             refreshToken: "refresh",
             expiresAt: .distantPast,

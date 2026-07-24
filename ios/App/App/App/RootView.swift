@@ -19,7 +19,7 @@ struct RootView: View {
                 SignInView()
             case .signedIn:
                 if requiresUnlock {
-                    BiometricLockView(unlock: unlock, signOut: session.signOut)
+                    BiometricLockView(unlock: unlock, signOut: { Task { await session.signOut() } })
                 } else {
                     MainTabView(router: router)
                 }

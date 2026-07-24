@@ -11,7 +11,7 @@ vi.mock('@/lib/server/yahoo-finance', () => ({
   getYahooFinance: () => ({ search: mocks.yahooSearch, chart: mocks.yahooChart }),
 }))
 
-import { POST } from '@/app/api/import/revolut/route'
+import { POST, validateXlsxArchive } from '@/app/api/import/revolut/route'
 import { calculateNetContributions } from '@/lib/domain/portfolio/contributions'
 
 interface AssetRow {
@@ -174,6 +174,21 @@ describe('broker import route', () => {
         ? [{ date: new Date('2026-02-25T00:00:00.000Z'), close: 1_650 }]
         : [{ date: new Date('2026-03-01T00:00:00.000Z'), close: 75 }],
     }))
+  })
+
+  it('rejects ZIP archives whose declared expansion exceeds the import budget', () => {
+    const archive = new Uint8Array(22 + 46)
+    const view = new DataView(archive.buffer)
+    view.setUint32(0, 0x02014b50, true)
+    view.setUint32(20, 1, true)
+    view.setUint32(24, 51 * 1024 * 1024, true)
+    view.setUint32(46, 0x06054b50, true)
+    view.setUint16(54, 1, true)
+    view.setUint16(56, 1, true)
+    view.setUint32(58, 46, true)
+    view.setUint32(62, 0, true)
+
+    expect(() => validateXlsxArchive(archive.buffer)).toThrow(/límite de compresión/i)
   })
 
   it('rebuilds assets and transactions from MyInvestor and is idempotent', async () => {

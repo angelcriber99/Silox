@@ -207,7 +207,7 @@ struct MoreView: View {
         } catch {
             // El cierre local debe seguir disponible sin conexión.
         }
-        session.signOut()
+        await session.signOut()
         WidgetCenter.shared.reloadAllTimelines()
     }
 }
@@ -279,7 +279,7 @@ private struct DeleteAccountView: View {
                 body: DeleteAccountRequest(confirmation: confirmation),
                 idempotencyKey: UUID().uuidString
             )
-            session.signOut()
+            await session.signOut()
             WidgetCenter.shared.reloadAllTimelines()
         } catch {
             errorMessage = error.localizedDescription

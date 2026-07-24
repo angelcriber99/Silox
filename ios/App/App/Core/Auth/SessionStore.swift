@@ -59,7 +59,7 @@ final class SessionStore: ObservableObject {
     private let urlSession: URLSession
     private let authConfigurationProvider: (() throws -> (URL, String))?
     private let oauthCallbackScheme: String
-    private let onSignOut: @Sendable () -> Void
+    private let onSessionChange: @Sendable (String?) async -> Void
     private var oauthWebSession: OAuthWebSession?
     private let sessionKey = "auth.session"
     private var refreshTask: (id: UUID, task: Task<Bool, Never>)?
@@ -71,19 +71,20 @@ final class SessionStore: ObservableObject {
         urlSession: URLSession = .shared,
         authConfigurationProvider: (() throws -> (URL, String))? = nil,
         oauthCallbackScheme: String = OAuthCallbackConfiguration.scheme(),
-        onSignOut: @escaping @Sendable () -> Void = {}
+        onSessionChange: @escaping @Sendable (String?) async -> Void = { _ in }
     ) {
         self.secureStore = secureStore
         self.urlSession = urlSession
         self.authConfigurationProvider = authConfigurationProvider
         self.oauthCallbackScheme = oauthCallbackScheme
-        self.onSignOut = onSignOut
+        self.onSessionChange = onSessionChange
     }
 
     func restore() async {
         if ProcessInfo.processInfo.arguments.contains("-ui-test-authenticated") {
             let user = UserProfile(id: "ui-test", email: "demo@silox.local", displayName: "Demo")
             session = AuthSession(accessToken: "ui-test-token", refreshToken: nil, expiresAt: nil, user: user)
+            await onSessionChange(user.id)
             state = .signedIn(user)
             return
         }
@@ -94,6 +95,7 @@ final class SessionStore: ObservableObject {
             if restored.expiresAt.map({ $0 <= Date().addingTimeInterval(60) }) == true {
                 guard await refreshSession() else { return }
             } else {
+                await onSessionChange(restored.user.id)
                 state = .signedIn(restored.user)
             }
         } catch {
@@ -120,7 +122,7 @@ final class SessionStore: ObservableObject {
             guard (200..<300).contains(http.statusCode) else {
                 throw APIError.server(status: http.statusCode, code: "sign_in_failed", message: "Correo o contraseña incorrectos.")
             }
-            try accept(session(from: try JSONDecoder().decode(SupabaseSessionPayload.self, from: data), fallbackEmail: email))
+            try await accept(session(from: try JSONDecoder().decode(SupabaseSessionPayload.self, from: data), fallbackEmail: email))
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "No se pudo iniciar sesión."
         }
@@ -178,7 +180,7 @@ final class SessionStore: ObservableObject {
 
     private func performSessionRefresh() async -> Bool {
         guard let refreshToken = session?.refreshToken, !refreshToken.isEmpty else {
-            signOut()
+            await signOut()
             return false
         }
         do {
@@ -201,10 +203,10 @@ final class SessionStore: ObservableObject {
                 throw APIError.unauthorized
             }
             let payload = try JSONDecoder().decode(SupabaseSessionPayload.self, from: data)
-            try accept(session(from: payload, fallbackEmail: session?.user.email ?? ""))
+            try await accept(session(from: payload, fallbackEmail: session?.user.email ?? ""))
             return true
         } catch {
-            signOut()
+            await signOut()
             errorMessage = "La sesión ha caducado. Vuelve a iniciar sesión."
             return false
         }
@@ -248,7 +250,7 @@ final class SessionStore: ObservableObject {
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
                 throw APIError.server(status: (response as? HTTPURLResponse)?.statusCode ?? 0, code: "oauth_exchange_failed", message: "No se pudo completar el acceso con Google.")
             }
-            try accept(session(from: try JSONDecoder().decode(SupabaseSessionPayload.self, from: data), fallbackEmail: ""))
+            try await accept(session(from: try JSONDecoder().decode(SupabaseSessionPayload.self, from: data), fallbackEmail: ""))
             return
         }
 
@@ -265,7 +267,7 @@ final class SessionStore: ObservableObject {
             let (userData, userResponse) = try await urlSession.data(for: userRequest)
         guard let http = userResponse as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { throw APIError.unauthorized }
         let user = try JSONDecoder().decode(SupabaseUserPayload.self, from: userData)
-        try accept(AuthSession(
+        try await accept(AuthSession(
             accessToken: accessToken,
             refreshToken: refreshToken,
             expiresAt: expiresIn.map { Date().addingTimeInterval($0) },
@@ -319,14 +321,15 @@ final class SessionStore: ObservableObject {
         )
     }
 
-    func accept(_ newSession: AuthSession) throws {
+    func accept(_ newSession: AuthSession) async throws {
         try secureStore.set(JSONEncoder().encode(newSession), for: sessionKey)
+        await onSessionChange(newSession.user.id)
         session = newSession
         state = .signedIn(newSession.user)
         errorMessage = nil
     }
 
-    func signOut() {
+    func signOut() async {
         refreshTask?.task.cancel()
         refreshTask = nil
         if let accessToken = session?.accessToken,
@@ -345,7 +348,7 @@ final class SessionStore: ObservableObject {
             }
         }
         try? secureStore.remove(sessionKey)
-        onSignOut()
+        await onSessionChange(nil)
         session = nil
         state = .signedOut
     }

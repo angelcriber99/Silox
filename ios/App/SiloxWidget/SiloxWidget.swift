@@ -91,6 +91,7 @@ struct SiloxWidgetEntryView: View {
             }
         }
         .foregroundStyle(SiloxColors.textPrimary)
+        .privacySensitive()
         .containerBackground(for: .widget) { SiloxColors.backgroundPrimary }
         .widgetURL(URL(string: "silox://portfolio"))
     }

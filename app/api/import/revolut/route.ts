@@ -40,6 +40,14 @@ interface ParsedImportTransaction {
   includeInSummary?: boolean
 }
 
+const MAX_XLSX_ENTRIES = 2_500
+const MAX_XLSX_UNCOMPRESSED_BYTES = 50 * 1024 * 1024
+const MAX_XLSX_COMPRESSION_RATIO = 100
+const MAX_XLSX_SHEETS = 32
+const MAX_XLSX_ROWS = 50_000
+const MAX_XLSX_CELLS = 500_000
+const MAX_XLSX_TEXT_BYTES = 8 * 1024 * 1024
+
 function toDatabaseTransaction(transaction: ParsedImportTransaction) {
   return {
     user_id: transaction.user_id,
@@ -273,17 +281,95 @@ function cellToString(value: CellValue): string {
   return normalizeText(value)
 }
 
+function xlsxLimitError(message: string): MobileApiError {
+  return new MobileApiError(413, 'xlsx_limits_exceeded', message)
+}
+
+/**
+ * Reads ZIP central-directory metadata before ExcelJS expands an XLSX archive.
+ * ZIP64 and encrypted archives are deliberately rejected because their sizes
+ * cannot be bounded with this lightweight preflight.
+ */
+export function validateXlsxArchive(buffer: ArrayBuffer): void {
+  const bytes = new Uint8Array(buffer)
+  const minimumEocdSize = 22
+  if (bytes.byteLength < minimumEocdSize) throw xlsxLimitError('El archivo XLSX no contiene un índice ZIP válido.')
+
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  let eocdOffset = -1
+  const searchStart = Math.max(0, bytes.byteLength - 65_557)
+  for (let offset = bytes.byteLength - minimumEocdSize; offset >= searchStart; offset--) {
+    if (view.getUint32(offset, true) === 0x06054b50) {
+      eocdOffset = offset
+      break
+    }
+  }
+  if (eocdOffset < 0) throw xlsxLimitError('El archivo XLSX no contiene un índice ZIP válido.')
+
+  const entries = view.getUint16(eocdOffset + 10, true)
+  const centralDirectorySize = view.getUint32(eocdOffset + 12, true)
+  const centralDirectoryOffset = view.getUint32(eocdOffset + 16, true)
+  if (
+    entries === 0xffff || centralDirectorySize === 0xffffffff || centralDirectoryOffset === 0xffffffff ||
+    entries > MAX_XLSX_ENTRIES || centralDirectoryOffset + centralDirectorySize > bytes.byteLength
+  ) {
+    throw xlsxLimitError('El archivo XLSX supera los límites de estructura permitidos.')
+  }
+
+  let offset = centralDirectoryOffset
+  let totalUncompressed = 0
+  for (let index = 0; index < entries; index++) {
+    if (offset + 46 > centralDirectoryOffset + centralDirectorySize || view.getUint32(offset, true) !== 0x02014b50) {
+      throw xlsxLimitError('El índice ZIP del XLSX no es válido.')
+    }
+    const flags = view.getUint16(offset + 8, true)
+    const compressedSize = view.getUint32(offset + 20, true)
+    const uncompressedSize = view.getUint32(offset + 24, true)
+    const nameLength = view.getUint16(offset + 28, true)
+    const extraLength = view.getUint16(offset + 30, true)
+    const commentLength = view.getUint16(offset + 32, true)
+    if (flags & 0x1 || compressedSize === 0xffffffff || uncompressedSize === 0xffffffff) {
+      throw xlsxLimitError('El XLSX usa una estructura ZIP no admitida.')
+    }
+    if (uncompressedSize > 0 && (compressedSize === 0 || uncompressedSize / compressedSize > MAX_XLSX_COMPRESSION_RATIO)) {
+      throw xlsxLimitError('El XLSX supera el límite de compresión permitido.')
+    }
+    totalUncompressed += uncompressedSize
+    if (totalUncompressed > MAX_XLSX_UNCOMPRESSED_BYTES) {
+      throw xlsxLimitError('El XLSX supera el tamaño descomprimido permitido.')
+    }
+    offset += 46 + nameLength + extraLength + commentLength
+  }
+  if (offset > centralDirectoryOffset + centralDirectorySize) {
+    throw xlsxLimitError('El índice ZIP del XLSX no es válido.')
+  }
+}
+
 async function parseWorkbook(buffer: ArrayBuffer): Promise<string[][]> {
+  validateXlsxArchive(buffer)
   const ExcelJS = (await import('exceljs')).default
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(buffer)
 
+  if (workbook.worksheets.length > MAX_XLSX_SHEETS) {
+    throw xlsxLimitError('El XLSX contiene demasiadas hojas.')
+  }
+  let totalRows = 0
+  let totalCells = 0
+  let totalTextBytes = 0
   const sheets = workbook.worksheets.map((sheet) => {
     const rows: string[][] = []
     sheet.eachRow((row) => {
+      totalRows += 1
+      if (totalRows > MAX_XLSX_ROWS) throw xlsxLimitError('El XLSX contiene demasiadas filas.')
       const values = row.values
       if (!Array.isArray(values)) return
       const cells = values.slice(1).map(cellToString)
+      totalCells += cells.length
+      totalTextBytes += cells.reduce((sum, cell) => sum + Buffer.byteLength(cell, 'utf8'), 0)
+      if (totalCells > MAX_XLSX_CELLS || totalTextBytes > MAX_XLSX_TEXT_BYTES) {
+        throw xlsxLimitError('El XLSX contiene demasiadas celdas o texto.')
+      }
       if (cells.some(Boolean)) rows.push(cells)
     })
     return rows

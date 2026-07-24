@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import os
 
@@ -18,6 +19,7 @@ actor ReadCache {
     private let decoder = JSONDecoder()
     private let logger = Logger(subsystem: "com.angelcriber.silox", category: "ReadCache")
     private var memory: [String: Data] = [:]
+    private var ownerNamespace: String?
 
     init(directory: URL? = nil, schemaVersion: Int = 2) {
         self.directory = directory ?? FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -25,17 +27,26 @@ actor ReadCache {
         self.schemaVersion = schemaVersion
     }
 
+    /// Cache entries are only available after an authenticated session has
+    /// selected its owner. This prevents a previous account's snapshots from
+    /// being rendered while another account is being restored.
+    func setOwner(_ userID: String?) {
+        memory.removeAll(keepingCapacity: false)
+        ownerNamespace = userID.map { digest($0) }
+    }
+
     func load<Value: Codable & Sendable>(
         _ type: Value.Type,
         key: String,
         maxAge: TimeInterval? = nil
     ) -> Cached<Value>? {
+        guard let scopedKey = scopedKey(for: key) else { return nil }
         let data: Data
-        if let memoryData = memory[key] {
+        if let memoryData = memory[scopedKey] {
             data = memoryData
-        } else if let diskData = try? Data(contentsOf: url(for: key)) {
+        } else if let diskData = try? Data(contentsOf: url(for: scopedKey)) {
             data = diskData
-            memory[key] = diskData
+            memory[scopedKey] = diskData
         } else {
             logger.debug("cache_miss key=\(key, privacy: .public)")
             return nil
@@ -43,8 +54,8 @@ actor ReadCache {
         guard let envelope = try? decoder.decode(Envelope<Value>.self, from: data),
               envelope.schemaVersion == schemaVersion else {
             logger.notice("cache_invalidated key=\(key, privacy: .public) schema=\(self.schemaVersion)")
-            memory.removeValue(forKey: key)
-            try? FileManager.default.removeItem(at: url(for: key))
+            memory.removeValue(forKey: scopedKey)
+            try? FileManager.default.removeItem(at: url(for: scopedKey))
             return nil
         }
         if let maxAge, Date().timeIntervalSince(envelope.payload.savedAt) > maxAge {
@@ -56,17 +67,19 @@ actor ReadCache {
     }
 
     func save<Value: Codable & Sendable>(_ value: Value, key: String) {
+        guard let scopedKey = scopedKey(for: key) else { return }
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let payload = Cached(savedAt: Date(), value: value)
         guard let data = try? encoder.encode(Envelope(schemaVersion: schemaVersion, payload: payload)) else { return }
-        memory[key] = data
-        try? data.write(to: url(for: key), options: .atomic)
+        memory[scopedKey] = data
+        try? data.write(to: url(for: scopedKey), options: .atomic)
         logger.debug("cache_saved key=\(key, privacy: .public)")
     }
 
     func remove(_ key: String) {
-        memory.removeValue(forKey: key)
-        try? FileManager.default.removeItem(at: url(for: key))
+        guard let scopedKey = scopedKey(for: key) else { return }
+        memory.removeValue(forKey: scopedKey)
+        try? FileManager.default.removeItem(at: url(for: scopedKey))
     }
 
     func clearAll() {
@@ -77,6 +90,14 @@ actor ReadCache {
     private func url(for key: String) -> URL {
         let safe = key.replacingOccurrences(of: "/", with: "-")
         return directory.appending(path: safe).appendingPathExtension("json")
+    }
+
+    private func scopedKey(for key: String) -> String? {
+        ownerNamespace.map { "\($0)-\(key)" }
+    }
+
+    private func digest(_ value: String) -> String {
+        SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 }
 

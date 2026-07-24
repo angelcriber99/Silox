@@ -59,11 +59,14 @@ final class AppEnvironment: ObservableObject {
 
     static func live() -> AppEnvironment {
         let cache = ReadCache()
-        let session = SessionStore(onSignOut: {
-            Task { await cache.clearAll() }
-            try? WidgetCredentialStore.make().remove(WidgetCredentialStore.tokenKey)
-            if let group = Bundle.main.object(forInfoDictionaryKey: "SILOX_APP_GROUP") as? String {
-                UserDefaults(suiteName: group)?.removeObject(forKey: "widget.summary.v1")
+        let session = SessionStore(onSessionChange: { userID in
+            await cache.setOwner(userID)
+            if userID == nil {
+                await cache.clearAll()
+                try? WidgetCredentialStore.make().remove(WidgetCredentialStore.tokenKey)
+                if let group = Bundle.main.object(forInfoDictionaryKey: "SILOX_APP_GROUP") as? String {
+                    UserDefaults(suiteName: group)?.removeObject(forKey: "widget.summary.v1")
+                }
             }
         })
         #if DEBUG
