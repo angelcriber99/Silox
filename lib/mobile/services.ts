@@ -19,6 +19,7 @@ import {
 import { displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } from '@/lib/domain/assets/normalization'
 import { enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
 import { calculateFixedNetInvestmentEur, calculateNetInvestmentByCurrency, historicalFxKey } from '@/lib/domain/portfolio/contributions'
+import { applyHistoricalFxRates, missingHistoricalFxRequests } from '@/lib/domain/portfolio/historical-fx-hydration'
 import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
 import { fetchHistoricalMarketData, type HistoricalMarketAsset } from '@/lib/actions/historical-market'
 import { fetchMarketPricesDirect } from '@/lib/actions/market'
@@ -224,8 +225,32 @@ export async function portfolio(context: Context) {
   } catch {
     throw new MobileApiError(500, 'database_error', 'No se pudo calcular el capital neto aportado')
   }
+  const missingFxRequests = missingHistoricalFxRequests(fundingTransactions)
+  const historicalRates = await fetchHistoricalFxRates(missingFxRequests)
+  const transactionsWithHistoricalFx = applyHistoricalFxRates(fundingTransactions, historicalRates)
+  const previousRatesByTransactionId = new Map(
+    fundingTransactions.map((transaction) => [transaction.id, transaction.tipo_cambio_eur]),
+  )
+  const idsByRate = new Map<number, string[]>()
+  for (const transaction of transactionsWithHistoricalFx) {
+    const previousRate = Number(previousRatesByTransactionId.get(transaction.id))
+    const rate = Number(transaction.tipo_cambio_eur)
+    if (Number.isFinite(previousRate) && previousRate > 0) continue
+    if (!transaction.id || !Number.isFinite(rate) || rate <= 0) continue
+    const ids = idsByRate.get(rate) ?? []
+    ids.push(transaction.id)
+    idsByRate.set(rate, ids)
+  }
+  await Promise.all(Array.from(idsByRate, ([rate, ids]) =>
+    context.supabase
+      .from('transacciones')
+      .update({ tipo_cambio_eur: rate })
+      .in('id', ids)
+      .eq('user_id', context.user.id)
+      .is('tipo_cambio_eur', null)
+  ))
   const accounting = calculatePortfolioAccounting(
-    fundingTransactions as PortfolioAccountingTransaction[],
+    transactionsWithHistoricalFx as PortfolioAccountingTransaction[],
   )
 
   // Keep the native dashboard on the exact same accounting universe as web.
@@ -243,28 +268,6 @@ export async function portfolio(context: Context) {
     : { prices: {}, fxRates: { EUR: 1 }, displayCurrency: 'EUR', marketState: 'CLOSED' }
   const enriched = enrichPositions(positions, market)
   const funding = accounting.funding
-  const missingFx = funding.datedFlows.filter((flow) => flow.currency !== 'EUR' && flow.fixedRate === null)
-  const historicalRates = await fetchHistoricalFxRates(missingFx.map((flow) => ({
-    currency: flow.currency,
-    date: flow.date,
-  })))
-  const idsByRate = new Map<number, string[]>()
-  for (const flow of missingFx) {
-    if (!flow.transactionId) continue
-    const rate = historicalRates[historicalFxKey(flow.currency, flow.date)]
-    if (!rate) continue
-    const ids = idsByRate.get(rate) ?? []
-    ids.push(flow.transactionId)
-    idsByRate.set(rate, ids)
-  }
-  await Promise.all(Array.from(idsByRate, ([rate, ids]) =>
-    context.supabase
-      .from('transacciones')
-      .update({ tipo_cambio_eur: rate })
-      .in('id', ids)
-      .eq('user_id', context.user.id)
-      .is('tipo_cambio_eur', null)
-  ))
   const netContributions = calculateFixedNetInvestmentEur(funding, historicalRates)
   const totals = computePortfolioTotals(enriched, netContributions)
 
@@ -298,7 +301,7 @@ export async function portfolio(context: Context) {
         : position.original_currency === position.moneda
           ? position.precio_actual_nativo
           : position.precio_actual_nativo ?? position.precio_actual
-      const assetTransactions = fundingTransactions.filter(
+      const assetTransactions = transactionsWithHistoricalFx.filter(
         (transaction) => transaction.activo_id === position.activo_id,
       )
       const openPurchaseLots = calculateOpenPurchaseLots(assetTransactions)

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { computePortfolioTotals, enrichPositions } from '@/lib/api/assets'
-import { calculateFixedNetInvestmentEur, historicalFxKey } from '@/lib/domain/portfolio/contributions'
+import { calculateFixedNetInvestmentEur } from '@/lib/domain/portfolio/contributions'
+import { applyHistoricalFxRates, missingHistoricalFxRequests } from '@/lib/domain/portfolio/historical-fx-hydration'
 import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
 import { isInvestablePortfolioAsset } from '@/lib/domain/assets/normalization'
 import { fetchMarketPrices } from '@/lib/actions/market'
@@ -59,7 +60,14 @@ export async function GET(request: Request) {
         .order('fecha', { ascending: true })
         .order('created_at', { ascending: true })
         .range(from, to))
-      const accounting = calculatePortfolioAccounting(fundingTransactions as PortfolioAccountingTransaction[])
+      const ledgerTransactions = fundingTransactions as PortfolioAccountingTransaction[]
+      const missingFxRequests = missingHistoricalFxRequests(ledgerTransactions)
+      const historicalRates = await fetchHistoricalFxRates(missingFxRequests)
+      const transactionsWithHistoricalFx = applyHistoricalFxRates(ledgerTransactions, historicalRates)
+      const previousRatesByTransactionId = new Map(
+        ledgerTransactions.map((transaction) => [transaction.id, transaction.tipo_cambio_eur]),
+      )
+      const accounting = calculatePortfolioAccounting(transactionsWithHistoricalFx)
       const projection = applyPortfolioAccounting(
         positions.filter(isInvestablePortfolioAsset),
         accounting,
@@ -84,19 +92,14 @@ export async function GET(request: Request) {
       }
 
       const enriched = enrichPositions(visiblePositions, pricePayload)
-      const funding = accounting.funding
-      const missingFx = funding.datedFlows.filter((flow) => flow.currency !== 'EUR' && flow.fixedRate === null)
-      const historicalRates = await fetchHistoricalFxRates(missingFx.map((flow) => ({
-        currency: flow.currency,
-        date: flow.date,
-      })))
       const idsByRate = new Map<number, string[]>()
-      for (const flow of missingFx) {
-        if (!flow.transactionId) continue
-        const rate = historicalRates[historicalFxKey(flow.currency, flow.date)]
-        if (!rate) continue
+      for (const transaction of transactionsWithHistoricalFx) {
+        const previousRate = Number(previousRatesByTransactionId.get(transaction.id))
+        const rate = Number(transaction.tipo_cambio_eur)
+        if (Number.isFinite(previousRate) && previousRate > 0) continue
+        if (!transaction.id || !Number.isFinite(rate) || rate <= 0) continue
         const ids = idsByRate.get(rate) ?? []
-        ids.push(flow.transactionId)
+        ids.push(transaction.id)
         idsByRate.set(rate, ids)
       }
       await Promise.all(Array.from(idsByRate, ([rate, ids]) =>
@@ -107,6 +110,7 @@ export async function GET(request: Request) {
           .eq('user_id', user.id)
           .is('tipo_cambio_eur', null)
       ))
+      const funding = accounting.funding
       const netContributions = calculateFixedNetInvestmentEur(funding, historicalRates)
       const totals = computePortfolioTotals(enriched, netContributions)
 
