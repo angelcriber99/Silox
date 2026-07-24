@@ -409,7 +409,7 @@ function historicalAssets(transactions: HistoricalPortfolioTransaction[]): Histo
   const assets = new Map<string, HistoricalMarketAsset>()
   for (const transaction of transactions) {
     const asset = Array.isArray(transaction.activo) ? transaction.activo[0] : transaction.activo
-    if (!asset || !transaction.activo_id) continue
+    if (!asset || !transaction.activo_id || !isInvestablePortfolioAsset(asset)) continue
     assets.set(transaction.activo_id, {
       id: transaction.activo_id,
       ticker: asset.ticker,

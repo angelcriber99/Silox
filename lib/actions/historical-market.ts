@@ -24,9 +24,10 @@ function isCashTicker(ticker: string): boolean {
   return normalized.startsWith('CASH') || normalized === 'REVOLUT'
 }
 
-function yahooTicker(asset: HistoricalMarketAsset): string {
+export function historicalYahooTicker(asset: HistoricalMarketAsset): string {
   const ticker = asset.ticker.toUpperCase()
   if (METAL_TICKER_ALIASES[ticker]) return METAL_TICKER_ALIASES[ticker]
+  if (asset.type.toLowerCase() === 'crypto' && !ticker.includes('-')) return `${ticker}-USD`
   if (ticker.startsWith('0P') && !ticker.includes('.')) return `${ticker}.F`
   return ticker
 }
@@ -70,7 +71,7 @@ export async function fetchHistoricalMarketData(
 
   const marketSeriesByAsset: Record<string, HistoricalMarketSeries> = {}
   const marketResults = await mapSettledWithConcurrency(marketAssets, 4, async (asset) => {
-    const chart = await getYahooFinance().chart(yahooTicker(asset), { period1, period2, interval: '1d' })
+    const chart = await getYahooFinance().chart(historicalYahooTicker(asset), { period1, period2, interval: '1d' })
     const quoteCurrency = normalizeYahooCurrency(chart.meta?.currency ?? asset.currency)
     return {
       assetId: asset.id,

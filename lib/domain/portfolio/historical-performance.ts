@@ -74,6 +74,13 @@ function isCashAsset(asset: Asset): boolean {
     || type.includes('liquidez')
 }
 
+/** Matches the investment-only portfolio shown by the app. Cash movements are
+ * bookkeeping entries and must never make an otherwise valid investment
+ * valuation disappear when their running balance is negative or incomplete. */
+function isVisiblePortfolioAsset(asset: Asset): boolean {
+  return !isCashAsset(asset) && asset.tipo !== 'Fondo Monetario'
+}
+
 function operationUnits(transaction: HistoricalPortfolioTransaction): number {
   const quantity = Number(transaction.cantidad)
   if (!Number.isFinite(quantity) || quantity < 0) return Number.NaN
@@ -184,7 +191,7 @@ export function reconstructPortfolioHistory(
   for (const currentDate of inclusiveDays(firstDate, endDate)) {
     for (const transaction of transactionsByDate.get(currentDate) ?? []) {
       const asset = assetFor(transaction)
-      if (!asset) continue
+      if (!asset || !isVisiblePortfolioAsset(asset)) continue
       const delta = operationUnits(transaction)
       if (!Number.isFinite(delta)) continue
       const holding = holdings.get(transaction.activo_id) ?? { asset, units: 0 }
