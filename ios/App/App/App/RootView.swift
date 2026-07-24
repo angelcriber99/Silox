@@ -113,13 +113,10 @@ struct MainTabView: View {
             )
                 .tabItem { Label(AppTab.analysis.title, systemImage: AppTab.analysis.systemImage) }
                 .tag(AppTab.analysis)
-            TransactionsView(repository: environment.transactionRepository, onAdd: { presentAdd(nil) })
-                .tabItem { Label(AppTab.transactions.title, systemImage: AppTab.transactions.systemImage) }
-                .tag(AppTab.transactions)
             RadarView(repository: environment.radarRepository)
                 .tabItem { Label(AppTab.radar.title, systemImage: AppTab.radar.systemImage) }
                 .tag(AppTab.radar)
-            MoreView()
+            MoreView(onAdd: { presentAdd(nil) })
                 .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.systemImage) }
                 .tag(AppTab.settings)
         }

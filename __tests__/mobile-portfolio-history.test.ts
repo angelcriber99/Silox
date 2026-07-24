@@ -39,6 +39,21 @@ describe('mobile portfolio history', () => {
     ])
   })
 
+  it('prefers a complete reconstructed valuation over a sparse persisted snapshot', () => {
+    const points = buildMobilePortfolioHistory(
+      [],
+      [{ date: '2024-02-01', total_value: 110, total_invested: 100, updated_at: '2024-02-01T08:00:00.000Z' }],
+      [],
+      {},
+      {},
+      [{ date: '2024-02-01', value: 125, invested: 100 }],
+    )
+
+    expect(points).toEqual([
+      expect.objectContaining({ date: '2024-02-01', value: '125', invested: '100', source: 'reconstructed' }),
+    ])
+  })
+
   it('completes a legacy valuation without capital from the imported movement ledger', () => {
     const points = buildMobilePortfolioHistory(
       [],

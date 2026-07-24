@@ -4,11 +4,16 @@ import WidgetKit
 struct MoreView: View {
     @EnvironmentObject private var environment: AppEnvironment
     @EnvironmentObject private var session: SessionStore
+    let onAdd: () -> Void
     @AppStorage("hideBalances") private var hideBalances = false
     @AppStorage("useBiometrics") private var useBiometrics = false
     @State private var widgetStatus = "No configurado"
     @State private var isUpdatingWidget = false
     @State private var biometricMessage: String?
+
+    init(onAdd: @escaping () -> Void = {}) {
+        self.onAdd = onAdd
+    }
 
     var body: some View {
         NavigationStack {
@@ -49,6 +54,20 @@ struct MoreView: View {
                             tint: SiloxColors.accentSecondary
                         )
                     }
+                }
+
+                Section("Movimientos") {
+                    NavigationLink {
+                        TransactionsView(repository: environment.transactionRepository, onAdd: onAdd)
+                    } label: {
+                        SettingsDestinationLabel(
+                            title: "Historial de movimientos",
+                            subtitle: "Compras, ventas, dividendos y efectivo",
+                            icon: "arrow.left.arrow.right",
+                            tint: SiloxColors.accent
+                        )
+                    }
+                    .accessibilityIdentifier("settings-transactions")
                 }
 
                 Section("Datos") {

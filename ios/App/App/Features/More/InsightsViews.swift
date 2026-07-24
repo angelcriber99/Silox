@@ -295,9 +295,9 @@ struct AnalysisView: View {
                     }
                     .accessibilityLabel("Evolución del valor de cartera y del dinero aportado")
 
-                    if filteredPoints.contains(where: { $0.source == .transaction }) {
+                    if filteredPoints.contains(where: { $0.source == .transaction || $0.source == .reconstructed }) {
                         Label(
-                            "El capital anterior se ha reconstruido desde los movimientos importados. No se muestran precios ni rentabilidad donde no hay una valoración histórica real.",
+                            "El historial se reconstruye con los movimientos, cierres de mercado y tipo de cambio de cada fecha. No se muestran precios ni rentabilidad donde no hay una valoración histórica real.",
                             systemImage: "info.circle"
                         )
                         .font(.caption2)
@@ -533,9 +533,9 @@ struct PortfolioHistoryView: View {
                             .pickerStyle(.segmented)
                             .siloxPeriodControlSurface()
 
-                            if visible.contains(where: { $0.source == .transaction }) {
+                            if visible.contains(where: { $0.source == .transaction || $0.source == .reconstructed }) {
                                 Label(
-                                    "El capital se ha reconstruido desde los movimientos importados. Solo se dibuja patrimonio cuando hay una valoración histórica real.",
+                                    "El historial usa movimientos, cierres de mercado y tipo de cambio de cada fecha. Solo se dibuja patrimonio cuando hay una valoración histórica real.",
                                     systemImage: "info.circle"
                                 )
                                 .font(.caption)
@@ -667,6 +667,10 @@ struct PortfolioHistoryView: View {
                 Text("Reconstruido desde movimientos")
                     .font(.caption2)
                     .foregroundStyle(SiloxColors.warning)
+            } else if point.source == .reconstructed {
+                Text("Valorado con cierre histórico")
+                    .font(.caption2)
+                    .foregroundStyle(SiloxColors.textSecondary)
             }
         }
     }

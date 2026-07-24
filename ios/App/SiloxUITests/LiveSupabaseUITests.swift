@@ -42,7 +42,9 @@ final class LiveSupabaseUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["MSFT"].waitForExistence(timeout: 20))
         capture("07-cartera-dos-activos")
 
-        app.buttons["Movimientos"].tap()
+        app.buttons["Ajustes"].tap()
+        XCTAssertTrue(app.buttons["settings-transactions"].waitForExistence(timeout: 8))
+        app.buttons["settings-transactions"].tap()
         XCTAssertTrue(app.navigationBars["Movimientos"].waitForExistence(timeout: 8))
         XCTAssertTrue(app.staticTexts["AAPL"].waitForExistence(timeout: 8))
         XCTAssertTrue(app.staticTexts["MSFT"].waitForExistence(timeout: 8))

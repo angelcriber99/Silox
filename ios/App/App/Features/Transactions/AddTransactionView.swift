@@ -11,14 +11,9 @@ struct AddTransactionView: View {
     @State private var assets: [Asset] = []
     @State private var assetId = ""
     @State private var quantity = ""
-    @State private var amount = ""
-    @State private var commission = ""
-    @State private var sourceWithholding = ""
-    @State private var destinationWithholding = ""
+    @State private var unitPrice = ""
+    @State private var dividendAmount = ""
     @State private var date = Date()
-    @State private var notes = ""
-    @State private var updatesCash = true
-    @State private var showsDetails = false
     @State private var didAttemptSave = false
     @State private var isSaving = false
     @State private var errorMessage: String?
@@ -88,83 +83,34 @@ struct AddTransactionView: View {
                         }
 
                         numericField(
-                            "Importe total",
-                            text: $amount,
+                            kind == .buy ? "Precio de compra" : "Precio de venta",
+                            text: $unitPrice,
                             suffix: selectedAsset?.currency ?? "",
-                            field: .amount,
-                            helper: "El importe antes de comisiones."
+                            field: .unitPrice,
+                            helper: "El precio pagado o recibido por cada unidad."
                         )
                     } else {
                         numericField(
-                            "Importe bruto",
-                            text: $amount,
+                            "Importe del dividendo",
+                            text: $dividendAmount,
                             suffix: selectedAsset?.currency ?? "",
-                            field: .amount,
-                            helper: "El dividendo antes de impuestos y comisiones."
+                            field: .dividendAmount,
+                            helper: "El efectivo recibido por este dividendo."
                         )
                     }
 
-                    if didAttemptSave, invalidField == .amount {
+                    if didAttemptSave, invalidField == .unitPrice || invalidField == .dividendAmount {
                         validationLabel(kind == .dividend
-                                        ? "Introduce un importe bruto mayor que cero."
-                                        : "Introduce un importe total mayor que cero.")
+                                        ? "Introduce un importe de dividendo mayor que cero."
+                                        : "Introduce un precio mayor que cero.")
                     }
+
+                    DatePicker("Fecha", selection: $date, displayedComponents: [.date])
                 }
 
                 if let summary = summary {
                     Section("Resumen") {
                         TransactionSummaryView(summary: summary)
-                    }
-                }
-
-                Section {
-                    DisclosureGroup("Comisiones, impuestos y más", isExpanded: $showsDetails) {
-                        numericField(
-                            "Comisión",
-                            text: $commission,
-                            suffix: selectedAsset?.currency ?? "",
-                            field: .commission,
-                            helper: "Déjalo vacío si no hubo comisión."
-                        )
-                        if didAttemptSave, invalidField == .commission {
-                            validationLabel(commissionValidationMessage)
-                        }
-
-                        if kind == .dividend {
-                            numericField(
-                                "Retención en origen",
-                                text: $sourceWithholding,
-                                suffix: selectedAsset?.currency ?? "",
-                                field: .sourceWithholding,
-                                helper: "El impuesto retenido por el país de origen."
-                            )
-                            if didAttemptSave, invalidField == .sourceWithholding {
-                                validationLabel("Introduce una retención válida.")
-                            }
-
-                            numericField(
-                                "Retención en destino",
-                                text: $destinationWithholding,
-                                suffix: selectedAsset?.currency ?? "",
-                                field: .destinationWithholding,
-                                helper: "El impuesto retenido en tu país de residencia."
-                            )
-                            if didAttemptSave, invalidField == .destinationWithholding {
-                                validationLabel("Introduce una retención válida.")
-                            }
-                        } else {
-                            Toggle("Registrar también el efectivo", isOn: $updatesCash)
-                            Text(updatesCash
-                                 ? "El efectivo se actualizará automáticamente en \(selectedAsset?.currency ?? "la moneda del activo")."
-                                 : "Úsalo solo si el efectivo ya se registró mediante una importación.")
-                                .font(.caption)
-                                .foregroundStyle(SiloxColors.textSecondary)
-                        }
-
-                        DatePicker("Fecha", selection: $date, displayedComponents: [.date])
-                        TextField("Notas opcionales", text: $notes, axis: .vertical)
-                            .lineLimit(2...4)
-                            .focused($focusedField, equals: .notes)
                     }
                 }
 
@@ -189,7 +135,7 @@ struct AddTransactionView: View {
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Button("Siguiente") { advanceFocus() }
-                        .disabled(focusedField == nil || focusedField == .notes)
+                        .disabled(focusedField == nil)
                     Spacer()
                     Button("Listo") { focusedField = nil }
                 }
@@ -238,71 +184,51 @@ struct AddTransactionView: View {
     }
 
     private enum FocusField: Hashable {
-        case quantity, amount, commission, sourceWithholding, destinationWithholding, notes
+        case quantity, unitPrice, dividendAmount
     }
 
     private var isTrade: Bool { kind == .buy || kind == .sell }
     private var selectedAsset: Asset? { assets.first(where: { $0.id == assetId }) }
     private var quantityValue: Decimal? { quantity.normalizedDecimal }
-    private var amountValue: Decimal? { amount.normalizedDecimal }
-    private var commissionValue: Decimal? { optionalDecimal(commission) }
-    private var sourceWithholdingValue: Decimal? { optionalDecimal(sourceWithholding) }
-    private var destinationWithholdingValue: Decimal? { optionalDecimal(destinationWithholding) }
+    private var unitPriceValue: Decimal? { unitPrice.normalizedDecimal }
+    private var amountValue: Decimal? {
+        if kind == .dividend { return dividendAmount.normalizedDecimal }
+        guard let quantityValue, let unitPriceValue else { return nil }
+        return quantityValue * unitPriceValue
+    }
 
     private var invalidField: FocusField? {
         guard !assetId.isEmpty else { return nil }
         if isTrade, (quantityValue ?? 0) <= 0 { return .quantity }
-        guard (amountValue ?? 0) > 0 else { return .amount }
-        guard let commissionValue, commissionValue >= 0 else { return .commission }
-        guard let sourceWithholdingValue, sourceWithholdingValue >= 0 else { return .sourceWithholding }
-        guard let destinationWithholdingValue, destinationWithholdingValue >= 0 else { return .destinationWithholding }
-        if kind == .sell, commissionValue >= (amountValue ?? 0) { return .commission }
-        if kind == .dividend,
-           (amountValue ?? 0) - commissionValue - sourceWithholdingValue - destinationWithholdingValue <= 0 {
-            return .commission
-        }
+        if kind == .dividend, (amountValue ?? 0) <= 0 { return .dividendAmount }
+        if isTrade, (unitPriceValue ?? 0) <= 0 { return .unitPrice }
         return nil
-    }
-
-    private var commissionValidationMessage: String {
-        if kind == .sell { return "La comisión debe ser menor que el importe de la venta." }
-        if kind == .dividend { return "Las comisiones e impuestos deben ser menores que el dividendo bruto." }
-        return "Introduce una comisión válida."
     }
 
     private var summary: TransactionSummary? {
         guard let amountValue, amountValue > 0 else { return nil }
-        let commission = commissionValue ?? 0
-        let sourceTax = sourceWithholdingValue ?? 0
-        let destinationTax = destinationWithholdingValue ?? 0
         let currency = selectedAsset?.currency ?? "EUR"
 
         if kind == .dividend {
-            let net = amountValue - commission - sourceTax - destinationTax
-            guard net >= 0 else { return nil }
             return TransactionSummary(
-                headline: "Recibirás \(formatted(net, currency: currency)) en efectivo",
+                headline: "Recibirás \(formatted(amountValue, currency: currency)) en efectivo",
                 details: [
-                    ("Bruto", formatted(amountValue, currency: currency)),
-                    ("Impuestos", formatted(sourceTax + destinationTax, currency: currency)),
-                    ("Comisión", formatted(commission, currency: currency))
+                    ("Dividendo", formatted(amountValue, currency: currency))
                 ],
                 footnote: "No se añadirán acciones a tu cartera."
             )
         }
 
         guard let quantityValue, quantityValue > 0 else { return nil }
-        let unitPrice = amountValue / quantityValue
-        let cashImpact = kind == .buy ? amountValue + commission : amountValue - commission
+        let cashImpact = amountValue
         let verb = kind == .buy ? "Saldrán" : "Entrarán"
         return TransactionSummary(
-            headline: "\(verb) \(formatted(cashImpact, currency: currency)) \(updatesCash ? "de efectivo" : "sin modificar el efectivo")",
+            headline: "\(verb) \(formatted(cashImpact, currency: currency)) de efectivo",
             details: [
-                ("Precio por unidad", formatted(unitPrice, currency: currency)),
-                ("Importe", formatted(amountValue, currency: currency)),
-                ("Comisión", formatted(commission, currency: currency))
+                ("Precio por unidad", formatted(unitPriceValue ?? 0, currency: currency)),
+                ("Importe total", formatted(amountValue, currency: currency))
             ],
-            footnote: updatesCash ? "El saldo de efectivo se actualizará automáticamente." : "El saldo de efectivo no se modificará."
+            footnote: "El saldo de efectivo se actualizará automáticamente."
         )
     }
 
@@ -356,21 +282,14 @@ struct AddTransactionView: View {
             .accessibilityLabel("Error: \(message)")
     }
 
-    private func optionalDecimal(_ raw: String) -> Decimal? {
-        raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : raw.normalizedDecimal
-    }
-
     private func formatted(_ value: Decimal, currency: String) -> String {
         value.formatted(.currency(code: currency))
     }
 
     private func resetOperationFields() {
         quantity = ""
-        amount = ""
-        commission = ""
-        sourceWithholding = ""
-        destinationWithholding = ""
-        updatesCash = true
+        unitPrice = ""
+        dividendAmount = ""
         errorMessage = nil
         didAttemptSave = false
         focusedField = nil
@@ -378,13 +297,8 @@ struct AddTransactionView: View {
 
     private func advanceFocus() {
         switch focusedField {
-        case .quantity: focusedField = .amount
-        case .amount: focusedField = showsDetails ? .commission : nil
-        case .commission:
-            focusedField = kind == .dividend ? .sourceWithholding : nil
-        case .sourceWithholding: focusedField = .destinationWithholding
-        case .destinationWithholding: focusedField = .notes
-        case .notes, nil: focusedField = nil
+        case .quantity: focusedField = .unitPrice
+        case .unitPrice, .dividendAmount, nil: focusedField = nil
         }
     }
 
@@ -406,7 +320,7 @@ struct AddTransactionView: View {
             return
         }
         guard let invalidField else {
-            guard let amountValue, let commissionValue, let sourceWithholdingValue, let destinationWithholdingValue else { return }
+            guard let amountValue else { return }
             isSaving = true
             defer { isSaving = false }
             do {
@@ -415,12 +329,12 @@ struct AddTransactionView: View {
                     assetId: assetId,
                     quantity: isTrade ? NSDecimalNumber(decimal: quantityValue ?? 0).stringValue : nil,
                     amount: NSDecimalNumber(decimal: amountValue).stringValue,
-                    commission: NSDecimalNumber(decimal: commissionValue).stringValue,
-                    sourceWithholding: NSDecimalNumber(decimal: sourceWithholdingValue).stringValue,
-                    destinationWithholding: NSDecimalNumber(decimal: destinationWithholdingValue).stringValue,
-                    updatesCash: kind == .dividend || updatesCash,
+                    commission: "0",
+                    sourceWithholding: "0",
+                    destinationWithholding: "0",
+                    updatesCash: true,
                     occurredAt: date,
-                    notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes,
+                    notes: nil,
                     idempotencyKey: idempotencyKey
                 ))
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -431,9 +345,6 @@ struct AddTransactionView: View {
             return
         }
 
-        if invalidField == .commission || invalidField == .sourceWithholding || invalidField == .destinationWithholding {
-            showsDetails = true
-        }
         focusedField = invalidField
     }
 }
@@ -448,9 +359,8 @@ private struct TransactionKindPicker: View {
     ]
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) { choices }
-            VStack(spacing: 8) { choices }
+        HStack(spacing: 8) {
+            choices
         }
     }
 
@@ -459,10 +369,17 @@ private struct TransactionKindPicker: View {
             Button {
                 selection = option.kind
             } label: {
-                Label(option.title, systemImage: option.icon)
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: 42)
+                VStack(spacing: 5) {
+                    Image(systemName: option.icon)
+                        .imageScale(.medium)
+                    Text(option.title)
+                        .font(.footnote.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                        .allowsTightening(true)
+                }
+                .frame(maxWidth: .infinity)
+                    .frame(minHeight: 62)
                     .foregroundStyle(selection == option.kind ? SiloxColors.textOnAccent : SiloxColors.textPrimary)
                     .background(selection == option.kind ? SiloxColors.accent : SiloxColors.backgroundSecondary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay {
@@ -471,6 +388,7 @@ private struct TransactionKindPicker: View {
                     }
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("transaction-kind-\(option.kind.rawValue)")
             .accessibilityAddTraits(selection == option.kind ? .isSelected : [])
         }
     }

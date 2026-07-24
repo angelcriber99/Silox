@@ -184,7 +184,7 @@ struct CreateTransactionRequest: Codable, Sendable {
 }
 
 struct PortfolioHistoryPoint: Codable, Sendable, Equatable, Identifiable {
-    enum Source: String, Codable, Sendable, Equatable { case snapshot, transaction }
+    enum Source: String, Codable, Sendable, Equatable { case snapshot, transaction, reconstructed }
 
     var id: String { date }
     let date: String

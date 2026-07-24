@@ -10,7 +10,12 @@ final class PortfolioSharingTests: XCTestCase {
             position(id: "cash", ticker: nil, name: "Euro", daily: "100", percent: 0, kind: .cash)
         ])
 
-        let snapshot = PortfolioShareSnapshot(portfolio: portfolio, balancesHidden: false)
+        let snapshot = PortfolioShareSnapshot(
+            portfolio: portfolio,
+            showTotalValue: true,
+            showPositions: true,
+            showAssetValues: true
+        )
 
         XCTAssertEqual(snapshot.movements.map(\.id), ["bitcoin", "nvidia", "apple"])
         XCTAssertEqual(snapshot.totalValueLabel, SiloxFormatters.money("12000", currency: "EUR"))
@@ -20,7 +25,9 @@ final class PortfolioSharingTests: XCTestCase {
     func testShareSnapshotRespectsBalancePrivacy() {
         let snapshot = PortfolioShareSnapshot(
             portfolio: fixturePortfolio(positions: [position(id: "apple", ticker: "AAPL", name: "Apple", daily: "8", percent: 1.2)]),
-            balancesHidden: true
+            showTotalValue: false,
+            showPositions: true,
+            showAssetValues: false
         )
 
         XCTAssertEqual(snapshot.totalValueLabel, "••••••")
@@ -44,7 +51,9 @@ final class PortfolioSharingTests: XCTestCase {
     func testShareCardRendersAHighResolutionImage() {
         let snapshot = PortfolioShareSnapshot(
             portfolio: fixturePortfolio(positions: [position(id: "apple", ticker: "AAPL", name: "Apple", daily: "8", percent: 1.2)]),
-            balancesHidden: false
+            showTotalValue: true,
+            showPositions: true,
+            showAssetValues: true
         )
 
         let image = PortfolioShareImageRenderer.image(for: snapshot, colorScheme: .light)

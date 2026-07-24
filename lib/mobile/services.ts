@@ -20,6 +20,7 @@ import { displayAssetType, isInvestablePortfolioAsset, toDatabaseAssetPayload } 
 import { enrichPositions, computePortfolioTotals } from '@/lib/api/assets'
 import { calculateFixedNetInvestmentEur, calculateNetInvestmentByCurrency, historicalFxKey } from '@/lib/domain/portfolio/contributions'
 import { fetchHistoricalFxRates } from '@/lib/actions/historical-fx'
+import { fetchHistoricalMarketData, type HistoricalMarketAsset } from '@/lib/actions/historical-market'
 import { fetchMarketPricesDirect } from '@/lib/actions/market'
 import { getYahooFinance } from '@/lib/server/yahoo-finance'
 import { mapSettledWithConcurrency } from '@/lib/utils/async'
@@ -30,6 +31,7 @@ import {
   type PortfolioAccountingTransaction,
 } from '@/lib/domain/portfolio/accounting-engine'
 import { buildMobilePortfolioHistory } from './portfolio-history'
+import { reconstructPortfolioHistory, type HistoricalPortfolioTransaction } from '@/lib/domain/portfolio/historical-performance'
 import type { InvestmentFlowTransaction } from '@/lib/domain/portfolio/contributions'
 import type { Database } from '@/lib/database.types'
 import { collectAllPages } from '@/lib/utils/pagination'
@@ -378,19 +380,68 @@ async function loadAllLegacyPortfolioSnapshots(context: Context) {
 }
 
 async function loadAllInvestmentTransactions(context: Context) {
-  const rows: InvestmentFlowTransaction[] = []
+  const rows: HistoricalPortfolioTransaction[] = []
   for (let offset = 0; ; offset += HISTORY_PAGE_SIZE) {
     const { data, error } = await context.supabase
       .from('transacciones')
-      .select('id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, tipo_cambio_eur, activo:activos(ticker, tipo, moneda)')
+      .select('id, activo_id, tipo_operacion, cantidad, precio_unitario, comision, retencion_origen, retencion_destino, fecha, notas, tipo_cambio_eur, estado, created_at, linked_transaction_id, activo:activos(id, ticker, tipo, moneda)')
       .eq('user_id', context.user.id)
       .eq('estado', 'Completada')
       .order('fecha', { ascending: true })
+      .order('created_at', { ascending: true })
       .order('id', { ascending: true })
       .range(offset, offset + HISTORY_PAGE_SIZE - 1)
     databaseFailure('cargar los movimientos históricos', error)
-    rows.push(...((data ?? []) as unknown as InvestmentFlowTransaction[]))
+    rows.push(...((data ?? []) as unknown as HistoricalPortfolioTransaction[]))
     if (!data || data.length < HISTORY_PAGE_SIZE) return rows
+  }
+}
+
+function historicalDate(value: string | null | undefined): string | null {
+  const date = String(value ?? '').slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null
+}
+
+function historicalAssets(transactions: HistoricalPortfolioTransaction[]): HistoricalMarketAsset[] {
+  const assets = new Map<string, HistoricalMarketAsset>()
+  for (const transaction of transactions) {
+    const asset = Array.isArray(transaction.activo) ? transaction.activo[0] : transaction.activo
+    if (!asset || !transaction.activo_id) continue
+    assets.set(transaction.activo_id, {
+      id: transaction.activo_id,
+      ticker: asset.ticker,
+      type: asset.tipo,
+      currency: asset.moneda,
+    })
+  }
+  return Array.from(assets.values())
+}
+
+async function reconstructHistoryFromLedger(
+  transactions: HistoricalPortfolioTransaction[],
+  historicalRates: Record<string, number>,
+) {
+  const firstDate = transactions
+    .map((transaction) => historicalDate(transaction.fecha))
+    .filter((date): date is string => date !== null)
+    .sort()[0]
+  if (!firstDate) return []
+
+  try {
+    const today = new Date().toISOString().slice(0, 10)
+    const marketData = await fetchHistoricalMarketData(historicalAssets(transactions), firstDate, today)
+    return reconstructPortfolioHistory(
+      transactions,
+      marketData.marketSeriesByAsset,
+      marketData.fxSeriesByCurrency,
+      historicalRates,
+      today,
+    ).points
+  } catch (error) {
+    // Persisted snapshots remain a safe fallback if the market data provider
+    // is temporarily unavailable. Do not turn an outage into a false value.
+    console.warn('No se pudo reconstruir el histórico de cartera:', error)
+    return []
   }
 }
 
@@ -417,7 +468,8 @@ export async function portfolioHistory(context: Context, from?: string | null, t
     loadAllInvestmentTransactions(context),
   ])
   const historicalRates = await loadHistoricalFxForTransactions(transactions)
-  return buildMobilePortfolioHistory(history, legacySnapshots, transactions, historicalRates, { from, to })
+  const reconstructed = await reconstructHistoryFromLedger(transactions, historicalRates)
+  return buildMobilePortfolioHistory(history, legacySnapshots, transactions, historicalRates, { from, to }, reconstructed)
 }
 
 type DecimalParts = { coefficient: bigint; scale: number }

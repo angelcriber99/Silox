@@ -9,7 +9,7 @@ final class NavigationUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Cartera"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Radar"].exists)
         XCTAssertTrue(app.buttons["Análisis"].exists)
-        XCTAssertTrue(app.buttons["Movimientos"].exists)
+        XCTAssertFalse(app.buttons["Movimientos"].exists)
         XCTAssertTrue(app.buttons["Ajustes"].exists)
         XCTAssertFalse(app.buttons["Añadir"].exists)
 
@@ -38,6 +38,7 @@ final class NavigationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Evolución del patrimonio"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Valor de cartera"].exists)
         XCTAssertTrue(app.staticTexts["Dinero aportado"].exists)
+        XCTAssertTrue(app.staticTexts["El historial se reconstruye con los movimientos, cierres de mercado y tipo de cambio de cada fecha. No se muestran precios ni rentabilidad donde no hay una valoración histórica real."].exists)
         XCTAssertFalse(app.staticTexts["Evolución y ganancias diarias"].exists)
         capture("evolucion-patrimonio-y-aportado")
     }
@@ -55,7 +56,7 @@ final class NavigationUITests: XCTestCase {
         XCTAssertFalse(app.textFields["ID del activo (opcional)"].exists)
     }
 
-    func testPurchaseLotsAndDividendDeductionsAreVisible() {
+    func testPurchaseLotsAndSimplifiedManualMovementAreVisible() {
         let app = XCUIApplication()
         app.launchArguments += ["-ui-test-authenticated", "-ui-test-fixtures"]
         app.launch()
@@ -71,11 +72,21 @@ final class NavigationUITests: XCTestCase {
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["Añadir movimiento"].tap()
         XCTAssertTrue(app.navigationBars["Nuevo movimiento"].waitForExistence(timeout: 3))
+
+        XCTAssertTrue(app.buttons["transaction-kind-buy"].exists)
+        XCTAssertTrue(app.buttons["transaction-kind-sell"].exists)
+        XCTAssertTrue(app.buttons["transaction-kind-dividend"].exists)
+        app.buttons["Vender"].tap()
+        XCTAssertTrue(app.staticTexts["Precio de venta"].exists)
+        XCTAssertTrue(app.datePickers["Fecha"].exists)
+        XCTAssertFalse(app.buttons["Comisiones, impuestos y más"].exists)
+
         app.buttons["Dividendo"].tap()
-        app.buttons["Comisiones, impuestos y más"].tap()
-        XCTAssertTrue(app.staticTexts["Retención en origen"].exists)
-        XCTAssertTrue(app.staticTexts["Retención en destino"].exists)
-        capture("dividendo-retenciones-efectivo")
+        XCTAssertTrue(app.staticTexts["Importe del dividendo"].exists)
+        XCTAssertTrue(app.datePickers["Fecha"].exists)
+        XCTAssertFalse(app.staticTexts["Retención en origen"].exists)
+        XCTAssertFalse(app.staticTexts["Retención en destino"].exists)
+        capture("movimiento-manual-simplificado")
     }
 
     func testAssetLogoLoadsInsideItsNativeMark() {
@@ -158,7 +169,9 @@ final class NavigationUITests: XCTestCase {
         appleRow.tap()
         XCTAssertTrue(app.staticTexts["Rendimiento por compra"].waitForExistence(timeout: 3))
 
-        app.tabBars.buttons["Movimientos"].tap()
+        app.tabBars.buttons["Ajustes"].tap()
+        XCTAssertTrue(app.buttons["settings-transactions"].waitForExistence(timeout: 3))
+        app.buttons["settings-transactions"].tap()
         XCTAssertTrue(app.navigationBars["Movimientos"].waitForExistence(timeout: 3))
         app.tabBars.buttons["Cartera"].tap()
 

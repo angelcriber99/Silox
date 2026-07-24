@@ -2,14 +2,13 @@ import Foundation
 import Observation
 
 enum AppTab: String, CaseIterable, Identifiable, Sendable {
-    case portfolio, analysis, transactions, radar, settings
+    case portfolio, analysis, radar, settings
 
     var id: Self { self }
     var title: String {
         switch self {
         case .portfolio: "Cartera"
         case .analysis: "Análisis"
-        case .transactions: "Movimientos"
         case .radar: "Radar"
         case .settings: "Ajustes"
         }
@@ -18,7 +17,6 @@ enum AppTab: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .portfolio: "chart.pie"
         case .analysis: "chart.xyaxis.line"
-        case .transactions: "arrow.left.arrow.right"
         case .radar: "dot.radiowaves.left.and.right"
         case .settings: "gearshape"
         }
@@ -50,7 +48,7 @@ enum SiloxDeepLink: Equatable {
         case "portfolio": self = .tab(.portfolio)
         case "analysis": self = .tab(.analysis)
         case "transactions":
-            self = components.first?.lowercased() == "add" ? .addMovement(assetID: nil) : .tab(.transactions)
+            self = components.first?.lowercased() == "add" ? .addMovement(assetID: nil) : .tab(.settings)
         case "radar": self = .tab(.radar)
         case "settings": self = .tab(.settings)
         case "asset":
@@ -86,7 +84,7 @@ final class AppRouter {
             selectedTab = tab
             presentedAsset = nil
         case .addMovement(let assetID):
-            selectedTab = .transactions
+            selectedTab = .settings
             presentAddMovement(assetID: assetID)
         case .asset(let id):
             selectedTab = .portfolio

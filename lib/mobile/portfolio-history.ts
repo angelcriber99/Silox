@@ -3,8 +3,9 @@ import {
   historicalFxKey,
   type InvestmentFlowTransaction,
 } from '@/lib/domain/portfolio/contributions'
+import type { ReconstructedPortfolioPoint } from '@/lib/domain/portfolio/historical-performance'
 
-export type PortfolioHistorySource = 'snapshot' | 'transaction'
+export type PortfolioHistorySource = 'snapshot' | 'transaction' | 'reconstructed'
 
 export interface PersistedPortfolioHistoryPoint {
   timestamp: string
@@ -118,6 +119,7 @@ export function buildMobilePortfolioHistory(
   transactions: InvestmentFlowTransaction[],
   historicalRates: Record<string, number>,
   range: { from?: string | null; to?: string | null } = {},
+  reconstructed: ReconstructedPortfolioPoint[] = [],
 ): MobilePortfolioHistoryPoint[] {
   const snapshots = new Map<string, MobilePortfolioHistoryPoint>()
 
@@ -174,6 +176,34 @@ export function buildMobilePortfolioHistory(
     // historical market value or overwrite a persisted contribution.
     if (snapshot.invested === null && point.invested !== null) {
       points.set(point.date, { ...snapshot, invested: point.invested })
+    }
+  }
+
+  // A reconstructed value is based on the transaction ledger, the historical
+  // close of every open position, and the FX close for that same day. It is
+  // therefore more representative than a later, sparse portfolio snapshot.
+  for (const point of reconstructed) {
+    const date = day(point.date)
+    if (!date) continue
+    const current = points.get(date)
+    if (point.value !== null) {
+      points.set(date, {
+        date,
+        value: numberString(point.value),
+        invested: numberString(point.invested) ?? current?.invested ?? null,
+        updatedAt: null,
+        source: 'reconstructed',
+      })
+    } else if (point.invested !== null) {
+      points.set(date, current
+        ? { ...current, invested: numberString(point.invested) }
+        : {
+            date,
+            value: null,
+            invested: numberString(point.invested),
+            updatedAt: null,
+            source: 'transaction',
+          })
     }
   }
 

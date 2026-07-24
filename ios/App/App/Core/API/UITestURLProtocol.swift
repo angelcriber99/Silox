@@ -83,12 +83,12 @@ final class UITestURLProtocol: URLProtocol, @unchecked Sendable {
         case "/api/mobile/v1/portfolio/history":
             json = #"""
             {"data":[
-              {"date":"2026-05-01","value":null,"invested":"500","updatedAt":null,"source":"transaction"},
-              {"date":"2026-05-08","value":null,"invested":"750","updatedAt":null,"source":"transaction"},
-              {"date":"2026-05-15","value":"790","invested":"750","updatedAt":"2026-05-15T20:00:00Z","source":"snapshot"},
-              {"date":"2026-05-19","value":"812","invested":"750","updatedAt":"2026-05-19T20:00:00Z","source":"snapshot"},
-              {"date":"2026-06-03","value":"805","invested":"750","updatedAt":"2026-06-03T20:00:00Z","source":"snapshot"},
-              {"date":"2026-06-10","value":"840","invested":"750","updatedAt":"2026-06-10T20:00:00Z","source":"snapshot"}
+              {"date":"2026-05-01","value":"500","invested":"500","updatedAt":null,"source":"reconstructed"},
+              {"date":"2026-05-08","value":"735","invested":"750","updatedAt":null,"source":"reconstructed"},
+              {"date":"2026-05-15","value":"790","invested":"750","updatedAt":null,"source":"reconstructed"},
+              {"date":"2026-05-19","value":"812","invested":"750","updatedAt":null,"source":"reconstructed"},
+              {"date":"2026-05-26","value":"805","invested":"750","updatedAt":null,"source":"reconstructed"},
+              {"date":"2026-06-02","value":"840","invested":"750","updatedAt":null,"source":"reconstructed"}
             ]}
             """#
         case "/api/mobile/v1/assets":
